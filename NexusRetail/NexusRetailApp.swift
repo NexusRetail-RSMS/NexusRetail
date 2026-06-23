@@ -1,19 +1,23 @@
-// App entry point (@main). Creates the shared SessionStore and launches RootView.
-
 //
 //  NexusRetailApp.swift
 //  NexusRetail
 //
-//  Created by Aryavansh on 23/06/26.
-//
 
 import SwiftUI
 
+/// App entry point (@main). Creates the shared SessionStore and launches RootView.
 @main
 struct NexusRetailApp: App {
+    @State private var sessionStore = SessionStore()
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
+                .environment(sessionStore)
+                .task {
+                    // Attempt to restore session on app launch
+                    await sessionStore.restore()
+                }
         }
     }
 }
