@@ -69,3 +69,7 @@ Temporary Items
 
 # Kiro Specs
 .kiro/
+
+# Secrets and Configs
+Config.xcconfig
+*.xcconfig
