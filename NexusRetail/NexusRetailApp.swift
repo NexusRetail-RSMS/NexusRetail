@@ -1,3 +1,5 @@
+// App entry point (@main). Creates the shared SessionStore and launches RootView.
+
 //
 //  NexusRetailApp.swift
 //  NexusRetail
