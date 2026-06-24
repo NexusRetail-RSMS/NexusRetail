@@ -12,9 +12,6 @@ struct LoginView: View {
 
     @State private var viewModel = LoginViewModel()
     @Environment(SessionStore.self) private var sessionStore
-    @Environment(\.dismiss) private var dismiss
-
-    let selectedRole: UserRole
 
     var body: some View {
         VStack(spacing: 24) {
@@ -24,16 +21,17 @@ struct LoginView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 50, height: 50)
-                .foregroundStyle(.green.opacity(0.8))
+                .foregroundStyle(Color.nexusGold)
                 .padding(.top, 24)
             
             // Titles
             VStack(spacing: 8) {
                 Text("NexusRetail")
-                    .font(.title.bold())
+                    .font(.largeTitle.bold())
                     .accessibilityAddTraits(.isHeader)
+                    .foregroundColor(Color.nexusNavy)
                 
-                Text("Log in as \(selectedRole.displayName)")
+                Text("Log in to your account")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -76,19 +74,6 @@ struct LoginView: View {
         .padding(.horizontal, 24)
         .frame(maxWidth: 480)
         .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    dismiss()
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "chevron.left")
-                        Text("Back")
-                    }
-                    .foregroundColor(Color.green.opacity(0.8))
-                }
-            }
-        }
     }
 
     /// The inline error message, shown only when the view model reports one.
@@ -109,7 +94,7 @@ struct LoginView: View {
     /// disabled while loading or when either field is empty.
     private var loginButton: some View {
         Button {
-            Task { await viewModel.login(using: sessionStore, selectedRole: selectedRole) }
+            Task { await viewModel.login(using: sessionStore) }
         } label: {
             ZStack {
                 Text("Log In")
@@ -118,15 +103,16 @@ struct LoginView: View {
 
                 if viewModel.isLoading {
                     ProgressView()
+                        .tint(Color.nexusGold)
                 }
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(viewModel.isLoginButtonEnabled ? Color.green.opacity(0.8) : Color.gray.opacity(0.3))
+            .background(viewModel.isLoginButtonEnabled ? Color.nexusNavy : Color.gray.opacity(0.3))
             .cornerRadius(12)
         }
         .buttonStyle(.plain)
-        .foregroundColor(viewModel.isLoginButtonEnabled ? .white : .gray)
+        .foregroundColor(viewModel.isLoginButtonEnabled ? Color.nexusGold : .gray)
         .disabled(!viewModel.isLoginButtonEnabled)
         .accessibilityLabel("Log in")
         .accessibilityValue(viewModel.isLoading ? "Authenticating" : "")
@@ -135,7 +121,7 @@ struct LoginView: View {
 
 #Preview {
     NavigationStack {
-        LoginView(selectedRole: .manager)
+        LoginView()
             .environment(SessionStore())
     }
 }
