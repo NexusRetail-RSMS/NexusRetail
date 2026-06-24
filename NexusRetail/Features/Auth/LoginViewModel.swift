@@ -18,7 +18,7 @@ class LoginViewModel {
         !email.trimmingCharacters(in: .whitespaces).isEmpty && !password.isEmpty && !isLoading
     }
     
-    func login(using sessionStore: SessionStore, selectedRole: UserRole) async {
+    func login(using sessionStore: SessionStore) async {
         let trimmedEmail = email.trimmingCharacters(in: .whitespaces)
         
         guard trimmedEmail.contains("@") else {
@@ -36,13 +36,6 @@ class LoginViewModel {
         
         do {
             try await sessionStore.signIn(email: trimmedEmail, password: password)
-            
-            // Verify if the selected role matches the actual authenticated role
-            if let actualRole = sessionStore.currentRole, actualRole != selectedRole {
-                // If there's a mismatch, sign them back out and show an error
-                try? await sessionStore.signOut()
-                errorMessage = "This account is not authorized as a \(selectedRole.displayName)."
-            }
             // On complete success, the SessionStore updates and RootView routes automatically.
         } catch {
             errorMessage = error.localizedDescription
