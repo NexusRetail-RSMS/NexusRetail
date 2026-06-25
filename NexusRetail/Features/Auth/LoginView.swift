@@ -18,170 +18,169 @@ struct LoginView: View {
     @State private var isPresented = false
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            VStack(spacing: 0) {
-                Spacer()
-                
-                // MARK: - Centered Logo Header
-                logoHeader
-                    .padding(.bottom, 32)
-                    .opacity(isPresented ? 1 : 0)
-                    .scaleEffect(isPresented ? 1.0 : 0.95)
-                
-                Spacer()
-                
-                // MARK: - Bottom Card
+        GeometryReader { geometry in
+            ZStack(alignment: .topLeading) {
                 VStack(spacing: 0) {
-                    // Top drag/indicator handle pill
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(RSMSColors.burgundy.opacity(0.3))
-                        .frame(width: 40, height: 4)
-                        .padding(.top, 16)
-                        .padding(.bottom, 8)
-                    
-                    ScrollView(showsIndicators: false) {
-                        VStack(spacing: RSMSSpacing.lg) {
-                            // MARK: - Titles & Subtitles
-                            VStack(alignment: .leading, spacing: RSMSSpacing.xs) {
-                                Text("Welcome back, \(role.displayName)!")
-                                    .font(RSMSFonts.largeTitle)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(RSMSColors.primaryText)
-                                
-                                Text("Sign in to continue to your account")
-                                    .font(RSMSFonts.subheadline)
-                                    .foregroundColor(RSMSColors.secondaryText)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.top, RSMSSpacing.sm)
-
-                            // MARK: - Credential Inputs
-                            VStack(spacing: RSMSSpacing.md) {
-                                // Email/Username Input
-                                HStack(spacing: RSMSSpacing.sm) {
-                                    Image(systemName: "envelope.fill")
-                                        .foregroundColor(RSMSColors.secondaryText)
-                                        .frame(width: 20)
-                                    
-                                    TextField("Email or Username", text: $viewModel.email)
-                                        .keyboardType(.emailAddress)
-                                        .textInputAutocapitalization(.never)
-                                        .autocorrectionDisabled()
-                                        .textContentType(.username)
-                                        .font(RSMSFonts.body)
-                                        .accessibilityLabel("Email address or username")
-                                }
-                                .padding(RSMSSpacing.md)
-                                .background(RSMSColors.cardBackground)
-                                .cornerRadius(RSMSRadius.small)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: RSMSRadius.small)
-                                        .stroke(RSMSColors.inputBorder, lineWidth: 1)
-                                )
-
-                                // Password Input
-                                HStack(spacing: RSMSSpacing.sm) {
-                                    Image(systemName: "lock.fill")
-                                        .foregroundColor(RSMSColors.secondaryText)
-                                        .frame(width: 20)
-                                    
-                                    Group {
-                                        if showPassword {
-                                            TextField("Password", text: $viewModel.password)
-                                                .textContentType(.password)
-                                                .font(RSMSFonts.body)
-                                        } else {
-                                            SecureField("Password", text: $viewModel.password)
-                                                .textContentType(.password)
-                                                .font(RSMSFonts.body)
-                                        }
-                                    }
-                                    .accessibilityLabel("Password")
-                                    
-                                    Button {
-                                        showPassword.toggle()
-                                    } label: {
-                                        Image(systemName: showPassword ? "eye.slash.fill" : "eye.fill")
-                                            .foregroundColor(RSMSColors.secondaryText)
-                                            .imageScale(.medium)
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                                .padding(RSMSSpacing.md)
-                                .background(RSMSColors.cardBackground)
-                                .cornerRadius(RSMSRadius.small)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: RSMSRadius.small)
-                                        .stroke(RSMSColors.inputBorder, lineWidth: 1)
-                                )
-                                
-                                // Forgot Password Link
-                                HStack {
-                                    Spacer()
-                                    Button(action: {}) {
-                                        Text("Forgot password?")
-                                            .font(RSMSFonts.subheadline)
-                                            .foregroundColor(RSMSColors.burgundy)
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            }
-
-                            // Error Message (if any)
-                            errorLabel
-
-                            // MARK: - Sign In Button (styled in dark brown)
-                            signInButton
-                            
-                            // MARK: - Apple Sign-in Section
-                            appleSignInSection
-                            
-                            Spacer()
-                            
-                            // MARK: - Bottom Security Badge
-                            securityBadge
-                        }
-                        .padding(.horizontal, RSMSSpacing.lg)
-                        .padding(.bottom, 24)
+                    // Top Half: Centered Logo
+                    VStack {
+                        Spacer()
+                        logoHeader
+                            .opacity(isPresented ? 1 : 0)
+                            .scaleEffect(isPresented ? 1.0 : 0.95)
+                        Spacer()
                     }
+                    .frame(height: geometry.size.height * 0.50)
+                    .frame(maxWidth: .infinity)
+                    
+                    // Bottom Half: Scrollable bottom card
+                    VStack(spacing: 0) {
+                        // Top drag/indicator handle pill
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(RSMSColors.burgundy.opacity(0.3))
+                            .frame(width: 40, height: 4)
+                            .padding(.top, 16)
+                            .padding(.bottom, 8)
+                        
+                        ScrollView(showsIndicators: false) {
+                            VStack(spacing: RSMSSpacing.lg) {
+                                // MARK: - Titles & Subtitles
+                                VStack(alignment: .leading, spacing: RSMSSpacing.xs) {
+                                    Text("Welcome back, \(role.displayName)!")
+                                        .font(RSMSFonts.largeTitle)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(RSMSColors.primaryText)
+                                    
+                                    Text("Sign in to continue to your account")
+                                        .font(RSMSFonts.subheadline)
+                                        .foregroundColor(RSMSColors.secondaryText)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.top, RSMSSpacing.sm)
+
+                                // MARK: - Credential Inputs
+                                VStack(spacing: RSMSSpacing.md) {
+                                    // Email/Username Input
+                                    HStack(spacing: RSMSSpacing.sm) {
+                                        Image(systemName: "envelope.fill")
+                                            .foregroundColor(RSMSColors.secondaryText)
+                                            .frame(width: 20)
+                                        
+                                        TextField("Email or Username", text: $viewModel.email)
+                                            .keyboardType(.emailAddress)
+                                            .textInputAutocapitalization(.never)
+                                            .autocorrectionDisabled()
+                                            .textContentType(.username)
+                                            .font(RSMSFonts.body)
+                                            .accessibilityLabel("Email address or username")
+                                    }
+                                    .padding(RSMSSpacing.md)
+                                    .background(RSMSColors.cardBackground)
+                                    .cornerRadius(RSMSRadius.small)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: RSMSRadius.small)
+                                            .stroke(RSMSColors.inputBorder, lineWidth: 1)
+                                    )
+
+                                    // Password Input
+                                    HStack(spacing: RSMSSpacing.sm) {
+                                        Image(systemName: "lock.fill")
+                                            .foregroundColor(RSMSColors.secondaryText)
+                                            .frame(width: 20)
+                                        
+                                        Group {
+                                            if showPassword {
+                                                TextField("Password", text: $viewModel.password)
+                                                    .textContentType(.password)
+                                                    .font(RSMSFonts.body)
+                                            } else {
+                                                SecureField("Password", text: $viewModel.password)
+                                                    .textContentType(.password)
+                                                    .font(RSMSFonts.body)
+                                            }
+                                        }
+                                        .accessibilityLabel("Password")
+                                        
+                                        Button {
+                                            showPassword.toggle()
+                                        } label: {
+                                            Image(systemName: showPassword ? "eye.slash.fill" : "eye.fill")
+                                                .foregroundColor(RSMSColors.secondaryText)
+                                                .imageScale(.medium)
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                    .padding(RSMSSpacing.md)
+                                    .background(RSMSColors.cardBackground)
+                                    .cornerRadius(RSMSRadius.small)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: RSMSRadius.small)
+                                            .stroke(RSMSColors.inputBorder, lineWidth: 1)
+                                    )
+                                    
+                                    // Forgot Password Link
+                                    HStack {
+                                        Spacer()
+                                        Button(action: {}) {
+                                            Text("Forgot password?")
+                                                .font(RSMSFonts.subheadline)
+                                                .foregroundColor(RSMSColors.burgundy)
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+
+                                // Error Message (if any)
+                                errorLabel
+
+                                // MARK: - Sign In Button (styled in dark brown)
+                                signInButton
+                                
+                                // MARK: - Apple Sign-in Section
+                                appleSignInSection
+                                
+                                Spacer()
+                                
+                                // MARK: - Bottom Security Badge
+                                securityBadge
+                            }
+                            .padding(.horizontal, RSMSSpacing.lg)
+                            .padding(.bottom, geometry.safeAreaInsets.bottom + 24)
+                        }
+                    }
+                    .frame(height: geometry.size.height * 0.50)
+                    .frame(maxWidth: 480)
+                    .background(
+                        RSMSColors.cardBackground
+                    )
+                    .clipShape(UnevenRoundedRectangle(topLeadingRadius: 40, bottomLeadingRadius: 0, bottomTrailingRadius: 0, topTrailingRadius: 40))
+                    .shadow(color: Color.black.opacity(0.06), radius: 16, x: 0, y: -4)
+                    .offset(y: isPresented ? 0 : geometry.size.height * 0.50)
                 }
-                .frame(maxWidth: 480)
-                .background(
-                    RSMSColors.cardBackground
-                        .ignoresSafeArea(edges: .bottom)
-                )
-                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 40, bottomLeadingRadius: 0, bottomTrailingRadius: 0, topTrailingRadius: 40))
-                .shadow(color: Color.black.opacity(0.06), radius: 16, x: 0, y: -4)
-                .offset(y: isPresented ? 0 : UIScreen.main.bounds.height)
-            }
-            
-            // MARK: - Custom Back Button
-            Button {
-                dismiss()
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "chevron.left")
-                        .fontWeight(.semibold)
-                    Text("Back")
-                        .font(RSMSFonts.headline)
+                
+                // MARK: - Custom Back Button
+                Button {
+                    dismiss()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                            .fontWeight(.semibold)
+                        Text("Back")
+                            .font(RSMSFonts.headline)
+                    }
+                    .foregroundColor(RSMSColors.burgundy)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(.ultraThinMaterial)
+                    .clipShape(Capsule())
+                    .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
                 }
-                .foregroundColor(RSMSColors.burgundy)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(.ultraThinMaterial)
-                .clipShape(Capsule())
-                .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
-            }
-            .padding(.leading, RSMSSpacing.lg)
-            .padding(.top, RSMSSpacing.md)
-            .opacity(isPresented ? 1 : 0)
-            .offset(y: isPresented ? 0 : -10)
-        }
-        .onAppear {
-            withAnimation(.spring(response: 0.65, dampingFraction: 0.82)) {
-                isPresented = true
+                .padding(.leading, RSMSSpacing.lg)
+                .padding(.top, RSMSSpacing.md)
+                .opacity(isPresented ? 1 : 0)
+                .offset(y: isPresented ? 0 : -10)
             }
         }
+        .ignoresSafeArea(edges: .bottom)
         .navigationBarBackButtonHidden(true)
         .background(
             ZStack {
@@ -199,6 +198,11 @@ struct LoginView: View {
                 .ignoresSafeArea()
             }
         )
+        .onAppear {
+            withAnimation(.spring(response: 0.65, dampingFraction: 0.82)) {
+                isPresented = true
+            }
+        }
     }
 
     // MARK: - Logo Header View
