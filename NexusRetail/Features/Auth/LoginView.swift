@@ -30,7 +30,7 @@ struct LoginView: View {
                         .scaledToFill()
                         .frame(width: geometry.size.width * 0.5)
                         .clipped()
-                        .opacity(0.15)
+                        .opacity(0.45)
                         .ignoresSafeArea()
                 }
             }
