@@ -13,75 +13,83 @@ struct RoleSelectionView: View {
     @State private var selectedRole: UserRole? = nil
 
     var body: some View {
-        ZStack {
-            // Screen-wide cream background
-            RSMSColors.background
-                .ignoresSafeArea()
+        GeometryReader { geometry in
+            ZStack {
+                // Screen-wide cream background
+                RSMSColors.background
+                    .ignoresSafeArea()
 
-            // Immersive background store image (full-screen)
-            Image("ChatGPT Image Jun 25, 2026, 11_07_16 AM")
-                .resizable()
-                .scaledToFill()
-                .opacity(0.25)
-                .ignoresSafeArea()
-
-            VStack(spacing: RSMSSpacing.xl) {
-                Spacer(minLength: RSMSSpacing.md)
-
-                // Header Image / Icon (colored in burgundy)
-                Image(systemName: "person.3.sequence.fill")
+                // Immersive background store image (full-screen, shifted left)
+                Image("ChatGPT Image Jun 25, 2026, 11_07_16 AM")
                     .resizable()
-                    .scaledToFit()
-                    .frame(width: 48, height: 48)
-                    .foregroundStyle(RSMSColors.burgundy)
-                    .padding(.top, RSMSSpacing.md)
-                
-                // Titles
-                VStack(spacing: RSMSSpacing.sm) {
-                    Text("Choose your role")
-                        .font(RSMSFonts.title)
-                        .foregroundColor(RSMSColors.primaryText)
+                    .scaledToFill()
+                    .frame(width: geometry.size.width + 240, height: geometry.size.height)
+                    .offset(x: -180)
+                    .opacity(0.25)
+                    .ignoresSafeArea()
+
+                VStack(spacing: RSMSSpacing.xl) {
+                    Spacer(minLength: RSMSSpacing.md)
+
+                    // Header Image / Icon (colored in burgundy)
+                    Image(systemName: "person.3.sequence.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 48, height: 48)
+                        .foregroundStyle(RSMSColors.burgundy)
+                        .padding(.top, RSMSSpacing.md)
                     
-                    Text("Select the option that best describes\nyour responsibilities.")
-                        .font(RSMSFonts.subheadline)
-                        .foregroundColor(RSMSColors.secondaryText)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .padding(.bottom, RSMSSpacing.sm)
-                
-                // Role Cards
-                VStack(spacing: RSMSSpacing.md) {
-                    ForEach(UserRole.allCases, id: \.self) { role in
-                        RoleCardView(
-                            role: role,
-                            isSelected: selectedRole == role
-                        ) {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                selectedRole = role
+                    // Titles
+                    VStack(spacing: RSMSSpacing.sm) {
+                        Text("Choose your role")
+                            .font(RSMSFonts.title)
+                            .foregroundColor(RSMSColors.primaryText)
+                        
+                        Text("Select the option that best describes\nyour responsibilities.")
+                            .font(RSMSFonts.subheadline)
+                            .foregroundColor(RSMSColors.secondaryText)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.bottom, RSMSSpacing.sm)
+                    
+                    // Role Cards
+                    VStack(spacing: RSMSSpacing.md) {
+                        ForEach(UserRole.allCases, id: \.self) { role in
+                            RoleCardView(
+                                role: role,
+                                isSelected: selectedRole == role
+                            ) {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    selectedRole = role
+                                }
                             }
                         }
                     }
+                    
+                    Spacer()
+                    
+                    // Continue Button (uses RSMSColors.burgundy and RSMSColors.disabled)
+                    NavigationLink(destination: destinationView) {
+                        Text("Continue")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(selectedRole == nil ? RSMSColors.disabled : RSMSColors.burgundy)
+                            .foregroundColor(.white)
+                            .cornerRadius(RSMSRadius.medium)
+                            .shadow(color: selectedRole == nil ? Color.clear : RSMSColors.burgundy.opacity(0.15), radius: 6, x: 0, y: 3)
+                    }
+                    .disabled(selectedRole == nil)
+                    .padding(.bottom, RSMSSpacing.xl)
                 }
-                
-                Spacer()
-                
-                // Continue Button (uses RSMSColors.burgundy and RSMSColors.disabled)
-                NavigationLink(destination: destinationView) {
-                    Text("Continue")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(selectedRole == nil ? RSMSColors.disabled : RSMSColors.burgundy)
-                        .foregroundColor(.white)
-                        .cornerRadius(RSMSRadius.medium)
-                        .shadow(color: selectedRole == nil ? Color.clear : RSMSColors.burgundy.opacity(0.15), radius: 6, x: 0, y: 3)
-                }
-                .disabled(selectedRole == nil)
-                .padding(.bottom, RSMSSpacing.xl)
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, geometry.safeAreaInsets.top)
+                .padding(.bottom, geometry.safeAreaInsets.bottom)
+                .frame(width: geometry.size.width, height: geometry.size.height)
             }
-            .padding(.horizontal, RSMSSpacing.lg)
         }
+        .ignoresSafeArea()
         .navigationBarBackButtonHidden(true)
     }
     
