@@ -10,6 +10,7 @@
 import SwiftUI
 
 struct LoginView: View {
+    var role: UserRole = .admin
     @State private var viewModel = LoginViewModel()
     @Environment(SessionStore.self) private var sessionStore
     @State private var showPassword = false
@@ -26,7 +27,7 @@ struct LoginView: View {
 
                     // MARK: - Titles & Subtitles
                     VStack(alignment: .leading, spacing: RSMSSpacing.xs) {
-                        Text("Welcome back!")
+                        Text("Welcome back, \(role.displayName)!")
                             .font(RSMSFonts.largeTitle)
                             .fontWeight(.bold)
                             .foregroundColor(RSMSColors.primaryText)

@@ -91,7 +91,7 @@ struct RoleSelectionView: View {
     @ViewBuilder
     private var destinationView: some View {
         if let role = selectedRole {
-            LoginView()
+            LoginView(role: role)
         } else {
             EmptyView()
         }
@@ -117,18 +117,10 @@ fileprivate struct RoleCardView: View {
                         .foregroundStyle(RSMSColors.burgundy)
                 }
                 
-                // Text Content
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(role.displayName)
-                        .font(RSMSFonts.headline)
-                        .foregroundColor(RSMSColors.primaryText)
-                    
-                    Text(role.descriptionText)
-                        .font(RSMSFonts.caption)
-                        .foregroundColor(RSMSColors.secondaryText)
-                        .multilineTextAlignment(.leading)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+                // Text Content - Header only
+                Text(role.displayName)
+                    .font(RSMSFonts.headline)
+                    .foregroundColor(RSMSColors.primaryText)
                 
                 Spacer()
                 
