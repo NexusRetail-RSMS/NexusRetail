@@ -15,6 +15,7 @@ struct LoginView: View {
     @Environment(SessionStore.self) private var sessionStore
     @State private var showPassword = false
     @Environment(\.dismiss) private var dismiss
+    @State private var isPresented = false
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -24,6 +25,8 @@ struct LoginView: View {
                 // MARK: - Centered Logo Header
                 logoHeader
                     .padding(.bottom, 32)
+                    .opacity(isPresented ? 1 : 0)
+                    .scaleEffect(isPresented ? 1.0 : 0.95)
                 
                 Spacer()
                 
@@ -149,6 +152,7 @@ struct LoginView: View {
                 )
                 .clipShape(UnevenRoundedRectangle(topLeadingRadius: 40, bottomLeadingRadius: 0, bottomTrailingRadius: 0, topTrailingRadius: 40))
                 .shadow(color: Color.black.opacity(0.06), radius: 16, x: 0, y: -4)
+                .offset(y: isPresented ? 0 : UIScreen.main.bounds.height)
             }
             
             // MARK: - Custom Back Button
@@ -162,8 +166,20 @@ struct LoginView: View {
                         .font(RSMSFonts.headline)
                 }
                 .foregroundColor(RSMSColors.burgundy)
-                .padding(.horizontal, RSMSSpacing.lg)
-                .padding(.vertical, RSMSSpacing.md)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(.ultraThinMaterial)
+                .clipShape(Capsule())
+                .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
+            }
+            .padding(.leading, RSMSSpacing.lg)
+            .padding(.top, RSMSSpacing.md)
+            .opacity(isPresented ? 1 : 0)
+            .offset(y: isPresented ? 0 : -10)
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.65, dampingFraction: 0.82)) {
+                isPresented = true
             }
         }
         .navigationBarBackButtonHidden(true)
