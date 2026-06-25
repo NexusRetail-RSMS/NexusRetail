@@ -19,6 +19,10 @@ struct LoginView: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
+            // Screen Background Color
+            RSMSColors.background
+                .ignoresSafeArea()
+
             // Main Content
             VStack(spacing: 0) {
                 Spacer()
@@ -140,12 +144,22 @@ struct LoginView: View {
                     .padding(.bottom, 34)
                 }
                 .frame(maxWidth: 480)
-                .background(
-                    .ultraThinMaterial
-                )
+                .background(RSMSColors.cardBackground)
                 .clipShape(UnevenRoundedRectangle(topLeadingRadius: 40, bottomLeadingRadius: 0, bottomTrailingRadius: 0, topTrailingRadius: 40))
                 .shadow(color: Color.black.opacity(0.06), radius: 16, x: 0, y: -4)
             }
+            
+            // MARK: - Background Watermark Image Overlay (renders on top of the sheet)
+            GeometryReader { geometry in
+                Image("ChatGPT Image Jun 25, 2026, 11_07_16 AM")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: geometry.size.width + 240, height: geometry.size.height)
+                    .offset(x: -180)
+                    .opacity(0.25)
+            }
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
             
             // MARK: - Custom Back Button (overlaid at top-left, respecting safe area)
             Button {
@@ -169,22 +183,6 @@ struct LoginView: View {
         }
         .ignoresSafeArea(edges: .bottom)
         .navigationBarBackButtonHidden(true)
-        .background(
-            ZStack {
-                RSMSColors.background
-                    .ignoresSafeArea()
-
-                GeometryReader { geometry in
-                    Image("ChatGPT Image Jun 25, 2026, 11_07_16 AM")
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: geometry.size.width + 240, height: geometry.size.height)
-                        .offset(x: -180)
-                        .opacity(0.25)
-                }
-                .ignoresSafeArea()
-            }
-        )
         .onAppear {
             withAnimation(.spring(response: 0.65, dampingFraction: 0.82)) {
                 isPresented = true
