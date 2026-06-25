@@ -2,72 +2,86 @@
 //  RoleSelectionView.swift
 //  NexusRetail
 //
+//  This file is deprecated and no longer used in the auth flow.
+//
 
 import SwiftUI
 
 /// Pre-login screen where the user selects their expected role before proceeding.
+/// Refactored to use the RSMS brand colors and design guidelines.
 struct RoleSelectionView: View {
     @State private var selectedRole: UserRole? = nil
 
     var body: some View {
-        VStack(spacing: 16) {
-            // Header Image / Icon
-            Image(systemName: "person.3.sequence.fill")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 48, height: 48)
-                .foregroundStyle(.green.opacity(0.8))
-                .padding(.top, 16)
-            
-            // Titles
-            VStack(spacing: 6) {
-                Text("Choose your role")
-                    .font(.title2.bold())
+        ZStack {
+            // Screen-wide cream background
+            RSMSColors.background
+                .ignoresSafeArea()
+
+            VStack(spacing: RSMSSpacing.xl) {
+                Spacer(minLength: RSMSSpacing.md)
+
+                // Header Image / Icon (colored in burgundy)
+                Image(systemName: "person.3.sequence.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 48, height: 48)
+                    .foregroundStyle(RSMSColors.burgundy)
+                    .padding(.top, RSMSSpacing.md)
                 
-                Text("Select the option that best describes\nyour responsibilities.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            .padding(.bottom, 8)
-            
-            // Role Cards
-            VStack(spacing: 12) {
-                ForEach(UserRole.allCases, id: \.self) { role in
-                    RoleCardView(
-                        role: role,
-                        isSelected: selectedRole == role
-                    ) {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            selectedRole = role
+                // Titles
+                VStack(spacing: RSMSSpacing.sm) {
+                    Text("Choose your role")
+                        .font(RSMSFonts.title)
+                        .foregroundColor(RSMSColors.primaryText)
+                    
+                    Text("Select the option that best describes\nyour responsibilities.")
+                        .font(RSMSFonts.subheadline)
+                        .foregroundColor(RSMSColors.secondaryText)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.bottom, RSMSSpacing.sm)
+                
+                // Role Cards
+                VStack(spacing: RSMSSpacing.md) {
+                    ForEach(UserRole.allCases, id: \.self) { role in
+                        RoleCardView(
+                            role: role,
+                            isSelected: selectedRole == role
+                        ) {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                selectedRole = role
+                            }
                         }
                     }
                 }
+                
+                Spacer()
+                
+                // Continue Button (uses RSMSColors.burgundy and RSMSColors.disabled)
+                NavigationLink(destination: destinationView) {
+                    Text("Continue")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(selectedRole == nil ? RSMSColors.disabled : RSMSColors.burgundy)
+                        .foregroundColor(.white)
+                        .cornerRadius(RSMSRadius.medium)
+                        .shadow(color: selectedRole == nil ? Color.clear : RSMSColors.burgundy.opacity(0.15), radius: 6, x: 0, y: 3)
+                }
+                .disabled(selectedRole == nil)
+                .padding(.bottom, RSMSSpacing.xl)
             }
-            
-            Spacer(minLength: 16)
-            
-            // Continue Button
-            NavigationLink(destination: destinationView) {
-                Text("Continue")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(selectedRole == nil ? Color.gray.opacity(0.3) : Color.green.opacity(0.8))
-                    .foregroundColor(selectedRole == nil ? .gray : .white)
-                    .cornerRadius(12)
-            }
-            .disabled(selectedRole == nil)
-            .padding(.bottom, 16)
+            .padding(.horizontal, RSMSSpacing.lg)
         }
-        .padding(.horizontal, 20)
         .navigationBarBackButtonHidden(true)
     }
     
     @ViewBuilder
     private var destinationView: some View {
         if let role = selectedRole {
-            LoginView(selectedRole: role)
+            LoginView()
         } else {
             EmptyView()
         }
@@ -81,87 +95,56 @@ fileprivate struct RoleCardView: View {
     
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 16) {
-                // Icon
+            HStack(spacing: RSMSSpacing.md) {
+                // Icon (burgundy themed)
                 ZStack {
                     Circle()
-                        .fill(Color.green.opacity(0.15))
-                        .frame(width: 50, height: 50)
+                        .fill(RSMSColors.burgundy.opacity(0.12))
+                        .frame(width: 48, height: 48)
                     
                     Image(systemName: role.iconName)
-                        .font(.title3)
-                        .foregroundStyle(Color.green.opacity(0.8))
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(RSMSColors.burgundy)
                 }
                 
                 // Text Content
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text(role.displayName)
-                        .font(.headline)
-                        .foregroundColor(.primary)
+                        .font(RSMSFonts.headline)
+                        .foregroundColor(RSMSColors.primaryText)
                     
                     Text(role.descriptionText)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .font(RSMSFonts.caption)
+                        .foregroundColor(RSMSColors.secondaryText)
                         .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 
                 Spacer()
                 
-                // Radio Button
+                // Radio Button (burgundy themed)
                 ZStack {
                     Circle()
-                        .stroke(isSelected ? Color.green.opacity(0.8) : Color.gray.opacity(0.5), lineWidth: 2)
+                        .stroke(isSelected ? RSMSColors.burgundy : Color.gray.opacity(0.4), lineWidth: 2)
                         .frame(width: 24, height: 24)
                     
                     if isSelected {
                         Circle()
-                            .fill(Color.green.opacity(0.8))
+                            .fill(RSMSColors.burgundy)
                             .frame(width: 12, height: 12)
                     }
                 }
             }
-            .padding(12)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.green.opacity(0.8) : Color.gray.opacity(0.2), lineWidth: isSelected ? 2 : 1)
-                    .background(Color(uiColor: .systemBackground))
+            .padding(RSMSSpacing.md)
+            .background(RSMSColors.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.large))
+            .overlay(
+                RoundedRectangle(cornerRadius: RSMSRadius.large)
+                    .stroke(isSelected ? RSMSColors.burgundy : RSMSColors.cardBorder, lineWidth: isSelected ? 2 : 1)
             )
+            .shadow(color: isSelected ? RSMSColors.burgundy.opacity(0.04) : Color.black.opacity(0.02), radius: 6, x: 0, y: 3)
         }
         .buttonStyle(.plain)
-    }
-}
-
-// UI extensions for UserRole
-extension UserRole: CaseIterable {
-    public static var allCases: [UserRole] {
-        [.admin, .manager, .salesAssociate, .afterSales]
-    }
-    
-    var displayName: String {
-        switch self {
-        case .admin: return "Admin"
-        case .manager: return "Manager"
-        case .salesAssociate: return "Sales Associate"
-        case .afterSales: return "After Sales"
-        }
-    }
-    
-    var descriptionText: String {
-        switch self {
-        case .admin: return "Manage global pricing, onboarding, and store transfers."
-        case .manager: return "Manage store operations, inventory, and staff performance."
-        case .salesAssociate: return "Operate point of sale, clienteling, and order fulfillment."
-        case .afterSales: return "Manage returns, warranties, and item condition estimates."
-        }
-    }
-    
-    var iconName: String {
-        switch self {
-        case .admin: return "globe.desk"
-        case .manager: return "briefcase.fill"
-        case .salesAssociate: return "cart.fill"
-        case .afterSales: return "wrench.and.screwdriver.fill"
-        }
     }
 }
 
