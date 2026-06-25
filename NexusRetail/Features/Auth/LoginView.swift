@@ -141,7 +141,7 @@ struct LoginView: View {
                 }
                 .frame(maxWidth: 480)
                 .background(
-                    RSMSColors.cardBackground
+                    .ultraThinMaterial
                 )
                 .clipShape(UnevenRoundedRectangle(topLeadingRadius: 40, bottomLeadingRadius: 0, bottomTrailingRadius: 0, topTrailingRadius: 40))
                 .shadow(color: Color.black.opacity(0.06), radius: 16, x: 0, y: -4)
