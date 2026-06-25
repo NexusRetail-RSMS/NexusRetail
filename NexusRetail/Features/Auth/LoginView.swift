@@ -45,6 +45,7 @@ struct LoginView: View {
                         // MARK: - Titles & Subtitles
                         VStack(alignment: .leading, spacing: RSMSSpacing.xs) {
                             Text("Welcome back!")
+                                .blendMode(.darken)
                                 .font(RSMSFonts.largeTitle)
                                 .fontWeight(.bold)
                                 .foregroundColor(RSMSColors.primaryText)
@@ -75,9 +76,9 @@ struct LoginView: View {
                             .padding(.horizontal, RSMSSpacing.md)
                             .frame(height: 50)
                             .background(RSMSColors.background)
-                            .cornerRadius(RSMSRadius.small)
+                            .cornerRadius(24)
                             .overlay(
-                                RoundedRectangle(cornerRadius: RSMSRadius.small)
+                                RoundedRectangle(cornerRadius: 24)
                                     .stroke(RSMSColors.inputBorder, lineWidth: 1)
                             )
 
@@ -114,9 +115,9 @@ struct LoginView: View {
                             .padding(.horizontal, RSMSSpacing.md)
                             .frame(height: 50)
                             .background(RSMSColors.background)
-                            .cornerRadius(RSMSRadius.small)
+                            .cornerRadius(24)
                             .overlay(
-                                RoundedRectangle(cornerRadius: RSMSRadius.small)
+                                RoundedRectangle(cornerRadius: 24)
                                     .stroke(RSMSColors.inputBorder, lineWidth: 1)
                             )
                             
@@ -149,7 +150,7 @@ struct LoginView: View {
                 }
                 .frame(maxWidth: 480)
                 .background(RSMSColors.cardBackground)
-                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 24, bottomLeadingRadius: 32, bottomTrailingRadius: 32, topTrailingRadius: 24))
+                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 24, bottomLeadingRadius: 50, bottomTrailingRadius: 50, topTrailingRadius: 24))
                 .shadow(color: Color.black.opacity(0.06), radius: 16, x: 0, y: 4)
                 .padding(.horizontal, 10)
                 .padding(.bottom, 10)
@@ -251,7 +252,7 @@ struct LoginView: View {
             .padding(.vertical, 16)
             .background(viewModel.isLoginButtonEnabled ? RSMSColors.burgundy : RSMSColors.disabled)
             .foregroundColor(.white)
-            .cornerRadius(RSMSRadius.medium)
+            .cornerRadius(24)
             .shadow(color: viewModel.isLoginButtonEnabled ? RSMSColors.burgundy.opacity(0.15) : Color.clear, radius: 6, x: 0, y: 3)
         }
         .buttonStyle(.plain)
@@ -289,9 +290,9 @@ struct LoginView: View {
                 .padding(.vertical, 14)
                 .background(Color.white)
                 .foregroundColor(.black)
-                .cornerRadius(RSMSRadius.medium)
+                .cornerRadius(24)
                 .overlay(
-                    RoundedRectangle(cornerRadius: RSMSRadius.medium)
+                    RoundedRectangle(cornerRadius: 24)
                         .stroke(Color.black, lineWidth: 1)
                 )
             }
