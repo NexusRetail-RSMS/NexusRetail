@@ -23,6 +23,17 @@ struct LoginView: View {
             RSMSColors.background
                 .ignoresSafeArea()
 
+            // Background Watermark Image (placed in the back, behind the card)
+            GeometryReader { geometry in
+                Image("ChatGPT Image Jun 25, 2026, 11_07_16 AM")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: geometry.size.width + 240, height: geometry.size.height)
+                    .offset(x: -180)
+                    .opacity(0.18)
+            }
+            .ignoresSafeArea()
+
             // Main Content
             VStack(spacing: 0) {
                 Spacer()
@@ -150,20 +161,20 @@ struct LoginView: View {
                 }
                 .frame(maxWidth: 480)
                 .background(RSMSColors.cardBackground)
-                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 24, bottomLeadingRadius: 50, bottomTrailingRadius: 50, topTrailingRadius: 24))
+                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 24, bottomLeadingRadius: 32, bottomTrailingRadius: 32, topTrailingRadius: 24))
                 .shadow(color: Color.black.opacity(0.06), radius: 16, x: 0, y: 4)
                 .padding(.horizontal, 10)
                 .padding(.bottom, 10)
             }
             
-            // MARK: - Background Watermark Image Overlay (renders on top of the sheet)
+            // MARK: - Background Watermark Image Overlay (renders on top of the sheet with lower opacity so the sheet looks more opaque)
             GeometryReader { geometry in
                 Image("ChatGPT Image Jun 25, 2026, 11_07_16 AM")
                     .resizable()
                     .scaledToFill()
                     .frame(width: geometry.size.width + 240, height: geometry.size.height)
                     .offset(x: -180)
-                    .opacity(0.25)
+                    .opacity(0.08)
             }
             .ignoresSafeArea()
             .allowsHitTesting(false)
