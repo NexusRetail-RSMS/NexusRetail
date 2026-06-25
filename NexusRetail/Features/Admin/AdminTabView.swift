@@ -2,9 +2,6 @@
 //  AdminTabView.swift
 //  NexusRetail
 //
-//  Transforming the Admin Tab View placeholder into a full-featured dashboard.
-//  Uses the RSMS design tokens and incorporates the new Payment Configuration module.
-//
 
 import SwiftUI
 import Supabase
@@ -21,7 +18,7 @@ struct AdminTabView: View {
             .tabItem {
                 Label("Dashboard", systemImage: "house")
             }
-            
+
             // 2. Stores
             NavigationStack {
                 StoreListView()
@@ -29,16 +26,18 @@ struct AdminTabView: View {
             .tabItem {
                 Label("Stores", systemImage: "building.2")
             }
-            
-            // 3. Products
+
+            // 3. Products — now navigates to ProductCatalogueView
             NavigationStack {
-                AdminPlaceholderView(title: "Products", message: "Product management coming soon.")
-                    .modifier(AdminToolbarModifier(title: "Products"))
+                ProductCatalogueView()
+                    // ProductCatalogueView draws its own header, so we hide
+                    // the NavigationStack bar to avoid a double title.
+                    .navigationBarHidden(true)
             }
             .tabItem {
                 Label("Products", systemImage: "tag")
             }
-            
+
             // 4. Transfers
             NavigationStack {
                 AdminPlaceholderView(title: "Transfers", message: "Inventory transfers coming soon.")
@@ -47,7 +46,7 @@ struct AdminTabView: View {
             .tabItem {
                 Label("Transfers", systemImage: "arrow.left.arrow.right")
             }
-            
+
             // 5. Managers
             NavigationStack {
                 AdminPlaceholderView(title: "Managers", message: "Manager and staff tracking coming soon.")
@@ -64,7 +63,7 @@ struct AdminTabView: View {
 /// A view modifier that applies the common Admin toolbar (title only).
 struct AdminToolbarModifier: ViewModifier {
     let title: String
-    
+
     func body(content: Content) -> some View {
         content
             .navigationTitle(title)
@@ -76,23 +75,23 @@ struct AdminToolbarModifier: ViewModifier {
 struct AdminPlaceholderView: View {
     let title: String
     let message: String
-    
+
     var body: some View {
         ZStack {
             RSMSColors.background
                 .ignoresSafeArea()
-            
+
             VStack(spacing: 24) {
                 Image(systemName: "hammer.fill")
                     .font(.system(size: 60))
                     .foregroundColor(RSMSColors.burgundy)
                     .accessibilityHidden(true)
-                
+
                 Text("Coming Soon")
                     .font(RSMSFonts.title)
                     .fontWeight(.semibold)
                     .foregroundColor(RSMSColors.primaryText)
-                
+
                 Text(message)
                     .font(RSMSFonts.body)
                     .foregroundColor(RSMSColors.secondaryText)
