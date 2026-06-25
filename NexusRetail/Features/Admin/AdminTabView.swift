@@ -2,10 +2,14 @@
 //  AdminTabView.swift
 //  NexusRetail
 //
+//  Transforming the Admin Tab View placeholder into a full-featured dashboard.
+//  Uses the RSMS design tokens and incorporates the new Payment Configuration module.
+//
 
 import SwiftUI
+import Supabase
 
-/// Admin shell: tabs for Dashboard, Stores, Products, Transfers, People.
+/// Admin shell: tabs for Dashboard, Stores, Products, Transfers, Managers.
 struct AdminTabView: View {
     var body: some View {
         TabView {
@@ -54,56 +58,18 @@ struct AdminTabView: View {
                 Label("Managers", systemImage: "person.2")
             }
         }
-        .tint(Color.nexusGold)
+        .tint(RSMSColors.burgundy)
     }
 }
 
-/// A view modifier that applies the common Admin toolbar (title + profile button).
+/// A view modifier that applies the common Admin toolbar (title only).
 struct AdminToolbarModifier: ViewModifier {
     let title: String
-    
-    @Environment(SessionStore.self) private var sessionStore
-    @State private var isProfilePresented = false
     
     func body(content: Content) -> some View {
         content
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        isProfilePresented = true
-                    } label: {
-                        ZStack {
-                            Circle()
-                                .fill(Color.nexusNavy)
-                                .frame(width: 32, height: 32)
-                            
-                            Text(initials(for: sessionStore.currentUser?.name))
-                                .font(.caption.bold())
-                                .foregroundColor(Color.nexusGold)
-                        }
-                    }
-                    .accessibilityLabel("Profile")
-                    .accessibilityHint("Opens your profile and settings")
-                }
-            }
-            .sheet(isPresented: $isProfilePresented) {
-                AdminProfileSheet()
-            }
-    }
-    
-    private func initials(for name: String?) -> String {
-        guard let name = name, !name.isEmpty else { return "AD" }
-        let components = name.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
-        if components.count >= 2 {
-            let first = components[0].prefix(1)
-            let last = components[1].prefix(1)
-            return "\(first)\(last)".uppercased()
-        } else if let first = components.first {
-            return String(first.prefix(2)).uppercased()
-        }
-        return "AD"
     }
 }
 
@@ -113,22 +79,33 @@ struct AdminPlaceholderView: View {
     let message: String
     
     var body: some View {
-        VStack(spacing: 24) {
-            Image(systemName: "hammer.fill")
-                .font(.system(size: 60))
-                .foregroundColor(Color.nexusGold)
-                .accessibilityHidden(true)
+        ZStack {
+            RSMSColors.background
+                .ignoresSafeArea()
             
-            Text("Coming Soon")
-                .font(.title2)
-                .fontWeight(.semibold)
-                .foregroundColor(Color.nexusNavy)
-            
-            Text(message)
-                .font(.body)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
+            VStack(spacing: 24) {
+                Image(systemName: "hammer.fill")
+                    .font(.system(size: 60))
+                    .foregroundColor(RSMSColors.burgundy)
+                    .accessibilityHidden(true)
+                
+                Text("Coming Soon")
+                    .font(RSMSFonts.title)
+                    .fontWeight(.semibold)
+                    .foregroundColor(RSMSColors.primaryText)
+                
+                Text(message)
+                    .font(RSMSFonts.body)
+                    .foregroundColor(RSMSColors.secondaryText)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+            }
         }
     }
+}
+
+#Preview {
+    let mockSession = SessionStore()
+    return AdminTabView()
+        .environment(mockSession)
 }

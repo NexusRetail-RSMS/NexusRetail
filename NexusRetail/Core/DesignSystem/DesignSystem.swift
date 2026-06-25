@@ -39,47 +39,47 @@ struct KPICardView: View {
     let title: String
     let value: String
     let icon: String
-    let trend: String? // e.g. "+5% this week"
+    let trend: String?
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
             HStack {
-                Text(title)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                ZStack {
+                    Circle()
+                        .fill(RSMSColors.burgundy.opacity(0.08))
+                        .frame(width: 32, height: 32)
+                    
+                    Image(systemName: icon)
+                        .foregroundColor(RSMSColors.burgundy)
+                        .font(.system(size: 14))
+                }
                 
                 Spacer()
                 
-                Image(systemName: icon)
-                    .foregroundColor(.nexusGold)
-                    .font(.system(size: 20))
+                if let trend = trend {
+                    Text(trend)
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(trend.contains("+") || trend.contains("approved") ? RSMSColors.success : .orange)
+                }
             }
             
-            Text(value)
-                .font(.system(.title, design: .rounded).weight(.semibold))
-                .foregroundColor(.primary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-            
-            Spacer(minLength: 0)
-            
-            if let trend = trend {
-                Text(trend)
-                    .font(.caption)
-                    .foregroundColor(.green)
-                    .lineLimit(1)
-            } else {
-                Text(" ")
-                    .font(.caption)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(value)
+                    .font(RSMSFonts.largeTitle)
+                    .fontWeight(.bold)
+                    .foregroundColor(RSMSColors.primaryText)
+                
+                Text(title)
+                    .font(RSMSFonts.caption)
+                    .foregroundColor(RSMSColors.secondaryText)
             }
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .frame(height: 120)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
-                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .padding(RSMSSpacing.md)
+        .background(RSMSColors.cardBackground)
+        .cornerRadius(RSMSRadius.medium)
+        .overlay(
+            RoundedRectangle(cornerRadius: RSMSRadius.medium)
+                .stroke(RSMSColors.cardBorder, lineWidth: 1)
         )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title): \(value)")

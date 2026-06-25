@@ -34,21 +34,3 @@ struct Store: Codable, Identifiable {
     }
 }
 
-enum PaymentTerminalType: String, Codable {
-    case razorpay = "razorpay"
-    case card = "card"
-}
-
-struct PaymentTerminal: Codable, Identifiable {
-    let id: UUID
-    let storeID: UUID
-    let type: PaymentTerminalType
-    let config: [String: String]?
-    
-    enum CodingKeys: String, CodingKey {
-        case id
-        case storeID = "store_id"
-        case type
-        case config
-    }
-}
