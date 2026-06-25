@@ -21,12 +21,11 @@ struct RoleSelectionView: View {
             VStack(spacing: RSMSSpacing.xl) {
                 Spacer(minLength: RSMSSpacing.md)
 
-                // Header Image / Icon (colored in burgundy)
-                Image(systemName: "person.3.sequence.fill")
+                // Header Image
+                Image("ChatGPT Image Jun 25, 2026, 11_07_16 AM")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 48, height: 48)
-                    .foregroundStyle(RSMSColors.burgundy)
+                    .frame(height: 120)
                     .padding(.top, RSMSSpacing.md)
                 
                 // Titles
