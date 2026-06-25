@@ -13,6 +13,7 @@ struct LoginView: View {
     @State private var viewModel = LoginViewModel()
     @Environment(SessionStore.self) private var sessionStore
     @State private var showPassword = false
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -130,6 +131,21 @@ struct LoginView: View {
                 .padding(.horizontal, RSMSSpacing.lg)
                 .frame(maxWidth: 480)
             }
+
+            // MARK: - Custom Back Button
+            Button {
+                dismiss()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "chevron.left")
+                        .fontWeight(.semibold)
+                    Text("Back")
+                        .font(RSMSFonts.headline)
+                }
+                .foregroundColor(RSMSColors.burgundy)
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.vertical, RSMSSpacing.md)
+            }
         }
         .navigationBarBackButtonHidden(true)
     }
@@ -137,16 +153,10 @@ struct LoginView: View {
     // MARK: - Logo Header View
     private var logoHeader: some View {
         VStack(spacing: RSMSSpacing.sm) {
-            ZStack {
-                Image(systemName: "bag.fill")
-                    .font(.system(size: 64))
-                    .foregroundColor(RSMSColors.burgundy)
-                
-                Image(systemName: "chart.bar.fill")
-                    .font(.system(size: 22))
-                    .foregroundColor(RSMSColors.background)
-                    .offset(y: 4)
-            }
+            Image("ChatGPT Image Jun 25, 2026, 11_07_16 AM")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 120)
             
             VStack(spacing: 2) {
                 Text("RSMS")

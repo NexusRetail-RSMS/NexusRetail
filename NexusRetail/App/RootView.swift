@@ -25,7 +25,7 @@ struct RootView: View {
                 }
             } else {
                 NavigationStack {
-                    LoginView()
+                    RoleSelectionView()
                 }
             }
         }
