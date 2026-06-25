@@ -18,14 +18,30 @@ struct RoleSelectionView: View {
             RSMSColors.background
                 .ignoresSafeArea()
 
+            // Immersive background store image
+            GeometryReader { geometry in
+                HStack {
+                    Spacer()
+                    Image("ChatGPT Image Jun 25, 2026, 11_07_16 AM")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: geometry.size.width * 0.5)
+                        .clipped()
+                        .opacity(0.15)
+                        .ignoresSafeArea()
+                }
+            }
+            .ignoresSafeArea()
+
             VStack(spacing: RSMSSpacing.xl) {
                 Spacer(minLength: RSMSSpacing.md)
 
-                // Header Image
-                Image("ChatGPT Image Jun 25, 2026, 11_07_16 AM")
+                // Header Image / Icon (colored in burgundy)
+                Image(systemName: "person.3.sequence.fill")
                     .resizable()
                     .scaledToFit()
-                    .frame(height: 120)
+                    .frame(width: 48, height: 48)
+                    .foregroundStyle(RSMSColors.burgundy)
                     .padding(.top, RSMSSpacing.md)
                 
                 // Titles

@@ -21,6 +21,21 @@ struct LoginView: View {
             RSMSColors.background
                 .ignoresSafeArea()
 
+            // Immersive background store image
+            GeometryReader { geometry in
+                HStack {
+                    Spacer()
+                    Image("ChatGPT Image Jun 25, 2026, 11_07_16 AM")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: geometry.size.width * 0.5)
+                        .clipped()
+                        .opacity(0.15)
+                        .ignoresSafeArea()
+                }
+            }
+            .ignoresSafeArea()
+
             ScrollView {
                 VStack(spacing: RSMSSpacing.xl) {
                     
@@ -153,10 +168,16 @@ struct LoginView: View {
     // MARK: - Logo Header View
     private var logoHeader: some View {
         VStack(spacing: RSMSSpacing.sm) {
-            Image("ChatGPT Image Jun 25, 2026, 11_07_16 AM")
-                .resizable()
-                .scaledToFit()
-                .frame(height: 120)
+            ZStack {
+                Image(systemName: "bag.fill")
+                    .font(.system(size: 64))
+                    .foregroundColor(RSMSColors.burgundy)
+                
+                Image(systemName: "chart.bar.fill")
+                    .font(.system(size: 22))
+                    .foregroundColor(RSMSColors.background)
+                    .offset(y: 4)
+            }
             
             VStack(spacing: 2) {
                 Text("RSMS")
