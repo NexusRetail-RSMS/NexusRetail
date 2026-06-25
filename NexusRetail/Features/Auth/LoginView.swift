@@ -72,7 +72,8 @@ struct LoginView: View {
                                     .font(RSMSFonts.body)
                                     .accessibilityLabel("Email address or username")
                             }
-                            .padding(RSMSSpacing.md)
+                            .padding(.horizontal, RSMSSpacing.md)
+                            .frame(height: 50)
                             .background(RSMSColors.background)
                             .cornerRadius(RSMSRadius.small)
                             .overlay(
@@ -98,6 +99,7 @@ struct LoginView: View {
                                     }
                                 }
                                 .accessibilityLabel("Password")
+                                .frame(height: 24)
                                 
                                 Button {
                                     showPassword.toggle()
@@ -105,10 +107,12 @@ struct LoginView: View {
                                     Image(systemName: showPassword ? "eye.slash.fill" : "eye.fill")
                                         .foregroundColor(RSMSColors.secondaryText)
                                         .imageScale(.medium)
+                                        .frame(width: 24, height: 24)
                                 }
                                 .buttonStyle(.plain)
                             }
-                            .padding(RSMSSpacing.md)
+                            .padding(.horizontal, RSMSSpacing.md)
+                            .frame(height: 50)
                             .background(RSMSColors.background)
                             .cornerRadius(RSMSRadius.small)
                             .overlay(
@@ -145,7 +149,7 @@ struct LoginView: View {
                 }
                 .frame(maxWidth: 480)
                 .background(RSMSColors.cardBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 24))
+                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 24, bottomLeadingRadius: 32, bottomTrailingRadius: 32, topTrailingRadius: 24))
                 .shadow(color: Color.black.opacity(0.06), radius: 16, x: 0, y: 4)
                 .padding(.horizontal, 10)
                 .padding(.bottom, 10)
