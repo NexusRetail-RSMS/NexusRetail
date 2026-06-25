@@ -65,10 +65,26 @@ class StoresViewModel {
         
         var terminals: [PaymentTerminal] = []
         if includeRazorpay {
-            terminals.append(PaymentTerminal(id: UUID(), storeID: newStoreId, type: .razorpay, config: ["status": "pending_setup"]))
+            let initialConfig = PaymentTerminalConfig(
+                isEnabled: false,
+                status: .notConfigured,
+                environment: .test,
+                credential1: nil,
+                credential2: nil,
+                updatedAt: nil
+            )
+            terminals.append(PaymentTerminal(id: UUID(), storeID: newStoreId, type: .razorpay, config: initialConfig))
         }
         if includeCard {
-            terminals.append(PaymentTerminal(id: UUID(), storeID: newStoreId, type: .card, config: ["status": "pending_setup"]))
+            let initialConfig = PaymentTerminalConfig(
+                isEnabled: false,
+                status: .notConfigured,
+                environment: .test,
+                credential1: nil,
+                credential2: nil,
+                updatedAt: nil
+            )
+            terminals.append(PaymentTerminal(id: UUID(), storeID: newStoreId, type: .card, config: initialConfig))
         }
         
         do {

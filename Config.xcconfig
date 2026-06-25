@@ -1,0 +1,4 @@
+
+SLASH = /
+SUPABASE_URL = https:$(SLASH)$(SLASH)mnjaozydopjwgevdqmnw.supabase.co
+SUPABASE_ANON_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1uamFvenlkb3Bqd2dldmRxbW53Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMjcyOTUsImV4cCI6MjA5NzgwMzI5NX0.e-NGEAu219s6zidG0otXOSfj943zODQxEELumTeOvr0

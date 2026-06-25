@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		C7B5B78C2FEB05D000E6CF91 /* Config.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C7B5B78B2FEB05D000E6CF91 /* Config.xcconfig */; };
+		327BE9D92FEB91EC00A9318C /* Config.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 327BE9D82FEB91EC00A9318C /* Config.xcconfig */; };
 		C7B5B7912FEB0A8100E6CF91 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = C7B5B7902FEB0A8100E6CF91 /* Auth */; };
 		C7B5B7932FEB0A8100E6CF91 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = C7B5B7922FEB0A8100E6CF91 /* Functions */; };
 		C7B5B7952FEB0A8100E6CF91 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = C7B5B7942FEB0A8100E6CF91 /* PostgREST */; };
@@ -17,8 +17,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		327BE9D82FEB91EC00A9318C /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		C7B5B6A92FEA47B800E6CF91 /* NexusRetail.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NexusRetail.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		C7B5B78B2FEB05D000E6CF91 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -64,8 +64,8 @@
 			children = (
 				C7B5B6AB2FEA47B800E6CF91 /* NexusRetail */,
 				C7B5B6AA2FEA47B800E6CF91 /* Products */,
-				C7B5B78B2FEB05D000E6CF91 /* Config.xcconfig */,
 				C7B5B78F2FEB0A7800E6CF91 /* Frameworks */,
+				327BE9D82FEB91EC00A9318C /* Config.xcconfig */,
 			);
 			sourceTree = "<group>";
 		};
@@ -157,7 +157,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C7B5B78C2FEB05D000E6CF91 /* Config.xcconfig in Resources */,
+				327BE9D92FEB91EC00A9318C /* Config.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -176,7 +176,7 @@
 /* Begin XCBuildConfiguration section */
 		C7B5B6B22FEA47B900E6CF91 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C7B5B78B2FEB05D000E6CF91 /* Config.xcconfig */;
+			baseConfigurationReference = 327BE9D82FEB91EC00A9318C /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -238,7 +238,7 @@
 		};
 		C7B5B6B32FEA47B900E6CF91 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C7B5B78B2FEB05D000E6CF91 /* Config.xcconfig */;
+			baseConfigurationReference = 327BE9D82FEB91EC00A9318C /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -292,7 +292,7 @@
 		};
 		C7B5B6B52FEA47B900E6CF91 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C7B5B78B2FEB05D000E6CF91 /* Config.xcconfig */;
+			baseConfigurationReference = 327BE9D82FEB91EC00A9318C /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -336,7 +336,7 @@
 		};
 		C7B5B6B62FEA47B900E6CF91 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C7B5B78B2FEB05D000E6CF91 /* Config.xcconfig */;
+			baseConfigurationReference = 327BE9D82FEB91EC00A9318C /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
