@@ -2,8 +2,16 @@
 //  AdminDashboardView.swift
 //  NexusRetail
 //
-//  A beautiful, premium dashboard for Admin users.
-//  Includes greeting, store selector, KPI cards, store setup/payments, and recent activity.
+//  Admin Dashboard — the central command view for corporate retail ops.
+//
+//  Layout (top → bottom):
+//    1. "Dashboard" header with curved bottom edge + profile avatar
+//    2. KPI overview cards (Revenue, Active Stores, Pending Transfers, Low-Stock)
+//    3. Store Revenue chart (has its own Weekly/Monthly toggle + country filter chips)
+//    4. Top Product Sales chart (has its own separate Weekly/Monthly toggle)
+//
+//  Each chart manages its own time-range toggle independently.
+//  The country filter inside the Revenue chart also updates the KPI cards.
 //
 
 import SwiftUI
@@ -11,38 +19,38 @@ import Supabase
 
 struct AdminDashboardView: View {
     @Environment(SessionStore.self) private var sessionStore
-    
-    // Dynamic store ID fetched from Supabase
-    @State private var selectedStoreID: UUID? = nil
-    @State private var storeName: String = "Loading..."
-    @State private var isLoadingStore: Bool = true
+    @State private var viewModel = DashboardViewModel()
     @State private var isProfilePresented = false
-    
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: RSMSSpacing.xl) {
-                
-                // MARK: - Header Section
+            VStack(alignment: .leading, spacing: 0) {
+
+                // MARK: - Header
                 headerSection
-                    .padding(.bottom, -RSMSSpacing.xl) // Blend header with the cards below
-                
+
+                // MARK: - Content
                 VStack(alignment: .leading, spacing: RSMSSpacing.xl) {
-                    // MARK: - Store Info Card
-                    storeSelectorCard
-                    
-                    // MARK: - KPI Cards Section
+
+                    // MARK: - KPI Overview
                     kpiSection
-                    
-                    // MARK: - Store Setup Section
-                    storeSetupSection
-                    
-                    // MARK: - Recent Activity Section
-                    recentActivitySection
-                    
-                    // MARK: - Sign Out Button
-                    signOutSection
+
+                    // MARK: - Store Revenue
+                    RevenueBarChart(
+                        data: viewModel.revenueChartData,
+                        maxValue: viewModel.revenueMaxValue,
+                        timeRange: $viewModel.revenueTimeRange
+                    )
+
+                    // MARK: - Top Product Sales (with its own toggle)
+                    ProductSalesChart(
+                        data: viewModel.productChartData,
+                        maxValue: viewModel.productMaxValue,
+                        timeRange: $viewModel.productTimeRange
+                    )
                 }
                 .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, RSMSSpacing.xl)
                 .padding(.bottom, RSMSSpacing.xxl)
             }
         }
@@ -52,67 +60,20 @@ struct AdminDashboardView: View {
         .sheet(isPresented: $isProfilePresented) {
             AdminProfileSheet()
         }
-        .task {
-            await loadStore()
-        }
-    }
-    
-    // MARK: - Load Store logic
-    private func loadStore() async {
-        if let assignedID = sessionStore.currentUser?.storeID {
-            self.selectedStoreID = assignedID
-            self.storeName = "Assigned Store"
-            self.isLoadingStore = false
-            return
-        }
-        
-        do {
-            let client = SupabaseManager.shared.client
-            let stores: [Store] = try await client
-                .from("store")
-                .select()
-                .limit(1)
-                .execute()
-                .value
-            
-            if let firstStore = stores.first {
-                self.selectedStoreID = firstStore.id
-                self.storeName = firstStore.name
-            } else {
-                self.storeName = "No Stores Configured"
-            }
-        } catch {
-            self.storeName = "Error Loading Store"
-        }
-        self.isLoadingStore = false
     }
 
-    // MARK: - Header View
+    // MARK: - Header
+    //
+    // Just "Dashboard" title + profile avatar.
+    // Smooth curved bottom edge to eliminate the harsh line.
     private var headerSection: some View {
         HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
-                Text("DASHBOARD")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(.white.opacity(0.6))
-                    .tracking(1.5)
-                    .padding(.top, 4)
-                
-                Text("Welcome back,")
-                    .font(RSMSFonts.subheadline)
-                    .foregroundColor(.white.opacity(0.85))
-                
-                Text(sessionStore.currentUser?.name ?? "Admin")
-                    .font(RSMSFonts.largeTitle)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                
-                Text("Here's what's happening today.")
-                    .font(RSMSFonts.caption)
-                    .foregroundColor(.white.opacity(0.75))
-            }
-            
+            Text("Dashboard")
+                .font(.system(size: 26, weight: .bold))
+                .foregroundColor(.white)
+
             Spacer()
-            
+
             Button {
                 isProfilePresented = true
             } label: {
@@ -120,7 +81,7 @@ struct AdminDashboardView: View {
                     Circle()
                         .fill(Color.white.opacity(0.2))
                         .frame(width: 44, height: 44)
-                    
+
                     Text(initials(for: sessionStore.currentUser?.name))
                         .font(.headline.bold())
                         .foregroundColor(.white)
@@ -130,8 +91,8 @@ struct AdminDashboardView: View {
             .accessibilityHint("Opens your profile and settings")
         }
         .padding(.horizontal, RSMSSpacing.lg)
-        .padding(.top, 64) // Ensure enough padding to clear the notch and status bar
-        .padding(.bottom, RSMSSpacing.xl)
+        .padding(.top, 60)
+        .padding(.bottom, RSMSSpacing.xxxl)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             LinearGradient(
@@ -140,8 +101,9 @@ struct AdminDashboardView: View {
                 endPoint: .bottomTrailing
             )
         )
+        .clipShape(HeaderCurve())
     }
-    
+
     private func initials(for name: String?) -> String {
         guard let name = name, !name.isEmpty else { return "AD" }
         let components = name.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
@@ -155,221 +117,99 @@ struct AdminDashboardView: View {
         return "AD"
     }
 
-    // MARK: - Store Selector Card
-    private var storeSelectorCard: some View {
-        HStack(spacing: RSMSSpacing.md) {
-            ZStack {
-                Circle()
-                    .fill(RSMSColors.burgundy.opacity(0.1))
-                    .frame(width: 40, height: 40)
-                
-                Image(systemName: "building.2.fill")
-                    .foregroundColor(RSMSColors.burgundy)
-            }
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Current Store")
-                    .font(RSMSFonts.caption)
-                    .foregroundColor(RSMSColors.secondaryText)
-                
-                if isLoadingStore {
-                    ProgressView()
-                        .controlSize(.small)
-                } else {
-                    Text(storeName)
-                        .font(RSMSFonts.headline)
-                        .foregroundColor(RSMSColors.primaryText)
-                }
-            }
-            
-            Spacer()
-            
-            Text("Active")
-                .font(RSMSFonts.caption)
-                .fontWeight(.bold)
-                .foregroundColor(RSMSColors.success)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(RSMSColors.success.opacity(0.1))
-                .cornerRadius(RSMSRadius.small)
-        }
-        .padding(RSMSSpacing.lg)
-        .background(RSMSColors.cardBackground)
-        .cornerRadius(RSMSRadius.large)
-        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
-    }
-
-    // MARK: - KPI Cards Section
+    // MARK: - KPI Cards
+    //
+    // These four cards map directly to the Admin workflow:
+    //   • Total Revenue      → "Sales Revenue of Stores"
+    //   • Active Stores      → "Create Store" branch
+    //   • Pending Transfers  → "Review Stock Request → Approve Transfer"
+    //   • Low-Stock Alerts   → triggers "Create Purchase Order" or manager replenishment
+    //
+    // They react to the country filter inside the Revenue chart.
     private var kpiSection: some View {
         VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
-            Text("Overview")
-                .font(RSMSFonts.headline)
-                .foregroundColor(RSMSColors.darkBrown)
-                .padding(.leading, 4)
-            
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: RSMSSpacing.md) {
-                KPICardView(title: "Total Revenue", value: "₹2.4M", icon: "indianrupesign.circle.fill", trend: "+12% this week")
-                KPICardView(title: "Active Stores", value: "14", icon: "building.2.fill", trend: nil)
-                KPICardView(title: "Pending Transfers", value: "8", icon: "arrow.left.arrow.right.circle.fill", trend: "3 require approval")
-                KPICardView(title: "Low-Stock Alerts", value: "24", icon: "exclamationmark.triangle.fill", trend: "-5 from yesterday")
-            }
-        }
-    }
-
-    // MARK: - Store Setup Section
-    private var storeSetupSection: some View {
-        VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
-            Text("Store Setup")
-                .font(RSMSFonts.headline)
-                .foregroundColor(RSMSColors.darkBrown)
-                .padding(.leading, 4)
-            
-            VStack(spacing: 0) {
-                // Row 1: Store Details
-                setupRow(title: "Store Details", icon: "building.2.fill", isNavigation: false)
+            HStack {
+                Text("Overview")
+                    .font(RSMSFonts.headline)
+                    .foregroundColor(RSMSColors.darkBrown)
+                    .padding(.leading, 4)
                 
-                Divider()
-                    .padding(.leading, 56)
+                Spacer()
                 
-                // Row 2: Users & Roles
-                setupRow(title: "Users & Roles", icon: "person.2.fill", isNavigation: false)
-                
-                Divider()
-                    .padding(.leading, 56)
-                
-                // Row 3: Payment Configuration
-                if let currentStoreID = sessionStore.currentUser?.storeID ?? selectedStoreID {
-                    NavigationLink {
-                        PaymentConfigurationView(isAdmin: true, storeID: currentStoreID)
-                    } label: {
-                        setupRowContent(title: "Payment Configuration", icon: "creditcard.fill", isNavigation: true)
+                Menu {
+                    ForEach(viewModel.countries, id: \.self) { country in
+                        Button(country) {
+                            withAnimation(.easeInOut(duration: 0.25)) {
+                                viewModel.selectedCountry = country
+                            }
+                        }
                     }
-                    .buttonStyle(.plain)
-                } else {
-                    setupRowContent(title: "Payment Configuration (Loading...)", icon: "creditcard.fill", isNavigation: false)
+                } label: {
+                    HStack(spacing: 6) {
+                        Text(viewModel.selectedCountry)
+                            .font(.system(size: 13, weight: .semibold))
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.system(size: 10, weight: .bold))
+                    }
+                    .foregroundColor(RSMSColors.burgundy)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(RSMSColors.burgundy.opacity(0.1))
+                    .cornerRadius(16)
                 }
             }
-            .background(RSMSColors.cardBackground)
-            .cornerRadius(RSMSRadius.large)
-            .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
-        }
-    }
 
-    private func setupRowContent(title: String, icon: String, isNavigation: Bool) -> some View {
-        HStack(spacing: RSMSSpacing.md) {
-            ZStack {
-                Circle()
-                    .fill(isNavigation ? RSMSColors.burgundy.opacity(0.12) : Color.gray.opacity(0.1))
-                    .frame(width: 36, height: 36)
-                
-                Image(systemName: icon)
-                    .foregroundColor(isNavigation ? RSMSColors.burgundy : .gray)
-                    .font(.system(size: 16))
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: RSMSSpacing.md) {
+                KPICardView(
+                    title: "Total Revenue",
+                    value: viewModel.formattedRevenue,
+                    icon: "indianrupesign.circle.fill",
+                    trend: nil
+                )
+                KPICardView(
+                    title: "Active Stores",
+                    value: viewModel.activeStoresText,
+                    icon: "building.2.fill",
+                    trend: nil
+                )
+                KPICardView(
+                    title: "Pending Transfers",
+                    value: viewModel.pendingTransfersText,
+                    icon: "arrow.left.arrow.right.circle.fill",
+                    trend: nil
+                )
+                KPICardView(
+                    title: "Low-Stock Alerts",
+                    value: viewModel.lowStockText,
+                    icon: "exclamationmark.triangle.fill",
+                    trend: nil
+                )
             }
-            
-            Text(title)
-                .font(RSMSFonts.headline)
-                .foregroundColor(isNavigation ? RSMSColors.primaryText : .gray)
-            
-            Spacer()
-            
-            if isNavigation {
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(RSMSColors.secondaryText)
-            } else {
-                Text("Coming Soon")
-                    .font(RSMSFonts.caption)
-                    .foregroundColor(.gray)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.gray.opacity(0.1))
-                    .cornerRadius(RSMSRadius.small)
-            }
+            .animation(.easeInOut(duration: 0.3), value: viewModel.selectedCountry)
         }
-        .padding(RSMSSpacing.lg)
-    }
-
-    private func setupRow(title: String, icon: String, isNavigation: Bool) -> some View {
-        setupRowContent(title: title, icon: icon, isNavigation: isNavigation)
-            .contentShape(Rectangle())
-    }
-
-    // MARK: - Recent Activity Section
-    private var recentActivitySection: some View {
-        VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
-            Text("Recent Activity")
-                .font(RSMSFonts.headline)
-                .foregroundColor(RSMSColors.darkBrown)
-                .padding(.leading, 4)
-            
-            VStack(spacing: 0) {
-                ActivityRow(title: "New store added: Mumbai Flagship", time: "2 hours ago", icon: "plus.circle.fill", color: .green)
-                Divider().padding(.leading, 56)
-                ActivityRow(title: "Transfer T-1024 approved", time: "5 hours ago", icon: "checkmark.circle.fill", color: .blue)
-                Divider().padding(.leading, 56)
-                ActivityRow(title: "Low stock: iPhone 15 Pro Max", time: "Yesterday", icon: "exclamationmark.triangle.fill", color: .orange)
-            }
-            .background(RSMSColors.cardBackground)
-            .cornerRadius(RSMSRadius.large)
-            .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
-        }
-    }
-
-    // MARK: - Sign Out Section
-    private var signOutSection: some View {
-        Button {
-            Task {
-                try? await sessionStore.signOut()
-            }
-        } label: {
-            Text("Sign Out")
-                .font(RSMSFonts.headline)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(RSMSColors.error)
-                .cornerRadius(RSMSRadius.medium)
-        }
-        .buttonStyle(.plain)
-        .padding(.top, RSMSSpacing.lg)
     }
 }
 
-// MARK: - Activity Row component
-struct ActivityRow: View {
-    let title: String
-    let time: String
-    let icon: String
-    let color: Color
-    
-    var body: some View {
-        HStack(spacing: RSMSSpacing.md) {
-            ZStack {
-                Circle()
-                    .fill(color.opacity(0.1))
-                    .frame(width: 36, height: 36)
-                
-                Image(systemName: icon)
-                    .foregroundColor(color)
-                    .font(.system(size: 16))
-            }
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(RSMSFonts.body)
-                    .foregroundColor(RSMSColors.primaryText)
-                
-                Text(time)
-                    .font(RSMSFonts.caption)
-                    .foregroundColor(RSMSColors.secondaryText)
-            }
-            
-            Spacer()
-        }
-        .padding(RSMSSpacing.md)
+// MARK: - Header Curve Shape
+
+/// Custom shape that gives the header a smooth curved bottom edge
+/// instead of a harsh straight line.
+struct HeaderCurve: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: .zero)
+        path.addLine(to: CGPoint(x: rect.maxX, y: 0))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - 20))
+        path.addQuadCurve(
+            to: CGPoint(x: 0, y: rect.maxY - 20),
+            control: CGPoint(x: rect.midX, y: rect.maxY + 10)
+        )
+        path.closeSubpath()
+        return path
     }
 }
+
+
 
 #Preview {
     NavigationStack {

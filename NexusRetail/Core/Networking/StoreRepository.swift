@@ -57,4 +57,13 @@ struct StoreRepository {
             .eq("id", value: id)
             .execute()
     }
+    
+    /// Updates an existing store.
+    func updateStore(_ store: Store) async throws {
+        try await client
+            .from("store")
+            .update(store)
+            .eq("id", value: store.id)
+            .execute()
+    }
 }

@@ -25,7 +25,6 @@ struct AdminTabView: View {
             // 2. Stores
             NavigationStack {
                 StoreListView()
-                    .modifier(AdminToolbarModifier(title: "Stores"))
             }
             .tabItem {
                 Label("Stores", systemImage: "building.2")
