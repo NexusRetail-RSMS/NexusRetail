@@ -141,12 +141,14 @@ struct LoginView: View {
                         securityBadge
                     }
                     .padding(.horizontal, RSMSSpacing.lg)
-                    .padding(.bottom, 34)
+                    .padding(.bottom, 24)
                 }
                 .frame(maxWidth: 480)
                 .background(RSMSColors.cardBackground)
-                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 40, bottomLeadingRadius: 0, bottomTrailingRadius: 0, topTrailingRadius: 40))
-                .shadow(color: Color.black.opacity(0.06), radius: 16, x: 0, y: -4)
+                .clipShape(RoundedRectangle(cornerRadius: 24))
+                .shadow(color: Color.black.opacity(0.06), radius: 16, x: 0, y: 4)
+                .padding(.horizontal, 10)
+                .padding(.bottom, 10)
             }
             
             // MARK: - Background Watermark Image Overlay (renders on top of the sheet)
