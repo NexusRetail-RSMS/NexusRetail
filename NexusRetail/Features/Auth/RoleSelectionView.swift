@@ -16,12 +16,8 @@ struct RoleSelectionView: View {
         VStack(spacing: RSMSSpacing.xl) {
             Spacer(minLength: RSMSSpacing.md)
 
-            // Header Image / Icon (colored in burgundy)
-            Image(systemName: "person.3.sequence.fill")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 48, height: 48)
-                .foregroundStyle(RSMSColors.burgundy)
+            // MARK: - Logo Header
+            logoHeader
                 .padding(.top, RSMSSpacing.md)
             
             // Titles
@@ -96,6 +92,34 @@ struct RoleSelectionView: View {
             EmptyView()
         }
     }
+
+    // MARK: - Logo Header View
+    private var logoHeader: some View {
+        VStack(spacing: RSMSSpacing.sm) {
+            ZStack {
+                Image(systemName: "bag.fill")
+                    .font(.system(size: 64))
+                    .foregroundColor(RSMSColors.burgundy)
+                
+                Image(systemName: "chart.bar.fill")
+                    .font(.system(size: 22))
+                    .foregroundColor(RSMSColors.background)
+                    .offset(y: 4)
+            }
+            
+            VStack(spacing: 2) {
+                Text("RSMS")
+                    .font(.system(size: 26, weight: .black))
+                    .foregroundColor(RSMSColors.primaryText)
+                    .tracking(2)
+                
+                Text("RETAIL STORE MANAGEMENT SYSTEM")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(RSMSColors.secondaryText)
+                    .tracking(1.5)
+            }
+        }
+    }
 }
 
 fileprivate struct RoleCardView: View {
@@ -142,7 +166,7 @@ fileprivate struct RoleCardView: View {
             .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.large))
             .overlay(
                 RoundedRectangle(cornerRadius: RSMSRadius.large)
-                    .stroke(isSelected ? RSMSColors.burgundy : RSMSColors.cardBorder, lineWidth: isSelected ? 2 : 1)
+                    .stroke(RSMSColors.cardBorder, lineWidth: 1)
             )
             .shadow(color: isSelected ? RSMSColors.burgundy.opacity(0.04) : Color.black.opacity(0.02), radius: 6, x: 0, y: 3)
         }
