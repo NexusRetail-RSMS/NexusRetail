@@ -210,7 +210,7 @@ struct LoginView: View {
 
     // MARK: - Logo Header View
     private var logoHeader: some View {
-        HStack(spacing: RSMSSpacing.md) {
+        VStack(spacing: RSMSSpacing.xs) {
             ZStack {
                 Image(systemName: "bag.fill")
                     .font(.system(size: 48))
