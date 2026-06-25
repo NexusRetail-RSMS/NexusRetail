@@ -13,50 +13,74 @@ struct RoleSelectionView: View {
     @State private var selectedRole: UserRole? = nil
 
     var body: some View {
-        VStack(spacing: RSMSSpacing.xl) {
-            Spacer(minLength: RSMSSpacing.md)
-
-            // MARK: - Logo Header
-            logoHeader
-                .padding(.top, RSMSSpacing.md)
-            
-            // Titles
-            Text("Choose your role")
-                .font(RSMSFonts.title)
-                .foregroundColor(RSMSColors.primaryText)
-                .padding(.bottom, RSMSSpacing.sm)
-            
-            // Role Cards
-            VStack(spacing: RSMSSpacing.md) {
-                ForEach(UserRole.allCases, id: \.self) { role in
-                    RoleCardView(
-                        role: role,
-                        isSelected: selectedRole == role
-                    ) {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            selectedRole = role
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                // Top Half: Centered Logo
+                VStack {
+                    Spacer()
+                    logoHeader
+                    Spacer()
+                }
+                .frame(height: geometry.size.height * 0.30)
+                .frame(maxWidth: .infinity)
+                
+                // Bottom Half: Scrollable bottom card
+                VStack(spacing: 0) {
+                    // Top drag/indicator handle pill
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(RSMSColors.burgundy.opacity(0.3))
+                        .frame(width: 40, height: 4)
+                        .padding(.top, 16)
+                        .padding(.bottom, 8)
+                    
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: RSMSSpacing.xl) {
+                            // Title
+                            Text("Choose your role")
+                                .font(RSMSFonts.title)
+                                .foregroundColor(RSMSColors.primaryText)
+                                .padding(.top, RSMSSpacing.sm)
+                            
+                            // Role Cards
+                            VStack(spacing: RSMSSpacing.md) {
+                                ForEach(UserRole.allCases, id: \.self) { role in
+                                    RoleCardView(
+                                        role: role,
+                                        isSelected: selectedRole == role
+                                    ) {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                            selectedRole = role
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Continue Button (uses RSMSColors.burgundy and RSMSColors.disabled)
+                            NavigationLink(destination: destinationView) {
+                                Text("Continue")
+                                    .font(.headline)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 16)
+                                    .background(selectedRole == nil ? RSMSColors.disabled : RSMSColors.burgundy)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(RSMSRadius.medium)
+                                    .shadow(color: selectedRole == nil ? Color.clear : RSMSColors.burgundy.opacity(0.15), radius: 6, x: 0, y: 3)
+                            }
+                            .disabled(selectedRole == nil)
+                            .padding(.top, RSMSSpacing.md)
                         }
+                        .padding(.horizontal, RSMSSpacing.lg)
+                        .padding(.bottom, geometry.safeAreaInsets.bottom + 24)
                     }
                 }
+                .frame(height: geometry.size.height * 0.70)
+                .frame(maxWidth: .infinity)
+                .background(RSMSColors.cardBackground)
+                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 40, bottomLeadingRadius: 0, bottomTrailingRadius: 0, topTrailingRadius: 40))
+                .shadow(color: Color.black.opacity(0.06), radius: 16, x: 0, y: -4)
             }
-            
-            Spacer()
-            
-            // Continue Button (uses RSMSColors.burgundy and RSMSColors.disabled)
-            NavigationLink(destination: destinationView) {
-                Text("Continue")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(selectedRole == nil ? RSMSColors.disabled : RSMSColors.burgundy)
-                    .foregroundColor(.white)
-                    .cornerRadius(RSMSRadius.medium)
-                    .shadow(color: selectedRole == nil ? Color.clear : RSMSColors.burgundy.opacity(0.15), radius: 6, x: 0, y: 3)
-            }
-            .disabled(selectedRole == nil)
-            .padding(.bottom, RSMSSpacing.xl)
         }
-        .padding(.horizontal, RSMSSpacing.lg)
+        .ignoresSafeArea()
         .navigationBarBackButtonHidden(true)
         .background(
             ZStack {
@@ -87,22 +111,22 @@ struct RoleSelectionView: View {
 
     // MARK: - Logo Header View
     private var logoHeader: some View {
-        VStack(spacing: RSMSSpacing.sm) {
+        HStack(spacing: RSMSSpacing.md) {
             ZStack {
                 Image(systemName: "bag.fill")
-                    .font(.system(size: 64))
+                    .font(.system(size: 48))
                     .foregroundColor(RSMSColors.burgundy)
                 
                 Image(systemName: "chart.bar.fill")
-                    .font(.system(size: 22))
+                    .font(.system(size: 16))
                     .foregroundColor(RSMSColors.background)
-                    .offset(y: 4)
+                    .offset(y: 3)
             }
             
             Text("NexusRetail")
-                .font(.system(size: 26, weight: .black))
+                .font(.system(size: 32, weight: .black))
                 .foregroundColor(RSMSColors.primaryText)
-                .tracking(1)
+                .tracking(0.5)
         }
     }
 }
