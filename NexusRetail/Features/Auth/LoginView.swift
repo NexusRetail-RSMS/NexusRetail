@@ -18,51 +18,55 @@ struct LoginView: View {
     @State private var isPresented = false
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: RSMSSpacing.xl) {
-                // MARK: - Top Custom Back Button Row
-                HStack {
-                    Button {
-                        dismiss()
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "chevron.left")
-                                .fontWeight(.semibold)
-                            Text("Back")
-                                .font(RSMSFonts.headline)
-                        }
-                        .foregroundColor(RSMSColors.burgundy)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(.ultraThinMaterial)
-                        .clipShape(Capsule())
-                        .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
+        VStack(spacing: 0) {
+            // MARK: - Top Custom Back Button Row
+            HStack {
+                Button {
+                    dismiss()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                            .fontWeight(.semibold)
+                        Text("Back")
+                            .font(RSMSFonts.headline)
                     }
-                    Spacer()
+                    .foregroundColor(RSMSColors.burgundy)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(.ultraThinMaterial)
+                    .clipShape(Capsule())
+                    .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
                 }
-                .padding(.top, RSMSSpacing.md)
-                
-                // MARK: - Centered Logo Header
-                logoHeader
-                    .padding(.top, RSMSSpacing.sm)
-                
-                // MARK: - Login Card
-                VStack(spacing: RSMSSpacing.lg) {
-                    // MARK: - Titles & Subtitles
-                    VStack(alignment: .leading, spacing: RSMSSpacing.xs) {
+                Spacer()
+            }
+            .padding(.horizontal, RSMSSpacing.lg)
+            .padding(.top, RSMSSpacing.md)
+            .padding(.bottom, RSMSSpacing.sm)
+            
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: RSMSSpacing.xl) {
+                    
+                    // MARK: - Centered Logo Header
+                    logoHeader
+                        .padding(.top, RSMSSpacing.md)
+                    
+                    // MARK: - Welcome Titles & Subtitles
+                    VStack(alignment: .center, spacing: RSMSSpacing.xs) {
                         Text("Welcome back, \(role.displayName)!")
                             .font(RSMSFonts.largeTitle)
                             .fontWeight(.bold)
                             .foregroundColor(RSMSColors.primaryText)
+                            .multilineTextAlignment(.center)
                         
                         Text("Sign in to continue to your account")
                             .font(RSMSFonts.subheadline)
                             .foregroundColor(RSMSColors.secondaryText)
+                            .multilineTextAlignment(.center)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(maxWidth: .infinity, alignment: .center)
                     
-                    // MARK: - Credential Inputs
-                    VStack(spacing: RSMSSpacing.md) {
+                    // MARK: - Form Fields and Buttons Container (Directly on wallpaper background)
+                    VStack(spacing: RSMSSpacing.lg) {
                         // Email/Username Input
                         HStack(spacing: RSMSSpacing.sm) {
                             Image(systemName: "envelope.fill")
@@ -131,33 +135,25 @@ struct LoginView: View {
                             }
                             .buttonStyle(.plain)
                         }
+                        
+                        // Error Message (if any)
+                        errorLabel
+
+                        // MARK: - Sign In Button (styled in dark brown)
+                        signInButton
+                        
+                        // MARK: - Apple Sign-in Section
+                        appleSignInSection
                     }
-
-                    // Error Message (if any)
-                    errorLabel
-
-                    // MARK: - Sign In Button (styled in dark brown)
-                    signInButton
+                    .frame(maxWidth: 480)
                     
-                    // MARK: - Apple Sign-in Section
-                    appleSignInSection
+                    // MARK: - Bottom Security Badge
+                    securityBadge
+                        .padding(.top, RSMSSpacing.md)
+                        .padding(.bottom, RSMSSpacing.xl)
                 }
-                .padding(RSMSSpacing.xl)
-                .background(RSMSColors.cardBackground)
-                .cornerRadius(RSMSRadius.large)
-                .shadow(color: Color.black.opacity(0.04), radius: 12, x: 0, y: 4)
-                .overlay(
-                    RoundedRectangle(cornerRadius: RSMSRadius.large)
-                        .stroke(RSMSColors.cardBorder, lineWidth: 1)
-                )
-                .frame(maxWidth: 480)
-                
-                // MARK: - Bottom Security Badge
-                securityBadge
-                    .padding(.top, RSMSSpacing.md)
-                    .padding(.bottom, RSMSSpacing.xl)
+                .padding(.horizontal, RSMSSpacing.lg)
             }
-            .padding(.horizontal, RSMSSpacing.lg)
         }
         .navigationBarBackButtonHidden(true)
         .background(
