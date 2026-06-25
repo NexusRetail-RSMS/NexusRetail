@@ -21,18 +21,10 @@ struct RoleSelectionView: View {
                 .padding(.top, RSMSSpacing.md)
             
             // Titles
-            VStack(spacing: RSMSSpacing.sm) {
-                Text("Choose your role")
-                    .font(RSMSFonts.title)
-                    .foregroundColor(RSMSColors.primaryText)
-                
-                Text("Select the option that best describes\nyour responsibilities.")
-                    .font(RSMSFonts.subheadline)
-                    .foregroundColor(RSMSColors.secondaryText)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(.bottom, RSMSSpacing.sm)
+            Text("Choose your role")
+                .font(RSMSFonts.title)
+                .foregroundColor(RSMSColors.primaryText)
+                .padding(.bottom, RSMSSpacing.sm)
             
             // Role Cards
             VStack(spacing: RSMSSpacing.md) {
@@ -107,17 +99,10 @@ struct RoleSelectionView: View {
                     .offset(y: 4)
             }
             
-            VStack(spacing: 2) {
-                Text("RSMS")
-                    .font(.system(size: 26, weight: .black))
-                    .foregroundColor(RSMSColors.primaryText)
-                    .tracking(2)
-                
-                Text("RETAIL STORE MANAGEMENT SYSTEM")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(RSMSColors.secondaryText)
-                    .tracking(1.5)
-            }
+            Text("NexusRetail")
+                .font(.system(size: 26, weight: .black))
+                .foregroundColor(RSMSColors.primaryText)
+                .tracking(1)
         }
     }
 }

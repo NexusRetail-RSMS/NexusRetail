@@ -177,17 +177,10 @@ struct LoginView: View {
                     .offset(y: 4)
             }
             
-            VStack(spacing: 2) {
-                Text("RSMS")
-                    .font(.system(size: 26, weight: .black))
-                    .foregroundColor(RSMSColors.primaryText)
-                    .tracking(2)
-                
-                Text("RETAIL STORE MANAGEMENT SYSTEM")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(RSMSColors.secondaryText)
-                    .tracking(1.5)
-            }
+            Text("NexusRetail")
+                .font(.system(size: 26, weight: .black))
+                .foregroundColor(RSMSColors.primaryText)
+                .tracking(1)
         }
     }
 
