@@ -6,6 +6,9 @@
 //  Each chart has its OWN independent time-range toggle so
 //  switching one does not refresh the other.
 //
+//  Data source: retail_sales.csv (Kaggle-format), parsed by
+//  CSVDataLoader and aggregated by DashboardDataProvider.
+//
 
 import Foundation
 import SwiftUI
@@ -32,7 +35,7 @@ struct RevenueChartPoint: Identifiable, Equatable {
     }
 }
 
-/// A single bar in the product-sales chart.
+/// A single bar/slice in the product-sales chart.
 struct ProductChartPoint: Identifiable, Equatable {
     let id = UUID()
     let category: String
@@ -93,6 +96,8 @@ class DashboardViewModel {
         "\(currentKPI.lowStockAlerts)"
     }
 
+    // MARK: - Trend values for KPI cards
+
     var revenueTrend: String {
         currentKPI.revenueTrend
     }
@@ -135,22 +140,38 @@ class DashboardViewModel {
 
         // Group by index and sum revenue
         let grouped = Dictionary(grouping: filtered) { $0.index }
-        let maxIndex = revenueTimeRange == .monthly ? 6 : 7
+
+        let maxIndex: Int
         let labels: [String]
         switch revenueTimeRange {
         case .monthly:
-            labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"]
+            // Find the actual month range from data
+            let indices = grouped.keys.sorted()
+            let minIdx = indices.first ?? 1
+            let maxIdx = indices.last ?? 6
+            maxIndex = maxIdx
+            let monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+            labels = Array(monthLabels[(minIdx - 1)..<min(maxIdx, 12)])
+            
+            return (minIdx...maxIndex).map { idx in
+                let totalForPeriod = grouped[idx]?.reduce(0.0) { $0 + $1.revenue } ?? 0
+                return RevenueChartPoint(
+                    label: monthLabels[idx - 1],
+                    index: idx,
+                    revenue: totalForPeriod
+                )
+            }
         case .weekly:
             labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-        }
-
-        return (1...maxIndex).map { idx in
-            let totalForPeriod = grouped[idx]?.reduce(0.0) { $0 + $1.revenue } ?? 0
-            return RevenueChartPoint(
-                label: labels[idx - 1],
-                index: idx,
-                revenue: totalForPeriod
-            )
+            return (1...7).map { idx in
+                let totalForPeriod = grouped[idx]?.reduce(0.0) { $0 + $1.revenue } ?? 0
+                return RevenueChartPoint(
+                    label: labels[idx - 1],
+                    index: idx,
+                    revenue: totalForPeriod
+                )
+            }
         }
     }
 
@@ -172,7 +193,7 @@ class DashboardViewModel {
         }
 
         let grouped = Dictionary(grouping: filtered) { $0.category }
-        let categories = ["Watches", "Jewelry", "Leather Goods", "Couture", "Fragrances"]
+        let categories = grouped.keys.sorted()
 
         return categories.compactMap { cat in
             guard let items = grouped[cat] else { return nil }

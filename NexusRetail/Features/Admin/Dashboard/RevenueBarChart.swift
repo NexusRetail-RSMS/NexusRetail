@@ -2,9 +2,9 @@
 //  RevenueBarChart.swift
 //  NexusRetail
 //
-//  Store revenue bar chart using Swift Charts.
+//  Store revenue bar chart using native SwiftUI Charts.
 //  Has its OWN Weekly/Monthly toggle (independent from Product chart).
-//  Country filter chips are embedded inside this card.
+//  Uses the complementary chart color palette for a premium look.
 //
 
 import SwiftUI
@@ -33,16 +33,17 @@ struct RevenueBarChart: View {
             Chart(data) { point in
                 BarMark(
                     x: .value("Period", point.label),
-                    y: .value("Revenue", point.revenue)
+                    y: .value("Revenue", point.revenue),
+                    width: .ratio(0.45) // Makes bars noticeably thinner and more modern
                 )
                 .foregroundStyle(
                     LinearGradient(
-                        colors: [RSMSColors.darkBurgundy, RSMSColors.burgundy],
-                        startPoint: .bottom,
-                        endPoint: .top
+                        colors: [RSMSColors.burgundy.opacity(0.6), RSMSColors.burgundy],
+                        startPoint: .top,
+                        endPoint: .bottom
                     )
                 )
-                .cornerRadius(4)
+                .cornerRadius(8) // More rounded cap
             }
             .chartYScale(domain: 0...maxValue)
             .chartYAxis {
@@ -73,9 +74,9 @@ struct RevenueBarChart: View {
 
             // Legend
             HStack(spacing: RSMSSpacing.sm) {
-                Circle()
-                    .fill(RSMSColors.darkBurgundy)
-                    .frame(width: 8, height: 8)
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(RSMSColors.burgundy)
+                    .frame(width: 16, height: 8)
                 Text("Revenue in ₹ Lakhs")
                     .font(.system(size: 10))
                     .foregroundColor(RSMSColors.secondaryText)

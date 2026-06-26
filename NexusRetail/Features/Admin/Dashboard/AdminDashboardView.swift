@@ -48,6 +48,9 @@ struct AdminDashboardView: View {
                         maxValue: viewModel.productMaxValue,
                         timeRange: $viewModel.productTimeRange
                     )
+
+                    // MARK: - Top Locations
+                    TopLocationsChartView()
                 }
                 .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.top, RSMSSpacing.xl)
@@ -151,10 +154,10 @@ struct AdminDashboardView: View {
                         Image(systemName: "chevron.up.chevron.down")
                             .font(.system(size: 10, weight: .bold))
                     }
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(RSMSColors.primaryText)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(RSMSColors.burgundy.opacity(0.1))
+                    .background(Color.gray.opacity(0.1))
                     .cornerRadius(16)
                 }
             }
@@ -163,26 +166,30 @@ struct AdminDashboardView: View {
                 KPICardView(
                     title: "Total Revenue",
                     value: viewModel.formattedRevenue,
-                    icon: "indianrupesign.circle.fill",
-                    trend: nil
+                    icon: "indianrupeesign.circle.fill",
+                    trend: nil,
+                    color: Color(hex: "34C759") // Green
                 )
                 KPICardView(
                     title: "Active Stores",
                     value: viewModel.activeStoresText,
                     icon: "building.2.fill",
-                    trend: nil
+                    trend: nil,
+                    color: Color(hex: "007AFF") // Blue
                 )
                 KPICardView(
                     title: "Pending Transfers",
                     value: viewModel.pendingTransfersText,
                     icon: "arrow.left.arrow.right.circle.fill",
-                    trend: nil
+                    trend: nil,
+                    color: Color(hex: "FF9500") // Orange
                 )
                 KPICardView(
                     title: "Low-Stock Alerts",
                     value: viewModel.lowStockText,
                     icon: "exclamationmark.triangle.fill",
-                    trend: nil
+                    trend: nil,
+                    color: Color(hex: "FF3B30") // Red
                 )
             }
             .animation(.easeInOut(duration: 0.3), value: viewModel.selectedCountry)
