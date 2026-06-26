@@ -42,39 +42,42 @@ struct KPICardView: View {
     let trend: String?
     
     var body: some View {
-        VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
-            HStack {
+        HStack(spacing: 0) {
+            // Main content
+            VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy.opacity(0.08))
-                        .frame(width: 32, height: 32)
+                        .fill(RSMSColors.burgundy.opacity(0.15))
+                        .frame(width: 36, height: 36)
                     
                     Image(systemName: icon)
                         .foregroundColor(RSMSColors.burgundy)
-                        .font(.system(size: 14))
+                        .font(.system(size: 16, weight: .semibold))
                 }
                 
-                Spacer()
-                
-                if let trend = trend {
-                    Text(trend)
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(trend.contains("+") || trend.contains("approved") ? RSMSColors.success : .orange)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(value)
+                        .font(RSMSFonts.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(RSMSColors.primaryText)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                    
+                    Text(title)
+                        .font(RSMSFonts.caption)
+                        .foregroundColor(RSMSColors.secondaryText)
                 }
             }
+            .padding(RSMSSpacing.md)
             
-            VStack(alignment: .leading, spacing: 2) {
-                Text(value)
-                    .font(RSMSFonts.largeTitle)
-                    .fontWeight(.bold)
-                    .foregroundColor(RSMSColors.primaryText)
-                
-                Text(title)
-                    .font(RSMSFonts.caption)
-                    .foregroundColor(RSMSColors.secondaryText)
-            }
+            Spacer(minLength: 0)
+            
+            // Right-edge burgundy accent stripe
+            RoundedRectangle(cornerRadius: 2)
+                .fill(RSMSColors.burgundy)
+                .frame(width: 4)
+                .padding(.vertical, 8)
         }
-        .padding(RSMSSpacing.md)
         .background(RSMSColors.cardBackground)
         .cornerRadius(RSMSRadius.medium)
         .overlay(
@@ -83,6 +86,5 @@ struct KPICardView: View {
         )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title): \(value)")
-        .accessibilityHint(trend ?? "")
     }
 }

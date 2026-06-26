@@ -2,17 +2,21 @@
 //  DashboardDataProvider.swift
 //  NexusRetail
 //
-//  Static sample dataset for the Admin Dashboard charts.
-//  Provides realistic luxury retail revenue and product-sales data
-//  across multiple countries and stores. Designed to be swapped for
-//  Supabase queries when real data flows in.
+//  Provides dashboard chart and KPI data by aggregating the parsed
+//  retail_sales.csv transactions. Falls back to empty results if
+//  the CSV is missing or cannot be loaded.
+//
+//  The CSV (Kaggle Retail Sales Dataset format) contains:
+//    Transaction ID, Date, Customer ID, Gender, Age,
+//    Product Category, Quantity, Price per Unit, Total Amount,
+//    Store, Country
 //
 
 import Foundation
 
 // MARK: - Data Models
 
-/// A single data point of revenue for a given store.
+/// A single data point of revenue for a given period.
 struct RevenueDataPoint: Identifiable {
     let id = UUID()
     let label: String           // "Jan", "Feb" … or "Mon", "Tue" …
@@ -41,118 +45,248 @@ struct CountryKPI {
     let revenueTrend: String     // e.g. "+8.2% vs last month"
 }
 
-// MARK: - Sample Data
+// MARK: - Data Provider (CSV-backed)
 
 enum DashboardDataProvider {
 
+    // MARK: - Loaded Transactions (cached)
+
+    /// All transactions parsed from the bundled CSV, loaded once.
+    static let allTransactions: [SalesTransaction] = CSVDataLoader.loadTransactions()
+
     // MARK: Countries
-    static let countries = ["All·Global", "India", "UAE", "UK", "Italy"]
 
-    // MARK: Monthly Revenue (per store, Jan–Jun 2026, values in ₹ Lakhs)
-    static let monthlyRevenue: [RevenueDataPoint] = {
-        var data: [RevenueDataPoint] = []
-
-        let storeData: [(String, String, [(String, Int, Double)])] = [
-            ("Mumbai Flagship", "India", [
-                ("Jan", 1, 62.0), ("Feb", 2, 71.0), ("Mar", 3, 85.0),
-                ("Apr", 4, 78.0), ("May", 5, 92.0), ("Jun", 6, 110.0)
-            ]),
-            ("Delhi Chanakya", "India", [
-                ("Jan", 1, 45.0), ("Feb", 2, 52.0), ("Mar", 3, 60.0),
-                ("Apr", 4, 55.0), ("May", 5, 68.0), ("Jun", 6, 74.0)
-            ]),
-            ("Dubai Mall", "UAE", [
-                ("Jan", 1, 88.0), ("Feb", 2, 95.0), ("Mar", 3, 102.0),
-                ("Apr", 4, 91.0), ("May", 5, 115.0), ("Jun", 6, 130.0)
-            ]),
-            ("Abu Dhabi", "UAE", [
-                ("Jan", 1, 38.0), ("Feb", 2, 42.0), ("Mar", 3, 50.0),
-                ("Apr", 4, 44.0), ("May", 5, 55.0), ("Jun", 6, 60.0)
-            ]),
-            ("London Harrods", "UK", [
-                ("Jan", 1, 72.0), ("Feb", 2, 80.0), ("Mar", 3, 90.0),
-                ("Apr", 4, 85.0), ("May", 5, 98.0), ("Jun", 6, 115.0)
-            ]),
-            ("Milan Duomo", "Italy", [
-                ("Jan", 1, 55.0), ("Feb", 2, 63.0), ("Mar", 3, 70.0),
-                ("Apr", 4, 65.0), ("May", 5, 78.0), ("Jun", 6, 88.0)
-            ])
-        ]
-        for (store, country, months) in storeData {
-            for m in months {
-                data.append(RevenueDataPoint(label: m.0, index: m.1, revenue: m.2, storeName: store, country: country))
-            }
-        }
-        return data
+    static let countries: [String] = {
+        var unique = Set(allTransactions.map(\.country))
+        let sorted = unique.sorted()
+        return ["All·Global"] + sorted
     }()
 
-    // MARK: Weekly Revenue (per store, current week, values in ₹ Lakhs)
-    static let weeklyRevenue: [RevenueDataPoint] = {
-        var data: [RevenueDataPoint] = []
-        let days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    // MARK: Unique Stores per Country
 
-        let storeData: [(String, String, [Double])] = [
-            ("Mumbai Flagship", "India",  [14.5, 12.8, 16.2, 15.0, 18.5, 22.0, 11.0]),
-            ("Delhi Chanakya",  "India",  [9.0,  8.5,  10.2, 9.8,  12.0, 15.5, 8.0]),
-            ("Dubai Mall",      "UAE",    [18.0, 16.5, 20.0, 17.5, 22.0, 26.0, 14.0]),
-            ("Abu Dhabi",       "UAE",    [7.5,  6.8,  8.5,  7.2,  9.0,  11.5, 5.5]),
-            ("London Harrods",  "UK",     [12.0, 11.5, 14.0, 13.0, 16.5, 20.0, 9.5]),
-            ("Milan Duomo",     "Italy",  [9.5,  8.8,  11.0, 10.2, 12.5, 15.0, 7.0])
-        ]
-        for (store, country, revenues) in storeData {
-            for (i, rev) in revenues.enumerated() {
-                data.append(RevenueDataPoint(label: days[i], index: i + 1, revenue: rev, storeName: store, country: country))
-            }
+    private static let storesPerCountry: [String: Set<String>] = {
+        var result: [String: Set<String>] = [:]
+        for txn in allTransactions {
+            result[txn.country, default: []].insert(txn.store)
         }
-        return data
+        return result
+    }()
+
+    // MARK: Monthly Revenue (per store, values in ₹ Lakhs)
+
+    static let monthlyRevenue: [RevenueDataPoint] = {
+        let monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+        // Group by (store, country, month) → sum totalAmount
+        var grouped: [String: Double] = [:]  // key: "store|country|month"
+        for txn in allTransactions {
+            let key = "\(txn.store)|\(txn.country)|\(txn.month)"
+            grouped[key, default: 0] += txn.totalAmount
+        }
+
+        var data: [RevenueDataPoint] = []
+        for (key, total) in grouped {
+            let parts = key.split(separator: "|")
+            guard parts.count == 3,
+                  let monthIndex = Int(parts[2]),
+                  monthIndex >= 1, monthIndex <= 12
+            else { continue }
+
+            data.append(RevenueDataPoint(
+                label: monthLabels[monthIndex - 1],
+                index: monthIndex,
+                revenue: total / 100_000.0,   // convert ₹ to Lakhs
+                storeName: String(parts[0]),
+                country: String(parts[1])
+            ))
+        }
+        return data.sorted { $0.index < $1.index }
+    }()
+
+    // MARK: Weekly Revenue (latest week in dataset, per store, in ₹ Lakhs)
+
+    static let weeklyRevenue: [RevenueDataPoint] = {
+        let dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+
+        // Find the last 7 days in the dataset
+        guard let maxDate = allTransactions.map(\.date).max() else { return [] }
+        let calendar = Calendar.current
+        guard let weekStart = calendar.date(byAdding: .day, value: -6, to: maxDate) else { return [] }
+
+        let lastWeekTxns = allTransactions.filter { $0.date >= weekStart && $0.date <= maxDate }
+
+        // Group by (store, country, weekday) → sum totalAmount
+        var grouped: [String: Double] = [:]
+        for txn in lastWeekTxns {
+            let key = "\(txn.store)|\(txn.country)|\(txn.weekday)"
+            grouped[key, default: 0] += txn.totalAmount
+        }
+
+        var data: [RevenueDataPoint] = []
+        for (key, total) in grouped {
+            let parts = key.split(separator: "|")
+            guard parts.count == 3,
+                  let weekday = Int(parts[2]),
+                  weekday >= 1, weekday <= 7
+            else { continue }
+
+            // Calendar weekday: 1=Sun, 2=Mon, … 7=Sat
+            // Reorder to Mon=1, Tue=2, … Sun=7 for display
+            let displayIndex = weekday == 1 ? 7 : weekday - 1
+
+            data.append(RevenueDataPoint(
+                label: dayLabels[weekday - 1],
+                index: displayIndex,
+                revenue: total / 100_000.0,
+                storeName: String(parts[0]),
+                country: String(parts[1])
+            ))
+        }
+        return data.sorted { $0.index < $1.index }
     }()
 
     // MARK: Product Sales (per country)
-    static let productSales: [ProductSalesData] = [
-        // India
-        ProductSalesData(category: "Watches",      weeklySales: 28, monthlySales: 112, country: "India"),
-        ProductSalesData(category: "Jewelry",       weeklySales: 35, monthlySales: 140, country: "India"),
-        ProductSalesData(category: "Leather Goods", weeklySales: 22, monthlySales: 88,  country: "India"),
-        ProductSalesData(category: "Couture",       weeklySales: 15, monthlySales: 60,  country: "India"),
-        ProductSalesData(category: "Fragrances",    weeklySales: 42, monthlySales: 168, country: "India"),
-        // UAE
-        ProductSalesData(category: "Watches",      weeklySales: 45, monthlySales: 180, country: "UAE"),
-        ProductSalesData(category: "Jewelry",       weeklySales: 52, monthlySales: 208, country: "UAE"),
-        ProductSalesData(category: "Leather Goods", weeklySales: 30, monthlySales: 120, country: "UAE"),
-        ProductSalesData(category: "Couture",       weeklySales: 25, monthlySales: 100, country: "UAE"),
-        ProductSalesData(category: "Fragrances",    weeklySales: 38, monthlySales: 152, country: "UAE"),
-        // UK
-        ProductSalesData(category: "Watches",      weeklySales: 33, monthlySales: 132, country: "UK"),
-        ProductSalesData(category: "Jewelry",       weeklySales: 40, monthlySales: 160, country: "UK"),
-        ProductSalesData(category: "Leather Goods", weeklySales: 48, monthlySales: 192, country: "UK"),
-        ProductSalesData(category: "Couture",       weeklySales: 20, monthlySales: 80,  country: "UK"),
-        ProductSalesData(category: "Fragrances",    weeklySales: 30, monthlySales: 120, country: "UK"),
-        // Italy
-        ProductSalesData(category: "Watches",      weeklySales: 25, monthlySales: 100, country: "Italy"),
-        ProductSalesData(category: "Jewelry",       weeklySales: 30, monthlySales: 120, country: "Italy"),
-        ProductSalesData(category: "Leather Goods", weeklySales: 55, monthlySales: 220, country: "Italy"),
-        ProductSalesData(category: "Couture",       weeklySales: 40, monthlySales: 160, country: "Italy"),
-        ProductSalesData(category: "Fragrances",    weeklySales: 20, monthlySales: 80,  country: "Italy"),
-    ]
+
+    static let productSales: [ProductSalesData] = {
+        guard let maxDate = allTransactions.map(\.date).max() else { return [] }
+        let calendar = Calendar.current
+        guard let weekStart = calendar.date(byAdding: .day, value: -6, to: maxDate) else { return [] }
+        let currentMonth = calendar.component(.month, from: maxDate)
+
+        let categories = Set(allTransactions.map(\.productCategory)).sorted()
+        let countries = Set(allTransactions.map(\.country)).sorted()
+
+        var data: [ProductSalesData] = []
+
+        for country in countries {
+            let countryTxns = allTransactions.filter { $0.country == country }
+
+            for category in categories {
+                let catTxns = countryTxns.filter { $0.productCategory == category }
+
+                // Weekly: last 7 days
+                let weeklyQty = catTxns
+                    .filter { $0.date >= weekStart && $0.date <= maxDate }
+                    .reduce(0) { $0 + $1.quantity }
+
+                // Monthly: current month
+                let monthlyQty = catTxns
+                    .filter { calendar.component(.month, from: $0.date) == currentMonth }
+                    .reduce(0) { $0 + $1.quantity }
+
+                data.append(ProductSalesData(
+                    category: category,
+                    weeklySales: weeklyQty,
+                    monthlySales: monthlyQty,
+                    country: country
+                ))
+            }
+        }
+        return data
+    }()
 
     // MARK: KPI Aggregates
-    static let countryKPIs: [CountryKPI] = [
-        CountryKPI(country: "India", totalRevenue: 853.0,  activeStores: 12, pendingTransfers: 5, lowStockAlerts: 8,  revenueTrend: "+12% this week"),
-        CountryKPI(country: "UAE",   totalRevenue: 910.0,  activeStores: 8,  pendingTransfers: 3, lowStockAlerts: 5,  revenueTrend: "+9.4% this week"),
-        CountryKPI(country: "UK",    totalRevenue: 740.0,  activeStores: 10, pendingTransfers: 4, lowStockAlerts: 6,  revenueTrend: "+6.1% this week"),
-        CountryKPI(country: "Italy", totalRevenue: 619.0,  activeStores: 8,  pendingTransfers: 2, lowStockAlerts: 5,  revenueTrend: "+7.8% this week"),
-    ]
+
+    static let countryKPIs: [CountryKPI] = {
+        let countries = Set(allTransactions.map(\.country)).sorted()
+        let calendar = Calendar.current
+
+        return countries.map { country in
+            let countryTxns = allTransactions.filter { $0.country == country }
+            let totalRevenue = countryTxns.reduce(0.0) { $0 + $1.totalAmount }
+            let storeCount = storesPerCountry[country]?.count ?? 0
+
+            // Compute trend: compare last month vs previous month
+            guard let maxDate = countryTxns.map(\.date).max() else {
+                return CountryKPI(
+                    country: country,
+                    totalRevenue: totalRevenue / 100_000.0,
+                    activeStores: storeCount,
+                    pendingTransfers: 0,
+                    lowStockAlerts: 0,
+                    revenueTrend: "—"
+                )
+            }
+
+            let lastMonth = calendar.component(.month, from: maxDate)
+            let prevMonth = lastMonth > 1 ? lastMonth - 1 : 12
+
+            let lastMonthRevenue = countryTxns
+                .filter { calendar.component(.month, from: $0.date) == lastMonth }
+                .reduce(0.0) { $0 + $1.totalAmount }
+
+            let prevMonthRevenue = countryTxns
+                .filter { calendar.component(.month, from: $0.date) == prevMonth }
+                .reduce(0.0) { $0 + $1.totalAmount }
+
+            let trend: String
+            if prevMonthRevenue > 0 {
+                let pctChange = ((lastMonthRevenue - prevMonthRevenue) / prevMonthRevenue) * 100
+                let sign = pctChange >= 0 ? "+" : ""
+                trend = "\(sign)\(String(format: "%.1f", pctChange))% vs last month"
+            } else {
+                trend = "—"
+            }
+
+            // Simulated operational metrics (scale with store count)
+            let pendingTransfers = max(1, storeCount * 2 + Int.random(in: 0...3))
+            let lowStockAlerts = max(1, storeCount + Int.random(in: 1...5))
+
+            return CountryKPI(
+                country: country,
+                totalRevenue: totalRevenue / 100_000.0,
+                activeStores: storeCount,
+                pendingTransfers: pendingTransfers,
+                lowStockAlerts: lowStockAlerts,
+                revenueTrend: trend
+            )
+        }
+    }()
 
     /// Global aggregate KPI (sum of all countries).
     static let globalKPI: CountryKPI = {
         let all = countryKPIs
+        // Compute global trend from raw transactions
+        let calendar = Calendar.current
+        guard let maxDate = allTransactions.map(\.date).max() else {
+            return CountryKPI(
+                country: "All·Global",
+                totalRevenue: all.reduce(0) { $0 + $1.totalRevenue },
+                activeStores: all.reduce(0) { $0 + $1.activeStores },
+                pendingTransfers: all.reduce(0) { $0 + $1.pendingTransfers },
+                lowStockAlerts: all.reduce(0) { $0 + $1.lowStockAlerts },
+                revenueTrend: "—"
+            )
+        }
+
+        let lastMonth = calendar.component(.month, from: maxDate)
+        let prevMonth = lastMonth > 1 ? lastMonth - 1 : 12
+
+        let lastMonthTotal = allTransactions
+            .filter { calendar.component(.month, from: $0.date) == lastMonth }
+            .reduce(0.0) { $0 + $1.totalAmount }
+
+        let prevMonthTotal = allTransactions
+            .filter { calendar.component(.month, from: $0.date) == prevMonth }
+            .reduce(0.0) { $0 + $1.totalAmount }
+
+        let trend: String
+        if prevMonthTotal > 0 {
+            let pctChange = ((lastMonthTotal - prevMonthTotal) / prevMonthTotal) * 100
+            let sign = pctChange >= 0 ? "+" : ""
+            trend = "\(sign)\(String(format: "%.1f", pctChange))% vs last month"
+        } else {
+            trend = "—"
+        }
+
         return CountryKPI(
             country: "All·Global",
             totalRevenue: all.reduce(0) { $0 + $1.totalRevenue },
             activeStores: all.reduce(0) { $0 + $1.activeStores },
             pendingTransfers: all.reduce(0) { $0 + $1.pendingTransfers },
             lowStockAlerts: all.reduce(0) { $0 + $1.lowStockAlerts },
-            revenueTrend: "+8.2% vs last month"
+            revenueTrend: trend
         )
     }()
 }
