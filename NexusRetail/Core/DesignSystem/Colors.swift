@@ -62,6 +62,11 @@ enum RSMSColors {
     
     /// Subtle divider
     static let divider = Color.gray.opacity(0.15)
+
+    // MARK: - Chart Colors
+    
+    /// Solid light warm color for chart bars, derived from the brand gradient
+    static let chartBar = Color(hex: "A44A33")
 }
 
 // MARK: - Color Extension for Hex Support

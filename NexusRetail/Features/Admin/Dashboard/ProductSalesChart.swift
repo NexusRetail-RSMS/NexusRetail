@@ -4,7 +4,9 @@
 //
 //  Top product-sales bar chart with its OWN Weekly ↔ Monthly toggle
 //  (independent from the Revenue chart).
-//  Uses gold/tan bars matching the screenshot aesthetic.
+//  Each category bar uses a shade from the brand gradient palette
+//  (#200E01 → #5B0202 → #8B0000 → #EDE7C7) for a homogenous look.
+//  Categories are labeled on the X-axis so no separate legend is needed.
 //
 
 import SwiftUI
@@ -35,14 +37,8 @@ struct ProductSalesChart: View {
                     x: .value("Category", shortLabel(point.category)),
                     y: .value("Sales", point.sales)
                 )
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [RSMSColors.darkBrown, RSMSColors.darkBrown.opacity(0.8)],
-                        startPoint: .bottom,
-                        endPoint: .top
-                    )
-                )
-                .cornerRadius(4)
+                .foregroundStyle(RSMSColors.chartBar)
+                .cornerRadius(6)
                 .annotation(position: .top, spacing: 4) {
                     Text("\(point.sales)")
                         .font(.system(size: 9, weight: .semibold))
@@ -76,11 +72,11 @@ struct ProductSalesChart: View {
             }
             .frame(height: 200)
 
-            // Legend
+            // Simple text legend — no colored dots needed since categories are on the X-axis
             HStack(spacing: RSMSSpacing.sm) {
-                Circle()
-                    .fill(RSMSColors.darkBrown)
-                    .frame(width: 8, height: 8)
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(RSMSColors.chartBar)
+                    .frame(width: 24, height: 8)
                 Text("Units sold (\(timeRange.rawValue.lowercased()))")
                     .font(.system(size: 10))
                     .foregroundColor(RSMSColors.secondaryText)

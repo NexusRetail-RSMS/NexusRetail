@@ -163,7 +163,7 @@ struct AdminDashboardView: View {
                 KPICardView(
                     title: "Total Revenue",
                     value: viewModel.formattedRevenue,
-                    icon: "indianrupesign.circle.fill",
+                    icon: "indianrupeesign.circle.fill",
                     trend: nil
                 )
                 KPICardView(
