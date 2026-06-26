@@ -29,7 +29,7 @@ struct LoginView: View {
                 Text("NexusRetail")
                     .font(.largeTitle.bold())
                     .accessibilityAddTraits(.isHeader)
-                    .foregroundColor(Color.nexusNavy)
+                    .foregroundColor(Color.nexusRed)
                 
                 Text("Log in to your account")
                     .font(.subheadline)
@@ -108,7 +108,7 @@ struct LoginView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(viewModel.isLoginButtonEnabled ? Color.nexusNavy : Color.gray.opacity(0.3))
+            .background(viewModel.isLoginButtonEnabled ? Color.nexusDark : Color.gray.opacity(0.3))
             .cornerRadius(12)
         }
         .buttonStyle(.plain)

@@ -80,7 +80,7 @@ private struct StoreRow: View {
             HStack {
                 Text(store.name)
                     .font(.headline)
-                    .foregroundColor(Color.nexusNavy)
+                    .foregroundColor(Color.nexusRed)
                 
                 Spacer()
                 

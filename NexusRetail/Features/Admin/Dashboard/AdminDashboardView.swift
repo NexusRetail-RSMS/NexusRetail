@@ -20,7 +20,7 @@ struct AdminDashboardView: View {
                     
                     Text(sessionStore.currentUser?.name ?? "Admin")
                         .font(.largeTitle.bold())
-                        .foregroundColor(Color.nexusNavy)
+                        .foregroundColor(Color.nexusRed)
                 }
                 .padding(.horizontal)
                 .padding(.top, 16)
@@ -38,7 +38,7 @@ struct AdminDashboardView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Recent Activity")
                         .font(.title3.bold())
-                        .foregroundColor(Color.nexusNavy)
+                        .foregroundColor(Color.nexusRed)
                         .padding(.horizontal)
                     
                     VStack(spacing: 0) {
@@ -50,7 +50,7 @@ struct AdminDashboardView: View {
                     }
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(UIColor.secondarySystemGroupedBackground))
+                            .fill(Color.white)
                     )
                     .padding(.horizontal)
                 }

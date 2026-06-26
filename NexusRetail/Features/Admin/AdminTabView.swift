@@ -7,8 +7,11 @@ import SwiftUI
 
 /// Admin shell: tabs for Dashboard, Stores, Products, Transfers, People.
 struct AdminTabView: View {
+    @State private var navStore = AdminNavigationStore()
+    @State private var transfersVM = AdminTransfersViewModel()
+    
     var body: some View {
-        TabView {
+        TabView(selection: $navStore.selectedTab) {
             // 1. Dashboard
             NavigationStack {
                 AdminDashboardView()
@@ -17,6 +20,7 @@ struct AdminTabView: View {
             .tabItem {
                 Label("Dashboard", systemImage: "house")
             }
+            .tag(AdminTab.dashboard)
             
             // 2. Stores
             NavigationStack {
@@ -26,6 +30,7 @@ struct AdminTabView: View {
             .tabItem {
                 Label("Stores", systemImage: "building.2")
             }
+            .tag(AdminTab.stores)
             
             // 3. Products
             NavigationStack {
@@ -35,26 +40,31 @@ struct AdminTabView: View {
             .tabItem {
                 Label("Products", systemImage: "tag")
             }
+            .tag(AdminTab.products)
             
             // 4. Transfers
             NavigationStack {
-                AdminPlaceholderView(title: "Transfers", message: "Inventory transfers coming soon.")
+                AdminTransfersView()
                     .modifier(AdminToolbarModifier(title: "Transfers"))
             }
             .tabItem {
                 Label("Transfers", systemImage: "arrow.left.arrow.right")
             }
+            .tag(AdminTab.transfers)
             
             // 5. Managers
             NavigationStack {
-                AdminPlaceholderView(title: "Managers", message: "Manager and staff tracking coming soon.")
+                AdminManagersView()
                     .modifier(AdminToolbarModifier(title: "Managers"))
             }
             .tabItem {
                 Label("Managers", systemImage: "person.2")
             }
+            .tag(AdminTab.managers)
         }
         .tint(Color.nexusGold)
+        .environment(navStore)
+        .environment(transfersVM)
     }
 }
 
@@ -76,7 +86,7 @@ struct AdminToolbarModifier: ViewModifier {
                     } label: {
                         ZStack {
                             Circle()
-                                .fill(Color.nexusNavy)
+                                .fill(Color.nexusRed)
                                 .frame(width: 32, height: 32)
                             
                             Text(initials(for: sessionStore.currentUser?.name))
@@ -122,7 +132,7 @@ struct AdminPlaceholderView: View {
             Text("Coming Soon")
                 .font(.title2)
                 .fontWeight(.semibold)
-                .foregroundColor(Color.nexusNavy)
+                .foregroundColor(Color.nexusRed)
             
             Text(message)
                 .font(.body)
