@@ -8,9 +8,8 @@ import SwiftUI
 // MARK: - Main View
 
 struct ProductCatalogueView: View {
-
-    @StateObject private var vm = ProductCatalogueViewModel()
-
+    @StateObject private var viewModel = ProductCatalogueViewModel()
+    @State private var showAddProduct = false
     var body: some View {
         ZStack {
             RSMSColors.background
@@ -25,7 +24,10 @@ struct ProductCatalogueView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: RSMSSpacing.lg) {
                         searchBar
-                        trendingCarousel
+                        if viewModel.searchText.isEmpty {
+                            trendingCarousel
+                            .animation(.easeInOut(duration: 0.3), value: viewModel.searchText.isEmpty)
+                        }
                         productListSection
                     }
                     .padding(.horizontal, RSMSSpacing.lg)
@@ -34,7 +36,14 @@ struct ProductCatalogueView: View {
             }
         }
         .navigationBarHidden(true)
+        .sheet(isPresented: $showAddProduct) {
+            NavigationStack {
+                AddProductView()
+                    .environmentObject(viewModel)
+            }
+        }
     }
+    
     
     private var searchBar: some View {
 
@@ -45,13 +54,13 @@ struct ProductCatalogueView: View {
 
             TextField(
                 "Search products, SKU...",
-                text: $vm.searchText
+                text: $viewModel.searchText
             )
             .foregroundColor(RSMSColors.darkBrown)
 
-            if !vm.searchText.isEmpty {
+            if !viewModel.searchText.isEmpty {
                 Button {
-                    vm.searchText = ""
+                    viewModel.searchText = ""
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundColor(RSMSColors.secondaryText)
@@ -80,14 +89,18 @@ struct ProductCatalogueView: View {
 
             Spacer()
 
-            ZStack {
-                Circle()
-                    .fill(RSMSColors.burgundy)
-                    .frame(width: 40, height: 40)
+            Button {
+                showAddProduct = true
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(RSMSColors.burgundy)
+                        .frame(width: 44, height: 44)
 
-                Text("JS")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.white)
+                    Image(systemName: "plus")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                }
             }
         }
     }
@@ -96,8 +109,8 @@ struct ProductCatalogueView: View {
 
     private var trendingCarousel: some View {
         VStack(spacing: RSMSSpacing.sm) {
-            TabView(selection: $vm.currentTrendingIndex) {
-                ForEach(Array(vm.trendingProducts.enumerated()), id: \.element.id) { index, product in
+            TabView(selection: $viewModel.currentTrendingIndex) {
+                ForEach(Array(viewModel.trendingProducts.enumerated()), id: \.element.id) { index, product in
                     trendingCard(for: product)
                         .tag(index)
                         .padding(.horizontal, 2)
@@ -107,24 +120,24 @@ struct ProductCatalogueView: View {
             .frame(height: 240)
             .simultaneousGesture(
                 DragGesture()
-                    .onChanged { _ in vm.stopAutoScroll() }
-                    .onEnded   { _ in vm.resumeAutoScroll() }
+                    .onChanged { _ in viewModel.stopAutoScroll() }
+                    .onEnded   { _ in viewModel.resumeAutoScroll() }
             )
 
             // Dot indicators
             HStack(spacing: 6) {
-                ForEach(vm.trendingProducts.indices, id: \.self) { index in
+                ForEach(viewModel.trendingProducts.indices, id: \.self) { index in
                     Capsule()
                         .fill(
-                            index == vm.currentTrendingIndex
+                            index == viewModel.currentTrendingIndex
                                 ? RSMSColors.burgundy
                                 : RSMSColors.burgundy.opacity(0.25)
                         )
                         .frame(
-                            width: index == vm.currentTrendingIndex ? 18 : 6,
+                            width: index == viewModel.currentTrendingIndex ? 18 : 6,
                             height: 6
                         )
-                        .animation(.easeInOut(duration: 0.25), value: vm.currentTrendingIndex)
+                        .animation(.easeInOut(duration: 0.25), value: viewModel.currentTrendingIndex)
                 }
             }
         }
@@ -166,6 +179,7 @@ struct ProductCatalogueView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 150, height: 150)
+                        .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.medium))
                 }
                 .padding(.leading, RSMSSpacing.md)
 
@@ -177,11 +191,11 @@ struct ProductCatalogueView: View {
                         .fixedSize(horizontal: false, vertical: true)
                         .lineLimit(2)
 
-                    Text(vm.stockLabel(for: product))
+                    Text(viewModel.stockLabel(for: product))
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(vm.stockColor(for: product))
+                        .foregroundColor(viewModel.stockColor(for: product))
 
-                    Text(vm.formattedPrice(for: product))
+                    Text(viewModel.formattedPrice(for: product))
                         .font(.system(size: 26, weight: .bold))
                         .foregroundColor(RSMSColors.darkBrown)
                     Spacer()
@@ -230,9 +244,9 @@ struct ProductCatalogueView: View {
                 .foregroundColor(RSMSColors.darkBrown)
             Spacer()
             Menu {
-                ForEach(vm.categoryOptions, id: \.self) { option in
+                ForEach(viewModel.categoryOptions, id: \.self) { option in
                     Button(option) {
-                        vm.selectedCategory = option
+                        viewModel.selectedCategory = option
                     }
                 }
             } label: {
@@ -250,9 +264,33 @@ struct ProductCatalogueView: View {
     }
     
     private var productRows: some View {
-        VStack(spacing: RSMSSpacing.sm) {
-            ForEach(vm.filteredProducts) { product in
-                ProductRowCard(product: product, vm: vm)
+
+        if viewModel.filteredProducts.isEmpty {
+
+            VStack(spacing: 16) {
+
+                Image(systemName: "shippingbox")
+                    .font(.system(size: 42))
+                    .foregroundColor(RSMSColors.secondaryText)
+
+                Text("No Products Found")
+                    .font(.headline)
+                    .foregroundColor(RSMSColors.darkBrown)
+
+                Text("Try a different product name, SKU, or category.")
+                    .font(.subheadline)
+                    .foregroundColor(RSMSColors.secondaryText)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.vertical, 60)
+            .frame(maxWidth: .infinity) as! VStack<ForEach<[CatalogueProduct], UUID, ProductRowCard>>
+
+        } else {
+
+            VStack(spacing: RSMSSpacing.sm) {
+                ForEach(viewModel.filteredProducts) { product in
+                    ProductRowCard(product: product, viewModel: viewModel)
+                }
             }
         }
     }
@@ -263,7 +301,7 @@ struct ProductCatalogueView: View {
 private struct ProductRowCard: View {
 
     let product: CatalogueProduct
-    let vm: ProductCatalogueViewModel
+    let viewModel: ProductCatalogueViewModel
 
     var body: some View {
         HStack(spacing: RSMSSpacing.md) {
@@ -281,10 +319,31 @@ private struct ProductRowCard: View {
                     )
                     .frame(width: 80, height: 80)
 
-                Image(product.imageName)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 80, height: 80)
+                if let image = product.image {
+
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 80, height: 80)
+                        .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.medium))
+
+                } else if let imageName = product.imageName {
+
+                    Image(imageName)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 80, height: 80)
+                        .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.medium))
+
+                } else {
+
+                    Image(systemName: "photo")
+                        .resizable()
+                        .scaledToFit()
+                        .padding(12)
+                        .frame(width: 80, height: 80)
+                        .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.medium))
+                }
             }
 
             // Details
@@ -299,16 +358,12 @@ private struct ProductRowCard: View {
                     Spacer(minLength: RSMSSpacing.xs)
                 }
 
-                Text("SKU · \(product.sku) · \(product.category)")
+                Text("\(product.sku) · \(product.category)")
                     .font(.system(size: 12, weight: .regular))
                     .foregroundColor(RSMSColors.secondaryText)
                     .lineLimit(1)
 
                 HStack(spacing: RSMSSpacing.md) {
-                    Text(vm.formattedPrice(for: product))
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(RSMSColors.darkBrown)
-
                     Text("Stock \(product.stock)")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundColor(RSMSColors.secondaryText)
@@ -316,6 +371,10 @@ private struct ProductRowCard: View {
                     Text(product.date)
                         .font(.system(size: 13, weight: .regular))
                         .foregroundColor(RSMSColors.secondaryText)
+                    
+                    Text(viewModel.formattedPrice(for: product))
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(RSMSColors.darkBrown)
                 }
             }
         }
@@ -340,31 +399,7 @@ private struct ProductRowCard: View {
     }
 }
 
-// MARK: - Placeholder Destination Views
 
-struct ProductsView: View {
-    var body: some View {
-        Text("Products").navigationTitle("Products")
-    }
-}
-
-struct AddProductView: View {
-    var body: some View {
-        Text("Add Product").navigationTitle("Add Product")
-    }
-}
-
-struct PricingView: View {
-    var body: some View {
-        Text("Pricing").navigationTitle("Pricing")
-    }
-}
-
-struct CategoriesView: View {
-    var body: some View {
-        Text("Categories").navigationTitle("Categories")
-    }
-}
 
 // MARK: - Preview
 
