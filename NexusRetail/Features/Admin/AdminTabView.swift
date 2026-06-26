@@ -7,6 +7,8 @@ import SwiftUI
 
 /// Admin shell: tabs for Dashboard, Stores, Products, Transfers, People.
 struct AdminTabView: View {
+    @State private var isAddManagerPresented = false
+    
     var body: some View {
         TabView {
             // 1. Dashboard
@@ -47,50 +49,63 @@ struct AdminTabView: View {
             
             // 5. Managers
             NavigationStack {
-                AdminPlaceholderView(title: "Managers", message: "Manager and staff tracking coming soon.")
-                    .modifier(AdminToolbarModifier(title: "Managers"))
+                AdminManagersView()
+                    .modifier(AdminToolbarModifier(title: "Managers", showPlusButton: true, plusAction: {
+                        isAddManagerPresented = true
+                    }))
             }
             .tabItem {
                 Label("Managers", systemImage: "person.2")
             }
         }
         .tint(Color.nexusGold)
+        .sheet(isPresented: $isAddManagerPresented) {
+            NewManagerSheet()
+        }
     }
 }
 
 /// A view modifier that applies the common Admin toolbar (title + profile button).
 struct AdminToolbarModifier: ViewModifier {
     let title: String
+    var showPlusButton: Bool = false
+    var plusAction: (() -> Void)? = nil
     
     @Environment(SessionStore.self) private var sessionStore
-    @State private var isProfilePresented = false
     
     func body(content: Content) -> some View {
-        content
-            .navigationTitle(title)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+        VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                Text(title)
+                    .font(.system(size: 40, weight: .bold))
+                
+                Spacer()
+                
+                if showPlusButton {
                     Button {
-                        isProfilePresented = true
+                        plusAction?()
                     } label: {
-                        ZStack {
-                            Circle()
-                                .fill(Color.nexusNavy)
-                                .frame(width: 32, height: 32)
-                            
-                            Text(initials(for: sessionStore.currentUser?.name))
-                                .font(.caption.bold())
-                                .foregroundColor(Color.nexusGold)
-                        }
+                        Image(systemName: "plus")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.primary)
+                            .frame(width: 42, height: 42)
+                            .background(Color(UIColor.secondarySystemFill))
+                            .clipShape(Circle())
                     }
-                    .accessibilityLabel("Profile")
-                    .accessibilityHint("Opens your profile and settings")
+                    .buttonStyle(.plain)
                 }
             }
-            .sheet(isPresented: $isProfilePresented) {
-                AdminProfileSheet()
-            }
+            .padding(.horizontal)
+            .padding(.top,  16)
+            .padding(.bottom, 8)
+            .background(Color.white)
+            
+            content
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(Color.white.ignoresSafeArea())
+        .toolbar(.hidden, for: .navigationBar)
     }
     
     private func initials(for name: String?) -> String {
