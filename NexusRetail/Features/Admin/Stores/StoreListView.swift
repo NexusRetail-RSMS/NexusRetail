@@ -85,7 +85,7 @@ struct StoreListView: View {
                             await viewModel.load()
                         }
                         .navigationDestination(for: Store.self) { store in
-                            StoreDetailView(store: store, manager: viewModel.managers.first(where: { $0.id == store.managerID }), viewModel: viewModel)
+                            StoreAnalyticsView(store: store, manager: viewModel.managers.first(where: { $0.id == store.managerID }), viewModel: viewModel)
                         }
                     }
                 }

@@ -52,11 +52,13 @@ struct StoreFormView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section(header: Text("Basic Details").foregroundColor(RSMSColors.primaryText).fontWeight(.semibold)) {
-                    if editingStore != nil {
+                if editingStore != nil {
+                    Section(header: Text("Store Status").foregroundColor(RSMSColors.primaryText).fontWeight(.semibold)) {
                         Toggle("Store is Active", isOn: $isActive)
                     }
-                    
+                }
+
+                Section(header: Text("Basic Details").foregroundColor(RSMSColors.primaryText).fontWeight(.semibold)) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Store Name").font(.caption).foregroundColor(RSMSColors.primaryText)
                         TextField("Enter store name", text: $name)
@@ -191,7 +193,6 @@ struct StoreFormView: View {
                         }
                     }
                     .fontWeight(.bold)
-                    .foregroundColor(Color.nexusGold)
                     .disabled(viewModel.isLoading || name.isEmpty)
                 }
             }
