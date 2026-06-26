@@ -40,6 +40,7 @@ struct KPICardView: View {
     let value: String
     let icon: String
     let trend: String?
+    var color: Color = Color(hex: "007AFF") // Default blue
     
     var body: some View {
         HStack(spacing: 0) {
@@ -47,11 +48,11 @@ struct KPICardView: View {
             VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy.opacity(0.15))
+                        .fill(color.opacity(0.15))
                         .frame(width: 36, height: 36)
                     
                     Image(systemName: icon)
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(color)
                         .font(.system(size: 16, weight: .semibold))
                 }
                 
@@ -71,12 +72,6 @@ struct KPICardView: View {
             .padding(RSMSSpacing.md)
             
             Spacer(minLength: 0)
-            
-            // Right-edge burgundy accent stripe
-            RoundedRectangle(cornerRadius: 2)
-                .fill(RSMSColors.burgundy)
-                .frame(width: 4)
-                .padding(.vertical, 8)
         }
         .background(RSMSColors.cardBackground)
         .cornerRadius(RSMSRadius.medium)

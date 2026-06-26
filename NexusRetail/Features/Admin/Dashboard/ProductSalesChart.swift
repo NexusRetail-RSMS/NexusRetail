@@ -32,54 +32,51 @@ struct ProductSalesChart: View {
             }
 
             // Chart
-            Chart(data) { point in
-                BarMark(
-                    x: .value("Category", shortLabel(point.category)),
-                    y: .value("Sales", point.sales)
-                )
-                .foregroundStyle(RSMSColors.chartBar)
-                .cornerRadius(6)
-                .annotation(position: .top, spacing: 4) {
-                    Text("\(point.sales)")
-                        .font(.system(size: 9, weight: .semibold))
-                        .foregroundColor(RSMSColors.secondaryText)
+            ZStack {
+                Chart(data) { point in
+                    SectorMark(
+                        angle: .value("Sales", point.sales),
+                        innerRadius: .ratio(0.65),
+                        angularInset: 2
+                    )
+                    .foregroundStyle(by: .value("Category", shortLabel(point.category)))
+                    .cornerRadius(4)
                 }
-            }
-            .chartYScale(domain: 0...maxValue)
-            .chartYAxis {
-                AxisMarks(position: .leading, values: .automatic(desiredCount: 5)) { value in
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
-                        .foregroundStyle(RSMSColors.divider)
-                    AxisValueLabel {
-                        if let v = value.as(Int.self) {
-                            Text("\(v)")
-                                .font(.system(size: 10))
-                                .foregroundColor(RSMSColors.secondaryText)
-                        }
-                    }
-                }
-            }
-            .chartXAxis {
-                AxisMarks { value in
-                    AxisValueLabel {
-                        if let cat = value.as(String.self) {
-                            Text(cat)
-                                .font(.system(size: 10, weight: .medium))
-                                .foregroundColor(RSMSColors.secondaryText)
-                        }
-                    }
-                }
-            }
-            .frame(height: 200)
+                .chartForegroundStyleScale([
+                    "Couture": RSMSColors.burgundy,
+                    "Fragrance": Color(hex: "F4A261"),
+                    "Jewelry": Color(hex: "E9C46A"),
+                    "Leather": Color(hex: "2A9D8F"),
+                    "Watches": Color(hex: "264653")
+                ])
+                .chartLegend(.hidden)
+                .frame(height: 200)
 
-            // Simple text legend — no colored dots needed since categories are on the X-axis
-            HStack(spacing: RSMSSpacing.sm) {
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(RSMSColors.chartBar)
-                    .frame(width: 24, height: 8)
-                Text("Units sold (\(timeRange.rawValue.lowercased()))")
-                    .font(.system(size: 10))
-                    .foregroundColor(RSMSColors.secondaryText)
+                VStack {
+                    Text("Total Units")
+                        .font(.system(size: 10))
+                        .foregroundColor(RSMSColors.secondaryText)
+                    Text("\(data.map(\.sales).reduce(0, +))")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundColor(RSMSColors.primaryText)
+                }
+            }
+            .padding(.top, RSMSSpacing.sm)
+
+            // Legend
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: RSMSSpacing.sm) {
+                ForEach(data) { point in
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(colorFor(category: shortLabel(point.category)))
+                            .frame(width: 8, height: 8)
+                        Text(shortLabel(point.category))
+                            .font(.system(size: 12))
+                            .foregroundColor(RSMSColors.secondaryText)
+                            .lineLimit(1)
+                        Spacer()
+                    }
+                }
             }
         }
         .padding(RSMSSpacing.lg)
@@ -95,6 +92,17 @@ struct ProductSalesChart: View {
         case "Leather Goods": return "Leather"
         case "Fragrances":    return "Fragrance"
         default:              return category
+        }
+    }
+    
+    private func colorFor(category: String) -> Color {
+        switch category {
+        case "Couture": return RSMSColors.burgundy
+        case "Fragrance": return Color(hex: "F4A261")
+        case "Jewelry": return Color(hex: "E9C46A")
+        case "Leather": return Color(hex: "2A9D8F")
+        case "Watches": return Color(hex: "264653")
+        default: return RSMSColors.chartBar
         }
     }
 }
