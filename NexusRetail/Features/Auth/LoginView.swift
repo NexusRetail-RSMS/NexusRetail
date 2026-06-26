@@ -46,11 +46,11 @@ struct LoginView: View {
                 // MARK: - Bottom Sheet Card
                 VStack(spacing: 0) {
                     // Top drag/indicator handle pill
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(RSMSColors.burgundy.opacity(0.3))
-                        .frame(width: 40, height: 4)
-                        .padding(.top, 16)
-                        .padding(.bottom, 8)
+//                    RoundedRectangle(cornerRadius: 2)
+//                        .fill(RSMSColors.burgundy.opacity(0.3))
+//                        .frame(width: 40, height: 4)
+//                        .padding(.top, 16)
+//                        .padding(.bottom, 8)
                     
                     VStack(spacing: RSMSSpacing.lg) {
                         // MARK: - Titles & Subtitles
@@ -58,7 +58,7 @@ struct LoginView: View {
                             Text("Welcome back!")
                                 .blendMode(.darken)
                                 .font(RSMSFonts.largeTitle)
-                                .fontWeight(.bold)
+                                .fontWeight(.heavy)
                                 .foregroundColor(RSMSColors.primaryText)
                             
                             Text("Sign in to continue to your account")
@@ -160,11 +160,12 @@ struct LoginView: View {
                     .padding(.bottom, 24)
                 }
                 .frame(maxWidth: 480)
+                .frame(maxHeight: 500)
                 .background(RSMSColors.cardBackground)
-                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 24, bottomLeadingRadius: 48, bottomTrailingRadius: 50, topTrailingRadius: 24))
+                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 32, bottomLeadingRadius: 54, bottomTrailingRadius: 54, topTrailingRadius: 32))
                 .shadow(color: Color.black.opacity(0.06), radius: 16, x: 0, y: 4)
-                .padding(.horizontal, 10)
-                .padding(.bottom, 10)
+                .padding(.horizontal, 7)
+                .padding(.bottom, 7)
             }
             
             // MARK: - Background Watermark Image Overlay (renders on top of the sheet with lower opacity so the sheet looks more opaque)
@@ -183,18 +184,17 @@ struct LoginView: View {
             Button {
                 dismiss()
             } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "chevron.left")
-                        .fontWeight(.semibold)
-                    Text("Back")
-                        .font(RSMSFonts.headline)
-                }
-                .foregroundColor(RSMSColors.burgundy)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(.ultraThinMaterial)
-                .clipShape(Capsule())
-                .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(RSMSColors.burgundy)
+                    .frame(width: 44, height: 44)
+                    .background(.ultraThinMaterial)
+                    .clipShape(Circle())
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white.opacity(0.3), lineWidth: 1.5)
+                    )
+                    .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
             }
             .padding(.leading, RSMSSpacing.lg)
             .padding(.top, RSMSSpacing.md)
