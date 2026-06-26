@@ -197,24 +197,7 @@ struct AdminDashboardView: View {
     }
 }
 
-// MARK: - Header Curve Shape
 
-/// Custom shape that gives the header a smooth curved bottom edge
-/// instead of a harsh straight line.
-struct HeaderCurve: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: .zero)
-        path.addLine(to: CGPoint(x: rect.maxX, y: 0))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - 20))
-        path.addQuadCurve(
-            to: CGPoint(x: 0, y: rect.maxY - 20),
-            control: CGPoint(x: rect.midX, y: rect.maxY + 10)
-        )
-        path.closeSubpath()
-        return path
-    }
-}
 
 
 

@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import Supabase
 
 /// Manages state for the Payment Configuration list screen.
 /// Fetches, caches, and mutates payment gateway configurations for a store.
@@ -16,6 +17,7 @@ class PaymentConfigurationViewModel {
     // MARK: - Published State
 
     var configurations: [PaymentConfiguration] = []
+    var storeName: String = "Payment Configuration"
     var isLoading: Bool = false
     var errorMessage: String = ""
     var showError: Bool = false
@@ -50,8 +52,18 @@ class PaymentConfigurationViewModel {
     func loadConfigurations(storeID: UUID) async {
         isLoading = true
         defer { isLoading = false }
-
+        
         do {
+            if let store: Store = try? await SupabaseManager.shared.client
+                .from("store")
+                .select()
+                .eq("id", value: storeID.uuidString)
+                .single()
+                .execute()
+                .value {
+                storeName = store.name
+            }
+
             var configs = try await service.fetchConfigurations(storeID: storeID)
 
             // Ensure every provider has a row — insert defaults for any that are missing.
