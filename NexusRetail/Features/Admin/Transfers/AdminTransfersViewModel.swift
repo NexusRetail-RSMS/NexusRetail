@@ -80,6 +80,20 @@ class AdminTransfersViewModel {
             notes: notes
         )
         purchaseOrders.insert(newPO, at: 0)
+        
+        if let productIndex = products.firstIndex(where: { $0.id == product.id }) {
+            products[productIndex].warehouseQuantity += quantity
+            products[productIndex].lastUpdated = Date()
+            
+            // Auto-check pending requests that were blocked
+            for (reqIndex, request) in requests.enumerated() {
+                if request.status == .awaitingRestock && request.productID == product.id {
+                    if products[productIndex].warehouseQuantity >= request.requestedQuantity {
+                        requests[reqIndex].status = .pending
+                    }
+                }
+            }
+        }
     }
     
     func simulateDelivery(for order: AdminPurchaseOrder) {

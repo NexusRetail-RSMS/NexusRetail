@@ -110,11 +110,6 @@ struct PurchaseOrderSheet: View {
         
         withAnimation {
             viewModel.createPurchaseOrder(for: product, quantity: qty, supplier: selectedSupplier, notes: notes)
-            
-            // If linked to a request, update the request status
-            if let req = initialRequest, let index = viewModel.requests.firstIndex(where: { $0.id == req.id }) {
-                viewModel.requests[index].status = .awaitingRestock
-            }
         }
         
         dismiss()
