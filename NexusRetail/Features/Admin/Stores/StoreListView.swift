@@ -179,8 +179,7 @@ private struct StoreRow: View {
                         .font(RSMSFonts.caption)
                         .foregroundColor(RSMSColors.secondaryText)
                 }
-                .padding(.leading, 8)
-                
+                .padding(.leading, 8)                
                 Spacer()
                 
                 if let status = store.status {

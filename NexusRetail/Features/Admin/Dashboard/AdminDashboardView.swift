@@ -46,8 +46,7 @@ struct AdminDashboardView: View {
                     ProductSalesChart(
                         data: viewModel.productChartData,
                         maxValue: viewModel.productMaxValue,
-                        timeRange: $viewModel.productTimeRange
-                    )
+                        timeRange: $viewModel.productTimeRange                    )
                 }
                 .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.top, RSMSSpacing.xl)

@@ -8,8 +8,11 @@ import Supabase
 
 /// Admin shell: tabs for Dashboard, Stores, Products, Transfers, Managers.
 struct AdminTabView: View {
+    @State private var navStore = AdminNavigationStore()
+    @State private var transfersVM = AdminTransfersViewModel()
+    
     var body: some View {
-        TabView {
+        TabView(selection: $navStore.selectedTab) {
             // 1. Dashboard
             NavigationStack {
                 AdminDashboardView()
@@ -18,17 +21,17 @@ struct AdminTabView: View {
             .tabItem {
                 Label("Dashboard", systemImage: "house")
             }
-
-            // 2. Stores
+            .tag(AdminTab.dashboard)
+                        // 2. Stores
             NavigationStack {
                 StoreListView()
             }
             .tabItem {
                 Label("Stores", systemImage: "building.2")
             }
-
-            // 3. Products — now navigates to ProductCatalogueView
-            NavigationStack {
+            .tag(AdminTab.stores)
+            
+            // 3. Products            NavigationStack {
                 ProductCatalogueView()
                     // ProductCatalogueView draws its own header, so we hide
                     // the NavigationStack bar to avoid a double title.
@@ -37,26 +40,29 @@ struct AdminTabView: View {
             .tabItem {
                 Label("Products", systemImage: "tag")
             }
-
-            // 4. Transfers
+            .tag(AdminTab.products)
+                        // 4. Transfers
             NavigationStack {
-                AdminPlaceholderView(title: "Transfers", message: "Inventory transfers coming soon.")
+                AdminTransfersView()
                     .modifier(AdminToolbarModifier(title: "Transfers"))
             }
             .tabItem {
                 Label("Transfers", systemImage: "arrow.left.arrow.right")
             }
-
-            // 5. Managers
+            .tag(AdminTab.transfers)
+                        // 5. Managers
             NavigationStack {
-                AdminPlaceholderView(title: "Managers", message: "Manager and staff tracking coming soon.")
+                AdminManagersView()
                     .modifier(AdminToolbarModifier(title: "Managers"))
             }
             .tabItem {
                 Label("Managers", systemImage: "person.2")
             }
+            .tag(AdminTab.managers)
         }
         .tint(RSMSColors.burgundy)
+        .environment(navStore)
+        .environment(transfersVM)
     }
 }
 
@@ -68,6 +74,43 @@ struct AdminToolbarModifier: ViewModifier {
         content
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
+=======
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        isProfilePresented = true
+                    } label: {
+                        ZStack {
+                            Circle()
+                                .fill(Color.nexusRed)
+                                .frame(width: 32, height: 32)
+                            
+                            Text(initials(for: sessionStore.currentUser?.name))
+                                .font(.caption.bold())
+                                .foregroundColor(Color.nexusGold)
+                        }
+                    }
+                    .accessibilityLabel("Profile")
+                    .accessibilityHint("Opens your profile and settings")
+                }
+            }
+            .sheet(isPresented: $isProfilePresented) {
+                AdminProfileSheet()
+            }
+    }
+    
+    private func initials(for name: String?) -> String {
+        guard let name = name, !name.isEmpty else { return "AD" }
+        let components = name.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+        if components.count >= 2 {
+            let first = components[0].prefix(1)
+            let last = components[1].prefix(1)
+            return "\(first)\(last)".uppercased()
+        } else if let first = components.first {
+            return String(first.prefix(2)).uppercased()
+        }
+        return "AD"
+>>>>>>> origin/negi
     }
 }
 
@@ -77,6 +120,7 @@ struct AdminPlaceholderView: View {
     let message: String
 
     var body: some View {
+<<<<<<< HEAD
         ZStack {
             RSMSColors.background
                 .ignoresSafeArea()
@@ -97,8 +141,7 @@ struct AdminPlaceholderView: View {
                     .foregroundColor(RSMSColors.secondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
-            }
-        }
+            }        }
     }
 }
 
