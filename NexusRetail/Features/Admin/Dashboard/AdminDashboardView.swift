@@ -5,7 +5,7 @@
 //  Admin Dashboard — the central command view for corporate retail ops.
 //
 //  Layout (top → bottom):
-//    1. "Dashboard" header with curved bottom edge + profile avatar
+//    1. Floating "Dashboard" header matching the Stores page style
 //    2. KPI overview cards (Revenue, Active Stores, Pending Transfers, Low-Stock)
 //    3. Store Revenue chart (has its own Weekly/Monthly toggle + country filter chips)
 //    4. Top Product Sales chart (has its own separate Weekly/Monthly toggle)
@@ -37,88 +37,132 @@ struct AdminDashboardView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                // MARK: - Header
-                headerSection
-                
-                if viewModel.isLoading && viewModel.kpis == nil {
-                    // Initial full-screen loading
-                    VStack {
-                        Spacer()
-                        ProgressView("Loading Dashboard...")
-                            .padding()
-                        Spacer()
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 300)
-                } else {
-                    // MARK: - Error Banner
-                    if let errorMessage = viewModel.errorMessage {
-                        HStack {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundColor(.white)
-                            Text(errorMessage)
-                                .font(RSMSFonts.caption)
-                                .foregroundColor(.white)
+        ZStack {
+            RSMSColors.background
+                .ignoresSafeArea()
+
+            ZStack(alignment: .top) {
+                // 1. Scrollable Content
+                Group {
+                    if viewModel.isLoading && viewModel.kpis == nil {
+                        // Initial full-screen loading
+                        VStack {
                             Spacer()
-                            Button("Retry") {
-                                Task { await viewModel.load() }
-                            }
-                            .foregroundColor(.white)
-                            .font(RSMSFonts.caption.bold())
+                            ProgressView("Loading Dashboard...")
+                                .tint(RSMSColors.burgundy)
+                                .padding()
+                            Spacer()
                         }
-                        .padding()
-                        .background(Color(hex: "FF3B30"))
-                        .cornerRadius(RSMSRadius.medium)
-                        .padding(.horizontal, RSMSSpacing.lg)
-                        .padding(.top, RSMSSpacing.md)
+                        .frame(maxWidth: .infinity, minHeight: 300)
+                    } else {
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 0) {
+                                // MARK: - Error Banner
+                                if let errorMessage = viewModel.errorMessage {
+                                    HStack {
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                            .foregroundColor(.white)
+                                        Text(errorMessage)
+                                            .font(RSMSFonts.caption)
+                                            .foregroundColor(.white)
+                                        Spacer()
+                                        Button("Retry") {
+                                            Task { await viewModel.load() }
+                                        }
+                                        .foregroundColor(.white)
+                                        .font(RSMSFonts.caption.bold())
+                                    }
+                                    .padding()
+                                    .background(Color(hex: "FF3B30"))
+                                    .cornerRadius(RSMSRadius.medium)
+                                    .padding(.horizontal, RSMSSpacing.lg)
+                                    .padding(.top, RSMSSpacing.md)
+                                }
+
+                                // MARK: - Content
+                                VStack(alignment: .leading, spacing: RSMSSpacing.xl) {
+
+                                    // MARK: - KPI Overview
+                                    kpiSection
+
+                                    // MARK: - Store Revenue
+                                    RevenueBarChart(
+                                        data: viewModel.revenueChartData,
+                                        maxValue: viewModel.revenueMaxValue,
+                                        timeRange: $viewModel.revenueTimeRange
+                                    )
+                                    .contentShape(Rectangle())
+                                    .onTapGesture { isShowingSalesDetail = true }
+
+                                    // MARK: - Top Product Sales (with its own toggle)
+                                    ProductSalesChart(
+                                        data: viewModel.productChartData,
+                                        maxValue: viewModel.productMaxValue,
+                                        timeRange: $viewModel.productTimeRange
+                                    )
+                                    .contentShape(Rectangle())
+                                    .onTapGesture { isShowingProductsDetail = true }
+
+                                    // MARK: - Top Locations
+                                    TopLocationsChartView()
+                                }
+                                .padding(.horizontal, RSMSSpacing.lg)
+                                .padding(.top, RSMSSpacing.xl)
+                                .padding(.bottom, RSMSSpacing.xxl)
+                            }
+                        }
+                        .safeAreaInset(edge: .top) {
+                            Color.clear.frame(height: 70)
+                        }
+                        .refreshable {
+                            await viewModel.load()
+                        }
                     }
+                }
 
-                    // MARK: - Content
-                    VStack(alignment: .leading, spacing: RSMSSpacing.xl) {
+                // 2. Floating Header (matches Stores page style)
+                VStack(spacing: 0) {
+                    HStack {
+                        Text("Dashboard")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(RSMSColors.primaryText)
 
-                        // MARK: - KPI Overview
-                        kpiSection
+                        Spacer()
 
-                        // MARK: - Store Revenue
-                        RevenueBarChart(
-                            data: viewModel.revenueChartData,
-                            maxValue: viewModel.revenueMaxValue,
-                            timeRange: $viewModel.revenueTimeRange
-                        )
-                        .contentShape(Rectangle())
-                        .onTapGesture { isShowingSalesDetail = true }
+                        Button {
+                            isProfilePresented = true
+                        } label: {
+                            ZStack {
+                                Circle()
+                                    .fill(RSMSColors.burgundy)
+                                    .frame(width: 44, height: 44)
 
-                        // MARK: - Top Product Sales (with its own toggle)
-                        ProductSalesChart(
-                            data: viewModel.productChartData,
-                            maxValue: viewModel.productMaxValue,
-                            timeRange: $viewModel.productTimeRange
-                        )
-                        .contentShape(Rectangle())
-                        .onTapGesture { isShowingProductsDetail = true }
-
-                        // MARK: - Top Locations
-                        TopLocationsChartView()
+                                Text(initials(for: sessionStore.currentUser?.name))
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
+                        }
+                        .accessibilityLabel("Profile")
+                        .accessibilityHint("Opens your profile and settings")
                     }
                     .padding(.horizontal, RSMSSpacing.lg)
-                    .padding(.top, RSMSSpacing.xl)
-                    .padding(.bottom, RSMSSpacing.xxl)
+                    .padding(.top, 16)
+                    .padding(.bottom, 8)
                 }
+                .background(
+                    RSMSColors.background
+                        .ignoresSafeArea(edges: .top)
+                )
             }
         }
-        .refreshable {
-            await viewModel.load()
-        }
+        .toolbar(.hidden, for: .navigationBar)
         .task {
             // Only load on first appearance if we haven't loaded yet
             if viewModel.kpis == nil {
                 await viewModel.load()
             }
         }
-        .background(RSMSColors.background.ignoresSafeArea())
-        .ignoresSafeArea(edges: .top)
-        .navigationBarHidden(true)
         .sheet(isPresented: $isProfilePresented) {
             AdminProfileSheet()
         }
@@ -132,48 +176,6 @@ struct AdminDashboardView: View {
                 TopProductsDetailView(store: globalStore)
             }
         }
-    }
-
-    // MARK: - Header
-    //
-    // Just "Dashboard" title + profile avatar.
-    // Smooth curved bottom edge to eliminate the harsh line.
-    private var headerSection: some View {
-        HStack(alignment: .center) {
-            Text("Dashboard")
-                .font(.system(size: 26, weight: .bold))
-                .foregroundColor(.white)
-
-            Spacer()
-
-            Button {
-                isProfilePresented = true
-            } label: {
-                ZStack {
-                    Circle()
-                        .fill(Color.white.opacity(0.2))
-                        .frame(width: 44, height: 44)
-
-                    Text(initials(for: sessionStore.currentUser?.name))
-                        .font(.headline.bold())
-                        .foregroundColor(.white)
-                }
-            }
-            .accessibilityLabel("Profile")
-            .accessibilityHint("Opens your profile and settings")
-        }
-        .padding(.horizontal, RSMSSpacing.lg)
-        .padding(.top, 60)
-        .padding(.bottom, RSMSSpacing.xxxl)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            LinearGradient(
-                colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
-        .clipShape(HeaderCurve())
     }
 
     private func initials(for name: String?) -> String {
@@ -268,25 +270,6 @@ struct AdminDashboardView: View {
             }
             .animation(.easeInOut(duration: 0.3), value: viewModel.selectedCountry)
         }
-    }
-}
-
-// MARK: - Header Curve Shape
-
-/// Custom shape that gives the header a smooth curved bottom edge
-/// instead of a harsh straight line.
-struct HeaderCurve: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: .zero)
-        path.addLine(to: CGPoint(x: rect.maxX, y: 0))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - 20))
-        path.addQuadCurve(
-            to: CGPoint(x: 0, y: rect.maxY - 20),
-            control: CGPoint(x: rect.midX, y: rect.maxY + 10)
-        )
-        path.closeSubpath()
-        return path
     }
 }
 

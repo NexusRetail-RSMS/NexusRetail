@@ -15,7 +15,6 @@ struct AdminTabView: View {
             // 1. Dashboard
             NavigationStack {
                 AdminDashboardView()
-                    .modifier(AdminToolbarModifier(title: "Dashboard"))
             }
             .tabItem {
                 Label("Dashboard", systemImage: "house")
@@ -42,8 +41,7 @@ struct AdminTabView: View {
 
             // 4. Transfers
             NavigationStack {
-                AdminPlaceholderView(title: "Transfers", message: "Inventory transfers coming soon.")
-                    .modifier(AdminToolbarModifier(title: "Transfers"))
+                TransfersTabRoot()
             }
             .tabItem {
                 Label("Transfers", systemImage: "arrow.left.arrow.right")
@@ -110,29 +108,38 @@ private struct ManagersTabRoot: View {
     }
 }
 
-/// A view modifier that applies the common Admin toolbar (title only).
-struct AdminToolbarModifier: ViewModifier {
-    let title: String
-    var showPlusButton: Bool = false
-    var plusAction: (() -> Void)? = nil
-
-    func body(content: Content) -> some View {
-        content
-            .navigationTitle(title)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                if showPlusButton {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button {
-                            plusAction?()
-                        } label: {
-                            Image(systemName: "plus")
-                        }
-                    }
+/// Wrapper that provides a custom header for the Transfers tab matching the Stores page style.
+private struct TransfersTabRoot: View {
+    var body: some View {
+        ZStack(alignment: .top) {
+            AdminPlaceholderView(title: "Transfers", message: "Inventory transfers coming soon.")
+                .safeAreaInset(edge: .top) {
+                    Color.clear.frame(height: 70)
                 }
+
+            // Floating header matching StoreListView style
+            VStack(spacing: 0) {
+                HStack {
+                    Text("Transfers")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(RSMSColors.primaryText)
+
+                    Spacer()
+                }
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, 16)
+                .padding(.bottom, 8)
             }
+            .background(
+                RSMSColors.background
+                    .ignoresSafeArea(edges: .top)
+            )
+        }
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
+
 
 /// A reusable placeholder view for the admin tabs.
 struct AdminPlaceholderView: View {
