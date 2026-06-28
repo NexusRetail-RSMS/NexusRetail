@@ -72,9 +72,9 @@ func flagEmoji(for country: String) -> String {
 }
 
 func performanceColor(for score: Int) -> Color {
-    if score >= 90 { return Color(red: 0.13, green: 0.77, blue: 0.37) }
-    if score >= 75 { return Color(red: 1.0,  green: 0.60, blue: 0.0)  }
-    return Color(red: 0.95, green: 0.27, blue: 0.27)
+    if score >= 90 { return RSMSColors.success }
+    if score >= 75 { return RSMSColors.warning }
+    return RSMSColors.error
 }
 
 // MARK: - Bookmark Badge Shape
@@ -147,159 +147,161 @@ struct AdminManagersView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+        ZStack {
+            RSMSColors.background
+                .ignoresSafeArea()
 
-                // MARK: Search Bar
-                HStack(spacing: 10) {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
-                    TextField("Search managers, stores...", text: $searchText)
-                        .foregroundColor(.primary)
-                }
-                .padding(.vertical, 10)
-                .padding(.horizontal, 16)
-                .background(Color(UIColor.systemGray6))
-                .cornerRadius(24)
-                .padding(.horizontal)
+            ScrollView {
+                VStack(alignment: .leading, spacing: RSMSSpacing.xl) {
 
-                // MARK: Top Performers
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        Text("Top Performers")
-                            .font(.title2.bold())
+                    // MARK: Search Bar
+                    HStack(spacing: RSMSSpacing.sm) {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(RSMSColors.secondaryText)
+                        TextField("Search managers, stores...", text: $searchText)
+                            .font(RSMSFonts.body)
+                            .foregroundColor(RSMSColors.primaryText)
+                        if !searchText.isEmpty {
+                            Button { searchText = "" } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(RSMSColors.secondaryText)
+                            }
+                        }
                     }
-                    .padding(.horizontal)
+                    .padding(RSMSSpacing.sm)
+                    .background(Color.black.opacity(0.05))
+                    .cornerRadius(RSMSRadius.small)
+                    .padding(.horizontal, RSMSSpacing.lg)
 
-                    let topManagers = Array(ManagersStore.shared.managers.prefix(topCount).enumerated())
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
-                            ForEach(topManagers, id: \.element.id) { index, manager in
-                                TopPerformanceCard(manager: manager, rank: index + 1) {
+                    // MARK: Top Performers
+                    VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
+                        Text("Top Performers")
+                            .font(RSMSFonts.headline)
+                            .foregroundColor(RSMSColors.darkBrown)
+                            .padding(.horizontal, RSMSSpacing.lg)
+
+                        let topManagers = Array(ManagersStore.shared.managers.prefix(topCount).enumerated())
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: RSMSSpacing.md) {
+                                ForEach(topManagers, id: \.element.id) { index, manager in
+                                    TopPerformanceCard(manager: manager, rank: index + 1) {
+                                        editingManager = manager
+                                    }
+                                }
+                            }
+                            .scrollTargetLayout()
+                            .padding(.horizontal, RSMSSpacing.lg)
+                        }
+                        .scrollTargetBehavior(.viewAligned)
+                        .scrollPosition(id: $scrolledID)
+                        .onChange(of: scrolledID) { _, newID in
+                            if let newID = newID, let idx = topManagers.firstIndex(where: { $0.element.id == newID }) {
+                                topPerformerPage = idx
+                            }
+                        }
+
+                        // Page dots
+                        HStack(spacing: 6) {
+                            ForEach(0..<topCount, id: \.self) { i in
+                                Circle()
+                                    .fill(i == topPerformerPage ? RSMSColors.burgundy : RSMSColors.cardBorder)
+                                    .frame(width: i == topPerformerPage ? 8 : 6,
+                                           height: i == topPerformerPage ? 8 : 6)
+                                    .animation(.spring(response: 0.3), value: topPerformerPage)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, RSMSSpacing.xs)
+                    }
+
+
+                    // MARK: All Managers Header
+                    HStack(alignment: .center) {
+                        Text("All Managers")
+                            .font(RSMSFonts.headline)
+                            .foregroundColor(RSMSColors.darkBrown)
+                        Spacer()
+                        Menu {
+                            Picker(selection: $selectedCountryFilter) {
+                                Text("All Countries").tag("All")
+                                ForEach(allCountries, id: \.self) { country in
+                                    Text("\(country) \(flagEmoji(for: country))").tag(country)
+                                }
+                            } label: {
+                                Label("Country", systemImage: "globe")
+                            }
+                            .pickerStyle(.menu)
+                            
+                            Picker(selection: $selectedPerformanceSort) {
+                                ForEach(PerformanceSortOrder.allCases, id: \.self) { option in
+                                    Text(option.rawValue).tag(option)
+                                }
+                            } label: {
+                                Label("Performance", systemImage: "chart.bar.fill")
+                            }
+                            .pickerStyle(.menu)
+                            
+                            Button {
+                                isRecentlyAddedSort.toggle()
+                            } label: {
+                                Label(isRecentlyAddedSort ? "✓ Recently Added" : "Recently Added", systemImage: "clock")
+                            }
+
+                            if isFiltered {
+                                Divider()
+                                Button(role: .destructive) {
+                                    selectedCountryFilter = "All"
+                                    selectedPerformanceSort = .none
+                                    isRecentlyAddedSort = false
+                                } label: {
+                                    Label("Reset Filters", systemImage: "trash")
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "line.3.horizontal.decrease")
+                                .font(.system(size: 17, weight: .medium))
+                                .foregroundColor(isFiltered ? RSMSColors.burgundy : RSMSColors.primaryText)
+                                .frame(width: 40, height: 40)
+                                .background(isFiltered
+                                    ? RSMSColors.burgundy.opacity(0.12)
+                                    : Color.black.opacity(0.05))
+                                .clipShape(Circle())
+                        }
+                        .id("\(selectedCountryFilter)_\(selectedPerformanceSort.rawValue)")
+                    }
+                    .padding(.horizontal, RSMSSpacing.lg)
+
+                    // MARK: Manager List
+                    if filteredManagers.isEmpty {
+                        VStack(spacing: RSMSSpacing.md) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 44))
+                                .foregroundColor(RSMSColors.secondaryText)
+                            Text("Not Present")
+                                .font(RSMSFonts.headline)
+                                .foregroundColor(RSMSColors.primaryText)
+                            Text("No manager or store matches '\(searchText)'.")
+                                .font(RSMSFonts.subheadline)
+                                .foregroundColor(RSMSColors.secondaryText)
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 40)
+                        .padding(.horizontal, RSMSSpacing.xxxl)
+                    } else {
+                        VStack(spacing: RSMSSpacing.md) {
+                            ForEach(filteredManagers) { manager in
+                                ManagerListCard(manager: manager) {
                                     editingManager = manager
                                 }
                             }
                         }
-                        .scrollTargetLayout()
-                        .padding(.horizontal)
-                        .padding(.vertical, 2)  // reduced vertical padding to decrease gap
+                        .padding(.horizontal, RSMSSpacing.lg)
+                        .padding(.bottom, RSMSSpacing.xl)
                     }
-                    .scrollTargetBehavior(.viewAligned)
-                    .scrollPosition(id: $scrolledID)
-                    .onChange(of: scrolledID) { _, newID in
-                        if let newID = newID, let idx = topManagers.firstIndex(where: { $0.element.id == newID }) {
-                            topPerformerPage = idx
-                        }
-                    }
-
-                    // Page dots
-                    HStack(spacing: 6) {
-                        ForEach(0..<topCount, id: \.self) { i in
-                            Circle()
-                                .fill(i == topPerformerPage ? Color.blue : Color(UIColor.systemGray4))
-                                .frame(width: i == topPerformerPage ? 8 : 6,
-                                       height: i == topPerformerPage ? 8 : 6)
-                                .animation(.spring(response: 0.3), value: topPerformerPage)
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 2)
                 }
-
-
-                // MARK: All Managers Header
-                HStack(alignment: .center) {
-                    Text("All Managers")
-                        .font(.title2.bold())
-                    Spacer()
-                    Menu {
-                        Picker(selection: $selectedCountryFilter) {
-                            Text("All Countries").tag("All")
-                            ForEach(allCountries, id: \.self) { country in
-                                Text("\(country) \(flagEmoji(for: country))").tag(country)
-                            }
-                        } label: {
-                            Label {
-                                Text("Country\n").font(.system(size: 16, weight: .medium)) + Text(selectedCountryFilter == "All" ? "All" : selectedCountryFilter).font(.system(size: 9)).foregroundColor(.secondary)
-                            } icon: {
-                                Image(systemName: "globe")
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        
-                        Picker(selection: $selectedPerformanceSort) {
-                            ForEach(PerformanceSortOrder.allCases, id: \.self) { option in
-                                Text(option.rawValue).tag(option)
-                            }
-                        } label: {
-                            Label {
-                                Text("Performance\n").font(.system(size: 16, weight: .medium)) + Text(selectedPerformanceSort.rawValue).font(.system(size: 9)).foregroundColor(.secondary)
-                            } icon: {
-                                Image(systemName: "chart.bar.fill")
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        
-                        Button {
-                            isRecentlyAddedSort.toggle()
-                        } label: {
-                            Label(isRecentlyAddedSort ? "✓ Recently Added" : "Recently Added", systemImage: "clock")
-                        }
-
-                        if isFiltered {
-                            Divider()
-                            Button(role: .destructive) {
-                                selectedCountryFilter = "All"
-                                selectedPerformanceSort = .none
-                                isRecentlyAddedSort = false
-                            } label: {
-                                Label("Reset Filters", systemImage: "trash")
-                            }
-                        }
-                    } label: {
-                        Image(systemName: "line.3.horizontal.decrease")
-                            .font(.system(size: 17, weight: .medium))
-                            .foregroundColor(isFiltered ? .blue : .primary)
-                            .frame(width: 40, height: 40)
-                            .background(isFiltered
-                                ? Color.blue.opacity(0.12)
-                                : Color(UIColor.systemGray6))
-                            .clipShape(Circle())
-                    }
-                    .id("\(selectedCountryFilter)_\(selectedPerformanceSort.rawValue)")
-                }
-                .padding(.horizontal)
-
-                // MARK: Manager List
-                if filteredManagers.isEmpty {
-                    VStack(spacing: 12) {
-                        Image(systemName: "magnifyingglass")
-                            .font(.system(size: 44))
-                            .foregroundColor(.secondary)
-                        Text("Not Present")
-                            .font(.title3.bold())
-                            .foregroundColor(.primary)
-                        Text("No manager or store matches '\(searchText)'.")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 40)
-                    .padding(.horizontal, 32)
-                } else {
-                    VStack(spacing: 10) {
-                        ForEach(filteredManagers) { manager in
-                            ManagerListCard(manager: manager) {
-                                editingManager = manager
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
-                    .padding(.bottom, 20)
-                }
+                .padding(.top, RSMSSpacing.sm)
             }
-            .padding(.top, 8)
         }
         .sheet(item: $editingManager) { mgr in
             if let idx = ManagersStore.shared.managers.firstIndex(where: { $0.id == mgr.id }) {
@@ -331,113 +333,115 @@ struct TopPerformanceCard: View {
 
     private var rankColor: Color {
         switch rank {
-        case 1:  return Color(red: 1.00, green: 0.72, blue: 0.16)  // gold
-        case 2:  return Color(red: 0.72, green: 0.72, blue: 0.75)  // silver
-        default: return Color(red: 0.80, green: 0.55, blue: 0.30)  // bronze
+        case 1:  return Color(hex: "D4A017")  // gold
+        case 2:  return Color(hex: "8B8B8D")  // silver
+        default: return Color(hex: "A0522D")  // bronze
         }
     }
 
     var body: some View {
         NavigationLink(destination: ManagerDetailView(manager: manager)) {
             ZStack(alignment: .topLeading) {
-                // Card
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(UIColor.systemBackground))
-                    // shadow removed as requested
+                // Card background
+                RoundedRectangle(cornerRadius: RSMSRadius.large)
+                    .fill(RSMSColors.cardBackground)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(Color(UIColor.systemGray5), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: RSMSRadius.large)
+                            .stroke(RSMSColors.cardBorder, lineWidth: 1)
                     )
+                    .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
 
                 VStack(spacing: 0) {
-                    // Top Row: Performance Score (Top Right)
+                    // Top Row: Performance Score badge
                     HStack {
                         Spacer()
                         Text("\(manager.performanceScore)%")
-                            .font(.caption.weight(.semibold))
+                            .font(RSMSFonts.caption.weight(.semibold))
                             .foregroundColor(performanceColor(for: manager.performanceScore))
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(performanceColor(for: manager.performanceScore).opacity(0.13))
-                            .cornerRadius(12)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(performanceColor(for: manager.performanceScore).opacity(0.12))
+                            .cornerRadius(RSMSRadius.small)
                     }
-                    
-                    Spacer()
-                    
-                    // Middle Row: Profile, Name, and Store Name vertically aligned at center of card
-                    HStack(alignment: .center, spacing: 16) {
-                        // Avatar (Left Center)
+
+                    // Middle: Avatar + Name + Store
+                    HStack(alignment: .center, spacing: RSMSSpacing.md) {
+                        // Avatar
                         ZStack {
                             Circle()
-                                .fill(Color.blue.opacity(0.12))
-                                .frame(width: 52, height: 52)
+                                .fill(RSMSColors.burgundy.opacity(0.1))
+                                .frame(width: 44, height: 44)
                             if let data = manager.photoData, let uiImage = UIImage(data: data) {
                                 Image(uiImage: uiImage)
                                     .resizable()
                                     .scaledToFill()
-                                    .frame(width: 52, height: 52)
+                                    .frame(width: 44, height: 44)
                                     .clipShape(Circle())
                             } else {
                                 Image(systemName: "person.fill")
-                                    .foregroundColor(.blue)
-                                    .font(.system(size: 22))
+                                    .foregroundColor(RSMSColors.burgundy)
+                                    .font(.system(size: 18))
                             }
                         }
-                        
-                        VStack(alignment: .leading, spacing: 4) {
+
+                        VStack(alignment: .leading, spacing: 2) {
                             Text(manager.name)
-                                .font(.title3.bold())
-                                .foregroundColor(.primary)
-                            
+                                .font(RSMSFonts.headline)
+                                .foregroundColor(RSMSColors.primaryText)
+                                .lineLimit(1)
+
                             Text(manager.storeName)
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
+                                .font(RSMSFonts.caption)
+                                .foregroundColor(RSMSColors.secondaryText)
+                                .lineLimit(1)
                         }
-                        
+
                         Spacer()
                     }
-                    
-                    Spacer()
-                    
+                    .padding(.top, RSMSSpacing.xs)
+
+                    Spacer(minLength: RSMSSpacing.sm)
+
                     // Bottom Row: Country & Revenue
                     HStack(alignment: .bottom) {
                         HStack(spacing: 4) {
                             Text(flagEmoji(for: manager.country))
-                                .font(.caption)
+                                .font(RSMSFonts.caption)
                             Text(manager.country)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                                .font(RSMSFonts.caption)
+                                .foregroundColor(RSMSColors.secondaryText)
+                                .lineLimit(1)
                         }
-                        
+
                         Spacer()
-                        
+
                         VStack(alignment: .trailing, spacing: 1) {
                             Text("Revenue")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
+                                .font(.system(size: 10))
+                                .foregroundColor(RSMSColors.secondaryText)
                             Text(manager.revenue)
-                                .font(.title3.weight(.bold))
-                                .foregroundColor(.primary)
+                                .font(RSMSFonts.headline)
+                                .foregroundColor(RSMSColors.primaryText)
                         }
                     }
                 }
-                .padding(16)
-                .frame(height: 160)
+                .padding(RSMSSpacing.md)
+                .frame(height: 140)
 
                 // Bookmark badge (top-left)
                 ZStack {
                     BookmarkShape()
                         .fill(rankColor)
-                        .frame(width: 26, height: 36)
-                        .shadow(color: rankColor.opacity(0.4), radius: 4, x: 0, y: 2)
+                        .frame(width: 24, height: 32)
+                        .shadow(color: rankColor.opacity(0.3), radius: 3, x: 0, y: 2)
                     Text("\(rank)")
-                        .font(.system(size: 11, weight: .bold))
+                        .font(.system(size: 10, weight: .bold))
                         .foregroundColor(.white)
                         .offset(y: -2)
                 }
-                .offset(x: 29, y: 0)
+                .offset(x: 24, y: 0)
             }
-            .frame(width: 300)
+            .frame(width: 280)
         }
         .buttonStyle(.plain)
         .contextMenu {
@@ -446,14 +450,11 @@ struct TopPerformanceCard: View {
             } label: {
                 Label("Edit", systemImage: "square.and.pencil")
             }
-            .tint(.black)
-            .foregroundStyle(.black)
             Button(role: .destructive) {
                 ManagersStore.shared.delete(manager: manager)
             } label: {
                 Label("Delete", systemImage: "trash")
             }
-            .tint(.red)
         }
     }
 }
@@ -466,39 +467,39 @@ struct ManagerListCard: View {
 
     var body: some View {
         NavigationLink(destination: ManagerDetailView(manager: manager)) {
-            HStack(spacing: 14) {
+            HStack(spacing: RSMSSpacing.md) {
                 // Avatar
                 ZStack {
                     Circle()
-                        .fill(Color.blue.opacity(0.12))
-                        .frame(width: 50, height: 50)
+                        .fill(RSMSColors.burgundy.opacity(0.1))
+                        .frame(width: 48, height: 48)
                     if let data = manager.photoData, let uiImage = UIImage(data: data) {
                         Image(uiImage: uiImage)
                             .resizable()
                             .scaledToFill()
-                            .frame(width: 50, height: 50)
+                            .frame(width: 48, height: 48)
                             .clipShape(Circle())
                     } else {
                         Image(systemName: "person.fill")
-                            .foregroundColor(.blue)
-                            .font(.system(size: 22))
+                            .foregroundColor(RSMSColors.burgundy)
+                            .font(.system(size: 20))
                     }
                 }
 
                 // Text info
                 VStack(alignment: .leading, spacing: 3) {
                     Text(manager.storeName)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundColor(.primary)
+                        .font(RSMSFonts.subheadline.weight(.semibold))
+                        .foregroundColor(RSMSColors.primaryText)
                     Text(manager.name)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundColor(.secondary)
+                        .font(RSMSFonts.subheadline)
+                        .foregroundColor(RSMSColors.secondaryText)
                     HStack(spacing: 4) {
                         Text(flagEmoji(for: manager.country))
-                            .font(.caption)
+                            .font(RSMSFonts.caption)
                         Text(manager.country)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                            .font(RSMSFonts.caption)
+                            .foregroundColor(RSMSColors.secondaryText)
                     }
                 }
 
@@ -506,23 +507,26 @@ struct ManagerListCard: View {
 
                 // Performance badge
                 Text("\(manager.performanceScore)%")
-                    .font(.caption.weight(.semibold))
+                    .font(RSMSFonts.caption.weight(.semibold))
                     .foregroundColor(performanceColor(for: manager.performanceScore))
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
                     .background(performanceColor(for: manager.performanceScore).opacity(0.12))
-                    .cornerRadius(12)
+                    .cornerRadius(RSMSRadius.small)
 
                 // Chevron
                 Image(systemName: "chevron.right")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(Color(UIColor.tertiaryLabel))
+                    .foregroundColor(RSMSColors.secondaryText)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-            .background(Color(UIColor.systemBackground))
-            .cornerRadius(18)
-            .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 3)
+            .padding(RSMSSpacing.lg)
+            .background(RSMSColors.cardBackground)
+            .cornerRadius(RSMSRadius.large)
+            .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
+            .overlay(
+                RoundedRectangle(cornerRadius: RSMSRadius.large)
+                    .stroke(RSMSColors.cardBorder, lineWidth: 1)
+            )
         }
         .buttonStyle(.plain)
         .contextMenu {
@@ -531,14 +535,11 @@ struct ManagerListCard: View {
             } label: {
                 Label("Edit", systemImage: "square.and.pencil")
             }
-            .tint(.black)
-            .foregroundStyle(.black)
             Button(role: .destructive) {
                 ManagersStore.shared.delete(manager: manager)
             } label: {
                 Label("Delete", systemImage: "trash")
             }
-            .tint(.red)
         }
     }
 }

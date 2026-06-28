@@ -24,11 +24,11 @@ struct ManagerDetailView: View {
             VStack(spacing: 0) {
 
                 // ── Header ──────────────────────────────────────────────
-                VStack(spacing: 12) {
+                VStack(spacing: RSMSSpacing.md) {
                     // Avatar
                     ZStack {
                         Circle()
-                            .fill(Color(red: 70/255, green: 65/255, blue: 95/255))
+                            .fill(RSMSColors.burgundy.opacity(0.15))
                             .frame(width: 100, height: 100)
 
                         if let data = manager.photoData, let uiImage = UIImage(data: data) {
@@ -41,43 +41,41 @@ struct ManagerDetailView: View {
                             Image(systemName: "person.fill")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 55, height: 55)
-                                .foregroundColor(.white)
-                                .offset(y: 6)
-                                .clipShape(Circle())
+                                .frame(width: 50, height: 50)
+                                .foregroundColor(RSMSColors.burgundy)
                         }
                     }
-                    .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 4)
+                    .shadow(color: RSMSColors.burgundy.opacity(0.15), radius: 10, x: 0, y: 4)
 
                     // Full name on one line
                     Text(manager.name)
-                        .font(.title2.bold())
-                        .foregroundColor(.primary)
+                        .font(RSMSFonts.title)
+                        .foregroundColor(RSMSColors.primaryText)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.top, 24)
-                .padding(.bottom, 10)
-                .background(Color(UIColor.systemGroupedBackground))
+                .padding(.top, RSMSSpacing.xxl)
+                .padding(.bottom, RSMSSpacing.md)
+                .background(RSMSColors.background)
 
                 // ── Contact Info ────────────────────────────────────────
                 DetailSection(title: "CONTACT") {
                     if !manager.phone.isEmpty {
-                        DetailRow(icon: "phone.fill", iconColor: .green, label: manager.phone)
+                        DetailRow(icon: "phone.fill", iconColor: RSMSColors.success, label: manager.phone)
                     }
                     if !manager.phone.isEmpty && (!manager.email.isEmpty || !manager.address.isEmpty) {
                         Divider().padding(.horizontal, 7)
                     }
                     if !manager.email.isEmpty {
-                        DetailRow(icon: "envelope.fill", iconColor: .blue, label: manager.email)
+                        DetailRow(icon: "envelope.fill", iconColor: RSMSColors.burgundy, label: manager.email)
                     }
                     if !manager.email.isEmpty && !manager.address.isEmpty {
                         Divider().padding(.horizontal, 7)
                     }
                     if !manager.address.isEmpty {
-                        DetailRow(icon: "mappin.circle.fill", iconColor: .red, label: manager.address)
+                        DetailRow(icon: "mappin.circle.fill", iconColor: RSMSColors.error, label: manager.address)
                     }
                     if manager.phone.isEmpty && manager.email.isEmpty && manager.address.isEmpty {
-                        DetailRow(icon: "info.circle.fill", iconColor: .gray, label: "No contact info available")
+                        DetailRow(icon: "info.circle.fill", iconColor: RSMSColors.secondaryText, label: "No contact info available")
                     }
                 }
 
@@ -85,7 +83,7 @@ struct ManagerDetailView: View {
                 DetailSection(title: "STORE") {
                     DetailRow(
                         icon: "building.2.fill",
-                        iconColor: Color(red: 1.0, green: 0.60, blue: 0.0),
+                        iconColor: RSMSColors.warning,
                         label: manager.storeName.isEmpty ? "Not Assigned" : manager.storeName,
                         isSecondary: manager.storeName.isEmpty
                     )
@@ -96,17 +94,18 @@ struct ManagerDetailView: View {
                     // Revenue
                     HStack {
                         Image(systemName: "dollarsign.circle.fill")
-                            .foregroundColor(.green)
+                            .foregroundColor(RSMSColors.success)
                             .font(.system(size: 22))
                             .frame(width: 32)
                         Text("Revenue")
-                            .foregroundColor(.primary)
+                            .font(RSMSFonts.body)
+                            .foregroundColor(RSMSColors.primaryText)
                         Spacer()
                         Text(manager.revenue.isEmpty ? "$0" : manager.revenue)
-                            .font(.body.weight(.semibold))
-                            .foregroundColor(.primary)
+                            .font(RSMSFonts.body.weight(.semibold))
+                            .foregroundColor(RSMSColors.primaryText)
                     }
-                    .padding(.horizontal, 16)
+                    .padding(.horizontal, RSMSSpacing.lg)
                     .padding(.vertical, 11)
 
                     Divider().padding(.horizontal, 7)
@@ -114,17 +113,18 @@ struct ManagerDetailView: View {
                     // Products sold
                     HStack {
                         Image(systemName: "shippingbox.fill")
-                            .foregroundColor(.purple)
+                            .foregroundColor(RSMSColors.burgundy)
                             .font(.system(size: 22))
                             .frame(width: 32)
                         Text("Products Sold")
-                            .foregroundColor(.primary)
+                            .font(RSMSFonts.body)
+                            .foregroundColor(RSMSColors.primaryText)
                         Spacer()
                         Text("\(manager.productsSold)")
-                            .font(.body.weight(.semibold))
-                            .foregroundColor(.primary)
+                            .font(RSMSFonts.body.weight(.semibold))
+                            .foregroundColor(RSMSColors.primaryText)
                     }
-                    .padding(.horizontal, 16)
+                    .padding(.horizontal, RSMSSpacing.lg)
                     .padding(.vertical, 11)
 
                     Divider().padding(.horizontal, 7)
@@ -137,19 +137,20 @@ struct ManagerDetailView: View {
                                 .font(.system(size: 22))
                                 .frame(width: 32)
                             Text("Performance Score")
-                                .foregroundColor(.primary)
+                                .font(RSMSFonts.body)
+                                .foregroundColor(RSMSColors.primaryText)
                             Spacer()
                             Text("\(manager.performanceScore)%")
-                                .font(.body.weight(.bold))
+                                .font(RSMSFonts.body.weight(.bold))
                                 .foregroundColor(performanceColor(for: manager.performanceScore))
                         }
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, RSMSSpacing.lg)
 
                         // Progress bar
                         GeometryReader { geo in
                             ZStack(alignment: .leading) {
                                 RoundedRectangle(cornerRadius: 6)
-                                    .fill(Color(UIColor.systemGray5))
+                                    .fill(RSMSColors.cardBorder)
                                     .frame(height: 8)
 
                                 RoundedRectangle(cornerRadius: 6)
@@ -162,16 +163,16 @@ struct ManagerDetailView: View {
                             }
                         }
                         .frame(height: 8)
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 12)
+                        .padding(.horizontal, RSMSSpacing.lg)
+                        .padding(.bottom, RSMSSpacing.md)
                     }
-                    .padding(.top, 12)
+                    .padding(.top, RSMSSpacing.md)
                 }
 
-                Spacer(minLength: 32)
+                Spacer(minLength: RSMSSpacing.xxxl)
             }
         }
-        .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
+        .background(RSMSColors.background.ignoresSafeArea())
         .navigationBarBackButtonHidden(true)
         .toolbar(.visible, for: .navigationBar)
         .toolbar {
@@ -184,7 +185,7 @@ struct ManagerDetailView: View {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 16, weight: .semibold))
                     }
-                    .foregroundColor(.blue)
+                    .foregroundColor(RSMSColors.burgundy)
                 }
             }
 
@@ -194,8 +195,8 @@ struct ManagerDetailView: View {
                     isEditPresented = true
                 } label: {
                     Text("Edit")
-                        .font(.body)
-                        .foregroundColor(.blue)
+                        .font(RSMSFonts.body)
+                        .foregroundColor(RSMSColors.burgundy)
                 }
             }
         }
@@ -214,20 +215,24 @@ private struct DetailSection<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(title)
-                .font(.caption.weight(.semibold))
-                .foregroundColor(.secondary)
-                .padding(.horizontal, 20)
-                .padding(.top, 10)
+                .font(RSMSFonts.caption.weight(.semibold))
+                .foregroundColor(RSMSColors.secondaryText)
+                .padding(.horizontal, RSMSSpacing.xl)
+                .padding(.top, RSMSSpacing.md)
                 .padding(.bottom, 6)
 
             VStack(spacing: 0) {
                 content()
             }
-            .background(Color(UIColor.secondarySystemGroupedBackground))
-            .cornerRadius(24)
-            .padding(.horizontal, 16)
+            .background(RSMSColors.cardBackground)
+            .cornerRadius(RSMSRadius.large)
+            .overlay(
+                RoundedRectangle(cornerRadius: RSMSRadius.large)
+                    .stroke(RSMSColors.cardBorder, lineWidth: 1)
+            )
+            .padding(.horizontal, RSMSSpacing.lg)
         }
-        .padding(.bottom, 4)
+        .padding(.bottom, RSMSSpacing.xs)
     }
 }
 
@@ -238,19 +243,20 @@ private struct DetailRow: View {
     var isSecondary: Bool = false
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: RSMSSpacing.md) {
             Image(systemName: icon)
                 .foregroundColor(iconColor)
                 .font(.system(size: 22))
                 .frame(width: 32)
 
             Text(label)
-                .foregroundColor(isSecondary ? .secondary : .primary)
+                .font(RSMSFonts.body)
+                .foregroundColor(isSecondary ? RSMSColors.secondaryText : RSMSColors.primaryText)
                 .multilineTextAlignment(.leading)
 
             Spacer()
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, RSMSSpacing.lg)
         .padding(.vertical, 11)
     }
 }
@@ -290,14 +296,14 @@ struct EditManagerSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 24) {
+                VStack(spacing: RSMSSpacing.xxl) {
 
                     // ── Photo Picker ──────────────────────────────────
-                    VStack(spacing: 12) {
+                    VStack(spacing: RSMSSpacing.md) {
                         PhotosPicker(selection: $photoPickerItem, matching: .images) {
                             ZStack {
                                 Circle()
-                                    .fill(Color(red: 70/255, green: 65/255, blue: 95/255))
+                                    .fill(RSMSColors.burgundy.opacity(0.15))
                                     .frame(width: 120, height: 120)
 
                                 if let data = selectedImageData, let uiImage = UIImage(data: data) {
@@ -310,10 +316,8 @@ struct EditManagerSheet: View {
                                     Image(systemName: "person.fill")
                                         .resizable()
                                         .scaledToFit()
-                                        .frame(width: 70, height: 70)
-                                        .foregroundColor(.white)
-                                        .offset(y: 8)
-                                        .clipShape(Circle())
+                                        .frame(width: 60, height: 60)
+                                        .foregroundColor(RSMSColors.burgundy)
                                 }
                             }
                         }
@@ -321,16 +325,16 @@ struct EditManagerSheet: View {
 
                         PhotosPicker(selection: $photoPickerItem, matching: .images) {
                             Text(selectedImageData == nil ? "Add Photo" : "Change Photo")
-                                .font(.subheadline.weight(.medium))
-                                .foregroundColor(.primary)
-                                .padding(.horizontal, 16)
+                                .font(RSMSFonts.subheadline.weight(.medium))
+                                .foregroundColor(RSMSColors.primaryText)
+                                .padding(.horizontal, RSMSSpacing.lg)
                                 .padding(.vertical, 6)
-                                .background(Color(UIColor.secondarySystemFill))
+                                .background(RSMSColors.burgundy.opacity(0.1))
                                 .clipShape(Capsule())
                         }
                         .buttonStyle(.plain)
                     }
-                    .padding(.top, 10)
+                    .padding(.top, RSMSSpacing.md)
                     .onChange(of: photoPickerItem) { _, newItem in
                         Task {
                             if let data = try? await newItem?.loadTransferable(type: Data.self) {
@@ -342,29 +346,35 @@ struct EditManagerSheet: View {
                     // ── Name ──────────────────────────────────────────
                     VStack(spacing: 0) {
                         TextField("First name", text: $firstName)
-                            .padding(.horizontal, 16)
+                            .font(RSMSFonts.body)
+                            .padding(.horizontal, RSMSSpacing.lg)
                             .padding(.vertical, 11)
 
                         Divider()
                             .padding(.horizontal, 7)
 
                         TextField("Last name", text: $lastName)
-                            .padding(.horizontal, 16)
+                            .font(RSMSFonts.body)
+                            .padding(.horizontal, RSMSSpacing.lg)
                             .padding(.vertical, 11)
                     }
-                    .background(Color(UIColor.secondarySystemGroupedBackground))
-                    .cornerRadius(24)
+                    .background(RSMSColors.cardBackground)
+                    .cornerRadius(RSMSRadius.large)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: RSMSRadius.large)
+                            .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                    )
 
                     // ── Contact Fields ────────────────────────────────
-                    VStack(spacing: 16) {
-                        contactField(icon: "phone.fill", iconColor: .green, placeholder: "Phone", text: $phone)
-                        contactField(icon: "envelope.fill", iconColor: .blue, placeholder: "Email", text: $email)
-                        contactField(icon: "mappin.circle.fill", iconColor: .red, placeholder: "Address", text: $address)
+                    VStack(spacing: RSMSSpacing.lg) {
+                        contactField(icon: "phone.fill", iconColor: RSMSColors.success, placeholder: "Phone", text: $phone)
+                        contactField(icon: "envelope.fill", iconColor: RSMSColors.burgundy, placeholder: "Email", text: $email)
+                        contactField(icon: "mappin.circle.fill", iconColor: RSMSColors.error, placeholder: "Address", text: $address)
                     }
                 }
                 .padding()
             }
-            .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
+            .background(RSMSColors.background.ignoresSafeArea())
             .navigationTitle("Edit Manager")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -372,7 +382,7 @@ struct EditManagerSheet: View {
                     Button { dismiss() } label: {
                         Image(systemName: "xmark")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.primary)
+                            .foregroundColor(RSMSColors.primaryText)
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -391,7 +401,7 @@ struct EditManagerSheet: View {
                     } label: {
                         Image(systemName: "checkmark")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(isFormValid ? .blue : Color(UIColor.tertiaryLabel))
+                            .foregroundColor(isFormValid ? RSMSColors.burgundy : RSMSColors.disabled)
                     }
                     .disabled(!isFormValid)
                 }
@@ -401,17 +411,22 @@ struct EditManagerSheet: View {
 
     @ViewBuilder
     private func contactField(icon: String, iconColor: Color, placeholder: String, text: Binding<String>) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: RSMSSpacing.md) {
             Image(systemName: icon)
                 .foregroundColor(iconColor)
                 .font(.system(size: 20))
                 .frame(width: 28)
 
             TextField(placeholder, text: text)
+                .font(RSMSFonts.body)
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, RSMSSpacing.lg)
         .padding(.vertical, 11)
-        .background(Color(UIColor.secondarySystemGroupedBackground))
-        .cornerRadius(24)
+        .background(RSMSColors.cardBackground)
+        .cornerRadius(RSMSRadius.large)
+        .overlay(
+            RoundedRectangle(cornerRadius: RSMSRadius.large)
+                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+        )
     }
 }

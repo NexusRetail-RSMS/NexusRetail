@@ -37,13 +37,13 @@ struct NewManagerSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 24) {
+                VStack(spacing: RSMSSpacing.xxl) {
                     // Profile Photo Picker Placeholder
-                    VStack(spacing: 12) {
+                    VStack(spacing: RSMSSpacing.md) {
                         PhotosPicker(selection: $photoPickerItem, matching: .images) {
                             ZStack {
                                 Circle()
-                                    .fill(Color(red: 70/255, green: 65/255, blue: 95/255))
+                                    .fill(RSMSColors.burgundy.opacity(0.15))
                                     .frame(width: 120, height: 120)
                                 
                                 if let data = selectedImageData, let uiImage = UIImage(data: data) {
@@ -56,10 +56,8 @@ struct NewManagerSheet: View {
                                     Image(systemName: "person.fill")
                                         .resizable()
                                         .scaledToFit()
-                                        .frame(width: 70, height: 70)
-                                        .foregroundColor(.white)
-                                        .offset(y: 8)
-                                        .clipShape(Circle())
+                                        .frame(width: 60, height: 60)
+                                        .foregroundColor(RSMSColors.burgundy)
                                 }
                             }
                         }
@@ -67,16 +65,16 @@ struct NewManagerSheet: View {
                         
                         PhotosPicker(selection: $photoPickerItem, matching: .images) {
                             Text("Add Photo")
-                                .font(.subheadline.weight(.medium))
-                                .foregroundColor(.primary)
-                                .padding(.horizontal, 16)
+                                .font(RSMSFonts.subheadline.weight(.medium))
+                                .foregroundColor(RSMSColors.primaryText)
+                                .padding(.horizontal, RSMSSpacing.lg)
                                 .padding(.vertical, 6)
-                                .background(Color(UIColor.secondarySystemFill))
+                                .background(RSMSColors.burgundy.opacity(0.1))
                                 .clipShape(Capsule())
                         }
                         .buttonStyle(.plain)
                     }
-                    .padding(.top, 10)
+                    .padding(.top, RSMSSpacing.md)
                     .onChange(of: photoPickerItem) { _, newItem in
                         Task {
                             if let data = try? await newItem?.loadTransferable(type: Data.self) {
@@ -88,21 +86,27 @@ struct NewManagerSheet: View {
                     // Name Form Card
                     VStack(spacing: 0) {
                         TextField("First name", text: $firstName)
-                            .padding(.horizontal, 16)
+                            .font(RSMSFonts.body)
+                            .padding(.horizontal, RSMSSpacing.lg)
                             .padding(.vertical, 11)
                         
                         Divider()
                             .padding(.horizontal, 7)
                         
                         TextField("Last name", text: $lastName)
-                            .padding(.horizontal, 16)
+                            .font(RSMSFonts.body)
+                            .padding(.horizontal, RSMSSpacing.lg)
                             .padding(.vertical, 11)
                     }
-                    .background(Color(UIColor.secondarySystemGroupedBackground))
-                    .cornerRadius(24)
+                    .background(RSMSColors.cardBackground)
+                    .cornerRadius(RSMSRadius.large)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: RSMSRadius.large)
+                            .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                    )
                     
                     // Dynamic Attribute Cards
-                    VStack(spacing: 16) {
+                    VStack(spacing: RSMSSpacing.lg) {
                         dynamicAttributeSection(
                             items: $phones,
                             defaultLabel: "mobile",
@@ -128,23 +132,28 @@ struct NewManagerSheet: View {
                     // Country Card
                     HStack {
                         Text("Country")
-                            .foregroundColor(.primary)
+                            .font(RSMSFonts.body)
+                            .foregroundColor(RSMSColors.primaryText)
                         Spacer()
                         Picker("Country", selection: $selectedCountry) {
                             ForEach(countries, id: \.self) { country in
                                 Text(country).tag(country)
                             }
                         }
-                        .tint(.blue)
+                        .tint(RSMSColors.burgundy)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 4)
-                    .background(Color(UIColor.secondarySystemGroupedBackground))
-                    .cornerRadius(24)
+                    .padding(.horizontal, RSMSSpacing.lg)
+                    .padding(.vertical, RSMSSpacing.xs)
+                    .background(RSMSColors.cardBackground)
+                    .cornerRadius(RSMSRadius.large)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: RSMSRadius.large)
+                            .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                    )
                 }
                 .padding()
             }
-            .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
+            .background(RSMSColors.background.ignoresSafeArea())
             .navigationTitle("New Manager")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -154,7 +163,7 @@ struct NewManagerSheet: View {
                     } label: {
                         Image(systemName: "xmark")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.primary)
+                            .foregroundColor(RSMSColors.primaryText)
                     }
                 }
                 
@@ -182,7 +191,7 @@ struct NewManagerSheet: View {
                     } label: {
                         Image(systemName: "checkmark")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(isFormValid ? .blue : Color(UIColor.tertiaryLabel))
+                            .foregroundColor(isFormValid ? RSMSColors.burgundy : RSMSColors.disabled)
                     }
                     .disabled(!isFormValid)
                 }
@@ -198,14 +207,14 @@ struct NewManagerSheet: View {
     ) -> some View {
         VStack(spacing: 0) {
             ForEach(items) { $item in
-                HStack(spacing: 12) {
+                HStack(spacing: RSMSSpacing.md) {
                     Button {
                         if let idx = items.wrappedValue.firstIndex(where: { $0.id == item.id }) {
                             items.wrappedValue.remove(at: idx)
                         }
                     } label: {
                         Image(systemName: "minus.circle.fill")
-                            .foregroundColor(.red)
+                            .foregroundColor(RSMSColors.error)
                             .font(.title3)
                     }
                     .buttonStyle(.plain)
@@ -215,10 +224,11 @@ struct NewManagerSheet: View {
                     } label: {
                         HStack(spacing: 4) {
                             Text(item.label)
-                                .foregroundColor(.blue)
+                                .font(RSMSFonts.subheadline)
+                                .foregroundColor(RSMSColors.burgundy)
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(Color(UIColor.tertiaryLabel))
+                                .foregroundColor(RSMSColors.secondaryText)
                         }
                     }
                     .buttonStyle(.plain)
@@ -227,8 +237,9 @@ struct NewManagerSheet: View {
                         .frame(height: 20)
                     
                     TextField(placeholder, text: $item.value)
+                        .font(RSMSFonts.body)
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.vertical, 11)
                 
                 Divider()
@@ -238,22 +249,27 @@ struct NewManagerSheet: View {
             Button {
                 items.wrappedValue.append(ContactFieldItem(label: defaultLabel, value: ""))
             } label: {
-                HStack(spacing: 12) {
+                HStack(spacing: RSMSSpacing.md) {
                     Image(systemName: "plus.circle.fill")
-                        .foregroundColor(.green)
+                        .foregroundColor(RSMSColors.success)
                         .font(.title3)
                     
                     Text(addTitle)
-                        .foregroundColor(.primary)
+                        .font(RSMSFonts.body)
+                        .foregroundColor(RSMSColors.primaryText)
                     
                     Spacer()
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.vertical, 11)
             }
             .buttonStyle(.plain)
         }
-        .background(Color(UIColor.secondarySystemGroupedBackground))
-        .cornerRadius(24)
+        .background(RSMSColors.cardBackground)
+        .cornerRadius(RSMSRadius.large)
+        .overlay(
+            RoundedRectangle(cornerRadius: RSMSRadius.large)
+                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+        )
     }
 }

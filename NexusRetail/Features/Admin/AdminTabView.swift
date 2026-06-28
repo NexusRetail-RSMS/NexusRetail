@@ -51,10 +51,7 @@ struct AdminTabView: View {
 
             // 5. Managers
             NavigationStack {
-                AdminManagersView()
-                    .modifier(AdminToolbarModifier(title: "Managers", showPlusButton: true, plusAction: {
-                        isAddManagerPresented = true
-                    }))
+                ManagersTabRoot(isAddManagerPresented: $isAddManagerPresented)
             }
             .tabItem {
                 Label("Managers", systemImage: "person.2")
@@ -64,6 +61,52 @@ struct AdminTabView: View {
         .sheet(isPresented: $isAddManagerPresented) {
             NewManagerSheet()
         }
+    }
+}
+
+/// Wrapper that provides a custom header for the Managers tab matching the Stores page style.
+private struct ManagersTabRoot: View {
+    @Binding var isAddManagerPresented: Bool
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            AdminManagersView()
+                .safeAreaInset(edge: .top) {
+                    Color.clear.frame(height: 70)
+                }
+
+            // Floating header matching StoreListView style
+            VStack(spacing: 0) {
+                HStack {
+                    Text("Managers")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(RSMSColors.primaryText)
+
+                    Spacer()
+
+                    Button {
+                        isAddManagerPresented = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.system(size: 20, weight: .medium))
+                            .foregroundColor(RSMSColors.burgundy)
+                            .frame(width: 44, height: 44)
+                            .background(RSMSColors.burgundy.opacity(0.1))
+                            .clipShape(Circle())
+                    }
+                    .accessibilityLabel("Add new manager")
+                }
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, 16)
+                .padding(.bottom, 8)
+            }
+            .background(
+                RSMSColors.background
+                    .ignoresSafeArea(edges: .top)
+            )
+        }
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
 
