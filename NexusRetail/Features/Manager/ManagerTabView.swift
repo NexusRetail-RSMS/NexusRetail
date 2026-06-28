@@ -21,12 +21,7 @@ struct ManagerTabView: View {
 
             // 1. Inventory
             NavigationStack {
-                ManagerPlaceholderView(
-                    title: "Inventory",
-                    message: "View store stock levels and configure low-stock alerts.",
-                    icon: "box.truck.fill"
-                )
-                .modifier(ManagerToolbarModifier(title: "Inventory"))
+                InventoryDashboardView()
             }
             .tabItem {
                 Label("Inventory", systemImage: "square.grid.3x3.fill")
