@@ -13,10 +13,8 @@ import Charts
 // MARK: - Time Range
 
 enum StoreChartTimeRange: String, CaseIterable, Identifiable {
-    case day = "D"
-    case week = "W"
     case month = "M"
-    case year = "Y"
+    case quarter = "Q"
     var id: String { rawValue }
 }
 
@@ -54,17 +52,16 @@ struct SalesDetailView: View {
 
     private var periodLabel: String {
         switch selectedRange {
-        case .day:   return "Today"
-        case .week:  return "This Week"
         case .month: return "This Month"
-        case .year:  return "This Year"
+        case .quarter: return "This Quarter"
         }
     }
 
     // MARK: - Body
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
 
             // Back button + title
             HStack {
@@ -173,8 +170,56 @@ struct SalesDetailView: View {
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.top, RSMSSpacing.lg)
             .animation(.easeInOut(duration: 0.3), value: selectedRange)
+            .frame(height: 300)
 
-            Spacer()
+            // Ranked Category list
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Sales by Category")
+                    .font(RSMSFonts.headline)
+                    .foregroundColor(RSMSColors.primaryText)
+                    .padding(.bottom, RSMSSpacing.md)
+
+                let categories = [
+                    ("Electronics", RSMSColors.burgundy, 18450),
+                    ("Accessories", Color(hex: "2A9D8F"), 12300),
+                    ("Apparel", Color(hex: "E76F51"), 8900),
+                ]
+                
+                ForEach(Array(categories.enumerated()), id: \.element.0) { index, cat in
+                    HStack(spacing: RSMSSpacing.md) {
+                        Text("#\(index + 1)")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(width: 32, height: 32)
+                            .background(cat.1)
+                            .clipShape(Circle())
+                            
+                        Text(cat.0)
+                            .font(RSMSFonts.body)
+                            .foregroundColor(RSMSColors.primaryText)
+                            
+                        Spacer()
+                        
+                        Text("₹\(formatNumber(cat.2))")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(RSMSColors.primaryText)
+                    }
+                    .padding(.vertical, RSMSSpacing.md)
+                    
+                    if index < categories.count - 1 {
+                        Divider()
+                            .foregroundColor(RSMSColors.divider)
+                    }
+                }
+            }
+            .padding(RSMSSpacing.lg)
+            .background(RSMSColors.cardBackground)
+            .cornerRadius(RSMSRadius.large)
+            .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+            .padding(.horizontal, RSMSSpacing.lg)
+            .padding(.top, RSMSSpacing.xl)
+            .padding(.bottom, RSMSSpacing.xxl)
+        }
         }
         .background(RSMSColors.background.ignoresSafeArea())
         .navigationBarHidden(true)
@@ -207,27 +252,12 @@ enum SalesDetailSampleData {
         }
 
         switch range {
-        case .day:
-            // Hourly buckets (6 AM – 9 PM)
-            return (6...21).map { hour in
-                SalesGranularPoint(
-                    label: "\(hour > 12 ? hour - 12 : hour)\(hour >= 12 ? "P" : "A")",
-                    online: r(5, 40, hour),
-                    offline: r(3, 30, hour + 50)
-                )
-            }
-        case .week:
-            let days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-            return days.enumerated().map { i, d in
-                SalesGranularPoint(label: d, online: r(200, 500, i), offline: r(150, 400, i + 20))
-            }
         case .month:
             return (1...4).map { w in
                 SalesGranularPoint(label: "W\(w)", online: r(1500, 3000, w), offline: r(1000, 2500, w + 30))
             }
-        case .year:
-            let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        case .quarter:
+            let months = ["Month 1", "Month 2", "Month 3"]
             return months.enumerated().map { i, m in
                 SalesGranularPoint(label: m, online: r(4000, 8000, i), offline: r(3000, 6000, i + 40))
             }

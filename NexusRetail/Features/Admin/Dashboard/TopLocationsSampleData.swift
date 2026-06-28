@@ -10,10 +10,8 @@ struct TopLocationsSampleData {
     static func salesData(for timeRange: StoreChartTimeRange) -> [String: (color: Color, value: String)] {
         let multiplier: Double
         switch timeRange {
-        case .week: multiplier = 0.25
         case .month: multiplier = 1.0
-        case .year: multiplier = 12.0
-        case .day: multiplier = 0.05
+        case .quarter: multiplier = 3.0
         }
         
         func scale(_ val: Double) -> String {

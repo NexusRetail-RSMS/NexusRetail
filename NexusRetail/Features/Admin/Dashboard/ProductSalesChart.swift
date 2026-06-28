@@ -121,7 +121,7 @@ struct ProductSalesChart: View {
 }
 
 #Preview {
-    @Previewable @State var range: SalesTimeRange = .weekly
+    @Previewable @State var range: SalesTimeRange = .monthly
     let vm = DashboardViewModel()
     ProductSalesChart(data: vm.productChartData, maxValue: vm.productMaxValue, timeRange: $range)
         .padding()

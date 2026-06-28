@@ -47,10 +47,8 @@ struct TopProductsDetailView: View {
 
     private var periodLabel: String {
         switch selectedRange {
-        case .day:   return "Today"
-        case .week:  return "This Week"
         case .month: return "This Month"
-        case .year:  return "This Year"
+        case .quarter: return "This Quarter"
         }
     }
 
@@ -224,10 +222,8 @@ enum TopProductsSampleData {
         let seed = abs(store.name.hashValue)
         let multiplier: Double
         switch range {
-        case .day:   multiplier = 0.03
-        case .week:  multiplier = 0.25
         case .month: multiplier = 1.0
-        case .year:  multiplier = 12.0
+        case .quarter: multiplier = 3.0
         }
 
         let colors = TopProductsDetailView.sliceColors

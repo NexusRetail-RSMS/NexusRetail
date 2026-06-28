@@ -16,9 +16,8 @@ import Supabase
 
 // MARK: - Time Range
 
-/// Toggle between weekly and monthly views.
 enum SalesTimeRange: String, CaseIterable {
-    case weekly  = "Weekly"
+    case quarterly = "Quarterly"
     case monthly = "Monthly"
 }
 
@@ -84,7 +83,7 @@ class DashboardViewModel {
     
     // MARK: - Independent Time Range Toggles
     var revenueTimeRange: SalesTimeRange = .monthly
-    var productTimeRange: SalesTimeRange = .weekly
+    var productTimeRange: SalesTimeRange = .monthly
     
     // MARK: - Computed KPI Formatters
     
@@ -120,22 +119,28 @@ class DashboardViewModel {
     // MARK: - Chart Data Adapters
     
     var revenueChartData: [RevenueChartPoint] {
-        if revenueTimeRange == .weekly {
-            return weekly.enumerated().map { index, point in
-                // week format is "YYYY-WW" (e.g. "2026-06" for 6th week)
-                let label: String
-                let parts = point.week.split(separator: "-")
-                if parts.count == 2 {
-                    label = "W\(parts[1])"
-                } else {
-                    label = point.week
+        if revenueTimeRange == .quarterly {
+            // Group monthly data into quarters
+            var quarterlyMap: [String: Double] = [:]
+            
+            for point in monthly {
+                let parts = point.month.split(separator: "-")
+                if parts.count == 2, let monthNum = Int(parts[1]) {
+                    let year = parts[0]
+                    let quarter = "Q\((monthNum - 1) / 3 + 1)"
+                    let label = "\(year)-\(quarter)"
+                    quarterlyMap[label, default: 0] += point.revenue
                 }
-                return RevenueChartPoint(
-                    label: label,
+            }
+            
+            let sortedKeys = quarterlyMap.keys.sorted()
+            return sortedKeys.enumerated().map { index, key in
+                RevenueChartPoint(
+                    label: key,
                     index: index,
-                    revenue: point.revenue / 100000.0 // UI expects Lakhs
+                    revenue: quarterlyMap[key]! / 100000.0 // UI expects Lakhs
                 )
-            }.suffix(12) // Show last 12 weeks so chart isn't too squished
+            }.suffix(4) // Show last 4 quarters
         } else {
             return monthly.enumerated().map { index, point in
                 // Try to extract just the month abbreviation from "YYYY-MM"
@@ -165,7 +170,7 @@ class DashboardViewModel {
     
     // MARK: - Product Sales Chart Data
     var productChartData: [ProductChartPoint] {
-        let sourceData = productTimeRange == .weekly ? topProductsWeekly : topProductsMonthly
+        let sourceData = topProductsMonthly // For now, we only have monthly data from the backend, so we use it for both quarterly and monthly views until the API is updated.
         
         // Group the top products by category and sum up their units
         let grouped = Dictionary(grouping: sourceData) { $0.category }
