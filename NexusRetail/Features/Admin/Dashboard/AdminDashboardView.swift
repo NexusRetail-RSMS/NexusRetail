@@ -21,40 +21,99 @@ struct AdminDashboardView: View {
     @Environment(SessionStore.self) private var sessionStore
     @State private var viewModel = DashboardViewModel()
     @State private var isProfilePresented = false
+    
+    // Drill-down states
+    @State private var isShowingSalesDetail = false
+    @State private var isShowingProductsDetail = false
+    
+    // Dummy store for global drill-downs
+    private var globalStore: Store {
+        Store(
+            id: UUID(uuidString: "00000000-0000-0000-0000-000000000000") ?? UUID(),
+            name: viewModel.displayCountry == "All Global" ? "Global Sales" : "\(viewModel.displayCountry) Sales",
+            address: nil, locale: "en_US", currencyCode: "USD", timezone: nil,
+            phone: nil, managerID: nil, isWarehouse: false, status: .active
+        )
+    }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-
                 // MARK: - Header
                 headerSection
+                
+                if viewModel.isLoading && viewModel.kpis == nil {
+                    // Initial full-screen loading
+                    VStack {
+                        Spacer()
+                        ProgressView("Loading Dashboard...")
+                            .padding()
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 300)
+                } else {
+                    // MARK: - Error Banner
+                    if let errorMessage = viewModel.errorMessage {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.white)
+                            Text(errorMessage)
+                                .font(RSMSFonts.caption)
+                                .foregroundColor(.white)
+                            Spacer()
+                            Button("Retry") {
+                                Task { await viewModel.load() }
+                            }
+                            .foregroundColor(.white)
+                            .font(RSMSFonts.caption.bold())
+                        }
+                        .padding()
+                        .background(Color(hex: "FF3B30"))
+                        .cornerRadius(RSMSRadius.medium)
+                        .padding(.horizontal, RSMSSpacing.lg)
+                        .padding(.top, RSMSSpacing.md)
+                    }
 
-                // MARK: - Content
-                VStack(alignment: .leading, spacing: RSMSSpacing.xl) {
+                    // MARK: - Content
+                    VStack(alignment: .leading, spacing: RSMSSpacing.xl) {
 
-                    // MARK: - KPI Overview
-                    kpiSection
+                        // MARK: - KPI Overview
+                        kpiSection
 
-                    // MARK: - Store Revenue
-                    RevenueBarChart(
-                        data: viewModel.revenueChartData,
-                        maxValue: viewModel.revenueMaxValue,
-                        timeRange: $viewModel.revenueTimeRange
-                    )
+                        // MARK: - Store Revenue
+                        RevenueBarChart(
+                            data: viewModel.revenueChartData,
+                            maxValue: viewModel.revenueMaxValue,
+                            timeRange: $viewModel.revenueTimeRange
+                        )
+                        .contentShape(Rectangle())
+                        .onTapGesture { isShowingSalesDetail = true }
 
-                    // MARK: - Top Product Sales (with its own toggle)
-                    ProductSalesChart(
-                        data: viewModel.productChartData,
-                        maxValue: viewModel.productMaxValue,
-                        timeRange: $viewModel.productTimeRange
-                    )
+                        // MARK: - Top Product Sales (with its own toggle)
+                        ProductSalesChart(
+                            data: viewModel.productChartData,
+                            maxValue: viewModel.productMaxValue,
+                            timeRange: $viewModel.productTimeRange
+                        )
+                        .contentShape(Rectangle())
+                        .onTapGesture { isShowingProductsDetail = true }
 
-                    // MARK: - Top Locations
-                    TopLocationsChartView()
+                        // MARK: - Top Locations
+                        TopLocationsChartView()
+                    }
+                    .padding(.horizontal, RSMSSpacing.lg)
+                    .padding(.top, RSMSSpacing.xl)
+                    .padding(.bottom, RSMSSpacing.xxl)
                 }
-                .padding(.horizontal, RSMSSpacing.lg)
-                .padding(.top, RSMSSpacing.xl)
-                .padding(.bottom, RSMSSpacing.xxl)
+            }
+        }
+        .refreshable {
+            await viewModel.load()
+        }
+        .task {
+            // Only load on first appearance if we haven't loaded yet
+            if viewModel.kpis == nil {
+                await viewModel.load()
             }
         }
         .background(RSMSColors.background.ignoresSafeArea())
@@ -62,6 +121,16 @@ struct AdminDashboardView: View {
         .navigationBarHidden(true)
         .sheet(isPresented: $isProfilePresented) {
             AdminProfileSheet()
+        }
+        .fullScreenCover(isPresented: $isShowingSalesDetail) {
+            NavigationStack {
+                SalesDetailView(store: globalStore)
+            }
+        }
+        .fullScreenCover(isPresented: $isShowingProductsDetail) {
+            NavigationStack {
+                TopProductsDetailView(store: globalStore)
+            }
         }
     }
 
@@ -140,6 +209,11 @@ struct AdminDashboardView: View {
                 Spacer()
                 
                 Menu {
+                    Button("All Global") {
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            viewModel.selectedCountry = nil
+                        }
+                    }
                     ForEach(viewModel.countries, id: \.self) { country in
                         Button(country) {
                             withAnimation(.easeInOut(duration: 0.25)) {
@@ -149,7 +223,7 @@ struct AdminDashboardView: View {
                     }
                 } label: {
                     HStack(spacing: 6) {
-                        Text(viewModel.selectedCountry)
+                        Text(viewModel.displayCountry)
                             .font(.system(size: 13, weight: .semibold))
                         Image(systemName: "chevron.up.chevron.down")
                             .font(.system(size: 10, weight: .bold))

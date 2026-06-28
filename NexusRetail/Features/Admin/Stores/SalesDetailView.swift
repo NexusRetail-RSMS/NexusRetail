@@ -5,7 +5,7 @@
 //  Full-screen detailed sales chart inspired by Apple Health's
 //  step-count view — D / W / M / Y segmented picker, a large
 //  total value, and an expanded bar chart.
-//
+
 
 import SwiftUI
 import Charts

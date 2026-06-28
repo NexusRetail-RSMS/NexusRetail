@@ -12,6 +12,7 @@
 
 import Foundation
 import SwiftUI
+import Supabase
 
 // MARK: - Time Range
 
@@ -50,168 +51,192 @@ struct ProductChartPoint: Identifiable, Equatable {
 
 @Observable
 class DashboardViewModel {
-
-    // MARK: - Filter State (shared across KPIs + revenue chart)
-    var selectedCountry: String = "All·Global"
-
+    
+    // MARK: - Backend State
+    var kpis: DashboardKPIs?
+    var monthly: [MonthlyRevenue] = []
+    var weekly: [WeeklyRevenue] = []
+    var byCountry: [CountryRevenue] = []
+    var topProductsWeekly: [DashboardTopProduct] = []
+    var topProductsMonthly: [DashboardTopProduct] = []
+    
+    var isLoading = false
+    var errorMessage: String?
+    
+    // MARK: - Filter State
+    // nil means "All Global"
+    var selectedCountry: String? = nil {
+        didSet {
+            // Automatically reload when country filter changes
+            Task {
+                await load()
+            }
+        }
+    }
+    
+    var countries: [String] {
+        byCountry.map(\.country).sorted()
+    }
+    
+    var displayCountry: String {
+        selectedCountry ?? "All Global"
+    }
+    
     // MARK: - Independent Time Range Toggles
-    /// Revenue chart has its own toggle
     var revenueTimeRange: SalesTimeRange = .monthly
-    /// Product chart has its own toggle
     var productTimeRange: SalesTimeRange = .weekly
-
-    // MARK: Available Countries
-    let countries: [String] = DashboardDataProvider.countries
-
-    // MARK: - Computed KPI
-
-    var currentKPI: CountryKPI {
-        if selectedCountry == "All·Global" {
-            return DashboardDataProvider.globalKPI
-        }
-        return DashboardDataProvider.countryKPIs.first { $0.country == selectedCountry }
-            ?? DashboardDataProvider.globalKPI
-    }
-
-    /// Formatted total revenue string (e.g. "₹12.4Cr" or "₹8.5L").
+    
+    // MARK: - Computed KPI Formatters
+    
     var formattedRevenue: String {
-        let lakhs = currentKPI.totalRevenue
-        if lakhs >= 100 {
-            let crores = lakhs / 100.0
+        guard let total = kpis?.totalRevenue else { return "₹0" }
+        if total >= 10000000 {
+            let crores = total / 10000000.0
             return "₹\(String(format: "%.1f", crores))Cr"
+        } else if total >= 100000 {
+            let lakhs = total / 100000.0
+            return "₹\(String(format: "%.1f", lakhs))L"
         } else {
-            return "₹\(String(format: "%.0f", lakhs))L"
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .currency
+            formatter.currencySymbol = "₹"
+            formatter.maximumFractionDigits = 0
+            return formatter.string(from: NSNumber(value: total)) ?? "₹\(total)"
         }
     }
-
+    
     var activeStoresText: String {
-        "\(currentKPI.activeStores)"
+        "\(kpis?.activeStores ?? 0)"
     }
-
+    
     var pendingTransfersText: String {
-        "\(currentKPI.pendingTransfers)"
+        "\(kpis?.pendingTransfers ?? 0)"
     }
-
+    
     var lowStockText: String {
-        "\(currentKPI.lowStockAlerts)"
+        "\(kpis?.lowStockAlerts ?? 0)"
     }
-
-    // MARK: - Trend values for KPI cards
-
-    var revenueTrend: String {
-        currentKPI.revenueTrend
-    }
-
-    var pendingTransfersTrend: String {
-        let urgentCount = max(1, currentKPI.pendingTransfers / 3)
-        return "\(urgentCount) high urgency"
-    }
-
-    var lowStockTrend: String {
-        let criticalCount = max(1, currentKPI.lowStockAlerts / 2)
-        return "\(criticalCount) critical SKUs"
-    }
-
-    var activeStoresTrend: String? {
-        if selectedCountry == "All·Global" {
-            return "+2 this quarter"
-        }
-        return nil
-    }
-
-    // MARK: - Revenue Chart Data
-
-    /// Revenue data filtered by country AND by the revenue chart's own time range.
+    
+    // MARK: - Chart Data Adapters
+    
     var revenueChartData: [RevenueChartPoint] {
-        let sourceData: [RevenueDataPoint]
-        switch revenueTimeRange {
-        case .monthly:
-            sourceData = DashboardDataProvider.monthlyRevenue
-        case .weekly:
-            sourceData = DashboardDataProvider.weeklyRevenue
-        }
-
-        let filtered: [RevenueDataPoint]
-        if selectedCountry == "All·Global" {
-            filtered = sourceData
-        } else {
-            filtered = sourceData.filter { $0.country == selectedCountry }
-        }
-
-        // Group by index and sum revenue
-        let grouped = Dictionary(grouping: filtered) { $0.index }
-
-        let maxIndex: Int
-        let labels: [String]
-        switch revenueTimeRange {
-        case .monthly:
-            // Find the actual month range from data
-            let indices = grouped.keys.sorted()
-            let minIdx = indices.first ?? 1
-            let maxIdx = indices.last ?? 6
-            maxIndex = maxIdx
-            let monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-            labels = Array(monthLabels[(minIdx - 1)..<min(maxIdx, 12)])
-            
-            return (minIdx...maxIndex).map { idx in
-                let totalForPeriod = grouped[idx]?.reduce(0.0) { $0 + $1.revenue } ?? 0
+        if revenueTimeRange == .weekly {
+            return weekly.enumerated().map { index, point in
+                // week format is "YYYY-WW" (e.g. "2026-06" for 6th week)
+                let label: String
+                let parts = point.week.split(separator: "-")
+                if parts.count == 2 {
+                    label = "W\(parts[1])"
+                } else {
+                    label = point.week
+                }
                 return RevenueChartPoint(
-                    label: monthLabels[idx - 1],
-                    index: idx,
-                    revenue: totalForPeriod
+                    label: label,
+                    index: index,
+                    revenue: point.revenue / 100000.0 // UI expects Lakhs
                 )
-            }
-        case .weekly:
-            labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-            return (1...7).map { idx in
-                let totalForPeriod = grouped[idx]?.reduce(0.0) { $0 + $1.revenue } ?? 0
+            }.suffix(12) // Show last 12 weeks so chart isn't too squished
+        } else {
+            return monthly.enumerated().map { index, point in
+                // Try to extract just the month abbreviation from "YYYY-MM"
+                let label: String
+                let parts = point.month.split(separator: "-")
+                if parts.count == 2, let monthNum = Int(parts[1]) {
+                    let formatter = DateFormatter()
+                    formatter.locale = Locale(identifier: "en_US")
+                    label = formatter.shortMonthSymbols[monthNum - 1]
+                } else {
+                    label = point.month
+                }
+                
                 return RevenueChartPoint(
-                    label: labels[idx - 1],
-                    index: idx,
-                    revenue: totalForPeriod
+                    label: label,
+                    index: index,
+                    revenue: point.revenue / 100000.0 // UI expects Lakhs
                 )
             }
         }
     }
-
-    /// Maximum revenue value — used for Y-axis scaling.
+    
     var revenueMaxValue: Double {
         let maxRev = revenueChartData.map(\.revenue).max() ?? 100
         return ceil(maxRev / 50) * 50
     }
-
+    
     // MARK: - Product Sales Chart Data
-
-    /// Product category sales filtered by country and the product chart's own time range.
     var productChartData: [ProductChartPoint] {
-        let filtered: [ProductSalesData]
-        if selectedCountry == "All·Global" {
-            filtered = DashboardDataProvider.productSales
-        } else {
-            filtered = DashboardDataProvider.productSales.filter { $0.country == selectedCountry }
-        }
-
-        let grouped = Dictionary(grouping: filtered) { $0.category }
+        let sourceData = productTimeRange == .weekly ? topProductsWeekly : topProductsMonthly
+        
+        // Group the top products by category and sum up their units
+        let grouped = Dictionary(grouping: sourceData) { $0.category }
         let categories = grouped.keys.sorted()
-
+        
         return categories.compactMap { cat in
             guard let items = grouped[cat] else { return nil }
-            let total: Int
-            switch productTimeRange {
-            case .weekly:
-                total = items.reduce(0) { $0 + $1.weeklySales }
-            case .monthly:
-                total = items.reduce(0) { $0 + $1.monthlySales }
-            }
+            let total = items.reduce(0) { $0 + $1.units }
             return ProductChartPoint(category: cat, sales: total)
         }
         .sorted { $0.sales > $1.sales }
     }
-
-    /// Maximum product sales value — used for Y-axis scaling.
+    
     var productMaxValue: Int {
         let maxVal = productChartData.map(\.sales).max() ?? 100
         return ((maxVal / 50) + 1) * 50
+    }
+    
+    // MARK: - Loading Backend Data
+    
+    struct DashboardRPCParams: Encodable {
+        let p_country: String?
+    }
+    
+    struct TopProductsRPCParams: Encodable {
+        let p_period: String
+        let p_limit: Int
+        let p_country: String?
+    }
+    
+    @MainActor
+    func load() async {
+        isLoading = true
+        errorMessage = nil
+        
+        do {
+            let params = DashboardRPCParams(p_country: selectedCountry)
+            let weekParams = TopProductsRPCParams(p_period: "week", p_limit: 20, p_country: selectedCountry)
+            let monthParams = TopProductsRPCParams(p_period: "month", p_limit: 20, p_country: selectedCountry)
+            
+            // We use async let for concurrent loading (as requested)
+            async let kpisTask: DashboardKPIs = SupabaseManager.shared.client
+                .rpc("dashboard_kpis", params: params).execute().value
+                
+            async let monthlyTask: [MonthlyRevenue] = SupabaseManager.shared.client
+                .rpc("revenue_by_month", params: params).execute().value
+                
+            async let weeklyTask: [WeeklyRevenue] = SupabaseManager.shared.client
+                .rpc("revenue_by_week", params: params).execute().value
+                
+            async let countryTask: [CountryRevenue] = SupabaseManager.shared.client
+                .rpc("revenue_by_country").execute().value
+                
+            async let topWeeklyTask: [DashboardTopProduct] = SupabaseManager.shared.client
+                .rpc("top_products", params: weekParams).execute().value
+                
+            async let topMonthlyTask: [DashboardTopProduct] = SupabaseManager.shared.client
+                .rpc("top_products", params: monthParams).execute().value
+                
+            self.kpis = try await kpisTask
+            self.monthly = try await monthlyTask
+            self.weekly = try await weeklyTask
+            self.byCountry = try await countryTask
+            self.topProductsWeekly = try await topWeeklyTask
+            self.topProductsMonthly = try await topMonthlyTask
+            
+        } catch {
+            self.errorMessage = "Failed to load dashboard data: \(error.localizedDescription)"
+            print("Dashboard Error: \(error)")
+        }
+        
+        isLoading = false
     }
 }

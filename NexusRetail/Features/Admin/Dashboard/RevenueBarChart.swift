@@ -30,47 +30,57 @@ struct RevenueBarChart: View {
             }
 
             // Chart
-            Chart(data) { point in
-                BarMark(
-                    x: .value("Period", point.label),
-                    y: .value("Revenue", point.revenue),
-                    width: .ratio(0.45) // Makes bars noticeably thinner and more modern
-                )
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [RSMSColors.burgundy.opacity(0.6), RSMSColors.burgundy],
-                        startPoint: .top,
-                        endPoint: .bottom
+            if data.isEmpty {
+                VStack {
+                    Spacer()
+                    Text("No revenue data available.")
+                        .foregroundColor(RSMSColors.secondaryText)
+                    Spacer()
+                }
+                .frame(height: 200)
+            } else {
+                Chart(data) { point in
+                    BarMark(
+                        x: .value("Period", point.label),
+                        y: .value("Revenue", point.revenue),
+                        width: .ratio(0.45) // Makes bars noticeably thinner and more modern
                     )
-                )
-                .cornerRadius(8) // More rounded cap
-            }
-            .chartYScale(domain: 0...maxValue)
-            .chartYAxis {
-                AxisMarks(position: .leading, values: .automatic(desiredCount: 5)) { value in
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
-                        .foregroundStyle(RSMSColors.divider)
-                    AxisValueLabel {
-                        if let v = value.as(Double.self) {
-                            Text("\(Int(v))")
-                                .font(.system(size: 10))
-                                .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [RSMSColors.burgundy.opacity(0.6), RSMSColors.burgundy],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .cornerRadius(8) // More rounded cap
+                }
+                .chartYScale(domain: 0...maxValue)
+                .chartYAxis {
+                    AxisMarks(position: .leading, values: .automatic(desiredCount: 5)) { value in
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
+                            .foregroundStyle(RSMSColors.divider)
+                        AxisValueLabel {
+                            if let v = value.as(Double.self) {
+                                Text("\(Int(v))")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(RSMSColors.secondaryText)
+                            }
                         }
                     }
                 }
-            }
-            .chartXAxis {
-                AxisMarks { value in
-                    AxisValueLabel {
-                        if let label = value.as(String.self) {
-                            Text(label)
-                                .font(.system(size: 10, weight: .medium))
-                                .foregroundColor(RSMSColors.secondaryText)
+                .chartXAxis {
+                    AxisMarks { value in
+                        AxisValueLabel {
+                            if let label = value.as(String.self) {
+                                Text(label)
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundColor(RSMSColors.secondaryText)
+                            }
                         }
                     }
                 }
+                .frame(height: 200)
             }
-            .frame(height: 200)
 
             // Legend
             HStack(spacing: RSMSSpacing.sm) {

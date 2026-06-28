@@ -41,3 +41,49 @@ struct Store: Codable, Identifiable, Hashable {
     }
 }
 
+// MARK: - Store Order Analytics
+
+struct StoreOrder: Codable, Identifiable {
+    let id: UUID
+    let clientID: UUID?
+    let storeID: UUID?
+    let associateID: UUID?
+    let total: Double
+    let createdAt: String
+    
+    // Nested relationship
+    let orderLineItems: [OrderLineItem]?
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case clientID = "client_id"
+        case storeID = "store_id"
+        case associateID = "associate_id"
+        case total
+        case createdAt = "created_at"
+        case orderLineItems = "order_line_item"
+    }
+}
+
+struct OrderLineItem: Codable, Identifiable {
+    let id: UUID?
+    let orderID: UUID?
+    let quantity: Int
+    let appliedPrice: Double
+    let sku: NestedSKU?
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case orderID = "order_id"
+        case quantity
+        case appliedPrice = "applied_price"
+        case sku
+    }
+}
+
+struct NestedSKU: Codable, Identifiable {
+    let id: UUID?
+    let name: String
+    let category: String
+}
+

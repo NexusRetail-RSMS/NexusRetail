@@ -8,6 +8,8 @@ import Supabase
 
 /// Admin shell: tabs for Dashboard, Stores, Products, Transfers, Managers.
 struct AdminTabView: View {
+    @State private var isAddManagerPresented = false
+    
     var body: some View {
         TabView {
             // 1. Dashboard
@@ -49,25 +51,43 @@ struct AdminTabView: View {
 
             // 5. Managers
             NavigationStack {
-                AdminPlaceholderView(title: "Managers", message: "Manager and staff tracking coming soon.")
-                    .modifier(AdminToolbarModifier(title: "Managers"))
+                AdminManagersView()
+                    .modifier(AdminToolbarModifier(title: "Managers", showPlusButton: true, plusAction: {
+                        isAddManagerPresented = true
+                    }))
             }
             .tabItem {
                 Label("Managers", systemImage: "person.2")
             }
         }
         .tint(RSMSColors.burgundy)
+        .sheet(isPresented: $isAddManagerPresented) {
+            NewManagerSheet()
+        }
     }
 }
 
 /// A view modifier that applies the common Admin toolbar (title only).
 struct AdminToolbarModifier: ViewModifier {
     let title: String
+    var showPlusButton: Bool = false
+    var plusAction: (() -> Void)? = nil
 
     func body(content: Content) -> some View {
         content
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                if showPlusButton {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button {
+                            plusAction?()
+                        } label: {
+                            Image(systemName: "plus")
+                        }
+                    }
+                }
+            }
     }
 }
 
