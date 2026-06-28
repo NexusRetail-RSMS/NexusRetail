@@ -2,15 +2,20 @@ import SwiftUI
 import CoreLocation
 
 struct TopLocationsChartView: View {
+    let revenueByCountry: [CountryRevenue]
     @State private var countryPolygons: [CountryPolygon] = []
     
     // Zoom and Pan state for the preview
     @State private var scale: CGFloat = 1.0
     @State private var offset: CGSize = .zero
     
-    @State private var timeRange: StoreChartTimeRange = .month
+    @State private var timeRange: StoreChartTimeRange = .monthly(Date())
     @State private var showingDetail = false
     @State private var selectedCountry: String? = nil
+    
+    private var maxRevenue: Double {
+        revenueByCountry.map(\.revenue).max() ?? 1
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: RSMSSpacing.lg) {
@@ -21,56 +26,78 @@ struct TopLocationsChartView: View {
                 .foregroundColor(RSMSColors.primaryText)
             
             // Custom Vector Map View
-            GeometryReader { geometry in
-                ZStack {
-                    Color.white // Plain white background
+            ZStack {
+                Color.white // Plain white background
+                    .onTapGesture {
+                        showingDetail = true
+                    }
+                
+                // Draw countries
+                ForEach(countryPolygons) { country in
+                    let isSelected = selectedCountry == country.name
                     
-                    // Draw countries
-                    ForEach(countryPolygons) { country in
-                        let isSelected = selectedCountry == country.name
-                        let salesData = TopLocationsSampleData.salesData(for: timeRange)
-                        let colorData = salesData[country.name]
-                        let defaultColor = Color(hex: "E5E5EA")
-                        let fillColor = colorData?.color ?? defaultColor
-                        
-                        CountryShape(polygons: country.polygons)
-                            .fill(fillColor.opacity(isSelected ? 1.0 : (colorData != nil ? 0.8 : 0.4)))
-                            .stroke(isSelected ? Color.blue : Color.white, lineWidth: isSelected ? 1.5 : 0.5)
-                            .onTapGesture {
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                    if selectedCountry == country.name {
-                                        selectedCountry = nil
-                                    } else {
-                                        selectedCountry = country.name
-                                    }
+                    CountryShape(polygons: country.polygons)
+                        .fill(getFillColor(for: country.name).opacity(getOpacity(for: country.name, isSelected: isSelected)))
+                        .stroke(isSelected ? Color.blue : Color.white, lineWidth: isSelected ? 1.5 : 0.5)
+                        .onTapGesture {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                if selectedCountry == country.name {
+                                    selectedCountry = nil
+                                } else {
+                                    selectedCountry = country.name
                                 }
                             }
-                    }
+                        }
                 }
-                .contentShape(Rectangle()) // Ensure drag/zoom works on whitespace
-                .scaleEffect(scale)
-                .offset(offset)
             }
-            .frame(height: 280)
-            .cornerRadius(RSMSRadius.medium)
+            .contentShape(Rectangle()) // Ensure drag/zoom works on whitespace
+            .aspectRatio(1.8, contentMode: .fit)
+            .scaleEffect(scale)
+            .offset(offset)
+            .gesture(
+                MagnificationGesture()
+                    .onChanged { value in
+                        scale = max(1.0, value.magnitude)
+                    }
+                    .onEnded { _ in
+                        if scale <= 1.0 {
+                            withAnimation { offset = .zero }
+                        }
+                    }
+            )
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        if scale > 1.0 {
+                            offset = value.translation
+                        }
+                    }
+                    .onEnded { _ in
+                        if scale <= 1.0 {
+                            withAnimation { offset = .zero }
+                        }
+                    }
+            )
             .clipped()
+            .cornerRadius(RSMSRadius.medium)
             
             // Clickable details section to open the detail view
             VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
                 // Dynamic Details based on selection
-                if let selected = selectedCountry, let data = TopLocationsSampleData.salesData(for: timeRange)[selected] {
+                if let selected = selectedCountry, let data = revenueByCountry.first(where: { $0.country == selected }) {
                     HStack(alignment: .lastTextBaseline, spacing: RSMSSpacing.sm) {
-                        Text(data.value)
+                        Text("₹\(shortCurrency(data.revenue))")
                             .font(.system(size: 36, weight: .bold))
-                            .foregroundColor(data.color)
+                            .foregroundColor(RSMSColors.primaryText)
                         
-                        Text("customers in \(selected)")
+                        Text("revenue in \(selected)")
                             .font(RSMSFonts.subheadline)
                             .foregroundColor(RSMSColors.secondaryText)
                     }
                 } else {
+                    let total = revenueByCountry.reduce(0) { $0 + $1.revenue }
                     HStack(alignment: .lastTextBaseline, spacing: RSMSSpacing.sm) {
-                        Text(TopLocationsSampleData.salesData(for: timeRange)["United States of America"]?.value ?? "19k")
+                        Text("₹\(shortCurrency(total))")
                             .font(.system(size: 36, weight: .bold))
                             .foregroundColor(RSMSColors.primaryText)
                         
@@ -110,7 +137,7 @@ struct TopLocationsChartView: View {
         .cornerRadius(RSMSRadius.large)
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
         .fullScreenCover(isPresented: $showingDetail) {
-            TopLocationsDetailView(timeRange: $timeRange, countryPolygons: countryPolygons)
+            TopLocationsDetailView(timeRange: $timeRange, countryPolygons: countryPolygons, revenueByCountry: revenueByCountry)
         }
         .onAppear {
             // Load GeoJSON in background so we don't block the main thread
@@ -121,6 +148,27 @@ struct TopLocationsChartView: View {
                 }
             }
         }
+    }
+    
+    private func getFillColor(for countryName: String) -> Color {
+        guard let data = revenueByCountry.first(where: { $0.country == countryName }), maxRevenue > 0 else {
+            return Color(hex: "E5E5EA")
+        }
+        let ratio = data.revenue / maxRevenue
+        if ratio > 0.66 { return Color(hex: "007AFF") }
+        if ratio > 0.33 { return Color(hex: "F4A261") }
+        return Color(hex: "E9C46A")
+    }
+    
+    private func getOpacity(for countryName: String, isSelected: Bool) -> Double {
+        let hasData = revenueByCountry.contains(where: { $0.country == countryName })
+        return isSelected ? 1.0 : (hasData ? 0.8 : 0.4)
+    }
+    
+    private func shortCurrency(_ value: Double) -> String {
+        if value >= 1_000_000 { return String(format: "%.1fM", value / 1_000_000) }
+        if value >= 1_000 { return String(format: "%.1fK", value / 1_000) }
+        return String(format: "%.0f", value)
     }
 }
 
@@ -189,7 +237,7 @@ struct CountryShape: Shape {
 }
 
 #Preview {
-    TopLocationsChartView()
+    TopLocationsChartView(revenueByCountry: [])
         .padding()
         .background(RSMSColors.background)
 }

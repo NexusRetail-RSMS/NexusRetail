@@ -8,13 +8,13 @@ import SwiftUI
 // MARK: - Data Model
 
 struct DisplayManager: Identifiable, Hashable {
-    let id = UUID()
+    let id: UUID
     var name: String
     var storeName: String
     var country: String
     var performanceScore: Int
     var revenue: String
-    var photoData: Data? = nil
+    var imageUrl: String?
     // Contact info
     var phone: String = ""
     var email: String = ""
@@ -24,34 +24,7 @@ struct DisplayManager: Identifiable, Hashable {
     var createdAt: Date = Date()
 }
 
-@Observable
-class ManagersStore {
-    static let shared = ManagersStore()
-
-    var managers: [DisplayManager] = [
-        DisplayManager(name: "Harman Singh",  storeName: "Nexus Flagship Store", country: "United States",  performanceScore: 98, revenue: "$152K", phone: "+1 (555) 234-5678", email: "harman@nexusretail.com",  address: "123 Main St, San Francisco, CA", productsSold: 1240, createdAt: Date().addingTimeInterval(-86400 * 5)),
-        DisplayManager(name: "Sarah Jenkins", storeName: "Downtown Plaza",       country: "United Kingdom", performanceScore: 92, revenue: "$134K", phone: "+44 20 7946 0958",   email: "sarah@nexusretail.com",   address: "45 Oxford St, London, UK",          productsSold: 980, createdAt: Date().addingTimeInterval(-86400 * 4)),
-        DisplayManager(name: "Michael Chang", storeName: "Metro Mall Store",     country: "Canada",         performanceScore: 87, revenue: "$118K", phone: "+1 (416) 555-0173", email: "michael@nexusretail.com", address: "200 King St W, Toronto, ON",       productsSold: 820, createdAt: Date().addingTimeInterval(-86400 * 3)),
-        DisplayManager(name: "Jessica Lee",   storeName: "Westfield Outlet",     country: "Australia",      performanceScore: 76, revenue: "$97K",  phone: "+61 2 9876 5432",   email: "jessica@nexusretail.com", address: "500 George St, Sydney, NSW",     productsSold: 640, createdAt: Date().addingTimeInterval(-86400 * 2)),
-        DisplayManager(name: "Elena Rostova", storeName: "Westside Boutique",    country: "Germany",        performanceScore: 65, revenue: "$84K",  phone: "+49 30 12345678",   email: "elena@nexusretail.com",   address: "Kurfürstendamm 12, Berlin",      productsSold: 510, createdAt: Date().addingTimeInterval(-86400 * 1)),
-    ]
-
-    func add(manager: DisplayManager) {
-        managers.append(manager)
-        managers.sort { $0.performanceScore > $1.performanceScore }
-    }
-
-    func update(manager: DisplayManager) {
-        if let idx = managers.firstIndex(where: { $0.id == manager.id }) {
-            managers[idx] = manager
-            managers.sort { $0.performanceScore > $1.performanceScore }
-        }
-    }
-
-    func delete(manager: DisplayManager) {
-        managers.removeAll(where: { $0.id == manager.id })
-    }
-}
+// Removed ManagersStore
 
 // MARK: - Helpers
 
@@ -106,6 +79,9 @@ enum PerformanceSortOrder: String, CaseIterable {
 // MARK: - Main View
 
 struct AdminManagersView: View {
+    @Binding var isAddManagerPresented: Bool
+    
+    @State private var viewModel = ManagersViewModel()
     @State private var searchText = ""
     @State private var topPerformerPage = 0
     @State private var scrolledID: UUID?
@@ -117,12 +93,12 @@ struct AdminManagersView: View {
     private let topCount = 3
 
     private var allCountries: [String] {
-        let names = ManagersStore.shared.managers.map { $0.country }
+        let names = viewModel.managers.map { $0.country }
         return Array(Set(names)).sorted()
     }
 
     var filteredManagers: [DisplayManager] {
-        var result = ManagersStore.shared.managers.filter { manager in
+        var result = viewModel.managers.filter { manager in
             let matchesSearch = searchText.isEmpty
                 || manager.name.localizedCaseInsensitiveContains(searchText)
                 || manager.storeName.localizedCaseInsensitiveContains(searchText)
@@ -180,13 +156,25 @@ struct AdminManagersView: View {
                             .foregroundColor(RSMSColors.darkBrown)
                             .padding(.horizontal, RSMSSpacing.lg)
 
-                        let topManagers = Array(ManagersStore.shared.managers.prefix(topCount).enumerated())
+                        let topManagers = Array(viewModel.managers.prefix(topCount).enumerated())
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: RSMSSpacing.md) {
                                 ForEach(topManagers, id: \.element.id) { index, manager in
-                                    TopPerformanceCard(manager: manager, rank: index + 1) {
-                                        editingManager = manager
-                                    }
+                                    TopPerformanceCard(
+                                        manager: manager,
+                                        rank: index + 1,
+                                        onEdit: {
+                                            editingManager = manager
+                                        },
+                                        onDelete: {
+                                            Task {
+                                                _ = await viewModel.deleteManager(id: manager.id)
+                                            }
+                                        },
+                                        onResetPassword: { newPassword in
+                                            return await viewModel.resetPassword(for: manager.id, email: manager.email, newPassword: newPassword)
+                                        }
+                                    )
                                 }
                             }
                             .scrollTargetLayout()
@@ -200,9 +188,10 @@ struct AdminManagersView: View {
                             }
                         }
 
-                        // Page dots
+                        // Page dots (synced with actual count of top managers)
+                        let actualTopCount = min(topCount, viewModel.managers.count)
                         HStack(spacing: 6) {
-                            ForEach(0..<topCount, id: \.self) { i in
+                            ForEach(0..<actualTopCount, id: \.self) { i in
                                 Circle()
                                     .fill(i == topPerformerPage ? RSMSColors.burgundy : RSMSColors.cardBorder)
                                     .frame(width: i == topPerformerPage ? 8 : 6,
@@ -291,9 +280,20 @@ struct AdminManagersView: View {
                     } else {
                         VStack(spacing: RSMSSpacing.md) {
                             ForEach(filteredManagers) { manager in
-                                ManagerListCard(manager: manager) {
-                                    editingManager = manager
-                                }
+                                ManagerListCard(
+                                    manager: manager,
+                                    onEdit: {
+                                        editingManager = manager
+                                    },
+                                    onDelete: {
+                                        Task {
+                                            _ = await viewModel.deleteManager(id: manager.id)
+                                        }
+                                    },
+                                    onResetPassword: { newPassword in
+                                        return await viewModel.resetPassword(for: manager.id, email: manager.email, newPassword: newPassword)
+                                    }
+                                )
                             }
                         }
                         .padding(.horizontal, RSMSSpacing.lg)
@@ -303,12 +303,18 @@ struct AdminManagersView: View {
                 .padding(.top, RSMSSpacing.sm)
             }
         }
+        .sheet(isPresented: $isAddManagerPresented) {
+            NewManagerSheet(onCreate: { email, password, name, phone, store, imageUrl in
+                return await viewModel.createManager(email: email, password: password, name: name, phone: phone, address: store, imageUrl: imageUrl)
+            })
+        }
         .sheet(item: $editingManager) { mgr in
-            if let idx = ManagersStore.shared.managers.firstIndex(where: { $0.id == mgr.id }) {
+            if let idx = viewModel.managers.firstIndex(where: { $0.id == mgr.id }) {
                 EditManagerSheet(manager: Binding(
-                    get: { ManagersStore.shared.managers[idx] },
+                    get: { viewModel.managers[idx] },
                     set: { newMgr in
-                        ManagersStore.shared.update(manager: newMgr)
+                        viewModel.managers[idx] = newMgr
+                        // We would call a viewModel.updateManager(newMgr) here
                     }
                 ))
             } else {
@@ -321,6 +327,12 @@ struct AdminManagersView: View {
         .onChange(of: isRecentlyAddedSort) { _, newVal in
             if newVal { selectedPerformanceSort = .none }
         }
+        .task {
+            await viewModel.loadManagers()
+        }
+        .refreshable {
+            await viewModel.loadManagers()
+        }
     }
 }
 
@@ -330,6 +342,8 @@ struct TopPerformanceCard: View {
     let manager: DisplayManager
     let rank: Int
     var onEdit: (() -> Void)? = nil
+    var onDelete: (() -> Void)? = nil
+    var onResetPassword: ((String) async -> Bool)? = nil
 
     private var rankColor: Color {
         switch rank {
@@ -340,7 +354,7 @@ struct TopPerformanceCard: View {
     }
 
     var body: some View {
-        NavigationLink(destination: ManagerDetailView(manager: manager)) {
+        NavigationLink(destination: ManagerDetailView(manager: manager, onResetPassword: onResetPassword, onDelete: onDelete)) {
             ZStack(alignment: .topLeading) {
                 // Card background
                 RoundedRectangle(cornerRadius: RSMSRadius.large)
@@ -371,12 +385,17 @@ struct TopPerformanceCard: View {
                             Circle()
                                 .fill(RSMSColors.burgundy.opacity(0.1))
                                 .frame(width: 44, height: 44)
-                            if let data = manager.photoData, let uiImage = UIImage(data: data) {
-                                Image(uiImage: uiImage)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 44, height: 44)
-                                    .clipShape(Circle())
+                            if let urlString = manager.imageUrl, let url = URL(string: urlString) {
+                                AsyncImage(url: url) { image in
+                                    image
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 44, height: 44)
+                                        .clipShape(Circle())
+                                } placeholder: {
+                                    ProgressView()
+                                        .frame(width: 44, height: 44)
+                                }
                             } else {
                                 Image(systemName: "person.fill")
                                     .foregroundColor(RSMSColors.burgundy)
@@ -400,7 +419,7 @@ struct TopPerformanceCard: View {
                     }
                     .padding(.top, RSMSSpacing.xs)
 
-                    Spacer(minLength: RSMSSpacing.sm)
+                    Spacer(minLength: RSMSSpacing.xs)
 
                     // Bottom Row: Country & Revenue
                     HStack(alignment: .bottom) {
@@ -426,9 +445,8 @@ struct TopPerformanceCard: View {
                     }
                 }
                 .padding(RSMSSpacing.md)
-                .frame(height: 140)
 
-                // Bookmark badge (top-left)
+                // Bookmark badge (top-left, flush to left edge)
                 ZStack {
                     BookmarkShape()
                         .fill(rankColor)
@@ -439,9 +457,9 @@ struct TopPerformanceCard: View {
                         .foregroundColor(.white)
                         .offset(y: -2)
                 }
-                .offset(x: 24, y: 0)
+                .offset(x: 10, y: 0)
             }
-            .frame(width: 280)
+            .frame(width: UIScreen.main.bounds.width - 48)
         }
         .buttonStyle(.plain)
         .contextMenu {
@@ -451,7 +469,7 @@ struct TopPerformanceCard: View {
                 Label("Edit", systemImage: "square.and.pencil")
             }
             Button(role: .destructive) {
-                ManagersStore.shared.delete(manager: manager)
+                onDelete?()
             } label: {
                 Label("Delete", systemImage: "trash")
             }
@@ -464,21 +482,28 @@ struct TopPerformanceCard: View {
 struct ManagerListCard: View {
     let manager: DisplayManager
     var onEdit: (() -> Void)? = nil
+    var onDelete: (() -> Void)? = nil
+    var onResetPassword: ((String) async -> Bool)? = nil
 
     var body: some View {
-        NavigationLink(destination: ManagerDetailView(manager: manager)) {
+        NavigationLink(destination: ManagerDetailView(manager: manager, onResetPassword: onResetPassword, onDelete: onDelete)) {
             HStack(spacing: RSMSSpacing.md) {
                 // Avatar
                 ZStack {
                     Circle()
                         .fill(RSMSColors.burgundy.opacity(0.1))
                         .frame(width: 48, height: 48)
-                    if let data = manager.photoData, let uiImage = UIImage(data: data) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 48, height: 48)
-                            .clipShape(Circle())
+                    if let urlString = manager.imageUrl, let url = URL(string: urlString) {
+                        AsyncImage(url: url) { image in
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 48, height: 48)
+                                .clipShape(Circle())
+                        } placeholder: {
+                            ProgressView()
+                                .frame(width: 48, height: 48)
+                        }
                     } else {
                         Image(systemName: "person.fill")
                             .foregroundColor(RSMSColors.burgundy)
@@ -536,7 +561,7 @@ struct ManagerListCard: View {
                 Label("Edit", systemImage: "square.and.pencil")
             }
             Button(role: .destructive) {
-                ManagersStore.shared.delete(manager: manager)
+                onDelete?()
             } label: {
                 Label("Delete", systemImage: "trash")
             }

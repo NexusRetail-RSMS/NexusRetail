@@ -56,9 +56,6 @@ struct AdminTabView: View {
             }
         }
         .tint(RSMSColors.burgundy)
-        .sheet(isPresented: $isAddManagerPresented) {
-            NewManagerSheet()
-        }
     }
 }
 
@@ -68,7 +65,7 @@ private struct ManagersTabRoot: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            AdminManagersView()
+            AdminManagersView(isAddManagerPresented: $isAddManagerPresented)
                 .safeAreaInset(edge: .top) {
                     Color.clear.frame(height: 70)
                 }

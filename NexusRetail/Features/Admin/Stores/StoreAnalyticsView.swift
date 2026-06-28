@@ -216,13 +216,44 @@ struct StoreAnalyticsView: View {
 
             // Bar Chart
             if analyticsVM.salesData.isEmpty {
-                VStack {
-                    Spacer()
-                    Text("No sales data available.")
-                        .foregroundColor(RSMSColors.secondaryText)
-                    Spacer()
+                Chart {
+                    ForEach(["Jan", "Feb", "Mar", "Apr", "May", "Jun"], id: \.self) { month in
+                        BarMark(
+                            x: .value("Month", month),
+                            y: .value("Sales", 5.0)
+                        )
+                        .foregroundStyle(RSMSColors.burgundy.opacity(0.15))
+                        .cornerRadius(4)
+                    }
+                }
+                .chartYScale(domain: 0...100)
+                .chartYAxis {
+                    AxisMarks(values: [0, 25, 50, 75, 100]) { value in
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
+                            .foregroundStyle(RSMSColors.divider)
+                        AxisValueLabel {
+                            if let intVal = value.as(Int.self) {
+                                Text("₹\(intVal)")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(RSMSColors.secondaryText)
+                            }
+                        }
+                    }
+                }
+                .chartXAxis {
+                    AxisMarks { _ in
+                        AxisValueLabel()
+                            .font(.system(size: 11))
+                            .foregroundStyle(RSMSColors.secondaryText)
+                    }
                 }
                 .frame(height: 220)
+                .padding(.top, RSMSSpacing.sm)
+                .overlay {
+                    Text("No sales data available")
+                        .font(RSMSFonts.subheadline)
+                        .foregroundColor(RSMSColors.secondaryText)
+                }
             } else {
                 Chart(analyticsVM.salesData) { item in
                     BarMark(
@@ -283,13 +314,28 @@ struct StoreAnalyticsView: View {
 
             // Donut Chart
             if analyticsVM.topProducts.isEmpty {
-                VStack {
-                    Spacer()
-                    Text("No products data available.")
-                        .foregroundColor(RSMSColors.secondaryText)
-                    Spacer()
+                ZStack {
+                    Chart {
+                        SectorMark(
+                            angle: .value("Placeholder", 1),
+                            innerRadius: .ratio(0.65),
+                            angularInset: 2
+                        )
+                        .foregroundStyle(RSMSColors.burgundy.opacity(0.1))
+                        .cornerRadius(6)
+                    }
+                    .chartLegend(.hidden)
+                    .frame(height: 200)
+                    
+                    VStack(spacing: 2) {
+                        Image(systemName: "bag")
+                            .font(.system(size: 22))
+                            .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                        Text("No products data")
+                            .font(.system(size: 10))
+                            .foregroundColor(RSMSColors.secondaryText)
+                    }
                 }
-                .frame(height: 200)
             } else {
                 ZStack {
                     Chart(analyticsVM.topProducts) { product in

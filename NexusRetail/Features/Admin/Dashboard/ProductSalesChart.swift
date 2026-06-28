@@ -33,13 +33,28 @@ struct ProductSalesChart: View {
 
             // Chart
             if data.isEmpty {
-                VStack {
-                    Spacer()
-                    Text("No product sales data available.")
-                        .foregroundColor(RSMSColors.secondaryText)
-                    Spacer()
+                ZStack {
+                    Chart {
+                        SectorMark(
+                            angle: .value("Placeholder", 1),
+                            innerRadius: .ratio(0.65),
+                            angularInset: 2
+                        )
+                        .foregroundStyle(RSMSColors.burgundy.opacity(0.1))
+                        .cornerRadius(4)
+                    }
+                    .chartLegend(.hidden)
+                    .frame(height: 200)
+                    
+                    VStack(spacing: 2) {
+                        Image(systemName: "bag")
+                            .font(.system(size: 22))
+                            .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                        Text("No product data")
+                            .font(.system(size: 10))
+                            .foregroundColor(RSMSColors.secondaryText)
+                    }
                 }
-                .frame(height: 200)
                 .padding(.top, RSMSSpacing.sm)
             } else {
                 ZStack {

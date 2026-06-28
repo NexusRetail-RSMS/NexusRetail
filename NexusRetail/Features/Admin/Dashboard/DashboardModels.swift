@@ -57,3 +57,18 @@ struct DashboardTopProduct: Decodable, Identifiable {
         case revenue
     }
 }
+
+/// Sales grouped by period (month/quarter) and channel (online vs offline)
+struct SalesPeriodResult: Decodable, Identifiable {
+    var id: String { label }
+    let label: String
+    let online: Double
+    let offline: Double
+}
+
+/// Sales grouped by product category
+struct StoreCategorySales: Decodable, Identifiable {
+    var id: String { category }
+    let category: String
+    let revenue: Double
+}

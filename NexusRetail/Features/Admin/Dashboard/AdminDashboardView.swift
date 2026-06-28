@@ -105,7 +105,7 @@ struct AdminDashboardView: View {
                             .onTapGesture { isShowingProductsDetail = true }
 
                             // MARK: - Top Locations
-                            TopLocationsChartView()
+                            TopLocationsChartView(revenueByCountry: viewModel.byCountry)
                         }
                         .padding(.horizontal, RSMSSpacing.lg)
                         .padding(.top, RSMSSpacing.xxl)
@@ -249,28 +249,28 @@ struct AdminDashboardView: View {
                 value: viewModel.formattedRevenue,
                 icon: "indianrupeesign.circle.fill",
                 trend: nil,
-                color: Color(hex: "34C759") // Green
+                color: Color(hex: "2A9D8F") // Teal
             )
             KPICardView(
                 title: "Active Stores",
                 value: viewModel.activeStoresText,
                 icon: "building.2.fill",
                 trend: nil,
-                color: Color(hex: "007AFF") // Blue
+                color: RSMSColors.burgundy
             )
             KPICardView(
                 title: "Pending Transfers",
                 value: viewModel.pendingTransfersText,
                 icon: "arrow.left.arrow.right.circle.fill",
                 trend: nil,
-                color: Color(hex: "FF9500") // Orange
+                color: Color(hex: "E76F51") // Warm orange
             )
             KPICardView(
                 title: "Low-Stock Alerts",
                 value: viewModel.lowStockText,
                 icon: "exclamationmark.triangle.fill",
                 trend: nil,
-                color: Color(hex: "FF3B30") // Red
+                color: Color(hex: "D4A017") // Gold
             )
         }
         .animation(.easeInOut(duration: 0.3), value: viewModel.selectedCountry)

@@ -52,84 +52,106 @@ struct StoreFormView: View {
     var body: some View {
         NavigationStack {
             Form {
+                // Store Image Placeholder
+                Section {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 18)
+                            .fill(RSMSColors.cardBackground)
+                            .frame(height: 160)
+                            .overlay {
+                                VStack(spacing: 10) {
+                                    Image(systemName: "building.2.fill")
+                                        .font(.system(size: 34))
+                                        .foregroundStyle(RSMSColors.burgundy)
+                                    
+                                    Text("Store Image")
+                                        .font(.headline)
+                                        .foregroundStyle(RSMSColors.darkBrown)
+                                    
+                                    Text("Visual placeholder")
+                                        .font(.caption)
+                                        .foregroundStyle(RSMSColors.secondaryText)
+                                }
+                            }
+                    }
+                    .listRowInsets(EdgeInsets())
+                }
+                .listRowInsets(EdgeInsets())
+                
                 if editingStore != nil {
-                    Section(header: Text("Store Status").foregroundColor(RSMSColors.primaryText).fontWeight(.semibold)) {
+                    Section("Store Status") {
                         Toggle("Store is Active", isOn: $isActive)
                     }
                 }
 
-                Section(header: Text("Basic Details").foregroundColor(RSMSColors.primaryText).fontWeight(.semibold)) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Store Name").font(.caption).foregroundColor(RSMSColors.primaryText)
-                        TextField("Enter store name", text: $name)
-                    }
+                Section("Basic Details") {
+                    TextField("Store Name", text: $name)
+                        .autocorrectionDisabled()
                     
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Phone Number").font(.caption).foregroundColor(RSMSColors.primaryText)
-                        TextField("Enter phone number", text: $phone)
-                            .keyboardType(.phonePad)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Address & Location")
-                            .font(.caption)
-                            .foregroundColor(RSMSColors.primaryText)
-                        
-                        TextField("Country", text: $country)
-                        TextField("State", text: $state)
-                        TextField("City", text: $city)
-                        TextField("Exact Address / Pin Location", text: $pinLocation)
-                        
-                        MapReader { proxy in
-                            Map(position: $position) {
-                                if let coordinate = pickedCoordinate {
-                                    Marker("Store Location", coordinate: coordinate)
-                                }
-                            }
-                            .mapControls {
-                                MapUserLocationButton()
-                                MapCompass()
-                                MapScaleView()
-                            }
-                            .onTapGesture { position in
-                                if let coordinate = proxy.convert(position, from: .local) {
-                                    pickedCoordinate = coordinate
-                                    reverseGeocode(coordinate: coordinate)
-                                }
-                            }
-                            .frame(height: 200)
-                            .cornerRadius(8)
-                        }
-                        Text("Tap map to drop a pin and set address.")
-                            .font(.caption2)
-                            .foregroundColor(.gray)
-                    }
+                    TextField("Phone Number", text: $phone)
+                        .keyboardType(.phonePad)
                 }
                 
-                Section(header: Text("Localization").foregroundColor(RSMSColors.primaryText).fontWeight(.semibold)) {
+                Section("Address & Location") {
+                    TextField("Country", text: $country)
+                    TextField("State", text: $state)
+                    TextField("City", text: $city)
+                    TextField("Exact Address / Pin Location", text: $pinLocation)
+                    
+                    MapReader { proxy in
+                        Map(position: $position) {
+                            if let coordinate = pickedCoordinate {
+                                Marker("Store Location", coordinate: coordinate)
+                            }
+                        }
+                        .mapControls {
+                            MapUserLocationButton()
+                            MapCompass()
+                            MapScaleView()
+                        }
+                        .onTapGesture { position in
+                            if let coordinate = proxy.convert(position, from: .local) {
+                                pickedCoordinate = coordinate
+                                reverseGeocode(coordinate: coordinate)
+                            }
+                        }
+                        .frame(height: 200)
+                        .cornerRadius(8)
+                    }
+                    
+                    Text("Tap map to drop a pin and set address.")
+                        .font(.caption2)
+                        .foregroundColor(.gray)
+                }
+                
+                Section("Localization") {
                     Picker("Currency", selection: $currencyCode) {
                         ForEach(currencies, id: \.self) { Text($0) }
                     }
+                    .tint(RSMSColors.burgundy)
                     
                     Picker("Locale", selection: $locale) {
                         ForEach(locales, id: \.self) { Text($0) }
                     }
+                    .tint(RSMSColors.burgundy)
                     
                     Picker("Timezone", selection: $timezone) {
                         ForEach(timezones, id: \.self) { Text($0) }
                     }
+                    .tint(RSMSColors.burgundy)
                 }
                 
-                Section(header: Text("Staffing").foregroundColor(RSMSColors.primaryText).fontWeight(.semibold)) {
+                Section("Staffing") {
                     Picker("Manager", selection: $selectedManagerID) {
                         Text("None").tag(UUID?(nil))
                         ForEach(viewModel.managers) { manager in
                             Text(manager.name ?? "Unknown").tag(manager.id as UUID?)
                         }
                     }
+                    .tint(RSMSColors.burgundy)
                 }
                 
-                Section(header: Text("Payment Terminals").foregroundColor(RSMSColors.primaryText).fontWeight(.semibold)) {
+                Section("Payment Terminals") {
                     Toggle("Razorpay", isOn: $includeRazorpay)
                     Toggle("Card Terminal", isOn: $includeCard)
                 }
@@ -142,19 +164,15 @@ struct StoreFormView: View {
                     }
                 }
             }
-            .scrollContentBackground(.hidden)
-            .background(RSMSColors.background.ignoresSafeArea())
-            .navigationTitle(editingStore != nil ? "Edit Store" : "New Store")
+            .navigationTitle(editingStore != nil ? "Edit Store" : "Add New Store")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { dismiss() }
+                        .tint(RSMSColors.burgundy)
                 }
-                
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(editingStore == nil ? "Save" : "Update") {
                         Task {
                             var fullAddress = ""
                             if !country.isEmpty { fullAddress += country + ", " }
@@ -193,6 +211,7 @@ struct StoreFormView: View {
                         }
                     }
                     .fontWeight(.bold)
+                    .tint(RSMSColors.burgundy)
                     .disabled(viewModel.isLoading || name.isEmpty)
                 }
             }

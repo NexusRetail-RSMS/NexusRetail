@@ -33,7 +33,7 @@ struct AddProductView: View {
     
     private var canSave: Bool {
         !productName.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !sku.trimmingCharacters(in: .whitespaces).isEmpty &&
+
         Double(basePrice) != nil &&
         Int(stock) != nil
     }
@@ -121,9 +121,11 @@ struct AddProductView: View {
                 Section("Product Details") {
                     TextField("Product Name", text: $productName)
                         .autocorrectionDisabled()
-                    TextField("SKU", text: $sku)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.characters)
+                    
+                    TextField("SKU (Auto-generated)", text: $sku)
+                        .disabled(true)
+                        .foregroundStyle(RSMSColors.secondaryText)
+
                     Picker("Category", selection: $category) {
                         ForEach(categories, id: \.self) { Text($0) }
                     }
@@ -172,16 +174,32 @@ struct AddProductView: View {
                         .tint(RSMSColors.burgundy)
                     }
                 }
-
-                Section {
-                    Button {
+            }
+            .navigationTitle(product == nil ? "Add New Product" : "Edit Product")
+            .navigationBarTitleDisplayMode(.inline)
+            .onAppear {
+                if product == nil && sku.isEmpty {
+                    sku = viewModel.generateSKU(for: category)
+                }
+            }
+            .onChange(of: category) { _, newCat in
+                if product == nil {
+                    sku = viewModel.generateSKU(for: newCat)
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { dismiss() }
+                        .tint(RSMSColors.burgundy)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(product == nil ? "Save" : "Update") {
                         guard
                             canSave,
                             let price = Double(basePrice),
                             let stockInt = Int(stock)
                         else { return }
                         if let product {
-
                             viewModel.updateProduct(
                                 product,
                                 name: productName,
@@ -191,9 +209,7 @@ struct AddProductView: View {
                                 stock: stockInt,
                                 image: selectedImage
                             )
-
                         } else {
-
                             viewModel.addProduct(
                                 name: productName,
                                 sku: sku,
@@ -205,24 +221,10 @@ struct AddProductView: View {
                             )
                         }
                         dismiss()
-                    } label: {
-                        HStack {
-                            Spacer()
-                            Text(product == nil ? "Save Product" : "Update Product")
-                                .font(.headline)
-                            Spacer()
-                        }
                     }
-                    .disabled(!canSave)
+                    .fontWeight(.bold)
                     .tint(RSMSColors.burgundy)
-                }
-            }
-            .navigationTitle(product == nil ? "Add New Product" : "Edit Product")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
-                        .tint(RSMSColors.burgundy)
+                    .disabled(!canSave)
                 }
             }
         }

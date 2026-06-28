@@ -14,9 +14,19 @@ struct ManagerDetailView: View {
     // We keep a local copy so edits reflect immediately
     @State private var manager: DisplayManager
     @State private var isEditPresented = false
+    
+    @State private var isResettingPassword = false
+    @State private var showResetAlert = false
+    @State private var newPassword = ""
+    @State private var showDeleteAlert = false
 
-    init(manager: DisplayManager) {
+    var onResetPassword: ((String) async -> Bool)?
+    var onDelete: (() -> Void)?
+
+    init(manager: DisplayManager, onResetPassword: ((String) async -> Bool)? = nil, onDelete: (() -> Void)? = nil) {
         _manager = State(initialValue: manager)
+        self.onResetPassword = onResetPassword
+        self.onDelete = onDelete
     }
 
     var body: some View {
@@ -31,12 +41,17 @@ struct ManagerDetailView: View {
                             .fill(RSMSColors.burgundy.opacity(0.15))
                             .frame(width: 100, height: 100)
 
-                        if let data = manager.photoData, let uiImage = UIImage(data: data) {
-                            Image(uiImage: uiImage)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 100, height: 100)
-                                .clipShape(Circle())
+                        if let urlString = manager.imageUrl, let url = URL(string: urlString) {
+                            AsyncImage(url: url) { image in
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 100, height: 100)
+                                    .clipShape(Circle())
+                            } placeholder: {
+                                ProgressView()
+                                    .frame(width: 100, height: 100)
+                            }
                         } else {
                             Image(systemName: "person.fill")
                                 .resizable()
@@ -169,6 +184,62 @@ struct ManagerDetailView: View {
                     .padding(.top, RSMSSpacing.md)
                 }
 
+                if onResetPassword != nil {
+                    VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
+                        Text("ACCOUNT")
+                            .font(RSMSFonts.caption.weight(.semibold))
+                            .foregroundColor(RSMSColors.secondaryText)
+                            .padding(.leading, RSMSSpacing.lg)
+
+                        Button {
+                            showResetAlert = true
+                        } label: {
+                            HStack {
+                                Text("Reset Credentials")
+                                    .font(RSMSFonts.body)
+                                Spacer()
+                                Image(systemName: "key.fill")
+                                    .foregroundColor(RSMSColors.warning)
+                            }
+                            .padding(.horizontal, RSMSSpacing.lg)
+                            .padding(.vertical, 14)
+                            .background(RSMSColors.cardBackground)
+                            .cornerRadius(RSMSRadius.large)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: RSMSRadius.large)
+                                    .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                            )
+                        }
+                        .foregroundColor(RSMSColors.primaryText)
+                        .padding(.horizontal, RSMSSpacing.lg)
+                    }
+                    .padding(.top, RSMSSpacing.md)
+                }
+
+                if onDelete != nil {
+                    Button {
+                        showDeleteAlert = true
+                    } label: {
+                        HStack {
+                            Text("Delete Manager")
+                                .font(RSMSFonts.body.weight(.semibold))
+                            Spacer()
+                            Image(systemName: "trash")
+                        }
+                        .padding(.horizontal, RSMSSpacing.lg)
+                        .padding(.vertical, 14)
+                        .background(RSMSColors.cardBackground)
+                        .cornerRadius(RSMSRadius.large)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: RSMSRadius.large)
+                                .stroke(RSMSColors.error.opacity(0.3), lineWidth: 1)
+                        )
+                        .foregroundColor(RSMSColors.error)
+                    }
+                    .padding(.horizontal, RSMSSpacing.lg)
+                    .padding(.top, RSMSSpacing.md)
+                }
+
                 Spacer(minLength: RSMSSpacing.xxxl)
             }
         }
@@ -202,6 +273,36 @@ struct ManagerDetailView: View {
         }
         .sheet(isPresented: $isEditPresented) {
             EditManagerSheet(manager: $manager)
+        }
+        .alert("Reset Password", isPresented: $showResetAlert) {
+            TextField("New Password", text: $newPassword)
+            Button("Cancel", role: .cancel) {
+                newPassword = ""
+            }
+            Button("Reset") {
+                Task {
+                    isResettingPassword = true
+                    if let onResetPassword = onResetPassword {
+                        _ = await onResetPassword(newPassword)
+                    }
+                    isResettingPassword = false
+                    newPassword = ""
+                }
+            }
+            .disabled(newPassword.isEmpty)
+        } message: {
+            Text("Enter a new password for this manager.")
+        }
+        .alert("Delete Manager", isPresented: $showDeleteAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                if let onDelete = onDelete {
+                    onDelete()
+                    dismiss()
+                }
+            }
+        } message: {
+            Text("Are you sure you want to delete this manager? This action cannot be undone and will revoke their access.")
         }
     }
 }
@@ -284,7 +385,8 @@ struct EditManagerSheet: View {
         _phone     = State(initialValue: m.phone)
         _email     = State(initialValue: m.email)
         _address   = State(initialValue: m.address)
-        _selectedImageData = State(initialValue: m.photoData)
+        // Note: imageUrl is a string, if we allow changing photos we'd need to upload it.
+        // For now, we leave image picking handled differently or removed.
     }
 
     private var isFormValid: Bool {
@@ -392,11 +494,8 @@ struct EditManagerSheet: View {
                         manager.phone   = phone
                         manager.email   = email
                         manager.address = address
-                        if let data = selectedImageData {
-                            manager.photoData = data
-                        }
-                        // Persist to shared store
-                        ManagersStore.shared.update(manager: manager)
+                        // Update binding, no local store anymore
+                        // manager.photoData logic removed for now
                         dismiss()
                     } label: {
                         Image(systemName: "checkmark")

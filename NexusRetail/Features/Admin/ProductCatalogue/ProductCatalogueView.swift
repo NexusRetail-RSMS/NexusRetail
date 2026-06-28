@@ -11,7 +11,7 @@ struct ProductCatalogueView: View {
             RSMSColors.background.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                headerBar
+                headerSection
                     .padding(.horizontal, 20)
                     .padding(.top, 16)
                     .padding(.bottom, 16)
@@ -49,23 +49,25 @@ struct ProductCatalogueView: View {
         }
     }
 
-    private var headerBar: some View {
-        HStack(alignment: .center) {
-            Text("Product Catalogue")
-                .font(.system(size: 26, weight: .bold, design: .rounded))
-                .foregroundStyle(RSMSColors.darkBrown)
+    private var headerSection: some View {
+        HStack {
+            Text("Products")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .foregroundColor(RSMSColors.primaryText)
+            
             Spacer()
-            Button { showAddProduct = true } label: {
-                ZStack {
-                    Circle()
-                        .fill(RSMSColors.burgundy)
-                        .frame(width: 44, height: 44)
-                    Image(systemName: "plus")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(.white)
-                }
+            
+            Button {
+                showAddProduct = true
+            } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundColor(RSMSColors.burgundy)
+                    .frame(width: 44, height: 44)
+                    .background(RSMSColors.burgundy.opacity(0.1))
+                    .clipShape(Circle())
             }
-            .buttonStyle(.plain)
         }
     }
 
@@ -139,9 +141,13 @@ struct ProductCatalogueView: View {
         )
     }
 
+    @ViewBuilder
     private var trendingSection: some View {
-        Section {
-            VStack(spacing: 10) {
+        if viewModel.trendingProducts.isEmpty {
+            EmptyView()
+        } else {
+            Section {
+                VStack(spacing: 10) {
                 GeometryReader { geo in
                     TabView(selection: $viewModel.currentTrendingIndex) {
                         ForEach(Array(viewModel.trendingProducts.enumerated()), id: \.element.id) { index, product in
@@ -174,16 +180,41 @@ struct ProductCatalogueView: View {
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
         }
+        }
     }
 
     private func trendingCard(for product: TrendingProduct) -> some View {
         ZStack(alignment: .bottomLeading) {
-            Image(product.imageName)
-                .resizable()
-                .scaledToFill()
+            if let imageUrlStr = product.imageUrl, let url = URL(string: imageUrlStr) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .empty:
+                        Color.gray.opacity(0.3)
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    case .failure:
+                        Color.gray.opacity(0.3)
+                    @unknown default:
+                        EmptyView()
+                    }
+                }
                 .frame(maxWidth: .infinity)
                 .frame(height: 210)
                 .clipped()
+            } else if let imageName = product.imageName {
+                Image(imageName)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 210)
+                    .clipped()
+            } else {
+                Color.gray.opacity(0.3)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 210)
+            }
 
             LinearGradient(
                 stops: [
@@ -278,6 +309,26 @@ private struct ProductRowCard: View {
                         .scaledToFill()
                         .frame(width: 72, height: 72)
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                } else if let imageUrlStr = product.imageUrl, let url = URL(string: imageUrlStr) {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .empty:
+                            ProgressView()
+                                .frame(width: 72, height: 72)
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 72, height: 72)
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        case .failure:
+                            Image(systemName: "photo")
+                                .font(.system(size: 24))
+                                .foregroundStyle(RSMSColors.secondaryText.opacity(0.4))
+                        @unknown default:
+                            EmptyView()
+                        }
+                    }
                 } else if let imageName = product.imageName {
                     Image(imageName)
                         .resizable()

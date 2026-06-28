@@ -34,6 +34,7 @@ class StoreAnalyticsViewModel {
             
             self.orders = fetchedOrders
         } catch {
+            if error is CancellationError { return }
             print("Error loading store analytics: \(error)")
             self.errorMessage = "Failed to load store analytics: \(error.localizedDescription)"
         }
