@@ -11,6 +11,14 @@ import SwiftUI
 struct ManagerTabView: View {
     var body: some View {
         TabView {
+            // 0. Dashboard
+            NavigationStack {
+                ManagerDashboardView()
+            }
+            .tabItem {
+                Label("Dashboard", systemImage: "squareshape.split.2x2")
+            }
+
             // 1. Inventory
             NavigationStack {
                 ManagerPlaceholderView(
