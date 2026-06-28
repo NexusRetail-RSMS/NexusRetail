@@ -22,7 +22,8 @@ struct AdminTabView: View {
                 Label("Dashboard", systemImage: "house")
             }
             .tag(AdminTab.dashboard)
-                        // 2. Stores
+            
+            // 2. Stores
             NavigationStack {
                 StoreListView()
             }
@@ -31,7 +32,8 @@ struct AdminTabView: View {
             }
             .tag(AdminTab.stores)
             
-            // 3. Products            NavigationStack {
+            // 3. Products
+            NavigationStack {
                 ProductCatalogueView()
                     // ProductCatalogueView draws its own header, so we hide
                     // the NavigationStack bar to avoid a double title.
@@ -41,7 +43,8 @@ struct AdminTabView: View {
                 Label("Products", systemImage: "tag")
             }
             .tag(AdminTab.products)
-                        // 4. Transfers
+            
+            // 4. Transfers
             NavigationStack {
                 AdminTransfersView()
                     .modifier(AdminToolbarModifier(title: "Transfers"))
@@ -50,7 +53,8 @@ struct AdminTabView: View {
                 Label("Transfers", systemImage: "arrow.left.arrow.right")
             }
             .tag(AdminTab.transfers)
-                        // 5. Managers
+            
+            // 5. Managers
             NavigationStack {
                 AdminManagersView()
                     .modifier(AdminToolbarModifier(title: "Managers"))
@@ -69,12 +73,13 @@ struct AdminTabView: View {
 /// A view modifier that applies the common Admin toolbar (title only).
 struct AdminToolbarModifier: ViewModifier {
     let title: String
+    @State private var isProfilePresented = false
+    @Environment(SessionStore.self) private var sessionStore
 
     func body(content: Content) -> some View {
         content
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
-=======
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -82,12 +87,12 @@ struct AdminToolbarModifier: ViewModifier {
                     } label: {
                         ZStack {
                             Circle()
-                                .fill(Color.nexusRed)
+                                .fill(RSMSColors.burgundy)
                                 .frame(width: 32, height: 32)
                             
                             Text(initials(for: sessionStore.currentUser?.name))
                                 .font(.caption.bold())
-                                .foregroundColor(Color.nexusGold)
+                                .foregroundColor(.white)
                         }
                     }
                     .accessibilityLabel("Profile")
@@ -110,7 +115,6 @@ struct AdminToolbarModifier: ViewModifier {
             return String(first.prefix(2)).uppercased()
         }
         return "AD"
->>>>>>> origin/negi
     }
 }
 
@@ -120,7 +124,6 @@ struct AdminPlaceholderView: View {
     let message: String
 
     var body: some View {
-<<<<<<< HEAD
         ZStack {
             RSMSColors.background
                 .ignoresSafeArea()
@@ -141,7 +144,8 @@ struct AdminPlaceholderView: View {
                     .foregroundColor(RSMSColors.secondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
-            }        }
+            }
+        }
     }
 }
 
