@@ -34,19 +34,7 @@ struct AdminDashboardView: View {
         )
     }
 
-    private var greetingText: String {
-        let hour = Calendar.current.component(.hour, from: Date())
-        if hour < 12 { return "Good Morning" }
-        if hour < 17 { return "Good Afternoon" }
-        return "Good Evening"
-    }
 
-    private var userName: String {
-        if let name = sessionStore.currentUser?.name, !name.isEmpty {
-            return name.components(separatedBy: " ").first ?? name
-        }
-        return "Admin"
-    }
 
     var body: some View {
         ZStack {
@@ -152,73 +140,67 @@ struct AdminDashboardView: View {
 
     // MARK: - Header
     //
-    // Row 1: "Dashboard" title + profile avatar
-    // Row 2: Greeting + country filter pill
+    // Single row: "Dashboard" title on left, country flag button + profile avatar on right.
     private var headerSection: some View {
-        VStack(alignment: .leading, spacing: RSMSSpacing.md) {
-            // Title row
-            HStack(alignment: .center) {
-                Text("Dashboard")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .foregroundColor(RSMSColors.primaryText)
+        HStack(alignment: .center) {
+            Text("Dashboard")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .foregroundColor(RSMSColors.primaryText)
 
-                Spacer()
+            Spacer()
 
+            // Country filter — shows flag or globe
+            Menu {
                 Button {
-                    isProfilePresented = true
-                } label: {
-                    ZStack {
-                        Circle()
-                            .fill(RSMSColors.burgundy)
-                            .frame(width: 44, height: 44)
-
-                        Text(initials(for: sessionStore.currentUser?.name))
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white)
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        viewModel.selectedCountry = nil
                     }
+                } label: {
+                    Text("🌍 All Global")
                 }
-                .accessibilityLabel("Profile")
-                .accessibilityHint("Opens your profile and settings")
-            }
-
-            // Greeting + Country filter row
-            HStack {
-                Text("\(greetingText), \(userName)")
-                    .font(RSMSFonts.subheadline)
-                    .foregroundColor(RSMSColors.secondaryText)
-
-                Spacer()
-
-                Menu {
-                    Button("All Global") {
+                ForEach(viewModel.countries, id: \.self) { country in
+                    Button {
                         withAnimation(.easeInOut(duration: 0.25)) {
-                            viewModel.selectedCountry = nil
+                            viewModel.selectedCountry = country
                         }
+                    } label: {
+                        Text("\(countryFlag(for: country)) \(country)")
                     }
-                    ForEach(viewModel.countries, id: \.self) { country in
-                        Button(country) {
-                            withAnimation(.easeInOut(duration: 0.25)) {
-                                viewModel.selectedCountry = country
-                            }
-                        }
+                }
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(RSMSColors.burgundy.opacity(0.1))
+                        .frame(width: 44, height: 44)
+
+                    if let selected = viewModel.selectedCountry {
+                        Text(countryFlag(for: selected))
+                            .font(.system(size: 22))
+                    } else {
+                        Text("🌍")
+                            .font(.system(size: 22))
                     }
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "globe")
-                            .font(.system(size: 12, weight: .medium))
-                        Text(viewModel.displayCountry)
-                            .font(.system(size: 13, weight: .semibold))
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 9, weight: .bold))
-                    }
-                    .foregroundColor(RSMSColors.burgundy)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(RSMSColors.burgundy.opacity(0.08))
-                    .cornerRadius(20)
                 }
             }
+            .accessibilityLabel("Country filter")
+
+            // Profile avatar
+            Button {
+                isProfilePresented = true
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(RSMSColors.burgundy)
+                        .frame(width: 44, height: 44)
+
+                    Text(initials(for: sessionStore.currentUser?.name))
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white)
+                }
+            }
+            .accessibilityLabel("Profile")
+            .accessibilityHint("Opens your profile and settings")
         }
         .padding(.horizontal, RSMSSpacing.lg)
     }
@@ -234,6 +216,26 @@ struct AdminDashboardView: View {
             return String(first.prefix(2)).uppercased()
         }
         return "AD"
+    }
+
+    /// Maps a country name to its flag emoji.
+    private func countryFlag(for country: String) -> String {
+        let map: [String: String] = [
+            "United States":        "🇺🇸",
+            "USA":                  "🇺🇸",
+            "United Kingdom":       "🇬🇧",
+            "UK":                   "🇬🇧",
+            "Canada":               "🇨🇦",
+            "Australia":            "🇦🇺",
+            "Germany":              "🇩🇪",
+            "France":               "🇫🇷",
+            "Japan":                "🇯🇵",
+            "India":                "🇮🇳",
+            "Singapore":            "🇸🇬",
+            "United Arab Emirates": "🇦🇪",
+            "UAE":                  "🇦🇪",
+        ]
+        return map[country] ?? "🌍"
     }
 
     // MARK: - KPI Cards
