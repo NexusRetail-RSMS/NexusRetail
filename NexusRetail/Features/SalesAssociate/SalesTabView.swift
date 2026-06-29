@@ -2,8 +2,32 @@ import SwiftUI
 
 struct SalesTabView: View {
     var body: some View {
-        NavigationStack {
-            SalesAssociateDashboardView()
+        TabView {
+            NavigationStack {
+                SalesPlaceholderView(
+                    title: "Dashboard",
+                    message: "Sales associate dashboard metrics will appear here.",
+                    icon: "chart.bar.fill"
+                )
+                .modifier(SalesToolbarModifier(title: "Dashboard"))
+            }
+            .tabItem {
+                Label("Dashboard", systemImage: "square.grid.2x2")
+            }
+            
+            NavigationStack {
+                SalesAssociateDashboardView()
+            }
+            .tabItem {
+                Label("Clients", systemImage: "person.3.fill")
+            }
+            
+            NavigationStack {
+                SalesSettingsView()
+            }
+            .tabItem {
+                Label("Settings", systemImage: "gearshape.fill")
+            }
         }
         .tint(RSMSColors.burgundy)
     }
