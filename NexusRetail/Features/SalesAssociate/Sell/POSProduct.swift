@@ -114,13 +114,6 @@ class POSProductRepository {
                 ))
             }
             
-            // Let's ensure the user's specific sample products from the prompt are present
-            for sample in self.fallbackProducts {
-                if !mapped.contains(where: { $0.name.localizedCaseInsensitiveContains(sample.name) }) {
-                    mapped.append(sample)
-                }
-            }
-            
             self.products = mapped
             
             // If the RPC didn't return item_id, fetch them directly from the sku table

@@ -37,6 +37,9 @@ class RecommendationService {
         
         for product in products {
             guard product.itemId > 0 else { continue } // Skip fallback products with itemId 0
+            print("Product:", product.name)
+            print("UUID:", product.id)
+            print("itemId:", product.itemId)
             itemIdToProductId[product.itemId] = product.id
             productIdToItemId[product.id] = product.itemId
         }
@@ -54,8 +57,11 @@ class RecommendationService {
         
         guard let itemId = productIdToItemId[productId] else {
             print("RecommendationService: Product \(productId) not found in mapping (no item_id)")
+            print("RecommendationService: Current mapping has \(productIdToItemId.count) entries")
             return []
         }
+        
+        print("RecommendationService: [STEP 1] UUID \(productId) → item_id \(itemId)")
         
         do {
             // The model expects a dictionary of items the user has interacted with
@@ -67,7 +73,11 @@ class RecommendationService {
                 exclude: nil
             )
             
+            print("RecommendationService: [STEP 2] CoreML input → items: [\(itemId): 1.0], k: \(count)")
+            
             let output = try model.prediction(input: input)
+            
+            print("RecommendationService: [STEP 3] CoreML output → \(output.recommendations.count) raw recommendations: \(output.recommendations)")
             
             // Map the recommended Int64 IDs back to product UUIDs
             var results: [(productId: UUID, score: Double)] = []
@@ -76,10 +86,13 @@ class RecommendationService {
                 if let uuid = itemIdToProductId[recommendedItemId] {
                     let score = output.scores[recommendedItemId] ?? 0.0
                     results.append((productId: uuid, score: score))
+                    print("RecommendationService: [STEP 4] item_id \(recommendedItemId) → UUID \(uuid) (score: \(String(format: "%.3f", score)))")
+                } else {
+                    print("RecommendationService: [STEP 4] item_id \(recommendedItemId) → NOT in catalogue (model knows it, but not in our 62 products)")
                 }
             }
             
-            print("RecommendationService: Got \(results.count) recommendations for item_id \(itemId)")
+            print("RecommendationService: [RESULT] \(results.count) of \(output.recommendations.count) recommendations matched catalogue products")
             return results
             
         } catch {
