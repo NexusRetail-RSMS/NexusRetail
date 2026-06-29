@@ -54,51 +54,55 @@ class POSProductRepository {
             let sizes = ["S", "M", "L", "XL"]
             var mapped: [POSProduct] = []
             
-            // Fetch inventory stock for this store if available from inventory_item table
+            // Fetch inventory stock from inventory_item table
             var inventoryStock: [UUID: Int] = [:]
-            if let storeID = storeID {
-                struct InventoryItemResponse: Codable {
-                    let sku_id: UUID
-                    let on_hand: Int
-                }
+            
+            struct InventoryItemResponse: Codable {
+                let sku_id: UUID
+                let on_hand: Int
+            }
+            
+            do {
+                let invItems: [InventoryItemResponse]
                 
-                do {
-                    let invItems: [InventoryItemResponse] = try await SupabaseManager.shared.client
+                if let storeID = storeID {
+                    // Fetch stock for specific store
+                    invItems = try await SupabaseManager.shared.client
                         .from("inventory_item")
                         .select("sku_id, on_hand")
                         .eq("store_id", value: storeID)
                         .execute()
                         .value
-                    
                     print("POSProductRepository: Found \(invItems.count) inventory_item rows for store \(storeID)")
-                    for item in invItems {
-                        inventoryStock[item.sku_id] = item.on_hand
-                        print("  -> sku_id: \(item.sku_id), on_hand: \(item.on_hand)")
-                    }
-                } catch {
-                    print("POSProductRepository: Non-fatal error querying store inventory_item: \(error)")
+                } else {
+                    // No storeID — fetch stock across ALL stores
+                    invItems = try await SupabaseManager.shared.client
+                        .from("inventory_item")
+                        .select("sku_id, on_hand")
+                        .execute()
+                        .value
+                    print("POSProductRepository: No storeID, fetched \(invItems.count) inventory_item rows across all stores")
                 }
-            } else {
-                print("POSProductRepository: No storeID provided, skipping inventory_item lookup")
+                
+                // Aggregate on_hand per sku_id (sum across stores if no specific store)
+                for item in invItems {
+                    inventoryStock[item.sku_id, default: 0] += item.on_hand
+                }
+            } catch {
+                print("POSProductRepository: Non-fatal error querying inventory_item: \(error)")
             }
             
             for (index, rpc) in response.enumerated() {
                 let size = sizes[index % sizes.count]
                 
-                // Priority: 1) inventory_item on_hand for this store, 2) RPC stock, 3) default 10
+                // Priority: 1) inventory_item on_hand, 2) RPC stock
                 let finalStock: Int
                 if let invStock = inventoryStock[rpc.id] {
                     finalStock = invStock
-                    print("POSProductRepository: \(rpc.name) -> using inventory_item on_hand: \(invStock)")
                 } else if rpc.stock > 0 {
                     finalStock = rpc.stock
-                    print("POSProductRepository: \(rpc.name) -> using RPC stock: \(rpc.stock)")
                 } else {
-                    // Default to 10 instead of 0 when no stock info exists
-                    // This prevents falsely showing "Out of Stock" for products 
-                    // that simply haven't had inventory_item rows created yet
-                    finalStock = 10
-                    print("POSProductRepository: \(rpc.name) -> no stock data found, defaulting to \(finalStock)")
+                    finalStock = 0
                 }
                 
                 mapped.append(POSProduct(
