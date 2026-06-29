@@ -369,6 +369,45 @@ struct ReceiptView: View {
                         .execute()
                 }
                 
+                // 3. Decrement database stock counts in inventory_item table
+                if let storeID = sessionStore.currentUser?.storeID {
+                    for item in cachedItems {
+                        struct InventoryItemSelect: Codable {
+                            let id: UUID
+                            let on_hand: Int
+                        }
+                        
+                        do {
+                            let invItems: [InventoryItemSelect] = try await SupabaseManager.shared.client
+                                .from("inventory_item")
+                                .select("id, on_hand")
+                                .eq("store_id", value: storeID)
+                                .eq("sku_id", value: item.id)
+                                .execute()
+                                .value
+                            
+                            if let invItem = invItems.first {
+                                let newStock = max(0, invItem.on_hand - 1)
+                                
+                                try await SupabaseManager.shared.client
+                                    .from("inventory_item")
+                                    .update(["on_hand": newStock])
+                                    .eq("id", value: invItem.id)
+                                    .execute()
+                                
+                                print("ReceiptView: Decremented database stock for SKU \(item.sku) to \(newStock)")
+                            }
+                        } catch {
+                            print("ReceiptView: Non-fatal error updating inventory_item for SKU \(item.sku): \(error)")
+                        }
+                    }
+                }
+                
+                // 4. Decrement local in-memory stock repository
+                for item in cachedItems {
+                    POSProductRepository.shared.decrementStock(productId: item.id)
+                }
+                
                 print("ReceiptView: Order successfully saved to database.")
             } catch {
                 print("ReceiptView: Non-fatal error inserting order to Supabase (using mock database completion): \(error)")

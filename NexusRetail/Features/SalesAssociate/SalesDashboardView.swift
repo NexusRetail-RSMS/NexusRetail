@@ -337,7 +337,7 @@ struct SalesDashboardView: View {
                 GridRow {
                     // 3. Search Product
                     NavigationLink(value: POSFlowDestination.searchProduct) {
-                        quickActionCard(title: "Search Product", subtitle: "Search by name or code", icon: "magnifyingglass", color: .purple)
+                        quickActionCard(title: "Search Product", subtitle: "Search by name or code", icon: "magnifyingglass", color: .purple, centerAlign: true)
                     }
                     .buttonStyle(.plain)
                     .gridCellColumns(2)
@@ -346,30 +346,40 @@ struct SalesDashboardView: View {
         }
     }
     
-    private func quickActionCard(title: String, subtitle: String, icon: String, color: Color) -> some View {
+    private func quickActionCard(title: String, subtitle: String, icon: String, color: Color, centerAlign: Bool = false) -> some View {
         HStack(spacing: 12) {
+            if centerAlign {
+                Spacer()
+            }
+            
             ZStack {
                 RoundedRectangle(cornerRadius: 10)
                     .fill(color.opacity(0.08))
-                    .frame(width: 40, height: 40)
+                    .frame(width: 38, height: 38)
                 
                 Image(systemName: icon)
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.system(size: 15, weight: .bold))
                     .foregroundColor(color)
             }
             
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: centerAlign ? .center : .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
                     .foregroundColor(RSMSColors.primaryText)
+                    .minimumScaleFactor(0.8)
+                    .lineLimit(1)
                 
                 Text(subtitle)
-                    .font(.system(size: 10))
+                    .font(.system(size: 9))
                     .foregroundColor(RSMSColors.secondaryText)
-                    .lineLimit(2)
+                    .lineLimit(1)
             }
             
-            Spacer()
+            if centerAlign {
+                Spacer()
+            } else {
+                Spacer()
+            }
         }
         .padding(14)
         .frame(height: 68) // Fixed height to align all quick actions perfectly

@@ -17,9 +17,11 @@ class POSProductRepository {
     
     // In-memory products list loaded either from Supabase or falling back to samples.
     var products: [POSProduct] = []
+    private var fallbackProducts: [POSProduct] = []
     
     init() {
-        self.products = getFallbackProducts()
+        self.fallbackProducts = getFallbackProducts()
+        self.products = fallbackProducts
     }
     
     func fetchProducts(storeID: UUID?) async -> [POSProduct] {
@@ -41,7 +43,6 @@ class POSProductRepository {
                 .value
             
             if response.isEmpty {
-                self.products = getFallbackProducts()
                 return self.products
             }
             
@@ -89,8 +90,7 @@ class POSProductRepository {
             }
             
             // Let's ensure the user's specific sample products from the prompt are present
-            let userSamples = getFallbackProducts()
-            for sample in userSamples {
+            for sample in self.fallbackProducts {
                 if !mapped.contains(where: { $0.name.localizedCaseInsensitiveContains(sample.name) }) {
                     mapped.append(sample)
                 }
@@ -99,9 +99,17 @@ class POSProductRepository {
             self.products = mapped
             return mapped
         } catch {
-            print("POSProductRepository: Error fetching from Supabase, using fallbacks: \(error)")
-            self.products = getFallbackProducts()
+            print("POSProductRepository: Error fetching from Supabase, using current in-memory list: \(error)")
             return self.products
+        }
+    }
+    
+    func decrementStock(productId: UUID) {
+        if let index = fallbackProducts.firstIndex(where: { $0.id == productId }) {
+            fallbackProducts[index].stock = max(0, fallbackProducts[index].stock - 1)
+        }
+        if let index = products.firstIndex(where: { $0.id == productId }) {
+            products[index].stock = max(0, products[index].stock - 1)
         }
     }
     
