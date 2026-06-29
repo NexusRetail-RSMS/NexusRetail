@@ -109,7 +109,7 @@ struct RecentOrdersView: View {
             Spacer()
             
             VStack(alignment: .trailing, spacing: 6) {
-                Text("₹\(Int(order.amount))")
+                Text("$\(String(format: "%.2f", order.amount))")
                     .font(.system(size: 14, weight: .bold))
                     .foregroundColor(RSMSColors.primaryText)
                 
