@@ -42,6 +42,8 @@ class POSProductRepository {
                 .execute()
                 .value
             
+            print("POSProductRepository: RPC returned \(response.count) products")
+            
             if response.isEmpty {
                 return self.products
             }
@@ -66,17 +68,37 @@ class POSProductRepository {
                         .execute()
                         .value
                     
+                    print("POSProductRepository: Found \(invItems.count) inventory_item rows for store \(storeID)")
                     for item in invItems {
                         inventoryStock[item.sku_id] = item.on_hand
+                        print("  -> sku_id: \(item.sku_id), on_hand: \(item.on_hand)")
                     }
                 } catch {
                     print("POSProductRepository: Non-fatal error querying store inventory_item: \(error)")
                 }
+            } else {
+                print("POSProductRepository: No storeID provided, skipping inventory_item lookup")
             }
             
             for (index, rpc) in response.enumerated() {
                 let size = sizes[index % sizes.count]
-                let finalStock = inventoryStock[rpc.id] ?? rpc.stock
+                
+                // Priority: 1) inventory_item on_hand for this store, 2) RPC stock, 3) default 10
+                let finalStock: Int
+                if let invStock = inventoryStock[rpc.id] {
+                    finalStock = invStock
+                    print("POSProductRepository: \(rpc.name) -> using inventory_item on_hand: \(invStock)")
+                } else if rpc.stock > 0 {
+                    finalStock = rpc.stock
+                    print("POSProductRepository: \(rpc.name) -> using RPC stock: \(rpc.stock)")
+                } else {
+                    // Default to 10 instead of 0 when no stock info exists
+                    // This prevents falsely showing "Out of Stock" for products 
+                    // that simply haven't had inventory_item rows created yet
+                    finalStock = 10
+                    print("POSProductRepository: \(rpc.name) -> no stock data found, defaulting to \(finalStock)")
+                }
+                
                 mapped.append(POSProduct(
                     id: rpc.id,
                     name: rpc.name,

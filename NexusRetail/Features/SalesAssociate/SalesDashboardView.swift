@@ -636,18 +636,72 @@ struct SalesDashboardView: View {
     }
     
     private func fetchStoreOrders() async {
-        guard let storeID = sessionStore.currentUser?.storeID else { return }
+        guard let storeID = sessionStore.currentUser?.storeID else {
+            print("SalesDashboardView: No storeID found on current user, skipping fetch")
+            return
+        }
         isStatsLoading = true
+        
+        // Use a lightweight model that matches exactly what we select
+        struct DashboardOrderLineItem: Codable {
+            let id: UUID?
+            let quantity: Int
+        }
+        
+        struct DashboardOrder: Codable, Identifiable {
+            let id: UUID
+            let clientID: UUID?
+            let storeID: UUID?
+            let associateID: UUID?
+            let total: Double
+            let createdAt: String
+            let orderLineItems: [DashboardOrderLineItem]?
+            
+            enum CodingKeys: String, CodingKey {
+                case id
+                case clientID = "client_id"
+                case storeID = "store_id"
+                case associateID = "associate_id"
+                case total
+                case createdAt = "created_at"
+                case orderLineItems = "order_line_item"
+            }
+        }
+        
         do {
-            let fetched: [StoreOrder] = try await SupabaseManager.shared.client
+            let fetched: [DashboardOrder] = try await SupabaseManager.shared.client
                 .from("orders")
                 .select("id, client_id, store_id, associate_id, total, created_at, order_line_item(id, quantity)")
                 .eq("store_id", value: storeID)
                 .execute()
                 .value
             
+            print("SalesDashboardView: Fetched \(fetched.count) orders from Supabase for store \(storeID)")
+            
+            // Convert to StoreOrder format
+            let converted: [StoreOrder] = fetched.map { dOrder in
+                let lineItems: [OrderLineItem]? = dOrder.orderLineItems?.map { dli in
+                    OrderLineItem(
+                        id: dli.id,
+                        orderID: nil,
+                        quantity: dli.quantity,
+                        appliedPrice: 0,
+                        sku: nil
+                    )
+                }
+                return StoreOrder(
+                    id: dOrder.id,
+                    clientID: dOrder.clientID,
+                    storeID: dOrder.storeID,
+                    associateID: dOrder.associateID,
+                    total: dOrder.total,
+                    createdAt: dOrder.createdAt,
+                    orderLineItems: lineItems
+                )
+            }
+            
             await MainActor.run {
-                self.dbOrders = fetched
+                self.dbOrders = converted
                 self.isStatsLoading = false
             }
         } catch {

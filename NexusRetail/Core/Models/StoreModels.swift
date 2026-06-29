@@ -63,6 +63,16 @@ struct StoreOrder: Codable, Identifiable {
         case createdAt = "created_at"
         case orderLineItems = "order_line_item"
     }
+    
+    init(id: UUID, clientID: UUID?, storeID: UUID?, associateID: UUID?, total: Double, createdAt: String, orderLineItems: [OrderLineItem]?) {
+        self.id = id
+        self.clientID = clientID
+        self.storeID = storeID
+        self.associateID = associateID
+        self.total = total
+        self.createdAt = createdAt
+        self.orderLineItems = orderLineItems
+    }
 }
 
 struct OrderLineItem: Codable, Identifiable {
@@ -78,6 +88,14 @@ struct OrderLineItem: Codable, Identifiable {
         case quantity
         case appliedPrice = "applied_price"
         case sku
+    }
+    
+    init(id: UUID?, orderID: UUID?, quantity: Int, appliedPrice: Double, sku: NestedSKU?) {
+        self.id = id
+        self.orderID = orderID
+        self.quantity = quantity
+        self.appliedPrice = appliedPrice
+        self.sku = sku
     }
 }
 
