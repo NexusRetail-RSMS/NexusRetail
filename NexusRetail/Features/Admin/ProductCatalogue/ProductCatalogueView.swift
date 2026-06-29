@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreImage.CIFilterBuiltins
 
 struct ProductCatalogueView: View {
     @StateObject private var viewModel = ProductCatalogueViewModel()
@@ -297,114 +298,188 @@ private struct ProductRowCard: View {
         return RSMSColors.success
     }
 
-    var body: some View {
-        HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(RSMSColors.burgundy.opacity(0.06))
+        @State private var showQR = false
+        
+        var body: some View {
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(RSMSColors.burgundy.opacity(0.06))
 
-                if let image = product.image {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 72, height: 72)
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                } else if let imageUrlStr = product.imageUrl, let url = URL(string: imageUrlStr) {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .empty:
-                            ProgressView()
-                                .frame(width: 72, height: 72)
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 72, height: 72)
-                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        case .failure:
-                            Image(systemName: "photo")
-                                .font(.system(size: 24))
-                                .foregroundStyle(RSMSColors.secondaryText.opacity(0.4))
-                        @unknown default:
-                            EmptyView()
+                    if let image = product.image {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 72, height: 72)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    } else if let imageUrlStr = product.imageUrl, let url = URL(string: imageUrlStr) {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case .empty:
+                                ProgressView()
+                                    .frame(width: 72, height: 72)
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 72, height: 72)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            case .failure:
+                                Image(systemName: "photo")
+                                    .font(.system(size: 24))
+                                    .foregroundStyle(RSMSColors.secondaryText.opacity(0.4))
+                            @unknown default:
+                                EmptyView()
+                            }
+                        }
+                    } else if let imageName = product.imageName {
+                        Image(imageName)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 72, height: 72)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    } else {
+                        Image(systemName: "photo")
+                            .font(.system(size: 24))
+                            .foregroundStyle(RSMSColors.secondaryText.opacity(0.4))
+                    }
+                }
+                .frame(width: 72, height: 72)
+
+                VStack(alignment: .leading, spacing: 3) {
+
+                    HStack(alignment: .center) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(product.name)
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(RSMSColors.darkBrown)
+                                .lineLimit(1)
+
+                            Text(product.category)
+                                .font(.system(size: 12))
+                                .foregroundStyle(RSMSColors.secondaryText)
+                        }
+
+                        Spacer()
+
+                        VStack(alignment: .trailing, spacing: 8) {
+                            // Price on the right
+                            Text(viewModel.formattedPrice(for: product))
+                                .font(.system(size: 17, weight: .bold, design: .rounded))
+                                .foregroundStyle(RSMSColors.darkBrown)
+                            
+                            if product.qrCode != nil {
+                                Button {
+                                    showQR = true
+                                } label: {
+                                    Image(systemName: "qrcode")
+                                        .font(.system(size: 16))
+                                        .foregroundColor(RSMSColors.burgundy)
+                                }
+                            }
                         }
                     }
-                } else if let imageName = product.imageName {
-                    Image(imageName)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 72, height: 72)
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                } else {
-                    Image(systemName: "photo")
-                        .font(.system(size: 24))
-                        .foregroundStyle(RSMSColors.secondaryText.opacity(0.4))
                 }
+                .frame(maxWidth: .infinity)
             }
-            .frame(width: 72, height: 72)
-
-            VStack(alignment: .leading, spacing: 3) {
-
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(product.name)
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(RSMSColors.darkBrown)
-                            .lineLimit(1)
-
-                        Text(product.category)
-                            .font(.system(size: 12))
-                            .foregroundStyle(RSMSColors.secondaryText)
-                    }
-
-                    Spacer()
-
-                    // Stock badge
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Text("\(product.stock)")
-                            .font(.system(size: 15, weight: .bold, design: .rounded))
-                            .foregroundStyle(stockColor)
-
-                        Text("in stock")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(RSMSColors.secondaryText)
+            .padding(14)
+            .frame(height: 100)
+            .background(RSMSColors.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(RSMSColors.cardBorder, lineWidth: 1)
+            )
+            .shadow(color: RSMSColors.darkBrown.opacity(0.04), radius: 6, x: 0, y: 2)
+            .contextMenu {
+                if product.qrCode != nil {
+                    Button {
+                        showQR = true
+                    } label: {
+                        Label("Show QR Code", systemImage: "qrcode")
                     }
                 }
+                
+                Button {
+                    onEdit()
+                } label: {
+                    Label("Edit", systemImage: "square.and.pencil")
+                }
 
-                Text(viewModel.formattedPrice(for: product))
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundStyle(RSMSColors.darkBrown)
-                    .padding(.top, 2)
+                Button(role: .destructive) {
+                    onDelete()
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
             }
-            .frame(maxWidth: .infinity)
-        }
-        .padding(14)
-        .frame(height: 100)
-        .background(RSMSColors.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(RSMSColors.cardBorder, lineWidth: 1)
-        )
-        .shadow(color: RSMSColors.darkBrown.opacity(0.04), radius: 6, x: 0, y: 2)
-        .contextMenu {
-            Button {
-                onEdit()
-            } label: {
-                Label("Edit", systemImage: "square.and.pencil")
-            }
-
-            Button(role: .destructive) {
-                onDelete()
-            } label: {
-                Label("Delete", systemImage: "trash")
+            .sheet(isPresented: $showQR) {
+                if let qr = product.qrCode {
+                    NavigationStack {
+                        VStack(spacing: 24) {
+                            Text(product.name)
+                                .font(.headline)
+                            
+                            QRCodeView(qrCodeString: qr)
+                                .frame(width: 250, height: 250)
+                                .padding()
+                                .background(Color.white)
+                                .cornerRadius(16)
+                                .shadow(radius: 4)
+                            
+                            Text("SKU: \(product.sku)")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding()
+                        .navigationTitle("Product QR")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .topBarTrailing) {
+                                Button("Done") {
+                                    showQR = false
+                                }
+                            }
+                        }
+                    }
+                    .presentationDetents([.medium])
+                }
             }
         }
     }
-}
 
 #Preview {
     NavigationStack {
         ProductCatalogueView()
+    }
+}
+
+// MARK: - QR Code Utility
+
+struct QRCodeView: View {
+    let qrCodeString: String
+    
+    var body: some View {
+        Image(uiImage: generateQRCode(from: qrCodeString))
+            .interpolation(.none)
+            .resizable()
+            .scaledToFit()
+    }
+    
+    private func generateQRCode(from string: String) -> UIImage {
+        let context = CIContext()
+        let filter = CIFilter.qrCodeGenerator()
+        
+        filter.message = Data(string.utf8)
+        
+        if let outputImage = filter.outputImage {
+            let transform = CGAffineTransform(scaleX: 10, y: 10)
+            let scaledImage = outputImage.transformed(by: transform)
+            
+            if let cgimg = context.createCGImage(scaledImage, from: scaledImage.extent) {
+                return UIImage(cgImage: cgimg)
+            }
+        }
+        
+        return UIImage(systemName: "xmark.circle") ?? UIImage()
     }
 }
