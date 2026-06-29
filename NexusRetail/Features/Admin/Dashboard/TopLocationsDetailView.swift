@@ -21,7 +21,6 @@ struct TopLocationsDetailView: View {
     @State private var offset: CGSize = .zero
     @State private var lastOffset: CGSize = .zero
     @State private var selectedCountry: String? = nil
-    @State private var timeRange: StoreChartTimeRange = .monthly(Date())
     
     var body: some View {
         VStack(spacing: 0) {
@@ -49,10 +48,7 @@ struct TopLocationsDetailView: View {
             
             ScrollView {
                 VStack(spacing: RSMSSpacing.xl) {
-                    
-                    // Time Range Picker
-                    SwipeableCalendarView(selectedRange: $timeRange)
-                        .padding(.horizontal)
+
                     // Map Area
                     ZStack {
                         Color.white
