@@ -59,33 +59,35 @@ struct ProfileView: View {
                         .padding(.horizontal, RSMSSpacing.lg)
                         .padding(.top, RSMSSpacing.lg)
                         
-                        // Store Settings Section
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Store Settings")
-                                .font(.subheadline)
-                                .foregroundColor(RSMSColors.secondaryText)
-                                .padding(.horizontal, RSMSSpacing.lg)
-                            
-                            VStack(spacing: 0) {
-                                Button {
-                                    // Action
-                                } label: {
-                                    HStack {
-                                        Image(systemName: "creditcard")
-                                            .foregroundColor(RSMSColors.burgundy)
-                                        Text("Payment Configuration")
-                                            .foregroundColor(RSMSColors.primaryText)
-                                        Spacer()
-                                        Image(systemName: "chevron.right")
-                                            .foregroundColor(RSMSColors.secondaryText)
-                                            .font(.caption)
+                        // Store Settings Section (Admin Only)
+                        if sessionStore.currentUser?.role == .admin {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Store Settings")
+                                    .font(.subheadline)
+                                    .foregroundColor(RSMSColors.secondaryText)
+                                    .padding(.horizontal, RSMSSpacing.lg)
+                                
+                                VStack(spacing: 0) {
+                                    Button {
+                                        // Action
+                                    } label: {
+                                        HStack {
+                                            Image(systemName: "creditcard")
+                                                .foregroundColor(RSMSColors.burgundy)
+                                            Text("Payment Configuration")
+                                                .foregroundColor(RSMSColors.primaryText)
+                                            Spacer()
+                                            Image(systemName: "chevron.right")
+                                                .foregroundColor(RSMSColors.secondaryText)
+                                                .font(.caption)
+                                        }
+                                        .padding()
                                     }
-                                    .padding()
                                 }
+                                .background(Color.white)
+                                .cornerRadius(RSMSRadius.large)
+                                .padding(.horizontal, RSMSSpacing.lg)
                             }
-                            .background(Color.white)
-                            .cornerRadius(RSMSRadius.large)
-                            .padding(.horizontal, RSMSSpacing.lg)
                         }
                         
                         // Sign Out Button
