@@ -30,32 +30,43 @@ struct CardGatewayConfigurationView: View {
             RSMSColors.background
                 .ignoresSafeArea()
 
-            if viewModel.isLoading {
-                ProgressView()
-                    .tint(RSMSColors.burgundy)
-                    .scaleEffect(1.2)
-            } else {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: RSMSSpacing.xl) {
-                        subtitleSection
-                        environmentSection
-                        credentialSection
-                        securityBadge
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    
+                    // MARK: - Custom Header
+                    customHeaderSection
 
-                        if isAdmin {
-                            actionButtons
+                    // MARK: - Content
+                    if viewModel.isLoading {
+                        VStack {
+                            Spacer()
+                            ProgressView()
+                                .tint(RSMSColors.burgundy)
+                                .scaleEffect(1.2)
+                                .frame(maxWidth: .infinity)
+                                .padding(.top, 100)
+                            Spacer()
                         }
+                    } else {
+                        VStack(alignment: .leading, spacing: RSMSSpacing.xl) {
+                            subtitleSection
+                            environmentSection
+                            credentialSection
+                            securityBadge
+
+                            if isAdmin {
+                                actionButtons
+                            }
+                        }
+                        .padding(.horizontal, RSMSSpacing.lg)
+                        .padding(.top, RSMSSpacing.xl)
+                        .padding(.bottom, RSMSSpacing.xxl)
                     }
-                    .padding(.horizontal, RSMSSpacing.lg)
-                    .padding(.vertical, RSMSSpacing.xl)
                 }
             }
+            .ignoresSafeArea(edges: .top)
         }
-        .navigationTitle("Card Gateway Configuration")
-        .navigationBarTitleDisplayMode(.large)
-        .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(RSMSColors.burgundy, for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
+        .navigationBarHidden(true)
         .task {
             await viewModel.loadExisting(storeID: storeID)
         }
@@ -71,6 +82,52 @@ struct CardGatewayConfigurationView: View {
         } message: {
             Text(viewModel.successMessage)
         }
+    }
+
+    // MARK: - Custom Header
+
+    private var customHeaderSection: some View {
+        HStack(alignment: .center, spacing: RSMSSpacing.md) {
+            Button {
+                dismiss()
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.2))
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                }
+            }
+            .accessibilityLabel("Back")
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Card Payments (Stripe)")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+                
+                Text("Credential Configuration")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.8))
+            }
+            
+            Spacer()
+        }
+        .padding(.horizontal, RSMSSpacing.lg)
+        .padding(.top, 60)
+        .padding(.bottom, RSMSSpacing.xxxl)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            LinearGradient(
+                colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .clipShape(HeaderCurve())
     }
 
     // MARK: - Subtitle
