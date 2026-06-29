@@ -319,30 +319,29 @@ struct SalesDashboardView: View {
             }
             .padding(.horizontal, 4)
             
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 14) {
-                // 1. New Sale
-                NavigationLink(value: POSFlowDestination.newSale) {
-                    quickActionCard(title: "New Sale", subtitle: "Start a new sale", icon: "bag", color: RSMSColors.burgundy)
+            Grid(horizontalSpacing: 14, verticalSpacing: 14) {
+                GridRow {
+                    // 1. New Sale
+                    NavigationLink(value: POSFlowDestination.newSale) {
+                        quickActionCard(title: "New Sale", subtitle: "Start a new sale", icon: "bag", color: RSMSColors.burgundy)
+                    }
+                    .buttonStyle(.plain)
+                    
+                    // 2. Scan Barcode
+                    NavigationLink(value: POSFlowDestination.barcodeScanner) {
+                        quickActionCard(title: "Scan Barcode", subtitle: "Scan product barcode", icon: "barcode.viewfinder", color: .orange)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
                 
-                // 2. Scan Barcode
-                NavigationLink(value: POSFlowDestination.barcodeScanner) {
-                    quickActionCard(title: "Scan Barcode", subtitle: "Scan product barcode", icon: "barcode.viewfinder", color: .orange)
+                GridRow {
+                    // 3. Search Product
+                    NavigationLink(value: POSFlowDestination.searchProduct) {
+                        quickActionCard(title: "Search Product", subtitle: "Search by name or code", icon: "magnifyingglass", color: .purple)
+                    }
+                    .buttonStyle(.plain)
+                    .gridCellColumns(2)
                 }
-                .buttonStyle(.plain)
-                
-                // 3. Search Product
-                NavigationLink(value: POSFlowDestination.searchProduct) {
-                    quickActionCard(title: "Search Product", subtitle: "Search by name or code", icon: "magnifyingglass", color: .purple)
-                }
-                .buttonStyle(.plain)
-                
-                // 4. Client Directory
-                NavigationLink(destination: SalesAssociateDashboardView()) {
-                    quickActionCard(title: "Client Directory", subtitle: "Manage client profiles", icon: "person.2.fill", color: .green)
-                }
-                .buttonStyle(.plain)
             }
         }
     }
