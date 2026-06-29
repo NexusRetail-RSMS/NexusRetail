@@ -345,6 +345,18 @@ struct BarcodeScannerView: View {
     }
     
     private func getAlternatives(for product: POSProduct) -> [POSProduct] {
+        // Try ML-powered recommendations first
+        let mlRecommendations = RecommendationService.shared.getRecommendedProducts(
+            for: product,
+            from: allProducts,
+            count: 5
+        )
+        
+        if !mlRecommendations.isEmpty {
+            return mlRecommendations
+        }
+        
+        // Fallback: same category, stock > 0, not itself, similar price
         return allProducts.filter { item in
             item.id != product.id &&
             item.category == product.category &&

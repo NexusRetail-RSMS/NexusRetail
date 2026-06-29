@@ -119,6 +119,10 @@ class POSProductRepository {
             }
             
             self.products = mapped
+            
+            // Build the ML recommendation mapping with the loaded products
+            RecommendationService.shared.buildProductMapping(from: mapped)
+            
             return mapped
         } catch {
             print("POSProductRepository: Error fetching from Supabase, using current in-memory list: \(error)")

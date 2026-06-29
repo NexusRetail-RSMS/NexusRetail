@@ -425,9 +425,22 @@ struct ProductSearchView: View {
         )
     }
     
-    // MARK: - Alternatives Fetching Logic
+    // MARK: - Alternatives Fetching Logic (ML-Powered)
     private func getAlternatives(for product: POSProduct) -> [POSProduct] {
-        // filter: same category, stock > 0, not itself, similar price (within 30% difference)
+        // Try ML-powered recommendations first
+        let mlRecommendations = RecommendationService.shared.getRecommendedProducts(
+            for: product,
+            from: allProducts,
+            count: 5
+        )
+        
+        if !mlRecommendations.isEmpty {
+            print("ProductSearchView: Using ML recommendations for \(product.name): \(mlRecommendations.map { $0.name })")
+            return mlRecommendations
+        }
+        
+        // Fallback: same category, stock > 0, not itself, similar price (within 30% difference)
+        print("ProductSearchView: ML returned no results, falling back to category match for \(product.name)")
         return allProducts.filter { item in
             item.id != product.id &&
             item.category == product.category &&
