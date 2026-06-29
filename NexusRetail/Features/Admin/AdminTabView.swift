@@ -45,7 +45,6 @@ struct AdminTabView: View {
             // 4. Transfers
             NavigationStack {
                 AdminTransfersView()
-                    .modifier(AdminToolbarModifier(title: "Transfers"))
             }
             .tabItem {
                 Label("Transfers", systemImage: "arrow.left.arrow.right")
