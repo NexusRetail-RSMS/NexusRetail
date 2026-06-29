@@ -109,11 +109,11 @@ class DashboardViewModel {
     }
     
     var pendingTransfersText: String {
-        "\(kpis?.pendingTransfers ?? 0)"
+        "0"
     }
     
     var lowStockText: String {
-        "\(kpis?.lowStockAlerts ?? 0)"
+        "0"
     }
     
     // MARK: - Chart Data Adapters

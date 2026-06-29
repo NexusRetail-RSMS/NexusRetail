@@ -71,19 +71,15 @@ struct KPICardView: View {
     
     var body: some View {
         HStack(spacing: RSMSSpacing.sm) {
-            // Double-circle icon on the left
+            // Single-color icon on the left
             ZStack {
                 Circle()
-                    .fill(color.opacity(0.08))
-                    .frame(width: 56, height: 56)
-                
-                Circle()
                     .fill(color.opacity(0.18))
-                    .frame(width: 40, height: 40)
+                    .frame(width: 48, height: 48)
                 
                 Image(systemName: icon)
                     .foregroundColor(color)
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 20, weight: .semibold))
             }
             
             // Value + label on the right
@@ -104,7 +100,7 @@ struct KPICardView: View {
             Spacer(minLength: 0)
         }
         .padding(.horizontal, RSMSSpacing.md)
-        .padding(.vertical, 18) // Make card bigger vertically
+        .frame(height: 94) // Fixed height to ensure all cards match
         .background(color.opacity(0.04))
         .cornerRadius(RSMSRadius.medium)
         .overlay(
