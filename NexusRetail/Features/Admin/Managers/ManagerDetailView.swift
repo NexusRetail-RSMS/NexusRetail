@@ -75,28 +75,28 @@ struct ManagerDetailView: View {
                 // ── Contact Info ────────────────────────────────────────
                 DetailSection(title: "CONTACT") {
                     if !manager.phone.isEmpty {
-                        DetailRow(icon: "phone.fill", iconColor: RSMSColors.success, label: manager.phone)
+                        ManagerProfileDetailRow(icon: "phone.fill", iconColor: RSMSColors.success, label: manager.phone)
                     }
                     if !manager.phone.isEmpty && (!manager.email.isEmpty || !manager.address.isEmpty) {
                         Divider().padding(.horizontal, 7)
                     }
                     if !manager.email.isEmpty {
-                        DetailRow(icon: "envelope.fill", iconColor: RSMSColors.burgundy, label: manager.email)
+                        ManagerProfileDetailRow(icon: "envelope.fill", iconColor: RSMSColors.burgundy, label: manager.email)
                     }
                     if !manager.email.isEmpty && !manager.address.isEmpty {
                         Divider().padding(.horizontal, 7)
                     }
                     if !manager.address.isEmpty {
-                        DetailRow(icon: "mappin.circle.fill", iconColor: RSMSColors.error, label: manager.address)
+                        ManagerProfileDetailRow(icon: "mappin.circle.fill", iconColor: RSMSColors.error, label: manager.address)
                     }
                     if manager.phone.isEmpty && manager.email.isEmpty && manager.address.isEmpty {
-                        DetailRow(icon: "info.circle.fill", iconColor: RSMSColors.secondaryText, label: "No contact info available")
+                        ManagerProfileDetailRow(icon: "info.circle.fill", iconColor: RSMSColors.secondaryText, label: "No contact info available")
                     }
                 }
 
                 // ── Store ───────────────────────────────────────────────
                 DetailSection(title: "STORE") {
-                    DetailRow(
+                    ManagerProfileDetailRow(
                         icon: "building.2.fill",
                         iconColor: RSMSColors.warning,
                         label: manager.storeName.isEmpty ? "Not Assigned" : manager.storeName,
@@ -337,7 +337,7 @@ private struct DetailSection<Content: View>: View {
     }
 }
 
-private struct DetailRow: View {
+private struct ManagerProfileDetailRow: View {
     let icon: String
     let iconColor: Color
     let label: String
