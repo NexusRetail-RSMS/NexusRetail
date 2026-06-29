@@ -32,36 +32,63 @@ struct ProductSalesChart: View {
             }
 
             // Chart
-            ZStack {
-                Chart(data) { point in
-                    SectorMark(
-                        angle: .value("Sales", point.sales),
-                        innerRadius: .ratio(0.65),
-                        angularInset: 2
-                    )
-                    .foregroundStyle(by: .value("Category", shortLabel(point.category)))
-                    .cornerRadius(4)
+            if data.isEmpty {
+                ZStack {
+                    Chart {
+                        SectorMark(
+                            angle: .value("Placeholder", 1),
+                            innerRadius: .ratio(0.65),
+                            angularInset: 2
+                        )
+                        .foregroundStyle(RSMSColors.burgundy.opacity(0.1))
+                        .cornerRadius(4)
+                    }
+                    .chartLegend(.hidden)
+                    .frame(height: 200)
+                    
+                    VStack(spacing: 2) {
+                        Image(systemName: "bag")
+                            .font(.system(size: 22))
+                            .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                        Text("No product data")
+                            .font(.system(size: 10))
+                            .foregroundColor(RSMSColors.secondaryText)
+                    }
                 }
-                .chartForegroundStyleScale([
-                    "Couture": RSMSColors.burgundy,
-                    "Fragrance": Color(hex: "F4A261"),
-                    "Jewelry": Color(hex: "E9C46A"),
-                    "Leather": Color(hex: "2A9D8F"),
-                    "Watches": Color(hex: "264653")
-                ])
-                .chartLegend(.hidden)
-                .frame(height: 200)
+                .padding(.top, RSMSSpacing.sm)
+            } else {
+                ZStack {
+                    Chart(data) { point in
+                        SectorMark(
+                            angle: .value("Sales", point.sales),
+                            innerRadius: .ratio(0.65),
+                            angularInset: 2
+                        )
+                        .foregroundStyle(by: .value("Category", shortLabel(point.category)))
+                        .cornerRadius(4)
+                    }
+                    .chartForegroundStyleScale([
+                        "Couture": RSMSColors.burgundy,
+                        "Fragrance": Color(hex: "F4A261"),
+                        "Jewelry": Color(hex: "E9C46A"),
+                        "Leather": Color(hex: "2A9D8F"),
+                        "Watches": Color(hex: "264653"),
+                        "Accessories": Color(hex: "8A2BE2")
+                    ])
+                    .chartLegend(.hidden)
+                    .frame(height: 200)
 
-                VStack {
-                    Text("Total Units")
-                        .font(.system(size: 10))
-                        .foregroundColor(RSMSColors.secondaryText)
-                    Text("\(data.map(\.sales).reduce(0, +))")
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundColor(RSMSColors.primaryText)
+                    VStack {
+                        Text("Total Units")
+                            .font(.system(size: 10))
+                            .foregroundColor(RSMSColors.secondaryText)
+                        Text("\(data.map(\.sales).reduce(0, +))")
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundColor(RSMSColors.primaryText)
+                    }
                 }
+                .padding(.top, RSMSSpacing.sm)
             }
-            .padding(.top, RSMSSpacing.sm)
 
             // Legend
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: RSMSSpacing.sm) {
@@ -102,13 +129,14 @@ struct ProductSalesChart: View {
         case "Jewelry": return Color(hex: "E9C46A")
         case "Leather": return Color(hex: "2A9D8F")
         case "Watches": return Color(hex: "264653")
+        case "Accessories": return Color(hex: "8A2BE2")
         default: return RSMSColors.chartBar
         }
     }
 }
 
 #Preview {
-    @Previewable @State var range: SalesTimeRange = .weekly
+    @Previewable @State var range: SalesTimeRange = .monthly
     let vm = DashboardViewModel()
     ProductSalesChart(data: vm.productChartData, maxValue: vm.productMaxValue, timeRange: $range)
         .padding()

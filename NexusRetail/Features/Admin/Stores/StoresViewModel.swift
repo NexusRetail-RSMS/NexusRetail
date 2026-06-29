@@ -34,6 +34,7 @@ class StoresViewModel {
             print("Decoding Error: \(error)")
             self.errorMessage = "Decoding Error: \(error)"
         } catch {
+            if error is CancellationError { return }
             self.errorMessage = "Failed to load data: \(error.localizedDescription)"
         }
         

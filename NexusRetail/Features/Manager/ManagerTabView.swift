@@ -2,23 +2,24 @@
 //  ManagerTabView.swift
 //  NexusRetail
 //
-//  Manager shell: Inventory, Requests, Pricing, Events, Staff.
-//  Styled with the premium RSMS cream and burgundy layout.
-//
 
 import SwiftUI
 
+/// Manager shell: Inventory, Requests, Pricing, Events, Staff.
 struct ManagerTabView: View {
     var body: some View {
         TabView {
+            // 0. Dashboard
+            NavigationStack {
+                ManagerDashboardView()
+            }
+            .tabItem {
+                Label("Dashboard", systemImage: "squareshape.split.2x2")
+            }
+
             // 1. Inventory
             NavigationStack {
-                ManagerPlaceholderView(
-                    title: "Inventory",
-                    message: "View store stock levels and configure low-stock alerts.",
-                    icon: "box.truck.fill"
-                )
-                .modifier(ManagerToolbarModifier(title: "Inventory"))
+                InventoryDashboardView()
             }
             .tabItem {
                 Label("Inventory", systemImage: "square.grid.3x3.fill")
@@ -83,10 +84,9 @@ struct ManagerTabView: View {
 /// A view modifier that applies the common Manager toolbar (title + profile button).
 struct ManagerToolbarModifier: ViewModifier {
     let title: String
-    
     @Environment(SessionStore.self) private var sessionStore
     @State private var isProfilePresented = false
-    
+
     func body(content: Content) -> some View {
         content
             .navigationTitle(title)
@@ -106,17 +106,15 @@ struct ManagerToolbarModifier: ViewModifier {
                                 .foregroundColor(.white)
                         }
                     }
-                    .accessibilityLabel("Profile")
-                    .accessibilityHint("Opens your manager profile")
                 }
             }
             .sheet(isPresented: $isProfilePresented) {
-                ManagerProfileSheet()
+                AdminProfileSheet()
             }
     }
     
     private func initials(for name: String?) -> String {
-        guard let name = name, !name.isEmpty else { return "MG" }
+        guard let name = name, !name.isEmpty else { return "MGR" }
         let components = name.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
         if components.count >= 2 {
             let first = components[0].prefix(1)
@@ -125,7 +123,7 @@ struct ManagerToolbarModifier: ViewModifier {
         } else if let first = components.first {
             return String(first.prefix(2)).uppercased()
         }
-        return "MG"
+        return "MGR"
     }
 }
 
@@ -144,7 +142,6 @@ struct ManagerPlaceholderView: View {
                 Image(systemName: icon)
                     .font(.system(size: 60))
                     .foregroundColor(RSMSColors.burgundy)
-                    .accessibilityHidden(true)
                 
                 Text(title)
                     .font(RSMSFonts.title)
@@ -168,71 +165,4 @@ struct ManagerPlaceholderView: View {
             }
         }
     }
-}
-
-/// Simple sheet to allow Manager to Sign Out
-struct ManagerProfileSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(SessionStore.self) private var sessionStore
-    
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                RSMSColors.background
-                    .ignoresSafeArea()
-                
-                VStack(spacing: RSMSSpacing.xl) {
-                    VStack(spacing: RSMSSpacing.sm) {
-                        Image(systemName: "person.crop.circle.fill")
-                            .font(.system(size: 80))
-                            .foregroundColor(RSMSColors.burgundy)
-                        
-                        Text(sessionStore.currentUser?.name ?? "Store Manager")
-                            .font(RSMSFonts.title)
-                            .fontWeight(.bold)
-                            .foregroundColor(RSMSColors.primaryText)
-                        
-                        Text("Store Manager")
-                            .font(RSMSFonts.subheadline)
-                            .foregroundColor(RSMSColors.secondaryText)
-                    }
-                    .padding(.top, RSMSSpacing.xxl)
-                    
-                    Spacer()
-                    
-                    Button {
-                        dismiss()
-                        Task { try? await sessionStore.signOut() }
-                    } label: {
-                        Text("Sign Out")
-                            .font(RSMSFonts.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(RSMSColors.error)
-                            .cornerRadius(RSMSRadius.medium)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, RSMSSpacing.lg)
-                    .padding(.bottom, RSMSSpacing.xxl)
-                }
-            }
-            .navigationTitle("Manager Profile")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Close") {
-                        dismiss()
-                    }
-                    .foregroundColor(RSMSColors.burgundy)
-                }
-            }
-        }
-    }
-}
-
-#Preview {
-    let mockSession = SessionStore()
-    return ManagerTabView()
-        .environment(mockSession)
 }

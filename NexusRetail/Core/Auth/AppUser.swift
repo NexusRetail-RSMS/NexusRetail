@@ -15,6 +15,9 @@ struct AppUser: Codable, Identifiable {
     let role: UserRole
     let storeID: UUID?
     let isActive: Bool?
+    let phone: String?
+    let address: String?
+    let imageUrl: String?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -23,5 +26,8 @@ struct AppUser: Codable, Identifiable {
         case role
         case storeID = "store_id"
         case isActive = "is_active"
+        case phone
+        case address
+        case imageUrl = "image_url"
     }
 }
