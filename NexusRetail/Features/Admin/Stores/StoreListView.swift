@@ -23,13 +23,14 @@ struct StoreListView: View {
             RSMSColors.background
                 .ignoresSafeArea()
             
-            ZStack(alignment: .top) {
-                // 1. Content
-                Group {
+            ScrollView {
+                VStack(spacing: 0) {
+                    headerSection
+
                     if viewModel.isLoading && viewModel.stores.isEmpty {
                         ProgressView("Loading stores...")
                             .tint(RSMSColors.burgundy)
-                            .frame(maxHeight: .infinity)
+                            .frame(maxWidth: .infinity, minHeight: 300)
                     } else if let errorMessage = viewModel.errorMessage, viewModel.stores.isEmpty {
                         VStack(spacing: RSMSSpacing.md) {
                             Image(systemName: "exclamationmark.triangle")
@@ -50,7 +51,7 @@ struct StoreListView: View {
                             .cornerRadius(RSMSRadius.small)
                         }
                         .padding()
-                        .frame(maxHeight: .infinity)
+                        .frame(maxWidth: .infinity, minHeight: 300)
                     } else if viewModel.stores.isEmpty {
                         VStack(spacing: RSMSSpacing.md) {
                             Image(systemName: "building.2.crop.circle")
@@ -64,79 +65,26 @@ struct StoreListView: View {
                                 .font(RSMSFonts.subheadline)
                                 .foregroundColor(RSMSColors.secondaryText)
                         }
-                        .frame(maxHeight: .infinity)
+                        .frame(maxWidth: .infinity, minHeight: 300)
                     } else {
-                        ScrollView {
-                            LazyVStack(spacing: RSMSSpacing.md) {
-                                ForEach(filteredStores) { store in
-                                    NavigationLink(value: store) {
-                                        StoreRow(store: store, manager: viewModel.managers.first(where: { $0.id == store.managerID }))
-                                    }
-                                    .buttonStyle(.plain)
+                        LazyVStack(spacing: RSMSSpacing.md) {
+                            ForEach(filteredStores) { store in
+                                NavigationLink(value: store) {
+                                    StoreRow(store: store, manager: viewModel.managers.first(where: { $0.id == store.managerID }))
                                 }
-                            }
-                            .padding(.horizontal, RSMSSpacing.lg)
-                            .padding(.bottom, RSMSSpacing.md)
-                        }
-                        .safeAreaInset(edge: .top) {
-                            Color.clear.frame(height: 130)
-                        }
-                        .refreshable {
-                            await viewModel.load()
-                        }
-                        .navigationDestination(for: Store.self) { store in
-                            StoreAnalyticsView(store: store, manager: viewModel.managers.first(where: { $0.id == store.managerID }), viewModel: viewModel)
-                        }
-                    }
-                }
-                
-                // 2. Custom Header (Floats on top)
-                VStack(spacing: RSMSSpacing.md) {
-                    HStack {
-                        Text("Stores")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                            .foregroundColor(RSMSColors.primaryText)
-                        
-                        Spacer()
-                        
-                        Button {
-                            isShowingCreateForm = true
-                        } label: {
-                            Image(systemName: "plus")
-                                .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(RSMSColors.burgundy)
-                                .frame(width: 44, height: 44)
-                                .background(RSMSColors.burgundy.opacity(0.1))
-                                .clipShape(Circle())
-                        }
-                        .accessibilityLabel("Add new store")
-                    }
-                    
-                    // Search Bar
-                    HStack {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(.gray)
-                        TextField("Search stores...", text: $searchText)
-                            .textFieldStyle(PlainTextFieldStyle())
-                        if !searchText.isEmpty {
-                            Button(action: { searchText = "" }) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundColor(.gray)
+                                .buttonStyle(.plain)
                             }
                         }
+                        .padding(.horizontal, RSMSSpacing.lg)
+                        .padding(.bottom, RSMSSpacing.md)
                     }
-                    .padding(RSMSSpacing.sm)
-                    .background(Color.black.opacity(0.05))
-                    .cornerRadius(RSMSRadius.small)
                 }
-                .padding(.horizontal, RSMSSpacing.lg)
-                .padding(.top, 16)
-                .padding(.bottom, 8)
-                .background(
-                    RSMSColors.background
-                        .ignoresSafeArea(edges: .top)
-                )
+            }
+            .refreshable {
+                await viewModel.load()
+            }
+            .navigationDestination(for: Store.self) { store in
+                StoreAnalyticsView(store: store, manager: viewModel.managers.first(where: { $0.id == store.managerID }), viewModel: viewModel)
             }
         }
         .toolbar(.hidden, for: .navigationBar)
@@ -148,6 +96,37 @@ struct StoreListView: View {
         .sheet(isPresented: $isShowingCreateForm) {
             StoreFormView(viewModel: viewModel)
         }
+    }
+
+    private var headerSection: some View {
+        VStack(spacing: RSMSSpacing.md) {
+            HStack {
+                Text("Stores")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .foregroundColor(RSMSColors.primaryText)
+                
+                Spacer()
+                
+                Button {
+                    isShowingCreateForm = true
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundColor(RSMSColors.burgundy)
+                        .frame(width: 44, height: 44)
+                        .background(RSMSColors.burgundy.opacity(0.1))
+                        .clipShape(Circle())
+                }
+                .accessibilityLabel("Add new store")
+            }
+            
+            // Search Bar
+            NexusSearchBar(text: $searchText, placeholder: "Search stores…")
+        }
+        .padding(.horizontal, RSMSSpacing.lg)
+        .padding(.top, 16)
+        .padding(.bottom, 8)
     }
 }
 
