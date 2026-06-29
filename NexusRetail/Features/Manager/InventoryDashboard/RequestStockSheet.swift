@@ -8,9 +8,11 @@ import SwiftUI
 struct RequestStockSheet: View {
     @Environment(\.dismiss) private var dismiss
     let lowStockItems: [InventoryItem]
-    let onSubmit: ([InventoryItem]) -> Void
+    let onSubmit: ([StockRequestPayload]) -> Void
     
     @State private var selectedItems: Set<UUID> = []
+    @State private var quantities: [UUID: Int] = [:]
+    @State private var urgencies: [UUID: StockRequestUrgency] = [:]
     @State private var isSubmitting = false
     
     var body: some View {
@@ -34,42 +36,91 @@ struct RequestStockSheet: View {
                             .font(RSMSFonts.caption)
                             .foregroundColor(RSMSColors.secondaryText)) {
                             ForEach(lowStockItems) { item in
-                                Button {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    Button {
+                                        withAnimation {
+                                            if selectedItems.contains(item.id) {
+                                                selectedItems.remove(item.id)
+                                                // Optional: clean up dicts
+                                            } else {
+                                                selectedItems.insert(item.id)
+                                                if quantities[item.id] == nil {
+                                                    quantities[item.id] = max(1, item.minimumRequired - item.currentStock)
+                                                }
+                                                if urgencies[item.id] == nil {
+                                                    urgencies[item.id] = .medium
+                                                }
+                                            }
+                                        }
+                                    } label: {
+                                        HStack {
+                                            Image(systemName: selectedItems.contains(item.id) ? "checkmark.circle.fill" : "circle")
+                                                .foregroundColor(selectedItems.contains(item.id) ? RSMSColors.burgundy : RSMSColors.secondaryText)
+                                                .font(.system(size: 20))
+                                            
+                                            VStack(alignment: .leading, spacing: 4) {
+                                                Text(item.name)
+                                                    .font(RSMSFonts.headline)
+                                                    .foregroundColor(RSMSColors.primaryText)
+                                                Text(item.sku)
+                                                    .font(RSMSFonts.caption)
+                                                    .foregroundColor(RSMSColors.secondaryText)
+                                            }
+                                            
+                                            Spacer()
+                                            
+                                            VStack(alignment: .trailing, spacing: 4) {
+                                                Text("\(item.currentStock) in stock")
+                                                    .font(RSMSFonts.subheadline)
+                                                    .foregroundColor(RSMSColors.error)
+                                                    .fontWeight(.bold)
+                                                Text("Min: \(item.minimumRequired)")
+                                                    .font(RSMSFonts.caption)
+                                                    .foregroundColor(RSMSColors.secondaryText)
+                                            }
+                                        }
+                                    }
+                                    .buttonStyle(.plain)
+                                    
                                     if selectedItems.contains(item.id) {
-                                        selectedItems.remove(item.id)
-                                    } else {
-                                        selectedItems.insert(item.id)
-                                    }
-                                } label: {
-                                    HStack {
-                                        Image(systemName: selectedItems.contains(item.id) ? "checkmark.circle.fill" : "circle")
-                                            .foregroundColor(selectedItems.contains(item.id) ? RSMSColors.burgundy : RSMSColors.secondaryText)
-                                            .font(.system(size: 20))
+                                        Divider()
+                                            .padding(.vertical, 4)
                                         
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text(item.name)
-                                                .font(RSMSFonts.headline)
-                                                .foregroundColor(RSMSColors.primaryText)
-                                            Text(item.sku)
-                                                .font(RSMSFonts.caption)
-                                                .foregroundColor(RSMSColors.secondaryText)
-                                        }
-                                        
-                                        Spacer()
-                                        
-                                        VStack(alignment: .trailing, spacing: 4) {
-                                            Text("\(item.currentStock) in stock")
+                                        HStack {
+                                            Text("Required Qty:")
                                                 .font(RSMSFonts.subheadline)
-                                                .foregroundColor(RSMSColors.error)
-                                                .fontWeight(.bold)
-                                            Text("Min: \(item.minimumRequired)")
-                                                .font(RSMSFonts.caption)
-                                                .foregroundColor(RSMSColors.secondaryText)
+                                                .foregroundColor(RSMSColors.primaryText)
+                                            Spacer()
+                                            Stepper(value: Binding(
+                                                get: { quantities[item.id, default: max(1, item.minimumRequired - item.currentStock)] },
+                                                set: { quantities[item.id] = $0 }
+                                            ), in: 1...1000) {
+                                                Text("\(quantities[item.id, default: max(1, item.minimumRequired - item.currentStock)])")
+                                                    .font(RSMSFonts.headline)
+                                                    .foregroundColor(RSMSColors.burgundy)
+                                            }
+                                            .frame(maxWidth: 160)
+                                        }
+                                        
+                                        HStack {
+                                            Text("Urgency:")
+                                                .font(RSMSFonts.subheadline)
+                                                .foregroundColor(RSMSColors.primaryText)
+                                            Spacer()
+                                            Picker("Urgency", selection: Binding(
+                                                get: { urgencies[item.id, default: .medium] },
+                                                set: { urgencies[item.id] = $0 }
+                                            )) {
+                                                ForEach(StockRequestUrgency.allCases) { urgency in
+                                                    Text(urgency.rawValue).tag(urgency)
+                                                }
+                                            }
+                                            .pickerStyle(.menu)
+                                            .tint(RSMSColors.burgundy)
                                         }
                                     }
-                                    .padding(.vertical, 4)
                                 }
-                                .buttonStyle(.plain)
+                                .padding(.vertical, 8)
                             }
                         }
                     }
@@ -102,9 +153,15 @@ struct RequestStockSheet: View {
     private func submitRequest() {
         isSubmitting = true
         
-        // Simulate network delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            let requestedItems = lowStockItems.filter { selectedItems.contains($0.id) }
+            let requestedItems: [StockRequestPayload] = lowStockItems
+                .filter { selectedItems.contains($0.id) }
+                .map { item in
+                    let qty = quantities[item.id] ?? max(1, item.minimumRequired - item.currentStock)
+                    let urgency = urgencies[item.id] ?? .medium
+                    return StockRequestPayload(item: item, quantity: qty, urgency: urgency)
+                }
+            
             onSubmit(requestedItems)
             isSubmitting = false
             dismiss()

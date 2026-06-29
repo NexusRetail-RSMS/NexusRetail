@@ -29,9 +29,9 @@ class InventoryDashboardViewModel {
         ]
     }
     
-    func requestStock(for items: [InventoryItem]) {
+    func requestStock(for payloads: [StockRequestPayload]) {
         // In a real app, this would send an API request to Supabase.
-        print("Stock requested for: \(items.map { $0.name }.joined(separator: ", "))")
+        print("Stock requested for: \(payloads.map { "\($0.item.name) (Qty: \($0.quantity), Urgency: \($0.urgency.rawValue))" }.joined(separator: ", "))")
         
         // Mock updating the local state (optional for mock, but good for UX)
         // Here we could simulate the items no longer being low stock, or just showing a success message.

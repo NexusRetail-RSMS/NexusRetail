@@ -21,3 +21,21 @@ struct InventoryItem: Identifiable, Equatable {
         return currentStock < minimumRequired
     }
 }
+
+/// Urgency level for a stock request
+enum StockRequestUrgency: String, CaseIterable, Identifiable {
+    case low = "Low"
+    case medium = "Medium"
+    case high = "High"
+    case critical = "Critical"
+    
+    var id: String { self.rawValue }
+}
+
+/// Payload sent to admin for a single item request
+struct StockRequestPayload: Identifiable {
+    var id: UUID { item.id }
+    let item: InventoryItem
+    var quantity: Int
+    var urgency: StockRequestUrgency
+}
