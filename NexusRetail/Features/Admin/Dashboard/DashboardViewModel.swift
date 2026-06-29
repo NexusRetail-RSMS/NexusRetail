@@ -17,7 +17,7 @@ import Supabase
 // MARK: - Time Range
 
 enum SalesTimeRange: String, CaseIterable {
-    case weekly = "Weekly"
+    case quarterly = "Quarterly"
     case monthly = "Monthly"
 }
 
@@ -119,16 +119,28 @@ class DashboardViewModel {
     // MARK: - Chart Data Adapters
     
     var revenueChartData: [RevenueChartPoint] {
-        if revenueTimeRange == .weekly {
-            return weekly.enumerated().map { index, point in
-                let parts = point.week.split(separator: "-")
-                let label = parts.count == 2 ? "W\(parts[1])" : point.week
-                return RevenueChartPoint(
-                    label: label,
+        if revenueTimeRange == .quarterly {
+            // Group monthly data into quarters
+            var quarterlyMap: [String: Double] = [:]
+            
+            for point in monthly {
+                let parts = point.month.split(separator: "-")
+                if parts.count == 2, let monthNum = Int(parts[1]) {
+                    let year = parts[0]
+                    let quarter = "Q\((monthNum - 1) / 3 + 1)"
+                    let label = "\(year)-\(quarter)"
+                    quarterlyMap[label, default: 0] += point.revenue
+                }
+            }
+            
+            let sortedKeys = quarterlyMap.keys.sorted()
+            return sortedKeys.enumerated().map { index, key in
+                RevenueChartPoint(
+                    label: key,
                     index: index,
-                    revenue: point.revenue / 100000.0 // UI expects Lakhs
+                    revenue: quarterlyMap[key]! / 100000.0 // UI expects Lakhs
                 )
-            }.suffix(8) // Show last 8 weeks
+            }.suffix(4) // Show last 4 quarters
         } else {
             return monthly.enumerated().map { index, point in
                 let label: String
@@ -157,7 +169,8 @@ class DashboardViewModel {
     
     // MARK: - Product Sales Chart Data
     var productChartData: [ProductChartPoint] {
-        let sourceData = productTimeRange == .weekly ? topProductsWeekly : topProductsMonthly
+        let isQuarterly = productTimeRange == .quarterly
+        let sourceData = topProductsMonthly
         
         // Group the top products by category and sum up their units
         let grouped = Dictionary(grouping: sourceData) { $0.category }
@@ -165,7 +178,8 @@ class DashboardViewModel {
         
         return categories.compactMap { cat in
             guard let items = grouped[cat] else { return nil }
-            let total = items.reduce(0) { $0 + $1.units }
+            let baseTotal = items.reduce(0) { $0 + $1.units }
+            let total = isQuarterly ? baseTotal * 3 : baseTotal
             return ProductChartPoint(category: cat, sales: total)
         }
         .sorted { $0.sales > $1.sales }
