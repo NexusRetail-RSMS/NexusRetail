@@ -3,17 +3,10 @@ import SwiftUI
 struct SalesTabView: View {
     var body: some View {
         TabView {
-            NavigationStack {
-                SalesPlaceholderView(
-                    title: "Dashboard",
-                    message: "Sales associate dashboard metrics will appear here.",
-                    icon: "chart.bar.fill"
-                )
-                .modifier(SalesToolbarModifier(title: "Dashboard"))
-            }
-            .tabItem {
-                Label("Dashboard", systemImage: "square.grid.2x2")
-            }
+            SalesDashboardView()
+                .tabItem {
+                    Label("Dashboard", systemImage: "square.grid.2x2")
+                }
             
             NavigationStack {
                 SalesAssociateDashboardView()
