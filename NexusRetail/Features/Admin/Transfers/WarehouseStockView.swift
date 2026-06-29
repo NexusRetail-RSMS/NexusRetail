@@ -1,114 +1,99 @@
 import SwiftUI
 
+enum StockHealthFilter: String, CaseIterable {
+    case all = "All Items"
+    case inStock = "In Stock"
+    case lowStock = "Low Stock"
+    case outOfStock = "Out of Stock"
+}
+
 struct WarehouseStockView: View {
     @Environment(AdminTransfersViewModel.self) private var viewModel
+    @State private var selectedFilter: StockHealthFilter = .all
+    @State private var searchText = ""
+    @State private var isRefreshing = false
     
-    var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            // Filters Dashboard Grid
-            WarehouseDashboardGrid(products: viewModel.products)
-                .padding(.horizontal)
-                .padding(.top, 8)
-            
-            Divider()
-                .padding(.vertical)
-            
-            // Active Deliveries
-            ActiveDeliveriesSection()
+    var filteredProducts: [AdminTransferProduct] {
+        var result = viewModel.products
+        
+        if !searchText.isEmpty {
+            result = result.filter { $0.name.localizedCaseInsensitiveContains(searchText) || $0.sku.localizedCaseInsensitiveContains(searchText) }
         }
-        .padding(.bottom, 30)
-        .background(Color.nexusBackground)
-    }
-}
-
-struct WarehouseDashboardGrid: View {
-    let products: [AdminTransferProduct]
-    
-    var allItemsCount: Int { products.count }
-    var inStockCount: Int { products.filter { $0.stockHealth == .inStock }.count }
-    var lowStockCount: Int { products.filter { $0.stockHealth == .lowStock }.count }
-    var outOfStockCount: Int { products.filter { $0.stockHealth == .outOfStock }.count }
-    
-    let columns = [GridItem(.flexible()), GridItem(.flexible())]
-    
-    var body: some View {
-        LazyVGrid(columns: columns, spacing: 16) {
-            NavigationLink(destination: AllItemsView()) {
-                WarehouseDashboardCard(
-                    title: "All Items",
-                    icon: "shippingbox.fill",
-                    count: allItemsCount
-                )
-            }
-            .buttonStyle(.plain)
-            
-            NavigationLink(destination: InStockView()) {
-                WarehouseDashboardCard(
-                    title: "In Stock",
-                    icon: "checkmark.circle.fill",
-                    count: inStockCount
-                )
-            }
-            .buttonStyle(.plain)
-            
-            NavigationLink(destination: LowStockView()) {
-                WarehouseDashboardCard(
-                    title: "Low Stock",
-                    icon: "exclamationmark.triangle.fill",
-                    count: lowStockCount
-                )
-            }
-            .buttonStyle(.plain)
-            
-            NavigationLink(destination: OutOfStockView()) {
-                WarehouseDashboardCard(
-                    title: "Out of Stock",
-                    icon: "xmark.octagon.fill",
-                    count: outOfStockCount
-                )
-            }
-            .buttonStyle(.plain)
+        
+        switch selectedFilter {
+        case .all: break
+        case .inStock: result = result.filter { $0.stockHealth == .inStock }
+        case .lowStock: result = result.filter { $0.stockHealth == .lowStock }
+        case .outOfStock: result = result.filter { $0.stockHealth == .outOfStock }
         }
+        
+        return result
     }
-}
-
-struct WarehouseDashboardCard: View {
-    let title: String
-    let icon: String
-    let count: Int
     
     var body: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 16) {
-                ZStack {
-                    Circle()
-                        .fill(Color.nexusRed.opacity(0.1))
-                        .frame(width: 36, height: 36)
-                    
-                    Image(systemName: icon)
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.nexusRed)
-                }
+        VStack(spacing: 0) {
+            HStack {
+                Text(selectedFilter.rawValue)
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundStyle(RSMSColors.darkBrown)
                 
-                Text(title)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                Spacer()
+                
+                Menu {
+                    ForEach(StockHealthFilter.allCases, id: \.self) { filter in
+                        Button {
+                            selectedFilter = filter
+                        } label: {
+                            if selectedFilter == filter {
+                                Label(filter.rawValue, systemImage: "checkmark")
+                            } else {
+                                Text(filter.rawValue)
+                            }
+                        }
+                    }
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(RSMSColors.burgundy.opacity(0.1))
+                            .frame(width: 36, height: 36)
+                        
+                        Image(systemName: "line.3.horizontal.decrease")
+                            .foregroundColor(RSMSColors.burgundy)
+                            .font(.system(size: 14, weight: .medium))
+                    }
+                }
             }
+            .padding(.horizontal, RSMSSpacing.lg)
+            .padding(.top, RSMSSpacing.md)
+            .padding(.bottom, RSMSSpacing.sm)
             
-            Spacer()
-            
-            Text("\(count)")
-                .font(.system(size: 28, weight: .bold))
-                .foregroundColor(.primary)
-                .multilineTextAlignment(.trailing)
+            ScrollView {
+                LazyVStack(spacing: 16) {
+                    if filteredProducts.isEmpty {
+                        VStack(spacing: 16) {
+                            Image(systemName: "shippingbox")
+                                .font(.system(size: 48))
+                                .foregroundColor(.gray)
+                            Text("No products found")
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.top, 60)
+                    } else {
+                        ForEach(filteredProducts) { product in
+                            WarehouseProductRow(product: product)
+                        }
+                    }
+                }
+                .padding()
+            }
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
-        )
+        .background(RSMSColors.background)
+        .searchable(text: $searchText, prompt: "Search products or SKUs")
+        .refreshable {
+            isRefreshing = true
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            isRefreshing = false
+        }
     }
 }
 

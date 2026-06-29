@@ -44,7 +44,7 @@ struct AdminTabView: View {
 
             // 4. Transfers
             NavigationStack {
-                TransfersTabRoot()
+                AdminTransfersView()
             }
             .tabItem {
                 Label("Transfers", systemImage: "arrow.left.arrow.right")
