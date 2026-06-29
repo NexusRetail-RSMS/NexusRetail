@@ -3,13 +3,11 @@ import SwiftUI
 struct PaymentFlowView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SellViewModel.self) private var viewModel
+    @Binding var path: NavigationPath
     
     @State private var paymentState: PaymentState = .initial
     @State private var isProcessing = false
     @State private var progressValue: Double = 0.0
-    
-    // Control navigation to ReceiptView
-    @State private var navigateToReceipt = false
     
     enum PaymentState {
         case initial
@@ -22,11 +20,6 @@ struct PaymentFlowView: View {
         ZStack {
             RSMSColors.background
                 .ignoresSafeArea()
-            
-            // Hidden navigation link to Receipt
-            NavigationLink(destination: ReceiptView(), isActive: $navigateToReceipt) {
-                EmptyView()
-            }
             
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
@@ -343,7 +336,7 @@ struct PaymentFlowView: View {
             
             // Proceed to Receipt View after a short display of success checkmark
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                navigateToReceipt = true
+                path.append(POSFlowDestination.receipt)
             }
         }
     }
@@ -359,7 +352,7 @@ struct PaymentFlowView: View {
             }
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                navigateToReceipt = true
+                path.append(POSFlowDestination.receipt)
             }
         }
     }

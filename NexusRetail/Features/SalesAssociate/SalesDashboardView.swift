@@ -59,17 +59,17 @@ struct SalesDashboardView: View {
             .navigationDestination(for: POSFlowDestination.self) { dest in
                 switch dest {
                 case .newSale:
-                    NewSaleView()
+                    NewSaleView(path: $navigationPath)
                 case .searchProduct:
-                    ProductSearchView()
+                    ProductSearchView(path: $navigationPath)
                 case .barcodeScanner:
-                    BarcodeScannerView()
+                    BarcodeScannerView(path: $navigationPath)
                 case .cart:
-                    CartView()
+                    CartView(path: $navigationPath)
                 case .checkout:
-                    CheckoutView()
+                    CheckoutView(path: $navigationPath)
                 case .payment:
-                    PaymentFlowView()
+                    PaymentFlowView(path: $navigationPath)
                 case .receipt:
                     ReceiptView(onComplete: {
                         navigationPath = NavigationPath()

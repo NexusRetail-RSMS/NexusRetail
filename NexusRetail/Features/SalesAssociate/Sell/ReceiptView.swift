@@ -13,6 +13,11 @@ struct ReceiptView: View {
     @State private var showShareToast = false
     @State private var isSaving = false
     
+    // Cached state to prevent SwiftUI reset layout glitches showing ₹0
+    @State private var cachedItems: [POSProduct] = []
+    @State private var cachedTotal: Double = 0.0
+    @State private var cachedSubtotal: Double = 0.0
+    
     var body: some View {
         ZStack {
             RSMSColors.background
@@ -137,6 +142,13 @@ struct ReceiptView: View {
             }
         }
         .navigationBarHidden(true)
+        .onAppear {
+            if cachedItems.isEmpty {
+                cachedItems = viewModel.cartItems
+                cachedTotal = viewModel.totalAmount
+                cachedSubtotal = viewModel.subtotalAmount
+            }
+        }
     }
     
     // MARK: - Header
@@ -208,7 +220,7 @@ struct ReceiptView: View {
             
             // Items List
             VStack(spacing: 10) {
-                ForEach(viewModel.cartItems) { item in
+                ForEach(cachedItems) { item in
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(item.name)
@@ -236,7 +248,7 @@ struct ReceiptView: View {
                         .font(.system(size: 13))
                         .foregroundColor(RSMSColors.secondaryText)
                     Spacer()
-                    Text("₹\(Int(viewModel.subtotalAmount))")
+                    Text("₹\(Int(cachedSubtotal))")
                         .font(.system(size: 13, weight: .bold))
                         .foregroundColor(RSMSColors.primaryText)
                 }
@@ -246,7 +258,7 @@ struct ReceiptView: View {
                         .font(.system(size: 13))
                         .foregroundColor(RSMSColors.secondaryText)
                     Spacer()
-                    Text("₹\(Int(viewModel.totalAmount * 0.18))")
+                    Text("₹\(Int(cachedTotal * 0.18))")
                         .font(.system(size: 13))
                         .foregroundColor(RSMSColors.secondaryText)
                 }
@@ -256,7 +268,7 @@ struct ReceiptView: View {
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(RSMSColors.primaryText)
                     Spacer()
-                    Text("₹\(Int(viewModel.totalAmount))")
+                    Text("₹\(Int(cachedTotal))")
                         .font(.system(size: 18, weight: .black))
                         .foregroundColor(RSMSColors.burgundy)
                 }
@@ -322,7 +334,7 @@ struct ReceiptView: View {
                     id: orderId,
                     store_id: storeId,
                     associate_id: associateId,
-                    total: viewModel.totalAmount,
+                    total: cachedTotal,
                     client_id: nil // clienteling relation optional or mock
                 )
                 
@@ -341,7 +353,7 @@ struct ReceiptView: View {
                 }
                 
                 var lineItems: [LineItemInsert] = []
-                for item in viewModel.cartItems {
+                for item in cachedItems {
                     lineItems.append(LineItemInsert(
                         order_id: orderId,
                         quantity: 1,

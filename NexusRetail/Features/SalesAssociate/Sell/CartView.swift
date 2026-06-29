@@ -3,6 +3,7 @@ import SwiftUI
 struct CartView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SellViewModel.self) private var viewModel
+    @Binding var path: NavigationPath
     
     var body: some View {
         ZStack {
@@ -117,7 +118,9 @@ struct CartView: View {
                         
                         // Proceed to Checkout
                         if !viewModel.cartItems.isEmpty {
-                            NavigationLink(destination: CheckoutView()) {
+                            Button {
+                                path.append(POSFlowDestination.checkout)
+                            } label: {
                                 HStack {
                                     Text("Checkout")
                                         .font(.system(size: 16, weight: .bold))

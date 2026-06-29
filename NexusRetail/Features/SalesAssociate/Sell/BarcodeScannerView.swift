@@ -3,21 +3,16 @@ import SwiftUI
 struct BarcodeScannerView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SellViewModel.self) private var viewModel
+    @Binding var path: NavigationPath
     
     @State private var allProducts: [POSProduct] = []
     @State private var scannedProduct: POSProduct? = nil
     @State private var isScanning = true
-    @State private var navigateToCart = false
     
     var body: some View {
         ZStack {
             RSMSColors.background
                 .ignoresSafeArea()
-            
-            // Hidden navigation link to Cart
-            NavigationLink(destination: CartView(), isActive: $navigateToCart) {
-                EmptyView()
-            }
             
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
@@ -192,7 +187,7 @@ struct BarcodeScannerView: View {
             // If in stock, immediately add to cart and go to Cart page!
             if match.stock > 0 {
                 viewModel.addToCart(product: match)
-                navigateToCart = true
+                path.append(POSFlowDestination.cart)
             }
         }
     }
@@ -328,7 +323,7 @@ struct BarcodeScannerView: View {
                 // Add to cart as alternative
                 viewModel.isAlternativeSuggested = true
                 viewModel.addToCart(product: alt, isAlternative: true)
-                navigateToCart = true
+                path.append(POSFlowDestination.cart)
             } label: {
                 Text("Add")
                     .font(.system(size: 13, weight: .bold))

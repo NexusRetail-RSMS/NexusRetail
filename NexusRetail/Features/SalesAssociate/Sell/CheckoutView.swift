@@ -3,6 +3,7 @@ import SwiftUI
 struct CheckoutView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SellViewModel.self) private var viewModel
+    @Binding var path: NavigationPath
     
     // Simple clients list matching clienteling data
     let clients = ["Ananya Rao", "Kabir Mehta", "Mira Kapoor"]
@@ -10,18 +11,10 @@ struct CheckoutView: View {
     @State private var clientSelection: String = "Skip"
     @State private var selectedPayment: POSPaymentMethod = .razorpay
     
-    // Control navigation to PaymentFlowView
-    @State private var navigateToPayment = false
-    
     var body: some View {
         ZStack {
             RSMSColors.background
                 .ignoresSafeArea()
-            
-            // Hidden navigation link to PaymentFlow
-            NavigationLink(destination: PaymentFlowView(), isActive: $navigateToPayment) {
-                EmptyView()
-            }
             
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
@@ -134,7 +127,7 @@ struct CheckoutView: View {
                             // Save choices to ViewModel and navigate
                             viewModel.selectedClient = clientSelection == "Skip" ? nil : clientSelection
                             viewModel.selectedPaymentMethod = selectedPayment
-                            navigateToPayment = true
+                            path.append(POSFlowDestination.payment)
                         } label: {
                             HStack {
                                 Text("Pay ₹\(Int(viewModel.totalAmount))")

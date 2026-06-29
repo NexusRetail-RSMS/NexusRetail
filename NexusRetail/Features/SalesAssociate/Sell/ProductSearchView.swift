@@ -3,6 +3,7 @@ import SwiftUI
 struct ProductSearchView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SellViewModel.self) private var viewModel
+    @Binding var path: NavigationPath
     
     var initialSearch: String = ""
     
@@ -12,9 +13,6 @@ struct ProductSearchView: View {
     
     // Track selected product to display its details/alternatives
     @State private var selectedProduct: POSProduct? = nil
-    
-    // To control navigation to CartView
-    @State private var navigateToCart = false
     
     var filteredProducts: [POSProduct] {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -32,11 +30,6 @@ struct ProductSearchView: View {
         ZStack {
             RSMSColors.background
                 .ignoresSafeArea()
-            
-            // Hidden navigation link to Cart
-            NavigationLink(destination: CartView(), isActive: $navigateToCart) {
-                EmptyView()
-            }
             
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
@@ -193,7 +186,7 @@ struct ProductSearchView: View {
             if product.stock > 0 {
                 // Add directly and go to Cart
                 viewModel.addToCart(product: product)
-                navigateToCart = true
+                path.append(POSFlowDestination.cart)
             } else {
                 // Go to Out-of-Stock Detail Mode
                 viewModel.originalUnavailableProduct = product
@@ -411,7 +404,7 @@ struct ProductSearchView: View {
                 // Add to cart as alternative
                 viewModel.isAlternativeSuggested = true
                 viewModel.addToCart(product: alt, isAlternative: true)
-                navigateToCart = true
+                path.append(POSFlowDestination.cart)
             } label: {
                 Text("Add")
                     .font(.system(size: 13, weight: .bold))

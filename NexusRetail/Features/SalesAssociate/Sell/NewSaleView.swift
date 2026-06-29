@@ -3,6 +3,7 @@ import SwiftUI
 struct NewSaleView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SellViewModel.self) private var viewModel
+    @Binding var path: NavigationPath
     
     var body: some View {
         ZStack {
@@ -22,7 +23,9 @@ struct NewSaleView: View {
                         
                         VStack(spacing: 16) {
                             // Search Product Link
-                            NavigationLink(destination: ProductSearchView()) {
+                            Button {
+                                path.append(POSFlowDestination.searchProduct)
+                            } label: {
                                 actionRow(
                                     title: "Search Product",
                                     subtitle: "Search by name, SKU, or category",
@@ -33,7 +36,9 @@ struct NewSaleView: View {
                             .buttonStyle(.plain)
                             
                             // Scan Barcode Link
-                            NavigationLink(destination: BarcodeScannerView()) {
+                            Button {
+                                path.append(POSFlowDestination.barcodeScanner)
+                            } label: {
                                 actionRow(
                                     title: "Scan Barcode",
                                     subtitle: "Scan barcode instantly using camera",
@@ -44,7 +49,9 @@ struct NewSaleView: View {
                             .buttonStyle(.plain)
                             
                             // Recent Products
-                            NavigationLink(destination: ProductSearchView(initialSearch: "")) {
+                            Button {
+                                path.append(POSFlowDestination.searchProduct)
+                            } label: {
                                 actionRow(
                                     title: "Recent Products",
                                     subtitle: "Frequently sold items in your store",
@@ -55,7 +62,9 @@ struct NewSaleView: View {
                             .buttonStyle(.plain)
                             
                             // Favorites
-                            NavigationLink(destination: ProductSearchView(initialSearch: "")) {
+                            Button {
+                                path.append(POSFlowDestination.searchProduct)
+                            } label: {
                                 actionRow(
                                     title: "Favorites",
                                     subtitle: "Frequently purchased by regular clients",
