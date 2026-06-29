@@ -137,7 +137,7 @@ struct TopLocationsChartView: View {
         .cornerRadius(RSMSRadius.large)
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
         .fullScreenCover(isPresented: $showingDetail) {
-            TopLocationsDetailView(timeRange: $timeRange, countryPolygons: countryPolygons, revenueByCountry: revenueByCountry)
+            TopLocationsDetailView(countryPolygons: countryPolygons, revenueByCountry: revenueByCountry)
         }
         .onAppear {
             // Load GeoJSON in background so we don't block the main thread
