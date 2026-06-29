@@ -10,10 +10,10 @@ class RecommendationService {
     
     private var model: ItemRecommendation?
     
-    /// Maps catalogue product index (1-based Int64) to product UUID
-    private var indexToProductId: [Int64: UUID] = [:]
-    /// Maps product UUID to catalogue index (1-based Int64)
-    private var productIdToIndex: [UUID: Int64] = [:]
+    /// Maps Supabase item_id (Int64) to product UUID
+    private var itemIdToProductId: [Int64: UUID] = [:]
+    /// Maps product UUID to Supabase item_id (Int64)
+    private var productIdToItemId: [UUID: Int64] = [:]
     
     private init() {
         loadModel()
@@ -29,20 +29,19 @@ class RecommendationService {
         }
     }
     
-    /// Call this after products are fetched from Supabase to build the Int64 ↔ UUID mapping.
-    /// The model was trained with 1-based integer item IDs, so we map each product's
-    /// position in the catalogue to a 1-based Int64 index.
+    /// Call this after products are fetched from Supabase to build the item_id ↔ UUID mapping.
+    /// Uses the real item_id from the sku table that the model was trained on.
     func buildProductMapping(from products: [POSProduct]) {
-        indexToProductId.removeAll()
-        productIdToIndex.removeAll()
+        itemIdToProductId.removeAll()
+        productIdToItemId.removeAll()
         
-        for (index, product) in products.enumerated() {
-            let itemIndex = Int64(index + 1) // 1-based to match training data
-            indexToProductId[itemIndex] = product.id
-            productIdToIndex[product.id] = itemIndex
+        for product in products {
+            guard product.itemId > 0 else { continue } // Skip fallback products with itemId 0
+            itemIdToProductId[product.itemId] = product.id
+            productIdToItemId[product.id] = product.itemId
         }
         
-        print("RecommendationService: Built mapping for \(products.count) products")
+        print("RecommendationService: Built mapping for \(itemIdToProductId.count) products with valid item_ids")
     }
     
     /// Get ML-powered recommendations for a given product.
@@ -53,8 +52,8 @@ class RecommendationService {
             return []
         }
         
-        guard let itemIndex = productIdToIndex[productId] else {
-            print("RecommendationService: Product \(productId) not found in mapping")
+        guard let itemId = productIdToItemId[productId] else {
+            print("RecommendationService: Product \(productId) not found in mapping (no item_id)")
             return []
         }
         
@@ -62,7 +61,7 @@ class RecommendationService {
             // The model expects a dictionary of items the user has interacted with
             // We pass the current product with a score of 1.0
             let input = ItemRecommendationInput(
-                items: [itemIndex: 1.0],
+                items: [itemId: 1.0],
                 k: Int64(count),
                 restrict_: nil,
                 exclude: nil
@@ -73,14 +72,14 @@ class RecommendationService {
             // Map the recommended Int64 IDs back to product UUIDs
             var results: [(productId: UUID, score: Double)] = []
             
-            for recommendedIndex in output.recommendations {
-                if let uuid = indexToProductId[recommendedIndex] {
-                    let score = output.scores[recommendedIndex] ?? 0.0
+            for recommendedItemId in output.recommendations {
+                if let uuid = itemIdToProductId[recommendedItemId] {
+                    let score = output.scores[recommendedItemId] ?? 0.0
                     results.append((productId: uuid, score: score))
                 }
             }
             
-            print("RecommendationService: Got \(results.count) recommendations for product index \(itemIndex)")
+            print("RecommendationService: Got \(results.count) recommendations for item_id \(itemId)")
             return results
             
         } catch {
