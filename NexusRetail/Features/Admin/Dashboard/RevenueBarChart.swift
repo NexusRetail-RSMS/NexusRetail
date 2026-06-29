@@ -142,30 +142,13 @@ struct TimeRangeToggle: View {
     @Binding var selection: SalesTimeRange
 
     var body: some View {
-        HStack(spacing: 0) {
+        Picker("Time Range", selection: $selection) {
             ForEach(SalesTimeRange.allCases, id: \.self) { range in
-                Button {
-                    withAnimation(.easeInOut(duration: 0.25)) {
-                        selection = range
-                    }
-                } label: {
-                    Text(range.rawValue)
-                        .font(.system(size: 11, weight: selection == range ? .bold : .regular))
-                        .foregroundColor(selection == range ? .white : RSMSColors.burgundy)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(
-                            selection == range
-                                ? RSMSColors.burgundy
-                                : Color.clear
-                        )
-                        .cornerRadius(RSMSRadius.small)
-                }
-                .buttonStyle(.plain)
+                Text(range.rawValue).tag(range)
             }
         }
-        .background(RSMSColors.burgundy.opacity(0.08))
-        .cornerRadius(RSMSRadius.small)
+        .pickerStyle(.segmented)
+        .frame(width: 160)
     }
 }
 
