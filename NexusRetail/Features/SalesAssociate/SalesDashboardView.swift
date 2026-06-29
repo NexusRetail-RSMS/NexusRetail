@@ -10,6 +10,12 @@ enum POSFlowDestination: Hashable {
     case receipt
 }
 
+enum SalesPeriod: String {
+    case today = "Today"
+    case week = "This Week"
+    case month = "This Month"
+}
+
 struct SalesDashboardView: View {
     @Environment(SessionStore.self) private var sessionStore
     
@@ -19,6 +25,36 @@ struct SalesDashboardView: View {
     
     @State private var isProfilePresented = false
     @State private var showSalesAmount = true
+    @State private var selectedPeriod: SalesPeriod = .today
+    
+    private var salesAmountString: String {
+        switch selectedPeriod {
+        case .today: return "₹24,350.00"
+        case .week: return "₹1,82,400.00"
+        case .month: return "₹7,40,200.00"
+        }
+    }
+    
+    private var salesTrendString: String {
+        switch selectedPeriod {
+        case .today: return "18% vs yesterday"
+        case .week: return "8% vs last week"
+        case .month: return "12% vs last month"
+        }
+    }
+    
+    private var salesGraphHeights: [Int] {
+        switch selectedPeriod {
+        case .today: return [12, 22, 38, 18, 52]
+        case .week: return [30, 45, 60, 40, 75]
+        case .month: return [40, 50, 45, 62, 85]
+        }
+    }
+    
+    private var recentActivityOrders: [MockPOSOrder] {
+        let orders = posViewModel.completedOrders
+        return Array(orders.prefix(3))
+    }
     
     var body: some View {
         NavigationStack(path: $navigationPath) {
@@ -124,7 +160,7 @@ struct SalesDashboardView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .center) {
                 HStack(spacing: 8) {
-                    Text("Today's Sales")
+                    Text("\(selectedPeriod.rawValue)'s Sales")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white.opacity(0.85))
                     
@@ -142,23 +178,29 @@ struct SalesDashboardView: View {
                 
                 Spacer()
                 
-                // Dropdown date tag (Static mock)
-                HStack(spacing: 4) {
-                    Text("Today")
-                        .font(.system(size: 12, weight: .bold))
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 9, weight: .bold))
+                // Dropdown date tag (Menu Selector)
+                Menu {
+                    Button("Today") { selectedPeriod = .today }
+                    Button("This Week") { selectedPeriod = .week }
+                    Button("This Month") { selectedPeriod = .month }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(selectedPeriod.rawValue)
+                            .font(.system(size: 12, weight: .bold))
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 9, weight: .bold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color.white.opacity(0.12))
+                    .clipShape(Capsule())
                 }
-                .foregroundColor(.white)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(Color.white.opacity(0.12))
-                .clipShape(Capsule())
             }
             
             HStack(alignment: .bottom) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(showSalesAmount ? "₹24,350.00" : "••••••")
+                    Text(showSalesAmount ? salesAmountString : "••••••")
                         .font(.system(size: 32, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                     
@@ -166,7 +208,7 @@ struct SalesDashboardView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "arrow.up")
                             .font(.system(size: 11, weight: .bold))
-                        Text("18% vs yesterday")
+                        Text(salesTrendString)
                             .font(.system(size: 12, weight: .bold))
                     }
                     .foregroundColor(Color(hex: "34C759")) // Green
@@ -176,11 +218,9 @@ struct SalesDashboardView: View {
                 
                 // Visual mini bar graph mock
                 HStack(alignment: .bottom, spacing: 6) {
-                    barGraphColumn(height: 12, opacity: 0.3)
-                    barGraphColumn(height: 22, opacity: 0.4)
-                    barGraphColumn(height: 38, opacity: 0.6)
-                    barGraphColumn(height: 18, opacity: 0.5)
-                    barGraphColumn(height: 52, opacity: 0.95)
+                    ForEach(salesGraphHeights, id: \.self) { height in
+                        barGraphColumn(height: CGFloat(height), opacity: 0.3 + Double(height)/100.0)
+                    }
                 }
             }
         }
@@ -298,9 +338,9 @@ struct SalesDashboardView: View {
                 }
                 .buttonStyle(.plain)
                 
-                // 4. Recent Orders
-                NavigationLink(destination: RecentOrdersView()) {
-                    quickActionCard(title: "Recent Orders", subtitle: "View recent orders", icon: "doc.text.fill", color: .green)
+                // 4. Client Directory
+                NavigationLink(destination: SalesAssociateDashboardView()) {
+                    quickActionCard(title: "Client Directory", subtitle: "Manage client profiles", icon: "person.2.fill", color: .green)
                 }
                 .buttonStyle(.plain)
             }
@@ -327,11 +367,13 @@ struct SalesDashboardView: View {
                 Text(subtitle)
                     .font(.system(size: 10))
                     .foregroundColor(RSMSColors.secondaryText)
+                    .lineLimit(2)
             }
             
             Spacer()
         }
         .padding(14)
+        .frame(height: 68) // Fixed height to align all quick actions perfectly
         .background(RSMSColors.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
@@ -361,9 +403,16 @@ struct SalesDashboardView: View {
             .padding(.horizontal, 4)
             
             VStack(spacing: 12) {
-                activityRow(orderId: "#421", client: "Ananya Rao", amount: "₹3,299", status: "Completed", statusColor: RSMSColors.success, time: "11:30 AM")
-                activityRow(orderId: "#420", client: "Kabir Mehta", amount: "₹2,199", status: "Pending Payment", statusColor: RSMSColors.warning, time: "10:15 AM")
-                activityRow(orderId: "#419", client: "Mira Kapoor", amount: "₹1,999", status: "Alternative Suggested", statusColor: Color.blue, time: "Yesterday")
+                ForEach(recentActivityOrders) { order in
+                    activityRow(
+                        orderId: order.id,
+                        client: order.client,
+                        amount: "₹\(Int(order.amount))",
+                        status: order.status,
+                        statusColor: statusColor(for: order.status),
+                        time: order.time
+                    )
+                }
             }
         }
     }
@@ -471,6 +520,14 @@ struct SalesDashboardView: View {
     }
     
     // MARK: - Helpers
+    private func statusColor(for status: String) -> Color {
+        switch status {
+        case "Completed": return RSMSColors.success
+        case "Pending Payment": return RSMSColors.warning
+        default: return .blue
+        }
+    }
+    
     private func initials(for name: String?) -> String {
         guard let name, !name.isEmpty else { return "NI" }
         let parts = name.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }

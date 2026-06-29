@@ -376,6 +376,7 @@ struct ReceiptView: View {
             
             await MainActor.run {
                 isSaving = false
+                viewModel.recordCompletedSale()
                 viewModel.resetFlow()
                 if let onComplete = onComplete {
                     onComplete()

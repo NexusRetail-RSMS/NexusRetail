@@ -53,6 +53,27 @@ class SellViewModel {
         }
     }
     
+    // Dynamic completed orders log
+    var completedOrders: [MockPOSOrder] = [
+        MockPOSOrder(id: "#421", client: "Ananya Rao", amount: 3299, status: "Completed", time: "11:30 AM", date: "Today"),
+        MockPOSOrder(id: "#420", client: "Kabir Mehta", amount: 2199, status: "Pending Payment", time: "10:15 AM", date: "Today"),
+        MockPOSOrder(id: "#419", client: "Mira Kapoor", amount: 1999, status: "Alternative Suggested", time: "Yesterday", date: "Yesterday")
+    ]
+    
+    func recordCompletedSale() {
+        let orderNumber = "#\(completedOrders.count + 420 + 2)"
+        let clientName = selectedClient ?? "Anonymous"
+        let newOrder = MockPOSOrder(
+            id: orderNumber,
+            client: clientName,
+            amount: totalAmount,
+            status: isAlternativeSuggested ? "Alternative Suggested" : "Completed",
+            time: "Just Now",
+            date: "Today"
+        )
+        completedOrders.insert(newOrder, at: 0)
+    }
+    
     func resetFlow() {
         cartItems = []
         actionLogs = []
@@ -64,6 +85,15 @@ class SellViewModel {
         receiptSharedPhone = ""
         isReceiptShared = false
     }
+}
+
+struct MockPOSOrder: Identifiable, Hashable {
+    let id: String
+    let client: String
+    let amount: Double
+    let status: String
+    let time: String
+    let date: String
 }
 
 struct CartActionLog: Identifiable, Hashable {

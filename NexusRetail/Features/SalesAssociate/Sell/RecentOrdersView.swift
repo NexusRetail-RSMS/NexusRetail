@@ -2,14 +2,7 @@ import SwiftUI
 
 struct RecentOrdersView: View {
     @Environment(\.dismiss) private var dismiss
-    
-    // Mock orders log matching mockup details
-    let recentOrders = [
-        MockPOSOrder(id: "#421", client: "Ananya Rao", amount: 3299, status: "Completed", time: "11:30 AM", date: "Today"),
-        MockPOSOrder(id: "#420", client: "Kabir Mehta", amount: 2199, status: "Pending Payment", time: "10:15 AM", date: "Today"),
-        MockPOSOrder(id: "#419", client: "Mira Kapoor", amount: 1999, status: "Alternative Suggested", time: "Yesterday", date: "Yesterday"),
-        MockPOSOrder(id: "#418", client: "Rhea Sethi", amount: 1299, status: "Completed", time: "2 days ago", date: "2 days ago")
-    ]
+    @Environment(SellViewModel.self) private var viewModel
     
     var body: some View {
         ZStack {
@@ -28,7 +21,7 @@ struct RecentOrdersView: View {
                             .padding(.horizontal, 4)
                         
                         VStack(spacing: 12) {
-                            ForEach(recentOrders) { order in
+                            ForEach(viewModel.completedOrders) { order in
                                 orderRow(order)
                             }
                         }
@@ -160,13 +153,4 @@ struct RecentOrdersView: View {
             .background(bgColor)
             .clipShape(Capsule())
     }
-}
-
-struct MockPOSOrder: Identifiable {
-    let id: String
-    let client: String
-    let amount: Double
-    let status: String
-    let time: String
-    let date: String
 }

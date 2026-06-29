@@ -3,6 +3,7 @@ import SwiftUI
 struct BarcodeScannerView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SellViewModel.self) private var viewModel
+    @Environment(SessionStore.self) private var sessionStore
     @Binding var path: NavigationPath
     
     @State private var allProducts: [POSProduct] = []
@@ -32,7 +33,7 @@ struct BarcodeScannerView: View {
         }
         .navigationBarHidden(true)
         .task {
-            allProducts = await POSProductRepository.shared.fetchProducts()
+            allProducts = await POSProductRepository.shared.fetchProducts(storeID: sessionStore.currentUser?.storeID)
         }
     }
     

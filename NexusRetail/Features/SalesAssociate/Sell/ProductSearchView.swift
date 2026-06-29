@@ -3,6 +3,7 @@ import SwiftUI
 struct ProductSearchView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SellViewModel.self) private var viewModel
+    @Environment(SessionStore.self) private var sessionStore
     @Binding var path: NavigationPath
     
     var initialSearch: String = ""
@@ -50,7 +51,7 @@ struct ProductSearchView: View {
         .navigationBarHidden(true)
         .task {
             isLoading = true
-            allProducts = await POSProductRepository.shared.fetchProducts()
+            allProducts = await POSProductRepository.shared.fetchProducts(storeID: sessionStore.currentUser?.storeID)
             isLoading = false
         }
         .onAppear {

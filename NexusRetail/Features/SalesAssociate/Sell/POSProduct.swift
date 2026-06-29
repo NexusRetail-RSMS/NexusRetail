@@ -22,7 +22,7 @@ class POSProductRepository {
         self.products = getFallbackProducts()
     }
     
-    func fetchProducts() async -> [POSProduct] {
+    func fetchProducts(storeID: UUID?) async -> [POSProduct] {
         do {
             struct CatalogueProductRPC: Codable {
                 let id: UUID
@@ -48,15 +48,41 @@ class POSProductRepository {
             // Map catalogue products to POSProducts, injecting size attributes
             let sizes = ["S", "M", "L", "XL"]
             var mapped: [POSProduct] = []
+            
+            // Fetch inventory stock for this store if available from inventory_item table
+            var inventoryStock: [UUID: Int] = [:]
+            if let storeID = storeID {
+                struct InventoryItemResponse: Codable {
+                    let sku_id: UUID
+                    let on_hand: Int
+                }
+                
+                do {
+                    let invItems: [InventoryItemResponse] = try await SupabaseManager.shared.client
+                        .from("inventory_item")
+                        .select("sku_id, on_hand")
+                        .eq("store_id", value: storeID)
+                        .execute()
+                        .value
+                    
+                    for item in invItems {
+                        inventoryStock[item.sku_id] = item.on_hand
+                    }
+                } catch {
+                    print("POSProductRepository: Non-fatal error querying store inventory_item: \(error)")
+                }
+            }
+            
             for (index, rpc) in response.enumerated() {
                 let size = sizes[index % sizes.count]
+                let finalStock = inventoryStock[rpc.id] ?? rpc.stock
                 mapped.append(POSProduct(
                     id: rpc.id,
                     name: rpc.name,
                     sku: rpc.sku_code ?? "SKU-\(index)",
                     category: rpc.category,
                     price: rpc.price,
-                    stock: rpc.stock,
+                    stock: finalStock,
                     size: size,
                     imageUrl: rpc.image_url
                 ))
