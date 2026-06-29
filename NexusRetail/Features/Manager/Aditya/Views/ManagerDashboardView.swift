@@ -64,7 +64,6 @@ struct ManagerDashboardView: View {
                     .padding(.bottom, RSMSSpacing.xxxl)
                 }
             }
-            .ignoresSafeArea(edges: .top)
             .background(RSMSColors.background.ignoresSafeArea())
             .navigationBarHidden(true)
     }
