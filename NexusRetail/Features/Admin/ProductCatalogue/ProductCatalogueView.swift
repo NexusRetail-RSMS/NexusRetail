@@ -11,14 +11,7 @@ struct ProductCatalogueView: View {
         ZStack(alignment: .top) {
             RSMSColors.background.ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                headerSection
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
-                    .padding(.bottom, 16)
-
-                productList
-            }
+            productList
         }
         .navigationBarHidden(true)
         .sheet(item: $editingProduct) { product in
@@ -51,66 +44,72 @@ struct ProductCatalogueView: View {
     }
 
     private var headerSection: some View {
-        HStack {
-            Text("Products")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(RSMSColors.primaryText)
-            
-            Spacer()
-            
-            Button {
-                showAddProduct = true
-            } label: {
-                Image(systemName: "plus")
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundColor(RSMSColors.burgundy)
-                    .frame(width: 44, height: 44)
-                    .background(RSMSColors.burgundy.opacity(0.1))
-                    .clipShape(Circle())
+        VStack(spacing: RSMSSpacing.md) {
+            HStack {
+                Text("Products")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .foregroundColor(RSMSColors.primaryText)
+
+                Spacer()
+
+                Button {
+                    showAddProduct = true
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundColor(RSMSColors.burgundy)
+                        .frame(width: 44, height: 44)
+                        .background(RSMSColors.burgundy.opacity(0.1))
+                        .clipShape(Circle())
+                }
             }
+
+            searchBarRow
         }
     }
 
     private var productList: some View {
-        List {
-            searchBarRow
-                .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 12, trailing: 20))
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
+        ScrollView {
+            LazyVStack(spacing: 0) {
+                headerSection
+                    .padding(.horizontal, RSMSSpacing.lg)
+                    .padding(.top, 16)
+                    .padding(.bottom, 8)
 
-            if viewModel.searchText.isEmpty {
-                trendingSection
-            }
+                if viewModel.searchText.isEmpty {
+                    trendingSection
+                }
 
-            productsHeader
-                .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 4, trailing: 20))
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
+                productsHeader
+                    .padding(.horizontal, RSMSSpacing.lg)
+                    .padding(.top, 8)
+                    .padding(.bottom, 10)
 
-            if viewModel.filteredProducts.isEmpty {
-                ContentUnavailableView(
-                    "No Products Found",
-                    systemImage: "shippingbox",
-                    description: Text("Try a different name, SKU, or category.")
-                )
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-            } else {
-                ForEach(viewModel.filteredProducts) { product in
-                    ProductRowCard(
-                        product: product,
-                        viewModel: viewModel,
-                        onEdit: { editingProduct = product },
-                        onDelete: { productToDelete = product }
+                if viewModel.filteredProducts.isEmpty {
+                    ContentUnavailableView(
+                        "No Products Found",
+                        systemImage: "shippingbox",
+                        description: Text("Try a different name, SKU, or category.")
                     )
-                    .listRowInsets(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 20))
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
+                    .padding(.top, 40)
+                } else {
+                    LazyVStack(spacing: RSMSSpacing.md) {
+                        ForEach(viewModel.filteredProducts) { product in
+                            ProductRowCard(
+                                product: product,
+                                viewModel: viewModel,
+                                onEdit: { editingProduct = product },
+                                onDelete: { productToDelete = product }
+                            )
+                        }
+                    }
+                    .padding(.horizontal, RSMSSpacing.lg)
                 }
             }
+            .padding(.top, RSMSSpacing.sm)
+            .padding(.bottom, 20)
         }
-        .listStyle(.plain)
         .scrollIndicators(.hidden)
         .background(RSMSColors.background)
         .animation(.easeInOut(duration: 0.2), value: viewModel.searchText)
@@ -118,37 +117,16 @@ struct ProductCatalogueView: View {
     }
 
     private var searchBarRow: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "magnifyingglass")
-                .foregroundStyle(RSMSColors.burgundy)
-                .font(.system(size: 15, weight: .medium))
-            TextField("Search products, SKU…", text: $viewModel.searchText)
-                .foregroundStyle(RSMSColors.darkBrown)
-            if !viewModel.searchText.isEmpty {
-                Button { viewModel.searchText = "" } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(RSMSColors.secondaryText)
-                }
-                .transition(.scale.combined(with: .opacity))
-            }
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .background(RSMSColors.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(RSMSColors.cardBorder, lineWidth: 1)
-        )
+        NexusSearchBar(text: $viewModel.searchText, placeholder: "Search products, SKU…")
     }
+
 
     @ViewBuilder
     private var trendingSection: some View {
         if viewModel.trendingProducts.isEmpty {
             EmptyView()
         } else {
-            Section {
-                VStack(spacing: 10) {
+            VStack(spacing: 10) {
                 GeometryReader { geo in
                     TabView(selection: $viewModel.currentTrendingIndex) {
                         ForEach(Array(viewModel.trendingProducts.enumerated()), id: \.element.id) { index, product in
@@ -177,10 +155,8 @@ struct ProductCatalogueView: View {
                     }
                 }
             }
-            .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 12, trailing: 20))
-            .listRowBackground(Color.clear)
-            .listRowSeparator(.hidden)
-        }
+            .padding(.horizontal, RSMSSpacing.lg)
+            .padding(.bottom, 12)
         }
     }
 
@@ -403,15 +379,30 @@ private struct ProductRowCard: View {
                 Button {
                     onEdit()
                 } label: {
-                    Label("Edit", systemImage: "square.and.pencil")
+                    Label {
+                        Text("Edit")
+                    } icon: {
+                        Image(systemName: "square.and.pencil")
+                            .renderingMode(.template)
+                            .foregroundColor(.black)
+                    }
                 }
+                .tint(.black)
 
                 Button(role: .destructive) {
                     onDelete()
                 } label: {
-                    Label("Delete", systemImage: "trash")
+                    Label {
+                        Text("Delete")
+                    } icon: {
+                        Image(systemName: "trash")
+                            .renderingMode(.template)
+                            .foregroundColor(.red)
+                    }
                 }
+                .tint(.red)
             }
+            .tint(.black)
             .sheet(isPresented: $showQR) {
                 if let qr = product.qrCode {
                     NavigationStack {
@@ -442,10 +433,10 @@ private struct ProductRowCard: View {
                         }
                     }
                     .presentationDetents([.medium])
-                }
             }
         }
     }
+}
 
 #Preview {
     NavigationStack {

@@ -11,52 +11,66 @@ struct AdminTransfersView: View {
     @State private var selectedTab: TransferTab = .pending
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Header
-            VStack(alignment: .leading, spacing: 8) {
-                // Tabs
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(TransferTab.allCases, id: \.self) { tab in
-                            Button {
-                                withAnimation {
-                                    selectedTab = tab
+        ScrollView {
+            VStack(spacing: 0) {
+                HStack {
+                    Text("Transfers")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(RSMSColors.primaryText)
+
+                    Spacer()
+                }
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, 16)
+                .padding(.bottom, 8)
+
+                // Header
+                VStack(alignment: .leading, spacing: 8) {
+                    // Tabs
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(TransferTab.allCases, id: \.self) { tab in
+                                Button {
+                                    withAnimation {
+                                        selectedTab = tab
+                                    }
+                                } label: {
+                                    Text(tab.rawValue)
+                                        .fontWeight(selectedTab == tab ? .bold : .regular)
+                                        .padding(.vertical, 8)
+                                        .padding(.horizontal, 16)
+                                        .background(selectedTab == tab ? Color.nexusRed : Color.clear)
+                                        .foregroundColor(selectedTab == tab ? .white : .primary)
+                                        .cornerRadius(20)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 20)
+                                                .stroke(selectedTab == tab ? Color.clear : Color.gray.opacity(0.3), lineWidth: 1)
+                                        )
                                 }
-                            } label: {
-                                Text(tab.rawValue)
-                                    .fontWeight(selectedTab == tab ? .bold : .regular)
-                                    .padding(.vertical, 8)
-                                    .padding(.horizontal, 16)
-                                    .background(selectedTab == tab ? Color.nexusRed : Color.clear)
-                                    .foregroundColor(selectedTab == tab ? .white : .primary)
-                                    .cornerRadius(20)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 20)
-                                            .stroke(selectedTab == tab ? Color.clear : Color.gray.opacity(0.3), lineWidth: 1)
-                                    )
                             }
                         }
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
                     }
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
+                }
+                .padding(.top, 8)
+                .background(Color.nexusBackground)
+                
+                Divider()
+                
+                // Content
+                switch selectedTab {
+                case .pending:
+                    RequestsListView(status: .pending)
+                case .history:
+                    HistoryView()
+                case .warehouse:
+                    WarehouseStockView()
                 }
             }
-            .padding(.top, 8)
-            .background(Color.nexusBackground)
-            
-            Divider()
-            
-            // Content
-            TabView(selection: $selectedTab) {
-                RequestsListView(status: .pending)
-                    .tag(TransferTab.pending)
-                HistoryView()
-                    .tag(TransferTab.history)
-                WarehouseStockView()
-                    .tag(TransferTab.warehouse)
-            }
-            .tabViewStyle(.page(indexDisplayMode: .never))
         }
+        .background(Color.nexusBackground)
     }
 }
 
@@ -73,13 +87,11 @@ struct HistoryView: View {
             .padding()
             .background(Color.nexusBackground)
             
-            TabView(selection: $historySelection) {
+            if historySelection == 0 {
                 RequestsListView(status: .approved)
-                    .tag(0)
+            } else {
                 RequestsListView(status: .denied)
-                    .tag(1)
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
         }
     }
 }
@@ -101,25 +113,23 @@ struct RequestsListView: View {
     }
     
     var body: some View {
-        ScrollView {
-            LazyVStack(spacing: 16) {
-                if filteredRequests.isEmpty {
-                    VStack(spacing: 16) {
-                        Image(systemName: "tray")
-                            .font(.system(size: 48))
-                            .foregroundColor(.gray)
-                        Text("No requests found")
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.top, 60)
-                } else {
-                    ForEach(filteredRequests) { request in
-                        TransferRequestCard(request: request)
-                    }
+        LazyVStack(spacing: 16) {
+            if filteredRequests.isEmpty {
+                VStack(spacing: 16) {
+                    Image(systemName: "tray")
+                        .font(.system(size: 48))
+                        .foregroundColor(.gray)
+                    Text("No requests found")
+                        .foregroundColor(.secondary)
+                }
+                .padding(.top, 60)
+            } else {
+                ForEach(filteredRequests) { request in
+                    TransferRequestCard(request: request)
                 }
             }
-            .padding()
         }
+        .padding()
         .background(Color.nexusBackground)
     }
 }

@@ -144,11 +144,20 @@ struct StoreFormView: View {
                 Section("Staffing") {
                     Picker("Manager", selection: $selectedManagerID) {
                         Text("None").tag(UUID?(nil))
-                        ForEach(viewModel.managers) { manager in
+                        // Only show managers not already assigned to another store.
+                        // When editing, the current store's own manager is always included.
+                        ForEach(viewModel.availableManagers(excludingStoreID: editingStore?.id)) { manager in
                             Text(manager.name ?? "Unknown").tag(manager.id as UUID?)
                         }
                     }
                     .tint(RSMSColors.burgundy)
+
+                    if viewModel.availableManagers(excludingStoreID: editingStore?.id).isEmpty
+                        && selectedManagerID == nil {
+                        Text("All managers are currently assigned to stores.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 
                 Section("Payment Terminals") {

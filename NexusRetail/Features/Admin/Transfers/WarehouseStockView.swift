@@ -4,21 +4,19 @@ struct WarehouseStockView: View {
     @Environment(AdminTransfersViewModel.self) private var viewModel
     
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                // Filters Dashboard Grid
-                WarehouseDashboardGrid(products: viewModel.products)
-                    .padding(.horizontal)
-                    .padding(.top, 8)
-                
-                Divider()
-                    .padding(.vertical)
-                
-                // Active Deliveries
-                ActiveDeliveriesSection()
-            }
-            .padding(.bottom, 30)
+        VStack(alignment: .leading, spacing: 20) {
+            // Filters Dashboard Grid
+            WarehouseDashboardGrid(products: viewModel.products)
+                .padding(.horizontal)
+                .padding(.top, 8)
+            
+            Divider()
+                .padding(.vertical)
+            
+            // Active Deliveries
+            ActiveDeliveriesSection()
         }
+        .padding(.bottom, 30)
         .background(Color.nexusBackground)
     }
 }

@@ -15,7 +15,7 @@ struct SegmentControlView: View {
             }
         }
         .pickerStyle(.segmented)
-        .frame(maxWidth: 250)
+        .fixedSize()
     }
 }
 

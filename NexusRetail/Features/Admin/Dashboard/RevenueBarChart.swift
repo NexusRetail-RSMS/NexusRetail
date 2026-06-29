@@ -148,7 +148,7 @@ struct TimeRangeToggle: View {
             }
         }
         .pickerStyle(.segmented)
-        .frame(width: 160)
+        .fixedSize()
     }
 }
 

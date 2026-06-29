@@ -134,3 +134,53 @@ public struct HeaderCurve: Shape {
         return path
     }
 }
+
+/// A reusable search bar styled after the iOS system search bar.
+/// Rounded pill with a magnifying glass on the left and a mic icon
+/// on the right (collapses to xmark when text is present).
+struct NexusSearchBar: View {
+    @Binding var text: String
+    var placeholder: String = "Search"
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(RSMSColors.secondaryText)
+
+            TextField(placeholder, text: $text)
+                .font(.system(size: 17))
+                .foregroundStyle(RSMSColors.primaryText)
+                .focused($isFocused)
+                .submitLabel(.search)
+
+            Spacer(minLength: 0)
+
+            if text.isEmpty {
+                Image(systemName: "mic.fill")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(RSMSColors.secondaryText)
+                    .transition(.opacity.combined(with: .scale))
+            } else {
+                Button {
+                    text = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 17))
+                        .foregroundStyle(RSMSColors.secondaryText)
+                }
+                .transition(.opacity.combined(with: .scale))
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(Color(.systemFill))
+        )
+        .animation(.easeInOut(duration: 0.18), value: text.isEmpty)
+        .onTapGesture { isFocused = true }
+    }
+}
+
