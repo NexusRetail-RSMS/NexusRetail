@@ -8,6 +8,7 @@ import SwiftUI
 struct DashboardHeaderView: View {
     let name: String
     @Environment(SessionStore.self) private var sessionStore
+    @State private var showProfile = false
     
     var body: some View {
         HStack(alignment: .center) {
@@ -17,42 +18,18 @@ struct DashboardHeaderView: View {
             
             Spacer()
             
-            HStack(spacing: RSMSSpacing.md) {
-                // Globe Button
-                Button {
-                    // Globe action placeholder
-                } label: {
-                    ZStack {
-                        Circle()
-                            .fill(Color.white)
-                            .frame(width: 40, height: 40)
-                            .shadow(color: Color.black.opacity(0.05), radius: 4, y: 2)
-                        
-                        Image(systemName: "globe.americas.fill")
-                            .symbolRenderingMode(.multicolor)
-                            .font(.system(size: 20))
-                    }
-                }
-                
-                // Profile Avatar with Sign Out Menu
-                Menu {
-                    Button(role: .destructive) {
-                        Task {
-                            try? await sessionStore.signOut()
-                        }
-                    } label: {
-                        Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
-                    }
-                } label: {
-                    ZStack {
-                        Circle()
-                            .fill(RSMSColors.burgundy)
-                            .frame(width: 40, height: 40)
-                        
-                        Text(initials(for: name))
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
-                    }
+            // Profile Avatar Button
+            Button {
+                showProfile = true
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(RSMSColors.burgundy)
+                        .frame(width: 40, height: 40)
+                    
+                    Text(initials(for: name))
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.white)
                 }
             }
         }
@@ -60,6 +37,11 @@ struct DashboardHeaderView: View {
         .padding(.top, RSMSSpacing.lg)
         .padding(.bottom, RSMSSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .sheet(isPresented: $showProfile) {
+            ProfileView()
+                .environment(sessionStore)
+                .presentationDetents([.fraction(0.6), .large])
+        }
     }
     
     private func initials(for name: String) -> String {
