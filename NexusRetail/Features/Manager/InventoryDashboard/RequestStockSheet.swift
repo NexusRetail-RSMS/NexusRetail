@@ -69,14 +69,14 @@ struct RequestStockSheet: View {
                                             
                                             Spacer()
                                             
-                                            VStack(alignment: .trailing, spacing: 4) {
-                                                Text("\(item.currentStock) in stock")
-                                                    .font(RSMSFonts.subheadline)
+                                            VStack(alignment: .trailing, spacing: 2) {
+                                                Text("\(item.currentStock)")
+                                                    .font(RSMSFonts.headline)
                                                     .foregroundColor(RSMSColors.error)
                                                     .fontWeight(.bold)
-                                                Text("Min: \(item.minimumRequired)")
+                                                Text("in stock")
                                                     .font(RSMSFonts.caption)
-                                                    .foregroundColor(RSMSColors.secondaryText)
+                                                    .foregroundColor(RSMSColors.error)
                                             }
                                         }
                                     }
@@ -107,15 +107,16 @@ struct RequestStockSheet: View {
                                                 .font(RSMSFonts.subheadline)
                                                 .foregroundColor(RSMSColors.primaryText)
                                             Spacer()
-                                            Picker("Urgency", selection: Binding(
+                                            Picker("", selection: Binding(
                                                 get: { urgencies[item.id, default: .medium] },
                                                 set: { urgencies[item.id] = $0 }
                                             )) {
                                                 ForEach(StockRequestUrgency.allCases) { urgency in
-                                                    Text(urgency.rawValue).tag(urgency)
+                                                    Text(urgency.rawValue.capitalized).tag(urgency)
                                                 }
                                             }
                                             .pickerStyle(.menu)
+                                            .labelsHidden()
                                             .tint(RSMSColors.burgundy)
                                         }
                                     }
@@ -139,7 +140,7 @@ struct RequestStockSheet: View {
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(isSubmitting ? "Sending..." : "Send Request") {
+                    Button(isSubmitting ? "Sending..." : "Send") {
                         submitRequest()
                     }
                     .fontWeight(.bold)
