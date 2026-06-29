@@ -11,35 +11,26 @@ struct DashboardHeaderView: View {
     
     var body: some View {
         HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Manager Dashboard")
-                    .font(.system(size: 26, weight: .bold))
-                    .foregroundColor(.white)
-            }
+            Text("Dashboard")
+                .font(.system(size: 32, weight: .bold))
+                .foregroundColor(RSMSColors.primaryText)
             
             Spacer()
             
             HStack(spacing: RSMSSpacing.md) {
-                // Notification Button
+                // Globe Button
                 Button {
-                    // Notification action
+                    // Globe action placeholder
                 } label: {
-                    ZStack(alignment: .topTrailing) {
-                        Image(systemName: "bell.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(.white)
-                            .frame(width: 44, height: 44)
-                            .background(Color.white.opacity(0.2))
-                            .clipShape(Circle())
-                        
-                        // Badge
+                    ZStack {
                         Circle()
-                            .fill(RSMSColors.error)
-                            .frame(width: 10, height: 10)
-                            .overlay(
-                                Circle().stroke(RSMSColors.burgundy, lineWidth: 2)
-                            )
-                            .offset(x: -2, y: 2)
+                            .fill(Color.white)
+                            .frame(width: 40, height: 40)
+                            .shadow(color: Color.black.opacity(0.05), radius: 4, y: 2)
+                        
+                        Image(systemName: "globe.americas.fill")
+                            .symbolRenderingMode(.multicolor)
+                            .font(.system(size: 20))
                     }
                 }
                 
@@ -55,28 +46,20 @@ struct DashboardHeaderView: View {
                 } label: {
                     ZStack {
                         Circle()
-                            .fill(Color.white.opacity(0.2))
-                            .frame(width: 44, height: 44)
+                            .fill(RSMSColors.burgundy)
+                            .frame(width: 40, height: 40)
                         
                         Text(initials(for: name))
-                            .font(.headline.bold())
+                            .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.white)
                     }
                 }
             }
         }
         .padding(.horizontal, RSMSSpacing.lg)
-        .padding(.top, 60)
-        .padding(.bottom, RSMSSpacing.xxxl)
+        .padding(.top, RSMSSpacing.lg)
+        .padding(.bottom, RSMSSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            LinearGradient(
-                colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .clipShape(ManagerHeaderCurve())
-        )
     }
     
     private func initials(for name: String) -> String {
@@ -93,28 +76,12 @@ struct DashboardHeaderView: View {
     }
 }
 
-/// Custom shape that gives the header a smooth curved bottom edge
-struct ManagerHeaderCurve: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: .zero)
-        path.addLine(to: CGPoint(x: rect.maxX, y: 0))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - 20))
-        path.addQuadCurve(
-            to: CGPoint(x: 0, y: rect.maxY - 20),
-            control: CGPoint(x: rect.midX, y: rect.maxY + 10)
-        )
-        path.closeSubpath()
-        return path
-    }
-}
-
 #Preview {
     VStack {
         DashboardHeaderView(name: "Alex")
         Spacer()
     }
     .background(RSMSColors.background)
-    .ignoresSafeArea()
+    .ignoresSafeArea(edges: .bottom)
     .environment(SessionStore())
 }
