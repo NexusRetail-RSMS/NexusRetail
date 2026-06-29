@@ -9,9 +9,11 @@ import Supabase
 /// Admin shell: tabs for Dashboard, Stores, Products, Transfers, Managers.
 struct AdminTabView: View {
     @State private var isAddManagerPresented = false
+    @State private var navStore = AdminNavigationStore()
+    @State private var transfersVM = AdminTransfersViewModel()
     
     var body: some View {
-        TabView {
+        TabView(selection: $navStore.selectedTab) {
             // 1. Dashboard
             NavigationStack {
                 AdminDashboardView()
@@ -19,6 +21,7 @@ struct AdminTabView: View {
             .tabItem {
                 Label("Dashboard", systemImage: "house")
             }
+            .tag(AdminTab.dashboard)
 
             // 2. Stores
             NavigationStack {
@@ -27,25 +30,27 @@ struct AdminTabView: View {
             .tabItem {
                 Label("Stores", systemImage: "building.2")
             }
+            .tag(AdminTab.stores)
 
-            // 3. Products — now navigates to ProductCatalogueView
+            // 3. Products
             NavigationStack {
                 ProductCatalogueView()
-                    // ProductCatalogueView draws its own header, so we hide
-                    // the NavigationStack bar to avoid a double title.
                     .navigationBarHidden(true)
             }
             .tabItem {
                 Label("Products", systemImage: "tag")
             }
+            .tag(AdminTab.products)
 
             // 4. Transfers
             NavigationStack {
-                TransfersTabRoot()
+                AdminTransfersView()
+                    .modifier(AdminToolbarModifier(title: "Transfers"))
             }
             .tabItem {
                 Label("Transfers", systemImage: "arrow.left.arrow.right")
             }
+            .tag(AdminTab.transfers)
 
             // 5. Managers
             NavigationStack {
@@ -54,8 +59,11 @@ struct AdminTabView: View {
             .tabItem {
                 Label("Managers", systemImage: "person.2")
             }
+            .tag(AdminTab.managers)
         }
         .tint(RSMSColors.burgundy)
+        .environment(navStore)
+        .environment(transfersVM)
     }
 }
 
@@ -105,35 +113,51 @@ private struct ManagersTabRoot: View {
     }
 }
 
-/// Wrapper that provides a custom header for the Transfers tab matching the Stores page style.
-private struct TransfersTabRoot: View {
-    var body: some View {
-        ZStack(alignment: .top) {
-            AdminPlaceholderView(title: "Transfers", message: "Inventory transfers coming soon.")
-                .safeAreaInset(edge: .top) {
-                    Color.clear.frame(height: 70)
-                }
+/// A view modifier that applies the common Admin toolbar (title only).
+struct AdminToolbarModifier: ViewModifier {
+    let title: String
+    @State private var isProfilePresented = false
+    @Environment(SessionStore.self) private var sessionStore
 
-            // Floating header matching StoreListView style
-            VStack(spacing: 0) {
-                HStack {
-                    Text("Transfers")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .foregroundColor(RSMSColors.primaryText)
-
-                    Spacer()
+    func body(content: Content) -> some View {
+        content
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        isProfilePresented = true
+                    } label: {
+                        ZStack {
+                            Circle()
+                                .fill(RSMSColors.burgundy)
+                                .frame(width: 32, height: 32)
+                            
+                            Text(initials(for: sessionStore.currentUser?.name))
+                                .font(.caption.bold())
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .accessibilityLabel("Profile")
+                    .accessibilityHint("Opens your profile and settings")
                 }
-                .padding(.horizontal, RSMSSpacing.lg)
-                .padding(.top, 16)
-                .padding(.bottom, 8)
             }
-            .background(
-                RSMSColors.background
-                    .ignoresSafeArea(edges: .top)
-            )
+            .sheet(isPresented: $isProfilePresented) {
+                AdminProfileSheet()
+            }
+    }
+    
+    private func initials(for name: String?) -> String {
+        guard let name = name, !name.isEmpty else { return "AD" }
+        let components = name.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+        if components.count >= 2 {
+            let first = components[0].prefix(1)
+            let last = components[1].prefix(1)
+            return "\(first)\(last)".uppercased()
+        } else if let first = components.first {
+            return String(first.prefix(2)).uppercased()
         }
-        .toolbar(.hidden, for: .navigationBar)
+        return "AD"
     }
 }
 

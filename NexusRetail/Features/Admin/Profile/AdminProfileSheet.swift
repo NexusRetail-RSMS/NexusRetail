@@ -17,7 +17,7 @@ struct AdminProfileSheet: View {
                         // Avatar
                         ZStack {
                             Circle()
-                                .fill(Color.nexusNavy)
+                                .fill(Color.nexusRed)
                                 .frame(width: 60, height: 60)
                             
                             Text(initials(for: sessionStore.currentUser?.name))
@@ -40,7 +40,7 @@ struct AdminProfileSheet: View {
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
                                 .background(Color.nexusGold.opacity(0.2))
-                                .foregroundColor(Color.nexusNavy)
+                                .foregroundColor(Color.nexusRed)
                                 .cornerRadius(8)
                                 .padding(.top, 4)
                         }
