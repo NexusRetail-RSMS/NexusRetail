@@ -65,7 +65,7 @@ class ManagersViewModel {
         isLoading = false
     }
 
-    func createManager(email: String, password: String, name: String, phone: String, address: String, imageUrl: String?) async -> Bool {
+    func createManager(email: String, password: String, name: String, phone: String, storeName: String, address: String, country: String, imageUrl: String?) async -> Bool {
         isLoading = true
         errorMessage = nil
         do {
@@ -74,23 +74,73 @@ class ManagersViewModel {
                 let manager_password: String
                 let manager_name: String
                 let manager_phone: String
+                let manager_store_name: String
                 let manager_address: String
+                let manager_country: String
                 let manager_image_url: String
             }
-            
-            let params = Params(manager_email: email, manager_password: password, manager_name: name, manager_phone: phone, manager_address: address, manager_image_url: imageUrl ?? "")
-            
+
+            let params = Params(
+                manager_email: email,
+                manager_password: password,
+                manager_name: name,
+                manager_phone: phone,
+                manager_store_name: storeName,
+                manager_address: address,
+                manager_country: country,
+                manager_image_url: imageUrl ?? ""
+            )
+
             try await SupabaseManager.shared.client
                 .rpc("create_manager", params: params)
                 .execute()
-            
+
             // Dispatch a raw email with the generated password via Resend
             await sendResendEmail(to: email, password: password)
-            
+
             await loadManagers()
             return true
         } catch {
             print("Error creating manager: \(error)")
+            self.errorMessage = error.localizedDescription
+            isLoading = false
+            return false
+        }
+    }
+
+    func updateManager(_ manager: DisplayManager) async -> Bool {
+        isLoading = true
+        errorMessage = nil
+        do {
+            struct Params: Encodable {
+                let manager_id: UUID
+                let manager_name: String
+                let manager_phone: String
+                let manager_email: String
+                let manager_store_name: String
+                let manager_address: String
+                let manager_country: String
+            }
+
+            let params = Params(
+                manager_id: manager.id,
+                manager_name: manager.name,
+                manager_phone: manager.phone,
+                manager_email: manager.email,
+                manager_store_name: manager.storeName,
+                manager_address: manager.address,
+                manager_country: manager.country
+            )
+
+            try await SupabaseManager.shared.client
+                .rpc("update_manager", params: params)
+                .execute()
+
+            // Refresh local list so changes appear immediately
+            await loadManagers()
+            return true
+        } catch {
+            print("Error updating manager: \(error)")
             self.errorMessage = error.localizedDescription
             isLoading = false
             return false
