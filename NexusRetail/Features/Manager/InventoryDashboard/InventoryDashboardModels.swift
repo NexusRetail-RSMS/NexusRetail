@@ -16,8 +16,8 @@ enum InventoryStatus: String, CaseIterable, Identifiable {
 
 enum InventorySortOrder: String, CaseIterable, Identifiable {
     case none = "None"
-    case lowestPerformance = "Lowest Performance"
-    case highestPerformance = "Highest Performance"
+    case criticalFirst = "Critical First"
+    case healthyFirst = "Healthy First"
     
     var id: String { self.rawValue }
 }

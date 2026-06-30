@@ -36,14 +36,14 @@ class InventoryDashboardViewModel {
         switch sortOrder {
         case .none:
             break // Keep original order
-        case .lowestPerformance:
+        case .criticalFirst:
             result.sort {
-                // Stock / Minimum ratio ascending (Lowest Performance first)
+                // Stock / Minimum ratio ascending (Critical first)
                 let ratio1 = Double($0.currentStock) / Double($0.minimumRequired)
                 let ratio2 = Double($1.currentStock) / Double($1.minimumRequired)
                 return ratio1 < ratio2
             }
-        case .highestPerformance:
+        case .healthyFirst:
             result.sort {
                 let ratio1 = Double($0.currentStock) / Double($0.minimumRequired)
                 let ratio2 = Double($1.currentStock) / Double($1.minimumRequired)

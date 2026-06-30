@@ -49,12 +49,15 @@ struct InventoryDashboardView: View {
                                         Image(systemName: "xmark.circle.fill")
                                             .foregroundColor(.secondary)
                                     }
+                                } else {
+                                    Image(systemName: "mic.fill")
+                                        .foregroundColor(.secondary)
                                 }
                             }
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 8)
-                            .background(Color(UIColor.systemGray6))
-                            .cornerRadius(10)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            .background(Color(UIColor.systemGray5))
+                            .clipShape(Capsule())
                             
                             // Filter Menu
                             Menu {
@@ -70,27 +73,27 @@ struct InventoryDashboardView: View {
                                         }
                                     }
                                     Button {
-                                        viewModel.sortOrder = .highestPerformance
+                                        viewModel.sortOrder = .healthyFirst
                                     } label: {
                                         HStack {
-                                            Text("Highest Performance")
-                                            if viewModel.sortOrder == .highestPerformance {
+                                            Text("Healthy First")
+                                            if viewModel.sortOrder == .healthyFirst {
                                                 Image(systemName: "checkmark")
                                             }
                                         }
                                     }
                                     Button {
-                                        viewModel.sortOrder = .lowestPerformance
+                                        viewModel.sortOrder = .criticalFirst
                                     } label: {
                                         HStack {
-                                            Text("Lowest Performance")
-                                            if viewModel.sortOrder == .lowestPerformance {
+                                            Text("Critical First")
+                                            if viewModel.sortOrder == .criticalFirst {
                                                 Image(systemName: "checkmark")
                                             }
                                         }
                                     }
                                 } label: {
-                                    Label("Performance", systemImage: "chart.bar.fill")
+                                    Label("Stock Level", systemImage: "shippingbox.fill")
                                 }
                                 
                                 Button(role: .destructive) {
