@@ -72,23 +72,23 @@ struct BookmarkShape: Shape {
 
 enum PerformanceSortOrder: String, CaseIterable {
     case none       = "None"
-    case topToLow   = "Top to Low"
-    case lowToTop   = "Low to Top"
+    case topToLow   = "Highest Performance"
+    case lowToTop   = "Lowest Performance"
     }
 
 // MARK: - Main View
 
 struct AdminManagersView: View {
     @Binding var isAddManagerPresented: Bool
-    
+    @Binding var searchText: String
     @State private var viewModel = ManagersViewModel()
-    @State private var searchText = ""
     @State private var topPerformerPage = 0
     @State private var scrolledID: UUID?
     @State private var selectedCountryFilter = "All"
     @State private var selectedPerformanceSort: PerformanceSortOrder = .none
     @State private var editingManager: DisplayManager? = nil
     @State private var isRecentlyAddedSort = false
+    @State private var managerToDelete: DisplayManager? = nil
 
     private let topCount = 3
 
@@ -129,25 +129,32 @@ struct AdminManagersView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: RSMSSpacing.xl) {
+                    VStack(spacing: RSMSSpacing.md) {
+                        HStack {
+                            Text("Managers")
+                                .font(.largeTitle)
+                                .fontWeight(.bold)
+                                .foregroundColor(RSMSColors.primaryText)
 
-                    // MARK: Search Bar
-                    HStack(spacing: RSMSSpacing.sm) {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(RSMSColors.secondaryText)
-                        TextField("Search managers, stores...", text: $searchText)
-                            .font(RSMSFonts.body)
-                            .foregroundColor(RSMSColors.primaryText)
-                        if !searchText.isEmpty {
-                            Button { searchText = "" } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundColor(RSMSColors.secondaryText)
+                            Spacer()
+
+                            Button {
+                                isAddManagerPresented = true
+                            } label: {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 20, weight: .medium))
+                                    .foregroundColor(RSMSColors.burgundy)
+                                    .frame(width: 44, height: 44)
+                                    .background(RSMSColors.burgundy.opacity(0.1))
+                                    .clipShape(Circle())
                             }
+                            .accessibilityLabel("Add new manager")
                         }
+
+                        NexusSearchBar(text: $searchText, placeholder: "Search managers, stores…")
                     }
-                    .padding(RSMSSpacing.sm)
-                    .background(Color.black.opacity(0.05))
-                    .cornerRadius(RSMSRadius.small)
                     .padding(.horizontal, RSMSSpacing.lg)
+                    .padding(.top, 16)
 
                     // MARK: Top Performers
                     VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
@@ -158,7 +165,7 @@ struct AdminManagersView: View {
 
                         let topManagers = Array(viewModel.managers.prefix(topCount).enumerated())
                         ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: RSMSSpacing.md) {
+                            LazyHStack(spacing: RSMSSpacing.md) {
                                 ForEach(topManagers, id: \.element.id) { index, manager in
                                     TopPerformanceCard(
                                         manager: manager,
@@ -167,9 +174,7 @@ struct AdminManagersView: View {
                                             editingManager = manager
                                         },
                                         onDelete: {
-                                            Task {
-                                                _ = await viewModel.deleteManager(id: manager.id)
-                                            }
+                                            managerToDelete = manager
                                         },
                                         onResetPassword: { newPassword in
                                             return await viewModel.resetPassword(for: manager.id, email: manager.email, newPassword: newPassword)
@@ -278,7 +283,7 @@ struct AdminManagersView: View {
                         .padding(.top, 40)
                         .padding(.horizontal, RSMSSpacing.xxxl)
                     } else {
-                        VStack(spacing: RSMSSpacing.md) {
+                        LazyVStack(spacing: RSMSSpacing.md) {
                             ForEach(filteredManagers) { manager in
                                 ManagerListCard(
                                     manager: manager,
@@ -286,9 +291,7 @@ struct AdminManagersView: View {
                                         editingManager = manager
                                     },
                                     onDelete: {
-                                        Task {
-                                            _ = await viewModel.deleteManager(id: manager.id)
-                                        }
+                                        managerToDelete = manager
                                     },
                                     onResetPassword: { newPassword in
                                         return await viewModel.resetPassword(for: manager.id, email: manager.email, newPassword: newPassword)
@@ -333,6 +336,24 @@ struct AdminManagersView: View {
         .refreshable {
             await viewModel.loadManagers()
         }
+        .alert("Delete Manager", isPresented: Binding(
+            get: { managerToDelete != nil },
+            set: { if !$0 { managerToDelete = nil } }
+        )) {
+            Button("Cancel", role: .cancel) {
+                managerToDelete = nil
+            }
+            Button("Delete", role: .destructive) {
+                if let manager = managerToDelete {
+                    Task {
+                        _ = await viewModel.deleteManager(id: manager.id)
+                    }
+                    managerToDelete = nil
+                }
+            }
+        } message: {
+            Text("Are you sure you want to delete this manager? This action cannot be undone and will revoke their access.")
+        }
     }
 }
 
@@ -357,23 +378,23 @@ struct TopPerformanceCard: View {
         NavigationLink(destination: ManagerDetailView(manager: manager, onResetPassword: onResetPassword, onDelete: onDelete)) {
             ZStack(alignment: .topLeading) {
                 // Card background
-                RoundedRectangle(cornerRadius: RSMSRadius.large)
+                RoundedRectangle(cornerRadius: RSMSRadius.extraLarge)
                     .fill(RSMSColors.cardBackground)
                     .overlay(
-                        RoundedRectangle(cornerRadius: RSMSRadius.large)
+                        RoundedRectangle(cornerRadius: RSMSRadius.extraLarge)
                             .stroke(RSMSColors.cardBorder, lineWidth: 1)
                     )
-                    .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
+                    .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
 
                 VStack(spacing: 0) {
                     // Top Row: Performance Score badge
                     HStack {
                         Spacer()
                         Text("\(manager.performanceScore)%")
-                            .font(RSMSFonts.caption.weight(.semibold))
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
                             .foregroundColor(performanceColor(for: manager.performanceScore))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
                             .background(performanceColor(for: manager.performanceScore).opacity(0.12))
                             .cornerRadius(RSMSRadius.small)
                     }
@@ -384,96 +405,112 @@ struct TopPerformanceCard: View {
                         ZStack {
                             Circle()
                                 .fill(RSMSColors.burgundy.opacity(0.1))
-                                .frame(width: 44, height: 44)
+                                .frame(width: 55, height: 55)
                             if let urlString = manager.imageUrl, let url = URL(string: urlString) {
                                 AsyncImage(url: url) { image in
                                     image
                                         .resizable()
                                         .scaledToFill()
-                                        .frame(width: 44, height: 44)
+                                        .frame(width: 55, height: 55)
                                         .clipShape(Circle())
                                 } placeholder: {
                                     ProgressView()
-                                        .frame(width: 44, height: 44)
+                                        .frame(width: 55, height: 55)
                                 }
                             } else {
                                 Image(systemName: "person.fill")
                                     .foregroundColor(RSMSColors.burgundy)
-                                    .font(.system(size: 18))
+                                    .font(.system(size: 22))
                             }
                         }
 
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: 3) {
                             Text(manager.name)
-                                .font(RSMSFonts.headline)
+                                .font(.system(size: 19, weight: .bold, design: .rounded))
                                 .foregroundColor(RSMSColors.primaryText)
                                 .lineLimit(1)
 
                             Text(manager.storeName)
-                                .font(RSMSFonts.caption)
+                                .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(RSMSColors.secondaryText)
                                 .lineLimit(1)
                         }
 
                         Spacer()
                     }
-                    .padding(.top, RSMSSpacing.xs)
+                    .padding(.top, RSMSSpacing.md)
 
-                    Spacer(minLength: RSMSSpacing.xs)
+                    Spacer(minLength: RSMSSpacing.sm)
 
                     // Bottom Row: Country & Revenue
                     HStack(alignment: .bottom) {
-                        HStack(spacing: 4) {
+                        HStack(spacing: 5) {
                             Text(flagEmoji(for: manager.country))
-                                .font(RSMSFonts.caption)
+                                .font(.system(size: 18))
                             Text(manager.country)
-                                .font(RSMSFonts.caption)
+                                .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(RSMSColors.secondaryText)
                                 .lineLimit(1)
                         }
 
                         Spacer()
 
-                        VStack(alignment: .trailing, spacing: 1) {
+                        VStack(alignment: .trailing, spacing: 2) {
                             Text("Revenue")
-                                .font(.system(size: 10))
+                                .font(.system(size: 12, weight: .medium))
                                 .foregroundColor(RSMSColors.secondaryText)
                             Text(manager.revenue)
-                                .font(RSMSFonts.headline)
+                                .font(.system(size: 19, weight: .bold, design: .rounded))
                                 .foregroundColor(RSMSColors.primaryText)
                         }
                     }
                 }
-                .padding(RSMSSpacing.md)
+                .padding(16)
 
-                // Bookmark badge (top-left, flush to left edge)
+                // Bookmark badge centered horizontally with profile avatar (center at x: 43.5)
                 ZStack {
                     BookmarkShape()
                         .fill(rankColor)
-                        .frame(width: 24, height: 32)
+                        .frame(width: 28, height: 36)
                         .shadow(color: rankColor.opacity(0.3), radius: 3, x: 0, y: 2)
                     Text("\(rank)")
-                        .font(.system(size: 10, weight: .bold))
+                        .font(.system(size: 13, weight: .bold))
                         .foregroundColor(.white)
                         .offset(y: -2)
                 }
-                .offset(x: 10, y: 0)
+                .offset(x: 29.5, y: 0)
             }
-            .frame(width: UIScreen.main.bounds.width - 48)
+            .frame(width: 320, height: 190)
         }
         .buttonStyle(.plain)
         .contextMenu {
             Button {
                 onEdit?()
             } label: {
-                Label("Edit", systemImage: "square.and.pencil")
+                Label {
+                    Text("Edit")
+                } icon: {
+                    Image(systemName: "square.and.pencil")
+                        .renderingMode(.template)
+                        .foregroundColor(.black)
+                }
             }
+            .tint(.black)
+
             Button(role: .destructive) {
                 onDelete?()
             } label: {
-                Label("Delete", systemImage: "trash")
+                Label {
+                    Text("Delete")
+                } icon: {
+                    Image(systemName: "trash")
+                        .renderingMode(.template)
+                        .foregroundColor(.red)
+                }
             }
+            .tint(.red)
         }
+        .tint(.black)
     }
 }
 
@@ -492,38 +529,38 @@ struct ManagerListCard: View {
                 ZStack {
                     Circle()
                         .fill(RSMSColors.burgundy.opacity(0.1))
-                        .frame(width: 48, height: 48)
+                        .frame(width: 55, height: 55)
                     if let urlString = manager.imageUrl, let url = URL(string: urlString) {
                         AsyncImage(url: url) { image in
                             image
                                 .resizable()
                                 .scaledToFill()
-                                .frame(width: 48, height: 48)
+                                .frame(width: 55, height: 55)
                                 .clipShape(Circle())
                         } placeholder: {
                             ProgressView()
-                                .frame(width: 48, height: 48)
+                                .frame(width: 55, height: 55)
                         }
                     } else {
                         Image(systemName: "person.fill")
                             .foregroundColor(RSMSColors.burgundy)
-                            .font(.system(size: 20))
+                            .font(.system(size: 22))
                     }
                 }
 
                 // Text info
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(manager.storeName)
-                        .font(RSMSFonts.subheadline.weight(.semibold))
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
                         .foregroundColor(RSMSColors.primaryText)
                     Text(manager.name)
-                        .font(RSMSFonts.subheadline)
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundColor(RSMSColors.secondaryText)
                     HStack(spacing: 4) {
                         Text(flagEmoji(for: manager.country))
-                            .font(RSMSFonts.caption)
+                            .font(.system(size: 16))
                         Text(manager.country)
-                            .font(RSMSFonts.caption)
+                            .font(.system(size: 13, weight: .medium))
                             .foregroundColor(RSMSColors.secondaryText)
                     }
                 }
@@ -532,7 +569,7 @@ struct ManagerListCard: View {
 
                 // Performance badge
                 Text("\(manager.performanceScore)%")
-                    .font(RSMSFonts.caption.weight(.semibold))
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
                     .foregroundColor(performanceColor(for: manager.performanceScore))
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
@@ -541,12 +578,13 @@ struct ManagerListCard: View {
 
                 // Chevron
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(RSMSColors.secondaryText)
             }
-            .padding(RSMSSpacing.lg)
+            .padding(16)
+            .frame(minHeight: 85)
             .background(RSMSColors.cardBackground)
-            .cornerRadius(RSMSRadius.large)
+            .cornerRadius(RSMSRadius.extraLarge)
             .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
             .overlay(
                 RoundedRectangle(cornerRadius: RSMSRadius.large)
@@ -558,13 +596,29 @@ struct ManagerListCard: View {
             Button {
                 onEdit?()
             } label: {
-                Label("Edit", systemImage: "square.and.pencil")
+                Label {
+                    Text("Edit")
+                } icon: {
+                    Image(systemName: "square.and.pencil")
+                        .renderingMode(.template)
+                        .foregroundColor(.black)
+                }
             }
+            .tint(.black)
+
             Button(role: .destructive) {
                 onDelete?()
             } label: {
-                Label("Delete", systemImage: "trash")
+                Label {
+                    Text("Delete")
+                } icon: {
+                    Image(systemName: "trash")
+                        .renderingMode(.template)
+                        .foregroundColor(.red)
+                }
             }
+            .tint(.red)
         }
+        .tint(.black)
     }
 }

@@ -64,7 +64,6 @@ struct TopLocationsChartView: View {
         }
         .fullScreenCover(isPresented: $showingDetail) {
             TopLocationsDetailView(
-                timeRange: $timeRange,
                 countryPolygons: countryPolygons,
                 revenueByCountry: revenueByCountry
             )

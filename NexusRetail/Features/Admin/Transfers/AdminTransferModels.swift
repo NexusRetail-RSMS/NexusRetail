@@ -16,7 +16,7 @@ enum TransferRequestStatus: String, Codable, CaseIterable {
         case .pending: return .orange
         case .approved: return .green
         case .denied: return .red
-        case .awaitingRestock: return .purple
+        case .awaitingRestock: return .yellow
         case .readyForDispatch: return .blue
         case .dispatched: return .gray
         }

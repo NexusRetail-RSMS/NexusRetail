@@ -25,6 +25,7 @@ struct CatalogueProduct: Identifiable {
     var imageName: String?
     var imageUrl: String?
     var image: UIImage?
+    var qrCode: String?
 }
 
 struct CatalogueProductRPC: Codable {
@@ -36,6 +37,7 @@ struct CatalogueProductRPC: Codable {
     let stock: Int
     let launch_date: String
     let image_url: String?
+    let qr_code: String?
 }
 
 struct AddProductParams: Encodable {
@@ -117,7 +119,8 @@ final class ProductCatalogueViewModel: ObservableObject {
                     date: dateStr,
                     imageName: nil,
                     imageUrl: rpc.image_url,
-                    image: nil
+                    image: nil,
+                    qrCode: rpc.qr_code
                 )
             }
             

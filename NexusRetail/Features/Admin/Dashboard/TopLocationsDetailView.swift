@@ -9,7 +9,6 @@ import CoreLocation
 struct TopLocationsDetailView: View {
     @Environment(\.dismiss) private var dismiss
     
-    @Binding var timeRange: StoreChartTimeRange
     let countryPolygons: [CountryPolygon]
     let revenueByCountry: [CountryRevenue]
     
@@ -49,11 +48,7 @@ struct TopLocationsDetailView: View {
             
             ScrollView {
                 VStack(spacing: RSMSSpacing.xl) {
-                    
-                    // Time Range Picker
-                    SwipeableCalendarView(selectedRange: $timeRange)
-                        .padding(.horizontal)
-                    
+
                     // Map Area
                     ZStack {
                         Color.white
