@@ -7,6 +7,9 @@ import SwiftUI
 
 struct BOPISView: View {
     @State private var viewModel = BOPISViewModel()
+    @State private var searchText = ""
+    @State private var selectedFilter: BOPISOrderStatus? = nil
+    @State private var orderToPack: BOPISOrder?
     
     var body: some View {
         NavigationStack {
@@ -45,6 +48,11 @@ struct BOPISView: View {
             }
             .navigationTitle("BOPIS")
             .navigationBarTitleDisplayMode(.inline)
+            .sheet(item: $orderToPack) { order in
+                BOPISPackOrderView(order: order) {
+                    viewModel.prepareOrder(id: order.id)
+                }
+            }
         }
     }
     
@@ -78,7 +86,7 @@ struct BOPISView: View {
         withAnimation {
             switch order.status {
             case .pending:
-                viewModel.prepareOrder(id: order.id)
+                orderToPack = order
             case .readyForPickup:
                 viewModel.notifyCustomer(id: order.id)
             case .waitingForCustomer:

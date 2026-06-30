@@ -21,6 +21,7 @@ struct BOPISOrder: Identifiable, Equatable {
     let phoneNumber: String
     let pickupTime: String
     var status: BOPISOrderStatus
+    let items: [BOPISOrderItem]
     let itemCount: Int
     let totalAmount: Double
     var verificationCode: String?
