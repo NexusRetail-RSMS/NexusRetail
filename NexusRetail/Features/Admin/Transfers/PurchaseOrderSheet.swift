@@ -9,10 +9,7 @@ struct PurchaseOrderSheet: View {
     @Environment(AdminTransfersViewModel.self) private var viewModel
     
     @State private var quantityText: String
-    @State private var selectedSupplier: String = "Global Sports Inc"
     @State private var notes: String = ""
-    
-    let mockSuppliers = ["Global Sports Inc", "Nike Distribution Co", "Sports Retail Wholesale", "FastTrack Logistics"]
     
     init(product: AdminTransferProduct, suggestedQuantity: Int, initialRequest: AdminStockRequest?) {
         self.product = product
@@ -40,19 +37,9 @@ struct PurchaseOrderSheet: View {
                         Spacer()
                         Text("\(product.warehouseQuantity)").foregroundColor(.secondary)
                     }
-                    HStack {
-                        Text("Reorder Level")
-                        Spacer()
-                        Text("\(product.reorderLevel)").foregroundColor(.secondary)
-                    }
                 }
                 
                 Section(header: Text("Order Details")) {
-                    Picker("Supplier", selection: $selectedSupplier) {
-                        ForEach(mockSuppliers, id: \.self) { supplier in
-                            Text(supplier).tag(supplier)
-                        }
-                    }
                     
                     HStack {
                         Text("Quantity")
@@ -109,7 +96,7 @@ struct PurchaseOrderSheet: View {
         guard let qty = Int(quantityText), qty > 0 else { return }
         
         withAnimation {
-            viewModel.createPurchaseOrder(for: product, quantity: qty, supplier: selectedSupplier, notes: notes)
+            viewModel.createPurchaseOrder(for: product, quantity: qty, supplier: "Internal Warehouse", notes: notes)
         }
         
         dismiss()
