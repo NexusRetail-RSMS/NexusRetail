@@ -16,7 +16,7 @@ struct AddProductView: View {
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var selectedImage: UIImage?
     let product: CatalogueProduct?
-    let categories = ["Bags", "Watches", "Fragrances", "Clothes", "Jewelry"]
+    let categories = ["Bags", "Watches", "Perfumes", "Clothes", "Jewellery"]
     
     init(product: CatalogueProduct? = nil) {
         self.product = product

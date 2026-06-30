@@ -84,7 +84,7 @@ struct TopLocationsChartView: View {
     private var headerSection: some View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(selectedCountry != nil ? "\(CountryMapRegion.flags[selectedCountry!] ?? "📍") \(selectedCountry!)" : "Top Customer Locations")
+                Text(selectedCountry != nil ? "\(CountryMapRegion.flags[selectedCountry ?? ""] ?? "📍") \(selectedCountry ?? "")" : "Top Customer Locations")
                     .font(RSMSFonts.headline)
                     .foregroundColor(RSMSColors.primaryText)
 
