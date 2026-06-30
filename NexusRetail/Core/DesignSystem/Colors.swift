@@ -68,5 +68,3 @@ enum RSMSColors {
     /// Solid light warm color for chart bars, derived from the brand gradient
     static let chartBar = Color(hex: "A44A33")
 }
-
-
