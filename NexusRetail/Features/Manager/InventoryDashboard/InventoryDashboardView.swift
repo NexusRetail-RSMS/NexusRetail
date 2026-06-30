@@ -34,12 +34,78 @@ struct InventoryDashboardView: View {
                         .padding(.horizontal, RSMSSpacing.md)
                         
                         // Search & Filter
-                        VStack(spacing: RSMSSpacing.md) {
-                            SearchBarView(text: $viewModel.searchText)
-                                .padding(.horizontal, RSMSSpacing.lg)
+                        HStack(spacing: RSMSSpacing.md) {
+                            // Native-like search bar
+                            HStack {
+                                Image(systemName: "magnifyingglass")
+                                    .foregroundColor(.secondary)
+                                
+                                TextField("Search", text: $viewModel.searchText)
+                                    .font(.body)
+                                    .submitLabel(.search)
+                                
+                                if !viewModel.searchText.isEmpty {
+                                    Button(action: { viewModel.searchText = "" }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 8)
+                            .background(Color(UIColor.systemGray6))
+                            .cornerRadius(10)
                             
-                            InventoryFilterBar(selectedFilter: $viewModel.selectedFilter)
+                            // Filter Menu
+                            Menu {
+                                Menu {
+                                    Button {
+                                        viewModel.sortOrder = .none
+                                    } label: {
+                                        HStack {
+                                            Text("None")
+                                            if viewModel.sortOrder == .none {
+                                                Image(systemName: "checkmark")
+                                            }
+                                        }
+                                    }
+                                    Button {
+                                        viewModel.sortOrder = .highestPerformance
+                                    } label: {
+                                        HStack {
+                                            Text("Highest Performance")
+                                            if viewModel.sortOrder == .highestPerformance {
+                                                Image(systemName: "checkmark")
+                                            }
+                                        }
+                                    }
+                                    Button {
+                                        viewModel.sortOrder = .lowestPerformance
+                                    } label: {
+                                        HStack {
+                                            Text("Lowest Performance")
+                                            if viewModel.sortOrder == .lowestPerformance {
+                                                Image(systemName: "checkmark")
+                                            }
+                                        }
+                                    }
+                                } label: {
+                                    Label("Performance", systemImage: "chart.bar.fill")
+                                }
+                                
+                                Button(role: .destructive) {
+                                    viewModel.sortOrder = .none
+                                    viewModel.searchText = ""
+                                } label: {
+                                    Label("Reset Filters", systemImage: "trash")
+                                }
+                            } label: {
+                                Image(systemName: "line.3.horizontal.decrease.circle")
+                                    .font(.title2)
+                                    .foregroundColor(RSMSColors.burgundy)
+                            }
                         }
+                        .padding(.horizontal, RSMSSpacing.md)
                         .padding(.vertical, RSMSSpacing.sm)
                         
 
@@ -86,40 +152,7 @@ struct InventoryDashboardView: View {
     }
 }
 
-// MARK: - Filter Bar
-struct InventoryFilterBar: View {
-    @Binding var selectedFilter: InventoryStatus?
-    
-    private let filters: [InventoryStatus?] = [nil, .healthy, .lowStock, .critical]
-    
-    var body: some View {
-        HStack(spacing: RSMSSpacing.sm) {
-            ForEach(0..<filters.count, id: \.self) { index in
-                let filter = filters[index]
-                let title = filter?.rawValue ?? "All"
-                
-                Button {
-                    selectedFilter = filter
-                } label: {
-                    Text(title)
-                        .font(.system(size: 13, weight: selectedFilter == filter ? .semibold : .regular))
-                        .minimumScaleFactor(0.8)
-                        .lineLimit(1)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, RSMSSpacing.sm)
-                        .background(selectedFilter == filter ? RSMSColors.burgundy : Color.white)
-                        .foregroundColor(selectedFilter == filter ? .white : RSMSColors.primaryText)
-                        .cornerRadius(20)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(selectedFilter == filter ? Color.clear : RSMSColors.inputBorder, lineWidth: 1)
-                        )
-                }
-            }
-        }
-        .padding(.horizontal, RSMSSpacing.lg)
-    }
-}
+
 
 // MARK: - Status Badge
 struct InventoryStatusBadge: View {

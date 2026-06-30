@@ -11,7 +11,7 @@ class InventoryDashboardViewModel {
     var inventoryItems: [InventoryItem] = []
     
     var searchText: String = ""
-    var selectedFilter: InventoryStatus? = nil
+    var sortOrder: InventorySortOrder = .none
     
     var pendingRequestsCount: Int = 0
     var showSuccessToast: Bool = false
@@ -23,14 +23,31 @@ class InventoryDashboardViewModel {
     var filteredItems: [InventoryItem] {
         var result = inventoryItems
         
-        if let filter = selectedFilter {
-            result = result.filter { $0.status == filter }
-        }
+        // We removed selectedFilter chips, so we just use all items initially
         
         if !searchText.isEmpty {
             result = result.filter { 
                 $0.name.localizedCaseInsensitiveContains(searchText) || 
                 $0.sku.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+        
+        // Apply sorting
+        switch sortOrder {
+        case .none:
+            break // Keep original order
+        case .lowestPerformance:
+            result.sort {
+                // Stock / Minimum ratio ascending (Lowest Performance first)
+                let ratio1 = Double($0.currentStock) / Double($0.minimumRequired)
+                let ratio2 = Double($1.currentStock) / Double($1.minimumRequired)
+                return ratio1 < ratio2
+            }
+        case .highestPerformance:
+            result.sort {
+                let ratio1 = Double($0.currentStock) / Double($0.minimumRequired)
+                let ratio2 = Double($1.currentStock) / Double($1.minimumRequired)
+                return ratio1 > ratio2
             }
         }
         

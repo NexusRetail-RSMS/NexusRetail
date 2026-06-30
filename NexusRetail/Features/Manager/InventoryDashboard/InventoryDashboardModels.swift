@@ -14,6 +14,14 @@ enum InventoryStatus: String, CaseIterable, Identifiable {
     var id: String { self.rawValue }
 }
 
+enum InventorySortOrder: String, CaseIterable, Identifiable {
+    case none = "None"
+    case lowestPerformance = "Lowest Performance"
+    case highestPerformance = "Highest Performance"
+    
+    var id: String { self.rawValue }
+}
+
 /// Represents an item in the store's inventory
 struct InventoryItem: Identifiable, Equatable {
     let id: UUID
