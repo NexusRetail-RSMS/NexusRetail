@@ -87,18 +87,53 @@ enum StockHealth: String, Codable {
     }
 }
 
+struct AdminRequestProfile: Codable {
+    let name: String?
+    let imageUrl: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case name
+        case imageUrl = "image_url"
+    }
+}
+
+struct AdminRequestStore: Codable {
+    let name: String
+    let city: String?
+    let manager: AdminRequestProfile?
+    
+    enum CodingKeys: String, CodingKey {
+        case name, city
+        case manager
+    }
+}
+
 struct AdminStockRequest: Identifiable, Codable {
-    let id: String
-    let managerID: UUID
-    let storeID: UUID
-    let productID: UUID
-    let requestedQuantity: Int
-    let warehouseQuantityAtRequest: Int
-    let requestDate: Date
-    let priority: RequestPriority
-    var status: TransferRequestStatus
-    var denialReason: String?
-    var dispatchStatus: String?
+    let id: UUID
+    let skuId: UUID
+    let requestingStoreId: UUID
+    let sourceStoreId: UUID?
+    let quantity: Int
+    let urgency: UrgencyLevel
+    var status: TransferStatus
+    let createdAt: Date
+    let sku: SKUInfo
+    let store: AdminRequestStore?
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case skuId = "sku_id"
+        case requestingStoreId = "requesting_store_id"
+        case sourceStoreId = "source_store_id"
+        case quantity, urgency, status
+        case createdAt = "created_at"
+        case sku
+        case store
+    }
+    
+    var productName: String { sku.name }
+    var storeName: String { store?.name ?? "Unknown Store" }
+    var managerName: String { store?.manager?.name ?? "No Manager" }
 }
 
 enum PurchaseOrderStatus: String, Codable, CaseIterable {

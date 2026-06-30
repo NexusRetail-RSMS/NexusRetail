@@ -25,33 +25,7 @@ struct ManagerTabView: View {
                 Label("Inventory", systemImage: "square.grid.3x3.fill")
             }
             
-            // 2. Requests
-            NavigationStack {
-                ManagerPlaceholderView(
-                    title: "Stock Requests",
-                    message: "Approve or create inventory transfer requests.",
-                    icon: "arrow.left.arrow.right"
-                )
-                .modifier(ManagerToolbarModifier(title: "Requests"))
-            }
-            .tabItem {
-                Label("Requests", systemImage: "shippingbox.fill")
-            }
-            
-            // 3. Pricing
-            NavigationStack {
-                ManagerPlaceholderView(
-                    title: "Pricing & Discounts",
-                    message: "Manage local store pricing promotions and adjustments.",
-                    icon: "tag.fill"
-                )
-                .modifier(ManagerToolbarModifier(title: "Pricing"))
-            }
-            .tabItem {
-                Label("Pricing", systemImage: "percent")
-            }
-            
-            // 4. Events
+            // 2. Events
             NavigationStack {
                 ManagerPlaceholderView(
                     title: "Store Events",
@@ -64,17 +38,17 @@ struct ManagerTabView: View {
                 Label("Events", systemImage: "sparkles")
             }
             
-            // 5. Staff
+            // 3. Employees
             NavigationStack {
                 ManagerPlaceholderView(
-                    title: "Staff Performance",
+                    title: "Employees",
                     message: "Monitor staff check-ins, tasks, and sales metrics.",
                     icon: "person.2.fill"
                 )
-                .modifier(ManagerToolbarModifier(title: "Staff"))
+                .modifier(ManagerToolbarModifier(title: "Employees"))
             }
             .tabItem {
-                Label("Staff", systemImage: "person.2")
+                Label("Employees", systemImage: "person.2")
             }
         }
         .tint(RSMSColors.burgundy)

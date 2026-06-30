@@ -122,16 +122,10 @@ struct WarehouseProductRow: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
-                    HStack(spacing: 12) {
-                        Text("Available: \(product.warehouseQuantity)")
-                            .font(.caption)
-                            .fontWeight(.bold)
-                        
-                        Text("Reorder: \(product.reorderLevel)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.top, 2)
+                    Text("Available: \(product.warehouseQuantity)")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .padding(.top, 2)
                 }
                 
                 Spacer()
