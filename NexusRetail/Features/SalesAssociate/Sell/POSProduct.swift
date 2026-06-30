@@ -86,6 +86,27 @@ class POSProductRepository {
                 ))
             }
             
+            struct SkuRow: Codable {
+                let id: UUID
+                let item_id: Int64?
+            }
+            
+            var skuToItemIdMap: [UUID: Int64] = [:]
+            do {
+                let skuRows: [SkuRow] = try await SupabaseManager.shared.client
+                    .from("sku")
+                    .select("id, item_id")
+                    .execute()
+                    .value
+                for row in skuRows {
+                    if let itemId = row.item_id {
+                        skuToItemIdMap[row.id] = itemId
+                    }
+                }
+            } catch {
+                print("POSProductRepository: Non-fatal error fetching from sku table: \(error)")
+            }
+            
             // Fetch inventory stock from inventory_item table
             var inventoryStock: [UUID: Int] = [:]
             
@@ -113,7 +134,12 @@ class POSProductRepository {
                 }
                 
                 for item in invItems {
-                    inventoryStock[item.sku_id, default: 0] += item.on_hand
+                    if let itemId = skuToItemIdMap[item.sku_id] {
+                        let deterministicId = UUID(uuidString: String(format: "00000000-0000-0000-0000-%012d", itemId)) ?? item.sku_id
+                        inventoryStock[deterministicId, default: 0] += item.on_hand
+                    } else {
+                        inventoryStock[item.sku_id, default: 0] += item.on_hand
+                    }
                 }
             } catch {
                 print("POSProductRepository: Non-fatal error querying inventory_item: \(error)")
