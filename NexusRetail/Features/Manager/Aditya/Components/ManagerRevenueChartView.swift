@@ -18,23 +18,6 @@ struct ManagerRevenueChartView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: RSMSSpacing.lg) {
             
-            // Header Row
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Revenue Trend")
-                        .font(RSMSFonts.headline)
-                        .foregroundColor(RSMSColors.primaryText)
-                    
-                    Text("Total: \(sixMonthTotal)")
-                        .font(RSMSFonts.subheadline)
-                        .foregroundColor(RSMSColors.secondaryText)
-                }
-                
-                Spacer()
-                
-                SegmentControlView(selection: $timeRange)
-            }
-            
             // Chart
             Chart(data) { point in
                 BarMark(

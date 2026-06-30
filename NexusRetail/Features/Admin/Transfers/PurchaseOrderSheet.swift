@@ -67,7 +67,7 @@ struct PurchaseOrderSheet: View {
                         HStack {
                             Text("Linked Request")
                             Spacer()
-                            Text(initialReq.id).foregroundColor(.secondary)
+                            Text(initialReq.id.uuidString).foregroundColor(.secondary)
                         }
                     }
                 }

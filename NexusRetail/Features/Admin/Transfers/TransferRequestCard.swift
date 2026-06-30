@@ -11,19 +11,17 @@ struct TransferRequestCard: View {
     @State private var showingPurchaseOrderSheet = false
     
     var body: some View {
-        let product = viewModel.product(for: request.productID)
-        let manager = viewModel.manager(for: request.managerID)
-        let store = viewModel.store(for: request.storeID)
+        let product = viewModel.product(for: request.skuId)
         
         VStack(alignment: .leading, spacing: 0) {
             // Header: Manager & Store + Badges
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(manager?.name ?? "Unknown Manager")
+                    Text(request.managerName)
                         .font(.system(size: 22, weight: .semibold))
                         .foregroundColor(.primary)
                     
-                    Text(store?.name ?? "Unknown Store")
+                    Text(request.storeName)
                         .font(.system(size: 14))
                         .foregroundColor(.secondary)
                 }
@@ -56,7 +54,7 @@ struct TransferRequestCard: View {
                     Text("Requested")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.secondary)
-                    Text("\(request.requestedQuantity)")
+                    Text("\(request.quantity)")
                         .font(.system(size: 20, weight: .bold))
                 }
                 
@@ -70,14 +68,14 @@ struct TransferRequestCard: View {
                     
                     Text("\(available)")
                         .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(available >= request.requestedQuantity ? .primary : .red)
+                        .foregroundColor(available >= request.quantity ? .primary : .red)
                 }
             }
             .padding(.top, 12)
             
             // Actions
-            if request.status == .pending || request.status == .awaitingRestock {
-                let isSufficient = (product?.warehouseQuantity ?? 0) >= request.requestedQuantity
+            if request.status == .pending {
+                let isSufficient = (product?.warehouseQuantity ?? 0) >= request.quantity
                 
                 HStack(spacing: 10) {
                     if isSufficient {
@@ -121,12 +119,7 @@ struct TransferRequestCard: View {
                 .padding(.top, 16)
             }
             
-            if let reason = request.denialReason {
-                Text("Reason: \(reason)")
-                    .font(.caption)
-                    .foregroundColor(.red)
-                    .padding(.top, 8)
-            }
+            // Note: Removed denial reason for now as the Supabase model does not have it yet.
         }
         .padding(16)
         .background(
@@ -147,16 +140,16 @@ struct TransferRequestCard: View {
         }
         .sheet(isPresented: $showingPurchaseOrderSheet) {
             if let product = product {
-                PurchaseOrderSheet(product: product, suggestedQuantity: request.requestedQuantity * 2, initialRequest: request)
+                PurchaseOrderSheet(product: product, suggestedQuantity: request.quantity * 2, initialRequest: request)
             }
         }
     }
 }
 
 struct StatusBadge: View {
-    let status: TransferRequestStatus
+    let status: TransferStatus
     var body: some View {
-        Text(status.rawValue)
+        Text(status.displayName)
             .font(.system(size: 12, weight: .semibold))
             .foregroundColor(status.color)
             .padding(.horizontal, 8)
@@ -167,12 +160,12 @@ struct StatusBadge: View {
 }
 
 struct PriorityBadge: View {
-    let priority: RequestPriority
+    let priority: UrgencyLevel
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: "flag.fill")
                 .font(.system(size: 10))
-            Text(priority.rawValue)
+            Text(priority.displayName)
         }
         .font(.caption2)
         .fontWeight(.bold)

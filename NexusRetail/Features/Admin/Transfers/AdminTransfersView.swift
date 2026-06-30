@@ -41,6 +41,13 @@ struct AdminTransfersView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
+        .onAppear {
+            if viewModel.requests.isEmpty {
+                Task {
+                    await viewModel.load()
+                }
+            }
+        }
     }
     
     private var headerSection: some View {
@@ -92,7 +99,7 @@ struct HistoryView: View {
                 TabView(selection: $historySelection) {
                     RequestsListView(status: .approved)
                         .tag(0)
-                    RequestsListView(status: .denied)
+                    RequestsListView(status: .unfulfillable)
                         .tag(1)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
@@ -103,19 +110,19 @@ struct HistoryView: View {
 }
 
 struct RequestsListView: View {
-    let status: TransferRequestStatus
+    let status: TransferStatus
     @Environment(AdminTransfersViewModel.self) private var viewModel
     
     var filteredRequests: [AdminStockRequest] {
         viewModel.requests.filter {
             if status == .pending {
-                return $0.status == .pending || $0.status == .awaitingRestock
+                return $0.status == .pending
             } else if status == .approved {
-                return $0.status == .approved || $0.status == .readyForDispatch || $0.status == .dispatched
+                return $0.status == .approved || $0.status == .dispatched || $0.status == .delivered
             } else {
                 return $0.status == status
             }
-        }.sorted { $0.requestDate > $1.requestDate }
+        }.sorted { $0.createdAt > $1.createdAt }
     }
     
     var body: some View {
@@ -126,13 +133,20 @@ struct RequestsListView: View {
                         Image(systemName: "tray")
                             .font(.system(size: 48))
                             .foregroundColor(.gray)
-                        Text("No requests found")
-                            .foregroundColor(.secondary)
+                        if let error = viewModel.errorMessage {
+                            Text(error)
+                                .foregroundColor(.red)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                        } else {
+                            Text("No requests found")
+                                .foregroundColor(.secondary)
+                        }
                     }
                     .padding(.top, 60)
                 } else {
                     ForEach(filteredRequests) { request in
-                        if status == .approved, let delivery = viewModel.deliveries.first(where: { $0.transferRequestID == request.id }) {
+                        if status == .approved, let delivery = viewModel.deliveries.first(where: { $0.transferRequestID == request.id.uuidString }) {
                             NavigationLink {
                                 DeliveryDetailView(delivery: delivery)
                             } label: {
@@ -146,6 +160,9 @@ struct RequestsListView: View {
                 }
             }
             .padding()
+        }
+        .refreshable {
+            await viewModel.load()
         }
         .background(RSMSColors.background)
     }
