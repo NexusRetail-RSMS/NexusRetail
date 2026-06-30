@@ -15,7 +15,6 @@ enum InventoryStatus: String, CaseIterable, Identifiable {
 }
 
 enum InventorySortOrder: String, CaseIterable, Identifiable {
-    case none = "None"
     case criticalFirst = "Critical First"
     case healthyFirst = "Healthy First"
     

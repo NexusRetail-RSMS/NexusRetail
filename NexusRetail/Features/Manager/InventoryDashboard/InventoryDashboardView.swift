@@ -62,16 +62,7 @@ struct InventoryDashboardView: View {
                             // Filter Menu
                             Menu {
                                 Menu {
-                                    Button {
-                                        viewModel.sortOrder = .none
-                                    } label: {
-                                        HStack {
-                                            Text("None")
-                                            if viewModel.sortOrder == .none {
-                                                Image(systemName: "checkmark")
-                                            }
-                                        }
-                                    }
+
                                     Button {
                                         viewModel.sortOrder = .healthyFirst
                                     } label: {
@@ -97,7 +88,7 @@ struct InventoryDashboardView: View {
                                 }
                                 
                                 Button(role: .destructive) {
-                                    viewModel.sortOrder = .none
+                                    viewModel.sortOrder = .criticalFirst
                                     viewModel.searchText = ""
                                 } label: {
                                     Label("Reset Filters", systemImage: "trash")

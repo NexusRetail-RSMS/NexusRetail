@@ -11,7 +11,7 @@ class InventoryDashboardViewModel {
     var inventoryItems: [InventoryItem] = []
     
     var searchText: String = ""
-    var sortOrder: InventorySortOrder = .none
+    var sortOrder: InventorySortOrder = .criticalFirst
     
     var pendingRequestsCount: Int = 0
     var showSuccessToast: Bool = false
@@ -34,8 +34,6 @@ class InventoryDashboardViewModel {
         
         // Apply sorting
         switch sortOrder {
-        case .none:
-            break // Keep original order
         case .criticalFirst:
             result.sort {
                 // Stock / Minimum ratio ascending (Critical first)
