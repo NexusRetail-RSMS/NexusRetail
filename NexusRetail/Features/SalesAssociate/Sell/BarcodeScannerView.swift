@@ -157,12 +157,6 @@ struct BarcodeScannerView: View {
                 scannedProduct = match
                 viewModel.originalUnavailableProduct = match
             }
-            
-            // If in stock, immediately add to cart and go to Cart page!
-            if match.stock > 0 {
-                viewModel.addToCart(product: match)
-                path.append(POSFlowDestination.cart)
-            }
         }
     }
     
@@ -222,18 +216,33 @@ struct BarcodeScannerView: View {
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(RSMSColors.burgundy)
                     
-                    // Out of stock banner
-                    HStack(spacing: 4) {
-                        Image(systemName: "xmark.circle.fill")
-                        Text("Out of Stock")
+                    if product.stock > 0 {
+                        // In stock banner
+                        HStack(spacing: 4) {
+                            Image(systemName: "checkmark.circle.fill")
+                            Text("In Stock (\(product.stock) available)")
+                        }
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(RSMSColors.success)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(RSMSColors.success.opacity(0.08))
+                        .clipShape(Capsule())
+                        .padding(.top, 4)
+                    } else {
+                        // Out of stock banner
+                        HStack(spacing: 4) {
+                            Image(systemName: "xmark.circle.fill")
+                            Text("Out of Stock")
+                        }
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(RSMSColors.error)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(RSMSColors.error.opacity(0.08))
+                        .clipShape(Capsule())
+                        .padding(.top, 4)
                     }
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(RSMSColors.error)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(RSMSColors.error.opacity(0.08))
-                    .clipShape(Capsule())
-                    .padding(.top, 4)
                 }
                 Spacer()
             }
@@ -246,30 +255,81 @@ struct BarcodeScannerView: View {
             )
             .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 3)
             
-            // Suggested Alternatives Checklist
-            VStack(alignment: .leading, spacing: 14) {
-                Text("Suggested Alternatives")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.darkBrown)
-                
-                HStack(spacing: 12) {
-                    checklistBadge("Same Category")
-                    checklistBadge("Similar Price")
-                    checklistBadge("Same Size")
+            if product.stock > 0 {
+                // In Stock Actions
+                VStack(spacing: 14) {
+                    Button {
+                        // Add to cart and begin checkout
+                        viewModel.addToCart(product: product)
+                        path.append(POSFlowDestination.checkout)
+                    } label: {
+                        HStack {
+                            Text("Begin Checkout")
+                                .font(.system(size: 16, weight: .bold))
+                            Spacer()
+                            Image(systemName: "arrow.right")
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .padding(.horizontal, 20)
+                        .background(RSMSColors.burgundy)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .shadow(color: RSMSColors.burgundy.opacity(0.2), radius: 10, x: 0, y: 5)
+                    }
+                    .buttonStyle(.plain)
+                    
+                    Button {
+                        // Add to cart and resume scanning
+                        viewModel.addToCart(product: product)
+                        withAnimation {
+                            scannedProduct = nil
+                            isScanning = true
+                        }
+                    } label: {
+                        HStack {
+                            Image(systemName: "barcode.viewfinder")
+                            Text("Add to Cart & Scan More")
+                                .font(.system(size: 16, weight: .bold))
+                        }
+                        .foregroundColor(RSMSColors.burgundy)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(RSMSColors.burgundy, lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
                 }
-                .padding(.bottom, 6)
-                
-                // Fetch and list alternatives
-                let alternatives = getAlternatives(for: product)
-                if alternatives.isEmpty {
-                    Text("No suitable alternatives found in stock.")
-                        .font(.system(size: 14))
-                        .foregroundColor(RSMSColors.secondaryText)
-                        .padding(.vertical, 10)
-                } else {
-                    VStack(spacing: 12) {
-                        ForEach(alternatives) { alt in
-                            alternativeRow(alt)
+            } else {
+                // Suggested Alternatives Checklist (Out of Stock)
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("Suggested Alternatives")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundColor(RSMSColors.darkBrown)
+                    
+                    HStack(spacing: 12) {
+                        checklistBadge("Same Category")
+                        checklistBadge("Similar Price")
+                        checklistBadge("Same Size")
+                    }
+                    .padding(.bottom, 6)
+                    
+                    // Fetch and list alternatives
+                    let alternatives = getAlternatives(for: product)
+                    if alternatives.isEmpty {
+                        Text("No suitable alternatives found in stock.")
+                            .font(.system(size: 14))
+                            .foregroundColor(RSMSColors.secondaryText)
+                            .padding(.vertical, 10)
+                    } else {
+                        VStack(spacing: 12) {
+                            ForEach(alternatives) { alt in
+                                alternativeRow(alt)
+                            }
                         }
                     }
                 }

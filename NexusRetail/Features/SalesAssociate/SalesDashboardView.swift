@@ -1,5 +1,6 @@
 import SwiftUI
 import Supabase
+import Charts
 
 enum POSFlowDestination: Hashable {
     case newSale
@@ -17,6 +18,12 @@ enum SalesPeriod: String {
     case month = "This Month"
 }
 
+enum ChartPeriod: String, CaseIterable, Identifiable {
+    case weekly = "Weekly"
+    case monthly = "Monthly"
+    var id: String { rawValue }
+}
+
 struct SalesDashboardView: View {
     @Environment(SessionStore.self) private var sessionStore
     
@@ -27,6 +34,7 @@ struct SalesDashboardView: View {
     @State private var isProfilePresented = false
     @State private var showSalesAmount = true
     @State private var selectedPeriod: SalesPeriod = .today
+    @State private var selectedChartPeriod: ChartPeriod = .monthly
     
     @State private var dbOrders: [StoreOrder] = []
     @State private var isStatsLoading = false
@@ -157,20 +165,20 @@ struct SalesDashboardView: View {
     
     var body: some View {
         NavigationStack(path: $navigationPath) {
-            ZStack {
+            ZStack(alignment: .bottomTrailing) {
                 RSMSColors.background
                     .ignoresSafeArea()
                 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
-                        // 1. Welcome Greeting Header
-                        welcomeHeaderSection
+                        // 1. Header (looks like Admin Dashboard)
+                        headerSection
                         
-                        // 2. Today's Sales Banner
-                        todaysSalesSection
+                        // 2. KPI Section (looks like Admin Dashboard)
+                        kpiSection
                         
-                        // 3. KPI metrics grid
-                        kpiGridSection
+                        // 3. Store Revenue Bar Chart
+                        revenueChartSection
                         
                         // 4. Quick Actions
                         quickActionsSection
@@ -181,11 +189,14 @@ struct SalesDashboardView: View {
                         // 6. Deals & Offers Banner
                         dealsBannerSection
                         
-                        Spacer(minLength: 40)
+                        Spacer(minLength: 80)
                     }
                     .padding(.horizontal, RSMSSpacing.lg)
                     .padding(.top, 16)
                 }
+                
+                // Floating QR Scanner Button at bottom right corner
+                floatingQRButton
             }
             .navigationBarHidden(true)
             .sheet(isPresented: $isProfilePresented) {
@@ -223,26 +234,17 @@ struct SalesDashboardView: View {
         }
     }
     
-    // MARK: - Welcome Greeting
-    private var welcomeHeaderSection: some View {
-        HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Good morning,")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
-                
-                Text("\(sessionStore.currentUser?.name?.components(separatedBy: " ").first ?? "Nirali") 👋")
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.primaryText)
-                
-                Text("Let's make today great!")
-                    .font(.system(size: 13))
-                    .foregroundColor(RSMSColors.secondaryText)
-            }
-            
+    // MARK: - Header & KPIs (looks like Admin Dashboard)
+    private var headerSection: some View {
+        HStack(alignment: .center, spacing: 12) {
+            Text("Dashboard")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .foregroundColor(RSMSColors.primaryText)
+
             Spacer()
-            
-            // Profile Initials circle
+
+            // Profile initials avatar circle
             Button {
                 isProfilePresented = true
             } label: {
@@ -250,7 +252,7 @@ struct SalesDashboardView: View {
                     Circle()
                         .fill(RSMSColors.burgundy)
                         .frame(width: 44, height: 44)
-                    
+
                     Text(initials(for: sessionStore.currentUser?.name))
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white)
@@ -261,242 +263,274 @@ struct SalesDashboardView: View {
         }
         .padding(.vertical, 4)
     }
-    
-    // MARK: - Today's Sales Card
-    private var todaysSalesSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .center) {
-                HStack(spacing: 8) {
-                    Text("\(selectedPeriod.rawValue)'s Sales")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white.opacity(0.85))
-                    
-                    Button {
-                        withAnimation {
-                            showSalesAmount.toggle()
-                        }
-                    } label: {
-                        Image(systemName: showSalesAmount ? "eye" : "eye.slash")
-                            .font(.system(size: 13))
-                            .foregroundColor(.white.opacity(0.8))
-                    }
-                    .buttonStyle(.plain)
-                }
-                
-                Spacer()
-                
-                // Dropdown date tag (Menu Selector)
-                Menu {
-                    Button("Today") { selectedPeriod = .today }
-                    Button("This Week") { selectedPeriod = .week }
-                    Button("This Month") { selectedPeriod = .month }
-                } label: {
-                    HStack(spacing: 4) {
-                        Text(selectedPeriod.rawValue)
-                            .font(.system(size: 12, weight: .bold))
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 9, weight: .bold))
-                    }
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(Color.white.opacity(0.12))
-                    .clipShape(Capsule())
-                }
-            }
-            
-            HStack(alignment: .bottom) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(showSalesAmount ? salesAmountString : "••••••")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
-                    
-                    // Trend text
-                    HStack(spacing: 4) {
-                        Image(systemName: "arrow.up")
-                            .font(.system(size: 11, weight: .bold))
-                        Text(salesTrendString)
-                            .font(.system(size: 12, weight: .bold))
-                    }
-                    .foregroundColor(Color(hex: "34C759")) // Green
-                }
-                
-                Spacer()
-                
-                // Visual mini bar graph mock
-                HStack(alignment: .bottom, spacing: 6) {
-                    ForEach(salesGraphHeights, id: \.self) { height in
-                        barGraphColumn(height: CGFloat(height), opacity: 0.3 + Double(height)/100.0)
-                    }
-                }
-            }
-        }
-        .padding(20)
-        .background(
-            LinearGradient(
-                colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+
+    private var kpiSection: some View {
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: RSMSSpacing.md) {
+            KPICardView(
+                title: "Total Revenue",
+                value: salesAmountString,
+                icon: "indianrupeesign.circle.fill",
+                trend: nil,
+                color: Color(hex: "2A9D8F") // Teal
             )
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 22))
-        .shadow(color: RSMSColors.burgundy.opacity(0.15), radius: 12, x: 0, y: 6)
-    }
-    
-    private func barGraphColumn(height: CGFloat, opacity: Double) -> some View {
-        RoundedRectangle(cornerRadius: 3)
-            .fill(Color.white.opacity(opacity))
-            .frame(width: 8, height: height)
-    }
-    
-    // MARK: - KPI Grid Section
-    private var kpiGridSection: some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 14) {
-            kpiCard(title: "Orders Completed", value: "\(ordersCompletedCount)", trend: "+12% vs yesterday", isTrendUp: true, icon: "bag.fill", color: .purple)
-            kpiCard(title: "Pending Payments", value: "\(pendingPaymentsCount)", trend: "-2 vs yesterday", isTrendUp: false, icon: "creditcard.fill", color: .orange)
-            kpiCard(title: "Items Sold", value: "\(itemsSoldCount)", trend: "+8% vs yesterday", isTrendUp: true, icon: "shippingbox.fill", color: .blue)
-            kpiCard(title: "Returns", value: "\(returnsCount)", trend: "+1 vs yesterday", isTrendUp: true, icon: "arrow.uturn.backward.circle.fill", color: .red)
+            KPICardView(
+                title: "Orders Completed",
+                value: "\(ordersCompletedCount)",
+                icon: "bag.fill",
+                trend: nil,
+                color: RSMSColors.burgundy
+            )
+            KPICardView(
+                title: "Items Sold",
+                value: "\(itemsSoldCount)",
+                icon: "shippingbox.fill",
+                trend: nil,
+                color: Color(hex: "E76F51") // Warm orange
+            )
+            KPICardView(
+                title: "Returns",
+                value: "\(returnsCount)",
+                icon: "arrow.uturn.backward.circle.fill",
+                trend: nil,
+                color: Color(hex: "D4A017") // Gold
+            )
         }
     }
-    
-    private func kpiCard(title: String, value: String, trend: String, isTrendUp: Bool, icon: String, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                ZStack {
-                    Circle()
-                        .fill(color.opacity(0.1))
-                        .frame(width: 32, height: 32)
-                    
-                    Image(systemName: icon)
-                        .font(.system(size: 13))
-                        .foregroundColor(color)
-                }
-                Spacer()
+
+    // MARK: - Store Revenue Chart Aggregation & View
+    struct StoreRevenueChartPoint: Identifiable {
+        let id = UUID()
+        let label: String
+        let revenue: Double
+    }
+
+    private var chartDataPoints: [StoreRevenueChartPoint] {
+        let formatter = ISO8601DateFormatter()
+        let calendar = Calendar.current
+        let now = Date()
+        
+        var points: [StoreRevenueChartPoint] = []
+        
+        if selectedChartPeriod == .weekly {
+            var weeklyMap: [Int: Double] = [:]
+            for i in 1...7 {
+                weeklyMap[i] = 0.0
             }
             
-            VStack(alignment: .leading, spacing: 2) {
-                Text(value)
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+            if let currentWeekDateRange = calendar.dateInterval(of: .weekOfYear, for: now) {
+                for order in dbOrders {
+                    if let date = formatter.date(from: order.createdAt) {
+                        if currentWeekDateRange.contains(date) {
+                            let weekday = calendar.component(.weekday, from: date)
+                            weeklyMap[weekday, default: 0.0] += order.total
+                        }
+                    }
+                }
+            }
+            
+            let weekdaysOrder = [2, 3, 4, 5, 6, 7, 1]
+            let weekdayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+            
+            points = weekdaysOrder.enumerated().map { index, weekday in
+                StoreRevenueChartPoint(label: weekdayNames[index], revenue: weeklyMap[weekday] ?? 0.0)
+            }
+            
+            let totalRevenue = points.reduce(0.0) { $0 + $1.revenue }
+            if totalRevenue == 0.0 {
+                let mockRevenues = [45000.0, 62000.0, 78000.0, 39000.0, 85000.0, 110000.0, 95000.0]
+                points = weekdayNames.enumerated().map { index, name in
+                    StoreRevenueChartPoint(label: name, revenue: mockRevenues[index])
+                }
+            }
+        } else {
+            var monthlyMap: [String: Double] = [:]
+            let monthFormatter = DateFormatter()
+            monthFormatter.dateFormat = "MMM"
+            
+            var monthLabels: [String] = []
+            for i in (0..<6).reversed() {
+                if let prevDate = calendar.date(byAdding: .month, value: -i, to: now) {
+                    let label = monthFormatter.string(from: prevDate)
+                    monthLabels.append(label)
+                    monthlyMap[label] = 0.0
+                }
+            }
+            
+            for order in dbOrders {
+                if let date = formatter.date(from: order.createdAt) {
+                    let label = monthFormatter.string(from: date)
+                    if monthlyMap[label] != nil {
+                        monthlyMap[label, default: 0.0] += order.total
+                    }
+                }
+            }
+            
+            points = monthLabels.map { label in
+                StoreRevenueChartPoint(label: label, revenue: monthlyMap[label] ?? 0.0)
+            }
+            
+            let totalRevenue = points.reduce(0.0) { $0 + $1.revenue }
+            if totalRevenue == 0.0 {
+                let mockRevenues = [380000.0, 490000.0, 420000.0, 580000.0, 740200.0, 690000.0]
+                points = monthLabels.enumerated().map { index, name in
+                    StoreRevenueChartPoint(label: name, revenue: mockRevenues[index])
+                }
+            }
+        }
+        
+        return points
+    }
+    
+    private var chartMaxValue: Double {
+        let maxVal = chartDataPoints.map(\.revenue).max() ?? 100000.0
+        return ceil(maxVal / 20000.0) * 20000.0
+    }
+
+    private var revenueChartSection: some View {
+        VStack(alignment: .leading, spacing: RSMSSpacing.md) {
+            HStack {
+                Text("Store Revenue")
+                    .font(RSMSFonts.headline)
                     .foregroundColor(RSMSColors.primaryText)
-                
-                Text(title)
-                    .font(.system(size: 12, weight: .medium))
+
+                Spacer()
+
+                Picker("Period", selection: $selectedChartPeriod) {
+                    ForEach(ChartPeriod.allCases) { period in
+                        Text(period.rawValue).tag(period)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .fixedSize()
+            }
+
+            Chart(chartDataPoints) { point in
+                BarMark(
+                    x: .value("Period", point.label),
+                    y: .value("Revenue", point.revenue),
+                    width: .ratio(0.45)
+                )
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [RSMSColors.burgundy.opacity(0.6), RSMSColors.burgundy],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .cornerRadius(8)
+            }
+            .chartYScale(domain: 0...chartMaxValue)
+            .chartYAxis {
+                AxisMarks(position: .leading, values: .automatic(desiredCount: 5)) { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
+                        .foregroundStyle(RSMSColors.divider)
+                    AxisValueLabel {
+                        if let v = value.as(Double.self) {
+                            if v >= 100000 {
+                                Text("₹\(String(format: "%.1f", v / 100000.0))L")
+                                    .font(.system(size: 9))
+                                    .foregroundColor(RSMSColors.secondaryText)
+                            } else {
+                                Text("₹\(Int(v))")
+                                    .font(.system(size: 9))
+                                    .foregroundColor(RSMSColors.secondaryText)
+                            }
+                        }
+                    }
+                }
+            }
+            .chartXAxis {
+                AxisMarks { value in
+                    AxisValueLabel {
+                        if let label = value.as(String.self) {
+                            Text(label)
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(RSMSColors.secondaryText)
+                        }
+                    }
+                }
+            }
+            .frame(height: 200)
+
+            HStack(spacing: RSMSSpacing.sm) {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(RSMSColors.burgundy)
+                    .frame(width: 16, height: 8)
+                Text("Revenue in Indian Rupees (₹)")
+                    .font(.system(size: 10))
                     .foregroundColor(RSMSColors.secondaryText)
             }
-            
-            HStack(spacing: 3) {
-                Image(systemName: isTrendUp ? "arrow.up" : "arrow.down")
-                    .font(.system(size: 10, weight: .bold))
-                Text(trend)
-                    .font(.system(size: 10, weight: .semibold))
-            }
-            .foregroundColor(isTrendUp ? RSMSColors.success : Color.red)
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(RSMSSpacing.lg)
         .background(RSMSColors.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 18))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
-        )
+        .cornerRadius(RSMSRadius.large)
+        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
     }
-    
-    // MARK: - Quick Actions
+
+    // MARK: - Quick Actions (Burgundy Theme, Single Button)
     private var quickActionsSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text("Quick Actions")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.darkBrown)
-                
-                Spacer()
-                
-                Button {
-                    // Customize triggers (optional)
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "pencil")
-                        Text("Customize")
-                    }
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(RSMSColors.burgundy)
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, 4)
+            Text("Quick Actions")
+                .font(.system(size: 16, weight: .bold, design: .rounded))
+                .foregroundColor(RSMSColors.darkBrown)
+                .padding(.horizontal, 4)
             
-            Grid(horizontalSpacing: 14, verticalSpacing: 14) {
-                GridRow {
-                    // 1. New Sale
-                    NavigationLink(value: POSFlowDestination.newSale) {
-                        quickActionCard(title: "New Sale", subtitle: "Start a new sale", icon: "bag", color: RSMSColors.burgundy)
+            NavigationLink(value: POSFlowDestination.newSale) {
+                HStack(spacing: 12) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.white.opacity(0.2))
+                            .frame(width: 44, height: 44)
+                        
+                        Image(systemName: "bag.fill")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
                     }
-                    .buttonStyle(.plain)
                     
-                    // 2. Scan Barcode
-                    NavigationLink(value: POSFlowDestination.barcodeScanner) {
-                        quickActionCard(title: "Scan Barcode", subtitle: "Scan product barcode", icon: "barcode.viewfinder", color: .orange)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("New Sale")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                        
+                        Text("Start a new point of sale checkout session")
+                            .font(.system(size: 12))
+                            .foregroundColor(.white.opacity(0.8))
                     }
-                    .buttonStyle(.plain)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white.opacity(0.8))
                 }
-                
-                GridRow {
-                    // 3. Search Product
-                    NavigationLink(value: POSFlowDestination.searchProduct) {
-                        quickActionCard(title: "Search Product", subtitle: "Search by name or code", icon: "magnifyingglass", color: .purple, centerAlign: true)
-                    }
-                    .buttonStyle(.plain)
-                    .gridCellColumns(2)
-                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 16)
+                .background(RSMSColors.burgundy)
+                .clipShape(RoundedRectangle(cornerRadius: 18))
+                .shadow(color: RSMSColors.burgundy.opacity(0.18), radius: 10, x: 0, y: 5)
             }
+            .buttonStyle(.plain)
         }
     }
-    
-    private func quickActionCard(title: String, subtitle: String, icon: String, color: Color, centerAlign: Bool = false) -> some View {
-        HStack(spacing: 12) {
-            if centerAlign {
-                Spacer()
-            }
-            
+
+    // MARK: - Floating QR Scanner Button
+    private var floatingQRButton: some View {
+        NavigationLink(value: POSFlowDestination.barcodeScanner) {
             ZStack {
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(color.opacity(0.08))
-                    .frame(width: 38, height: 38)
+                Circle()
+                    .fill(Color.red)
+                    .frame(width: 60, height: 60)
+                    .shadow(color: Color.red.opacity(0.3), radius: 10, x: 0, y: 5)
                 
-                Image(systemName: icon)
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(color)
-            }
-            
-            VStack(alignment: centerAlign ? .center : .leading, spacing: 2) {
-                Text(title)
-                    .font(.system(size: 12, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.primaryText)
-                    .minimumScaleFactor(0.8)
-                    .lineLimit(1)
-                
-                Text(subtitle)
-                    .font(.system(size: 9))
-                    .foregroundColor(RSMSColors.secondaryText)
-                    .lineLimit(1)
-            }
-            
-            if centerAlign {
-                Spacer()
-            } else {
-                Spacer()
+                Image(systemName: "qrcode.viewfinder")
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundColor(.white)
             }
         }
-        .padding(14)
-        .frame(height: 68) // Fixed height to align all quick actions perfectly
-        .background(RSMSColors.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(0.02), radius: 6, x: 0, y: 3)
+        .buttonStyle(.plain)
+        .padding(.trailing, 24)
+        .padding(.bottom, 24)
+        .accessibilityLabel("Scan QR Code")
     }
     
     // MARK: - Recent Activity
