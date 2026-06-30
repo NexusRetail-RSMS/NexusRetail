@@ -38,6 +38,11 @@ struct SalesTabView: View {
                 Label("Clients", systemImage: "person.3.fill")
             }
             
+            BOPISView()
+                .tabItem {
+                    Label("BOPIS", systemImage: "bag.fill")
+                }
+            
             NavigationStack {
                 AppointmentsView()
             }
