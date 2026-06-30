@@ -10,6 +10,8 @@ struct BOPISView: View {
     @State private var searchText = ""
     @State private var selectedFilter: BOPISOrderStatus? = nil
     @State private var orderToPack: BOPISOrder?
+    @State private var showNotifiedAlert = false
+    @State private var notifiedCustomerName = ""
     
     var body: some View {
         NavigationStack {
@@ -50,8 +52,15 @@ struct BOPISView: View {
             .navigationBarTitleDisplayMode(.inline)
             .sheet(item: $orderToPack) { order in
                 BOPISPackOrderView(order: order) {
-                    viewModel.prepareOrder(id: order.id)
+                    viewModel.packAndNotify(id: order.id)
+                    notifiedCustomerName = order.customerName
+                    showNotifiedAlert = true
                 }
+            }
+            .alert("Customer Notified", isPresented: $showNotifiedAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("\(notifiedCustomerName) has been sent a verification code for pickup.")
             }
         }
     }
@@ -87,8 +96,6 @@ struct BOPISView: View {
             switch order.status {
             case .pending:
                 orderToPack = order
-            case .readyForPickup:
-                viewModel.notifyCustomer(id: order.id)
             case .waitingForCustomer:
                 viewModel.markCollected(id: order.id)
             case .collected:

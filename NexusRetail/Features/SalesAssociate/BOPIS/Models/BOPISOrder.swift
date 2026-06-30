@@ -7,7 +7,6 @@ import Foundation
 
 enum BOPISOrderStatus: String, CaseIterable, Identifiable {
     case pending = "Pending"
-    case readyForPickup = "Ready for Pickup"
     case waitingForCustomer = "Waiting for Customer"
     case collected = "Collected"
     

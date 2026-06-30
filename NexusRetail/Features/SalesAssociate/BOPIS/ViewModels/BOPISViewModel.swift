@@ -42,13 +42,7 @@ class BOPISViewModel {
     
     // MARK: - State Transitions
     
-    func prepareOrder(id: UUID) {
-        if let index = orders.firstIndex(where: { $0.id == id }) {
-            orders[index].status = .readyForPickup
-        }
-    }
-    
-    func notifyCustomer(id: UUID) {
+    func packAndNotify(id: UUID) {
         if let index = orders.firstIndex(where: { $0.id == id }) {
             let order = orders[index]
             let initials = order.customerName.components(separatedBy: " ")
@@ -106,14 +100,14 @@ class BOPISViewModel {
                 customerName: "Sarah Connor",
                 phoneNumber: "+1 (555) 345-6789",
                 pickupTime: "Today, 1:15 PM",
-                status: .readyForPickup,
+                status: .waitingForCustomer,
                 items: [
                     BOPISOrderItem(id: UUID(), name: "Nocturne Velvet Fragrances", sku: "BAG-NOC-055", quantity: 2, price: 640.00, qrCode: "nexus://product/BAG-NOC-055"),
                     BOPISOrderItem(id: UUID(), name: "Ivory Pearl Earrings", sku: "JWL-IPE-201", quantity: 2, price: 580.00, qrCode: "nexus://product/JWL-IPE-201")
                 ],
                 itemCount: 4,
                 totalAmount: 4890.00,
-                verificationCode: nil
+                verificationCode: "SC-9281"
             ),
             BOPISOrder(
                 id: UUID(),

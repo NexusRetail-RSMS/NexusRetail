@@ -12,8 +12,6 @@ struct PickupStatusBadge: View {
         switch status {
         case .pending:
             return RSMSColors.warning
-        case .readyForPickup:
-            return RSMSColors.success
         case .waitingForCustomer:
             return Color.blue // Or another highlight color
         case .collected:
