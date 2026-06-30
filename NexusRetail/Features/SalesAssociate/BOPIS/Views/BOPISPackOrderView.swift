@@ -112,7 +112,7 @@ struct BOPISPackOrderView: View {
 
 // Wrapper for Sheet
 private struct QRCodeWrapper: Identifiable {
-    let id = UUID()
+    var id: String { qrCode }
     let qrCode: String
 }
 
