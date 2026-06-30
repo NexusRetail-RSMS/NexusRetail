@@ -23,41 +23,42 @@ struct BOPISCardView: View {
             Divider()
                 .background(RSMSColors.divider)
             
-            // Customer Details
-            VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
-                Label(order.customerName, systemImage: "person.fill")
-                    .font(RSMSFonts.body)
-                    .foregroundColor(RSMSColors.primaryText)
-                
-                Label(order.phoneNumber, systemImage: "phone.fill")
-                    .font(RSMSFonts.subheadline)
-                    .foregroundColor(RSMSColors.secondaryText)
-                
-                Label(order.pickupTime, systemImage: "clock.fill")
-                    .font(RSMSFonts.subheadline)
-                    .foregroundColor(RSMSColors.secondaryText)
-            }
-            
-            // Order Summary
-            HStack {
-                VStack(alignment: .leading) {
-                    Text("Items")
-                        .font(RSMSFonts.caption)
-                        .foregroundColor(RSMSColors.secondaryText)
-                    Text("\(order.itemCount)")
-                        .font(RSMSFonts.headline)
+            // Customer Details & Order Summary
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
+                    Label(order.customerName, systemImage: "person.fill")
+                        .font(RSMSFonts.body)
                         .foregroundColor(RSMSColors.primaryText)
+                    
+                    Label(order.phoneNumber, systemImage: "phone.fill")
+                        .font(RSMSFonts.subheadline)
+                        .foregroundColor(RSMSColors.secondaryText)
+                    
+                    Label(order.pickupTime, systemImage: "clock.fill")
+                        .font(RSMSFonts.subheadline)
+                        .foregroundColor(RSMSColors.secondaryText)
                 }
                 
                 Spacer()
                 
-                VStack(alignment: .trailing) {
-                    Text("Total")
-                        .font(RSMSFonts.caption)
-                        .foregroundColor(RSMSColors.secondaryText)
-                    Text(String(format: "$%.2f", order.totalAmount))
-                        .font(RSMSFonts.headline)
-                        .foregroundColor(RSMSColors.primaryText)
+                VStack(alignment: .trailing, spacing: RSMSSpacing.sm) {
+                    VStack(alignment: .trailing, spacing: 0) {
+                        Text("Items")
+                            .font(RSMSFonts.caption)
+                            .foregroundColor(RSMSColors.secondaryText)
+                        Text("\(order.itemCount)")
+                            .font(RSMSFonts.headline)
+                            .foregroundColor(RSMSColors.primaryText)
+                    }
+                    
+                    VStack(alignment: .trailing, spacing: 0) {
+                        Text("Total")
+                            .font(RSMSFonts.caption)
+                            .foregroundColor(RSMSColors.secondaryText)
+                        Text(String(format: "$%.2f", order.totalAmount))
+                            .font(RSMSFonts.headline)
+                            .foregroundColor(RSMSColors.primaryText)
+                    }
                 }
             }
             
