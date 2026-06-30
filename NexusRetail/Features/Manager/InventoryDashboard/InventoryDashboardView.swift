@@ -42,45 +42,8 @@ struct InventoryDashboardView: View {
                             InventoryFilterBar(selectedFilter: $viewModel.selectedFilter)
                         }
                         .padding(.vertical, RSMSSpacing.sm)
-                        .background(Color.white)
-                        .shadow(color: Color.black.opacity(0.05), radius: 4, y: 2)
                         
-                        // Low Stock Alert Banner
-                        if !viewModel.lowStockItems.isEmpty {
-                            Button {
-                                withAnimation {
-                                    if let firstId = viewModel.lowStockItems.first?.id {
-                                        proxy.scrollTo(firstId, anchor: .top)
-                                    }
-                                }
-                            } label: {
-                                HStack {
-                                    Image(systemName: "exclamationmark.triangle.fill")
-                                        .foregroundColor(RSMSColors.warning)
-                                        .font(.title3)
-                                    
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text("Low Stock Alert")
-                                            .font(RSMSFonts.headline)
-                                            .foregroundColor(RSMSColors.primaryText)
-                                        Text("\(viewModel.lowStockItems.count) Products Require Reordering")
-                                            .font(RSMSFonts.caption)
-                                            .foregroundColor(RSMSColors.secondaryText)
-                                    }
-                                    
-                                    Spacer()
-                                    
-                                    Image(systemName: "chevron.right")
-                                        .foregroundColor(RSMSColors.secondaryText)
-                                }
-                                .padding(16)
-                                .background(Color.white)
-                                .cornerRadius(RSMSRadius.medium)
-                                .shadow(color: Color.black.opacity(0.05), radius: 8, y: 4)
-                            }
-                            .buttonStyle(.plain)
-                            .padding(.horizontal, RSMSSpacing.md)
-                        }
+
                         
                         // Inventory List
                         VStack(alignment: .leading, spacing: 12) {
@@ -155,32 +118,31 @@ struct InventoryFilterBar: View {
     private let filters: [InventoryStatus?] = [nil, .healthy, .lowStock, .critical]
     
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: RSMSSpacing.sm) {
-                ForEach(0..<filters.count, id: \.self) { index in
-                    let filter = filters[index]
-                    let title = filter?.rawValue ?? "All"
-                    
-                    Button {
-                        selectedFilter = filter
-                    } label: {
-                        Text(title)
-                            .font(RSMSFonts.subheadline)
-                            .fontWeight(selectedFilter == filter ? .semibold : .regular)
-                            .padding(.horizontal, RSMSSpacing.md)
-                            .padding(.vertical, RSMSSpacing.sm)
-                            .background(selectedFilter == filter ? RSMSColors.burgundy : Color.white)
-                            .foregroundColor(selectedFilter == filter ? .white : RSMSColors.primaryText)
-                            .cornerRadius(20)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(selectedFilter == filter ? Color.clear : RSMSColors.inputBorder, lineWidth: 1)
-                            )
-                    }
+        HStack(spacing: RSMSSpacing.sm) {
+            ForEach(0..<filters.count, id: \.self) { index in
+                let filter = filters[index]
+                let title = filter?.rawValue ?? "All"
+                
+                Button {
+                    selectedFilter = filter
+                } label: {
+                    Text(title)
+                        .font(.system(size: 13, weight: selectedFilter == filter ? .semibold : .regular))
+                        .minimumScaleFactor(0.8)
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, RSMSSpacing.sm)
+                        .background(selectedFilter == filter ? RSMSColors.burgundy : Color.white)
+                        .foregroundColor(selectedFilter == filter ? .white : RSMSColors.primaryText)
+                        .cornerRadius(20)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(selectedFilter == filter ? Color.clear : RSMSColors.inputBorder, lineWidth: 1)
+                        )
                 }
             }
-            .padding(.horizontal, RSMSSpacing.lg)
         }
+        .padding(.horizontal, RSMSSpacing.lg)
     }
 }
 
