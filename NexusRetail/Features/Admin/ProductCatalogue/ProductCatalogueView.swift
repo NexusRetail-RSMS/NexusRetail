@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreImage.CIFilterBuiltins
 
 struct ProductCatalogueView: View {
     @StateObject private var viewModel = ProductCatalogueViewModel()
@@ -10,14 +11,7 @@ struct ProductCatalogueView: View {
         ZStack(alignment: .top) {
             RSMSColors.background.ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                headerSection
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
-                    .padding(.bottom, 16)
-
-                productList
-            }
+            productList
         }
         .navigationBarHidden(true)
         .sheet(item: $editingProduct) { product in
@@ -50,66 +44,72 @@ struct ProductCatalogueView: View {
     }
 
     private var headerSection: some View {
-        HStack {
-            Text("Products")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(RSMSColors.primaryText)
-            
-            Spacer()
-            
-            Button {
-                showAddProduct = true
-            } label: {
-                Image(systemName: "plus")
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundColor(RSMSColors.burgundy)
-                    .frame(width: 44, height: 44)
-                    .background(RSMSColors.burgundy.opacity(0.1))
-                    .clipShape(Circle())
+        VStack(spacing: RSMSSpacing.md) {
+            HStack {
+                Text("Products")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .foregroundColor(RSMSColors.primaryText)
+
+                Spacer()
+
+                Button {
+                    showAddProduct = true
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundColor(RSMSColors.burgundy)
+                        .frame(width: 44, height: 44)
+                        .background(RSMSColors.burgundy.opacity(0.1))
+                        .clipShape(Circle())
+                }
             }
+
+            searchBarRow
         }
     }
 
     private var productList: some View {
-        List {
-            searchBarRow
-                .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 12, trailing: 20))
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
+        ScrollView {
+            LazyVStack(spacing: 0) {
+                headerSection
+                    .padding(.horizontal, RSMSSpacing.lg)
+                    .padding(.top, 16)
+                    .padding(.bottom, 8)
 
-            if viewModel.searchText.isEmpty {
-                trendingSection
-            }
+                if viewModel.searchText.isEmpty {
+                    trendingSection
+                }
 
-            productsHeader
-                .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 4, trailing: 20))
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
+                productsHeader
+                    .padding(.horizontal, RSMSSpacing.lg)
+                    .padding(.top, 8)
+                    .padding(.bottom, 10)
 
-            if viewModel.filteredProducts.isEmpty {
-                ContentUnavailableView(
-                    "No Products Found",
-                    systemImage: "shippingbox",
-                    description: Text("Try a different name, SKU, or category.")
-                )
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-            } else {
-                ForEach(viewModel.filteredProducts) { product in
-                    ProductRowCard(
-                        product: product,
-                        viewModel: viewModel,
-                        onEdit: { editingProduct = product },
-                        onDelete: { productToDelete = product }
+                if viewModel.filteredProducts.isEmpty {
+                    ContentUnavailableView(
+                        "No Products Found",
+                        systemImage: "shippingbox",
+                        description: Text("Try a different name, SKU, or category.")
                     )
-                    .listRowInsets(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 20))
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
+                    .padding(.top, 40)
+                } else {
+                    LazyVStack(spacing: RSMSSpacing.md) {
+                        ForEach(viewModel.filteredProducts) { product in
+                            ProductRowCard(
+                                product: product,
+                                viewModel: viewModel,
+                                onEdit: { editingProduct = product },
+                                onDelete: { productToDelete = product }
+                            )
+                        }
+                    }
+                    .padding(.horizontal, RSMSSpacing.lg)
                 }
             }
+            .padding(.top, RSMSSpacing.sm)
+            .padding(.bottom, 20)
         }
-        .listStyle(.plain)
         .scrollIndicators(.hidden)
         .background(RSMSColors.background)
         .animation(.easeInOut(duration: 0.2), value: viewModel.searchText)
@@ -117,37 +117,16 @@ struct ProductCatalogueView: View {
     }
 
     private var searchBarRow: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "magnifyingglass")
-                .foregroundStyle(RSMSColors.burgundy)
-                .font(.system(size: 15, weight: .medium))
-            TextField("Search products, SKU…", text: $viewModel.searchText)
-                .foregroundStyle(RSMSColors.darkBrown)
-            if !viewModel.searchText.isEmpty {
-                Button { viewModel.searchText = "" } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(RSMSColors.secondaryText)
-                }
-                .transition(.scale.combined(with: .opacity))
-            }
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .background(RSMSColors.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(RSMSColors.cardBorder, lineWidth: 1)
-        )
+        NexusSearchBar(text: $viewModel.searchText, placeholder: "Search products, SKU…")
     }
+
 
     @ViewBuilder
     private var trendingSection: some View {
         if viewModel.trendingProducts.isEmpty {
             EmptyView()
         } else {
-            Section {
-                VStack(spacing: 10) {
+            VStack(spacing: 10) {
                 GeometryReader { geo in
                     TabView(selection: $viewModel.currentTrendingIndex) {
                         ForEach(Array(viewModel.trendingProducts.enumerated()), id: \.element.id) { index, product in
@@ -176,10 +155,8 @@ struct ProductCatalogueView: View {
                     }
                 }
             }
-            .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 12, trailing: 20))
-            .listRowBackground(Color.clear)
-            .listRowSeparator(.hidden)
-        }
+            .padding(.horizontal, RSMSSpacing.lg)
+            .padding(.bottom, 12)
         }
     }
 
@@ -297,107 +274,165 @@ private struct ProductRowCard: View {
         return RSMSColors.success
     }
 
-    var body: some View {
-        HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(RSMSColors.burgundy.opacity(0.06))
+        @State private var showQR = false
+        
+        var body: some View {
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(RSMSColors.burgundy.opacity(0.06))
 
-                if let image = product.image {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 72, height: 72)
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                } else if let imageUrlStr = product.imageUrl, let url = URL(string: imageUrlStr) {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .empty:
-                            ProgressView()
-                                .frame(width: 72, height: 72)
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 72, height: 72)
-                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        case .failure:
-                            Image(systemName: "photo")
-                                .font(.system(size: 24))
-                                .foregroundStyle(RSMSColors.secondaryText.opacity(0.4))
-                        @unknown default:
-                            EmptyView()
+                    if let image = product.image {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 72, height: 72)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    } else if let imageUrlStr = product.imageUrl, let url = URL(string: imageUrlStr) {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case .empty:
+                                ProgressView()
+                                    .frame(width: 72, height: 72)
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 72, height: 72)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            case .failure:
+                                Image(systemName: "photo")
+                                    .font(.system(size: 24))
+                                    .foregroundStyle(RSMSColors.secondaryText.opacity(0.4))
+                            @unknown default:
+                                EmptyView()
+                            }
+                        }
+                    } else if let imageName = product.imageName {
+                        Image(imageName)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 72, height: 72)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    } else {
+                        Image(systemName: "photo")
+                            .font(.system(size: 24))
+                            .foregroundStyle(RSMSColors.secondaryText.opacity(0.4))
+                    }
+                }
+                .frame(width: 72, height: 72)
+
+                VStack(alignment: .leading, spacing: 3) {
+
+                    HStack(alignment: .center) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(product.name)
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(RSMSColors.darkBrown)
+                                .lineLimit(1)
+
+                            Text(product.category)
+                                .font(.system(size: 12))
+                                .foregroundStyle(RSMSColors.secondaryText)
+                        }
+
+                        Spacer()
+
+                        VStack(alignment: .trailing, spacing: 8) {
+                            // Price on the right
+                            Text(viewModel.formattedPrice(for: product))
+                                .font(.system(size: 17, weight: .bold, design: .rounded))
+                                .foregroundStyle(RSMSColors.darkBrown)
+                            
+                            if product.qrCode != nil {
+                                Button {
+                                    showQR = true
+                                } label: {
+                                    Image(systemName: "qrcode")
+                                        .font(.system(size: 16))
+                                        .foregroundColor(RSMSColors.burgundy)
+                                }
+                            }
                         }
                     }
-                } else if let imageName = product.imageName {
-                    Image(imageName)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 72, height: 72)
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                } else {
-                    Image(systemName: "photo")
-                        .font(.system(size: 24))
-                        .foregroundStyle(RSMSColors.secondaryText.opacity(0.4))
                 }
+                .frame(maxWidth: .infinity)
             }
-            .frame(width: 72, height: 72)
-
-            VStack(alignment: .leading, spacing: 3) {
-
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(product.name)
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(RSMSColors.darkBrown)
-                            .lineLimit(1)
-
-                        Text(product.category)
-                            .font(.system(size: 12))
-                            .foregroundStyle(RSMSColors.secondaryText)
-                    }
-
-                    Spacer()
-
-                    // Stock badge
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Text("\(product.stock)")
-                            .font(.system(size: 15, weight: .bold, design: .rounded))
-                            .foregroundStyle(stockColor)
-
-                        Text("in stock")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(RSMSColors.secondaryText)
+            .padding(14)
+            .frame(height: 100)
+            .background(RSMSColors.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(RSMSColors.cardBorder, lineWidth: 1)
+            )
+            .shadow(color: RSMSColors.darkBrown.opacity(0.04), radius: 6, x: 0, y: 2)
+            .contextMenu {
+                if product.qrCode != nil {
+                    Button {
+                        showQR = true
+                    } label: {
+                        Label("Show QR Code", systemImage: "qrcode")
                     }
                 }
+                
+                Button {
+                    onEdit()
+                } label: {
+                    Label {
+                        Text("Edit")
+                    } icon: {
+                        Image(systemName: "square.and.pencil")
+                            .renderingMode(.template)
+                            .foregroundColor(.black)
+                    }
+                }
+                .tint(.black)
 
-                Text(viewModel.formattedPrice(for: product))
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundStyle(RSMSColors.darkBrown)
-                    .padding(.top, 2)
+                Button(role: .destructive) {
+                    onDelete()
+                } label: {
+                    Label {
+                        Text("Delete")
+                    } icon: {
+                        Image(systemName: "trash")
+                            .renderingMode(.template)
+                            .foregroundColor(.red)
+                    }
+                }
+                .tint(.red)
             }
-            .frame(maxWidth: .infinity)
-        }
-        .padding(14)
-        .frame(height: 100)
-        .background(RSMSColors.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(RSMSColors.cardBorder, lineWidth: 1)
-        )
-        .shadow(color: RSMSColors.darkBrown.opacity(0.04), radius: 6, x: 0, y: 2)
-        .contextMenu {
-            Button {
-                onEdit()
-            } label: {
-                Label("Edit", systemImage: "square.and.pencil")
-            }
-
-            Button(role: .destructive) {
-                onDelete()
-            } label: {
-                Label("Delete", systemImage: "trash")
+            .tint(.black)
+            .sheet(isPresented: $showQR) {
+                if let qr = product.qrCode {
+                    NavigationStack {
+                        VStack(spacing: 24) {
+                            Text(product.name)
+                                .font(.headline)
+                            
+                            QRCodeView(qrCodeString: qr)
+                                .frame(width: 250, height: 250)
+                                .padding()
+                                .background(Color.white)
+                                .cornerRadius(16)
+                                .shadow(radius: 4)
+                            
+                            Text("SKU: \(product.sku)")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding()
+                        .navigationTitle("Product QR")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .topBarTrailing) {
+                                Button("Done") {
+                                    showQR = false
+                                }
+                            }
+                        }
+                    }
+                    .presentationDetents([.medium])
             }
         }
     }
@@ -406,5 +441,36 @@ private struct ProductRowCard: View {
 #Preview {
     NavigationStack {
         ProductCatalogueView()
+    }
+}
+
+// MARK: - QR Code Utility
+
+struct QRCodeView: View {
+    let qrCodeString: String
+    
+    var body: some View {
+        Image(uiImage: generateQRCode(from: qrCodeString))
+            .interpolation(.none)
+            .resizable()
+            .scaledToFit()
+    }
+    
+    private func generateQRCode(from string: String) -> UIImage {
+        let context = CIContext()
+        let filter = CIFilter.qrCodeGenerator()
+        
+        filter.message = Data(string.utf8)
+        
+        if let outputImage = filter.outputImage {
+            let transform = CGAffineTransform(scaleX: 10, y: 10)
+            let scaledImage = outputImage.transformed(by: transform)
+            
+            if let cgimg = context.createCGImage(scaledImage, from: scaledImage.extent) {
+                return UIImage(cgImage: cgimg)
+            }
+        }
+        
+        return UIImage(systemName: "xmark.circle") ?? UIImage()
     }
 }

@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import Supabase
 
 enum POSPaymentMethod: String, CaseIterable, Identifiable {
     case razorpay = "Razorpay"
@@ -59,6 +60,62 @@ class SellViewModel {
         MockPOSOrder(id: "#420", client: "Kabir Mehta", amount: 2199, status: "Pending Payment", time: "10:15 AM", date: "Today"),
         MockPOSOrder(id: "#419", client: "Mira Kapoor", amount: 1999, status: "Alternative Suggested", time: "Yesterday", date: "Yesterday")
     ]
+    
+    struct CheckoutParams: Encodable {
+        let p_store_id: UUID
+        let p_associate_id: UUID
+        let p_items: [[String: AnyCodable]]
+        let p_total: Double
+    }
+    
+    struct AnyCodable: Encodable {
+        let value: Any
+        
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.singleValueContainer()
+            switch value {
+            case let intVal as Int: try container.encode(intVal)
+            case let doubleVal as Double: try container.encode(doubleVal)
+            case let stringVal as String: try container.encode(stringVal)
+            case let uuidVal as UUID: try container.encode(uuidVal)
+            default:
+                throw EncodingError.invalidValue(value, EncodingError.Context(codingPath: encoder.codingPath, debugDescription: "Invalid AnyCodable value"))
+            }
+        }
+    }
+    
+    func processCheckout(storeID: UUID?, associateID: UUID?) async throws {
+        guard let storeID = storeID, let associateID = associateID else { return }
+        
+        // Group items by ID to handle quantities
+        var itemCounts: [UUID: (POSProduct, Int)] = [:]
+        for item in cartItems {
+            if let existing = itemCounts[item.id] {
+                itemCounts[item.id] = (existing.0, existing.1 + 1)
+            } else {
+                itemCounts[item.id] = (item, 1)
+            }
+        }
+        
+        let pItems: [[String: AnyCodable]] = itemCounts.values.map { (product, quantity) in
+            return [
+                "sku_id": AnyCodable(value: product.id),
+                "quantity": AnyCodable(value: quantity),
+                "price": AnyCodable(value: product.price)
+            ]
+        }
+        
+        let params = CheckoutParams(
+            p_store_id: storeID,
+            p_associate_id: associateID,
+            p_items: pItems,
+            p_total: totalAmount
+        )
+        
+        _ = try await SupabaseManager.shared.client
+            .rpc("process_pos_checkout", params: params)
+            .execute()
+    }
     
     func recordCompletedSale() {
         let orderNumber = "#\(completedOrders.count + 420 + 2)"

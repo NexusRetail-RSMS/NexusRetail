@@ -3,6 +3,7 @@ import SwiftUI
 struct PaymentFlowView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SellViewModel.self) private var viewModel
+    @Environment(SessionStore.self) private var sessionStore
     @Binding var path: NavigationPath
     
     @State private var paymentState: PaymentState = .initial
@@ -104,7 +105,7 @@ struct PaymentFlowView: View {
                     .foregroundColor(RSMSColors.secondaryText)
                     .kerning(1.5)
                 
-                Text("₹\(Int(viewModel.totalAmount))")
+                Text("$\(String(format: "%.2f", viewModel.totalAmount))")
                     .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundColor(RSMSColors.burgundy)
                 
@@ -160,7 +161,7 @@ struct PaymentFlowView: View {
                 Button {
                     processRazorpayPayment()
                 } label: {
-                    Text("Pay ₹\(Int(viewModel.totalAmount))")
+                    Text("Pay $\(String(format: "%.2f", viewModel.totalAmount))")
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -231,7 +232,7 @@ struct PaymentFlowView: View {
                             .font(.system(size: 12))
                             .foregroundColor(.white.opacity(0.8))
                         
-                        Text("₹\(Int(viewModel.totalAmount))")
+                        Text("$\(String(format: "%.2f", viewModel.totalAmount))")
                             .font(.system(size: 24, weight: .bold))
                             .foregroundColor(RSMSColors.burgundy)
                     } else if paymentState == .processing {
@@ -327,16 +328,29 @@ struct PaymentFlowView: View {
             paymentState = .processing
         }
         
-        // Simulates loading/verification delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
-            withAnimation {
-                isProcessing = false
-                paymentState = .success
-            }
-            
-            // Proceed to Receipt View after a short display of success checkmark
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                path.append(POSFlowDestination.receipt)
+        Task {
+            do {
+                try await viewModel.processCheckout(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
+                viewModel.recordCompletedSale()
+                
+                await MainActor.run {
+                    withAnimation {
+                        isProcessing = false
+                        paymentState = .success
+                    }
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        path.append(POSFlowDestination.receipt)
+                    }
+                }
+            } catch {
+                print("Checkout failed: \(error)")
+                await MainActor.run {
+                    withAnimation {
+                        isProcessing = false
+                        paymentState = .failed
+                    }
+                }
             }
         }
     }
@@ -346,13 +360,27 @@ struct PaymentFlowView: View {
             paymentState = .processing
         }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            withAnimation {
-                paymentState = .success
-            }
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                path.append(POSFlowDestination.receipt)
+        Task {
+            do {
+                try await viewModel.processCheckout(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
+                viewModel.recordCompletedSale()
+                
+                await MainActor.run {
+                    withAnimation {
+                        paymentState = .success
+                    }
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                        path.append(POSFlowDestination.receipt)
+                    }
+                }
+            } catch {
+                print("Checkout failed: \(error)")
+                await MainActor.run {
+                    withAnimation {
+                        paymentState = .failed
+                    }
+                }
             }
         }
     }

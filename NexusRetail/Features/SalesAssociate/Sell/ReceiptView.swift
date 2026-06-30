@@ -13,7 +13,7 @@ struct ReceiptView: View {
     @State private var showShareToast = false
     @State private var isSaving = false
     
-    // Cached state to prevent SwiftUI reset layout glitches showing ₹0
+    // Cached state to prevent SwiftUI reset layout glitches showing $0
     @State private var cachedItems: [POSProduct] = []
     @State private var cachedTotal: Double = 0.0
     @State private var cachedSubtotal: Double = 0.0
@@ -149,6 +149,11 @@ struct ReceiptView: View {
                 cachedSubtotal = viewModel.subtotalAmount
             }
         }
+        .sheet(isPresented: $showShareSheet) {
+            if let image = generatedReceiptImage {
+                ShareSheet(items: [image])
+            }
+        }
     }
     
     // MARK: - Header
@@ -231,7 +236,7 @@ struct ReceiptView: View {
                                 .foregroundColor(RSMSColors.secondaryText)
                         }
                         Spacer()
-                        Text("₹\(Int(item.price))")
+                        Text("$\(String(format: "%.2f", item.price))")
                             .font(.system(size: 13, weight: .bold))
                             .foregroundColor(RSMSColors.primaryText)
                     }
@@ -248,7 +253,7 @@ struct ReceiptView: View {
                         .font(.system(size: 13))
                         .foregroundColor(RSMSColors.secondaryText)
                     Spacer()
-                    Text("₹\(Int(cachedSubtotal))")
+                    Text("$\(String(format: "%.2f", cachedSubtotal))")
                         .font(.system(size: 13, weight: .bold))
                         .foregroundColor(RSMSColors.primaryText)
                 }
@@ -258,7 +263,7 @@ struct ReceiptView: View {
                         .font(.system(size: 13))
                         .foregroundColor(RSMSColors.secondaryText)
                     Spacer()
-                    Text("₹\(Int(cachedTotal * 0.18))")
+                    Text("$\(String(format: "%.2f", cachedTotal * 0.18))")
                         .font(.system(size: 13))
                         .foregroundColor(RSMSColors.secondaryText)
                 }
@@ -268,7 +273,7 @@ struct ReceiptView: View {
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(RSMSColors.primaryText)
                     Spacer()
-                    Text("₹\(Int(cachedTotal))")
+                    Text("$\(String(format: "%.2f", cachedTotal))")
                         .font(.system(size: 18, weight: .black))
                         .foregroundColor(RSMSColors.burgundy)
                 }
@@ -297,16 +302,25 @@ struct ReceiptView: View {
         }
     }
     
+    @State private var generatedReceiptImage: UIImage? = nil
+    @State private var showShareSheet = false
+    
     // MARK: - Actions
+    @MainActor
     private func shareReceipt() {
-        withAnimation {
-            showShareToast = true
-        }
-        
-        // Hide after 3 seconds
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+        let renderer = ImageRenderer(content: paperReceiptView.frame(width: 350))
+        renderer.scale = UIScreen.main.scale
+        if let image = renderer.uiImage {
+            self.generatedReceiptImage = image
+            self.showShareSheet = true
+        } else {
             withAnimation {
-                showShareToast = false
+                showShareToast = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                withAnimation {
+                    showShareToast = false
+                }
             }
         }
     }
@@ -315,107 +329,13 @@ struct ReceiptView: View {
         isSaving = true
         
         Task {
-            // Save to Supabase (Background)
-            do {
-                let orderId = UUID()
-                let storeId = sessionStore.currentUser?.storeID ?? UUID(uuidString: "11111111-1111-1111-1111-111111111111")!
-                let associateId = sessionStore.currentUser?.id ?? UUID()
-                
-                // Formulate order insert payload
-                struct OrderInsert: Encodable {
-                    let id: UUID
-                    let store_id: UUID
-                    let associate_id: UUID
-                    let total: Double
-                    let client_id: UUID?
-                }
-                
-                let orderInsert = OrderInsert(
-                    id: orderId,
-                    store_id: storeId,
-                    associate_id: associateId,
-                    total: cachedTotal,
-                    client_id: nil // clienteling relation optional or mock
-                )
-                
-                // 1. Insert order record
-                try await SupabaseManager.shared.client
-                    .from("orders")
-                    .insert(orderInsert)
-                    .execute()
-                
-                // 2. Insert line items
-                struct LineItemInsert: Encodable {
-                    let order_id: UUID
-                    let quantity: Int
-                    let applied_price: Double
-                    let sku_id: UUID
-                }
-                
-                var lineItems: [LineItemInsert] = []
-                for item in cachedItems {
-                    lineItems.append(LineItemInsert(
-                        order_id: orderId,
-                        quantity: 1,
-                        applied_price: item.price,
-                        sku_id: item.id
-                    ))
-                }
-                
-                if !lineItems.isEmpty {
-                    try await SupabaseManager.shared.client
-                        .from("order_line_item")
-                        .insert(lineItems)
-                        .execute()
-                }
-                
-                // 3. Decrement database stock counts in inventory_item table
-                if let storeID = sessionStore.currentUser?.storeID {
-                    for item in cachedItems {
-                        struct InventoryItemSelect: Codable {
-                            let id: UUID
-                            let on_hand: Int
-                        }
-                        
-                        do {
-                            let invItems: [InventoryItemSelect] = try await SupabaseManager.shared.client
-                                .from("inventory_item")
-                                .select("id, on_hand")
-                                .eq("store_id", value: storeID)
-                                .eq("sku_id", value: item.id)
-                                .execute()
-                                .value
-                            
-                            if let invItem = invItems.first {
-                                let newStock = max(0, invItem.on_hand - 1)
-                                
-                                try await SupabaseManager.shared.client
-                                    .from("inventory_item")
-                                    .update(["on_hand": newStock])
-                                    .eq("id", value: invItem.id)
-                                    .execute()
-                                
-                                print("ReceiptView: Decremented database stock for SKU \(item.sku) to \(newStock)")
-                            }
-                        } catch {
-                            print("ReceiptView: Non-fatal error updating inventory_item for SKU \(item.sku): \(error)")
-                        }
-                    }
-                }
-                
-                // 4. Decrement local in-memory stock repository
-                for item in cachedItems {
-                    POSProductRepository.shared.decrementStock(productId: item.id)
-                }
-                
-                print("ReceiptView: Order successfully saved to database.")
-            } catch {
-                print("ReceiptView: Non-fatal error inserting order to Supabase (using mock database completion): \(error)")
+            // 4. Decrement local in-memory stock repository
+            for item in cachedItems {
+                POSProductRepository.shared.decrementStock(productId: item.id)
             }
             
             await MainActor.run {
                 isSaving = false
-                viewModel.recordCompletedSale()
                 viewModel.resetFlow()
                 if let onComplete = onComplete {
                     onComplete()
@@ -423,4 +343,19 @@ struct ReceiptView: View {
             }
         }
     }
+}
+
+// MARK: - Share Sheet Utility
+import UIKit
+
+struct ShareSheet: UIViewControllerRepresentable {
+    var items: [Any]
+    var applicationActivities: [UIActivity]? = nil
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: items, applicationActivities: applicationActivities)
+        return controller
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }

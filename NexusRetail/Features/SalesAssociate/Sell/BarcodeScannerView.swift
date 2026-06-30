@@ -1,4 +1,6 @@
 import SwiftUI
+import PhotosUI
+import CoreImage
 
 struct BarcodeScannerView: View {
     @Environment(\.dismiss) private var dismiss
@@ -9,6 +11,7 @@ struct BarcodeScannerView: View {
     @State private var allProducts: [POSProduct] = []
     @State private var scannedProduct: POSProduct? = nil
     @State private var isScanning = true
+    @State private var selectedPhoto: PhotosPickerItem? = nil
     
     var body: some View {
         ZStack {
@@ -32,6 +35,10 @@ struct BarcodeScannerView: View {
             .ignoresSafeArea(edges: .top)
         }
         .navigationBarHidden(true)
+        .onAppear {
+            scannedProduct = nil
+            isScanning = true
+        }
         .task {
             allProducts = await POSProductRepository.shared.fetchProducts(storeID: sessionStore.currentUser?.storeID)
         }
@@ -89,7 +96,6 @@ struct BarcodeScannerView: View {
         .clipShape(HeaderCurve())
     }
     
-    // MARK: - Viewfinder Camera Mock
     private var scannerViewSection: some View {
         VStack(spacing: 32) {
             Text("Point camera at product barcode")
@@ -97,78 +103,45 @@ struct BarcodeScannerView: View {
                 .foregroundColor(RSMSColors.secondaryText)
                 .multilineTextAlignment(.center)
             
-            // Viewfinder Simulator Frame
+            // Live Camera Viewfinder
             ZStack {
-                // Dark translucent camera background
-                Color.black.opacity(0.82)
-                    .frame(height: 240)
-                    .cornerRadius(20)
+                CameraScannerView { scannedCode in
+                    // Extract SKU if it's a nexus://product URL
+                    let sku: String
+                    if scannedCode.hasPrefix("nexus://product/") {
+                        sku = scannedCode.replacingOccurrences(of: "nexus://product/", with: "")
+                    } else {
+                        sku = scannedCode
+                    }
+                    simulateScan(forSku: sku)
+                }
+                .frame(height: 300)
+                .cornerRadius(20)
                 
-                // Clear center cutout
-                RoundedRectangle(cornerRadius: 12)
-                    .blendMode(.destinationOut)
-                    .frame(width: 280, height: 120)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(RSMSColors.burgundy, lineWidth: 3)
-                    )
-                
-                // Laser line animation
-                Rectangle()
-                    .fill(Color.red)
-                    .frame(width: 270, height: 2)
-                    .offset(y: 0)
-                
-                Text("📷 Viewfinder Simulator")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(.white.opacity(0.4))
-                    .offset(y: 45)
+                // Overlay outline
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(RSMSColors.burgundy, lineWidth: 2)
+                    .frame(height: 300)
             }
-            .background(Color.clear)
-            .compositingGroup()
             .padding(.horizontal, RSMSSpacing.lg)
             
             // Simulator Controls
             VStack(alignment: .leading, spacing: 14) {
-                Text("Simulate Scans (For Demo/Testing)")
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.darkBrown)
-                    .padding(.horizontal, 4)
-                
-                HStack(spacing: 12) {
-                    // Available item trigger
-                    Button {
-                        simulateScan(forSku: "OX-SKY-03") // Sky Blue Shirt (In Stock)
-                    } label: {
-                        HStack {
-                            Image(systemName: "checkmark.circle.fill")
-                            Text("Scan Available Item")
-                        }
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(RSMSColors.success)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                // Photo picker for simulator QR testing
+                PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                    HStack {
+                        Image(systemName: "photo")
+                        Text("Upload QR Code Image")
                     }
-                    .buttonStyle(.plain)
-                    
-                    // Out of stock item trigger
-                    Button {
-                        simulateScan(forSku: "OX-BLUE-01") // Blue Oxford Shirt (Out of Stock)
-                    } label: {
-                        HStack {
-                            Image(systemName: "xmark.circle.fill")
-                            Text("Scan Out of Stock")
-                        }
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(RSMSColors.error)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
-                    }
-                    .buttonStyle(.plain)
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundColor(RSMSColors.primaryText)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color.gray.opacity(0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
+                .onChange(of: selectedPhoto) { _, newItem in
+                    processSelectedPhoto(newItem)
                 }
             }
             .padding(.horizontal, RSMSSpacing.lg)
@@ -189,6 +162,32 @@ struct BarcodeScannerView: View {
             if match.stock > 0 {
                 viewModel.addToCart(product: match)
                 path.append(POSFlowDestination.cart)
+            }
+        }
+    }
+    
+    private func processSelectedPhoto(_ item: PhotosPickerItem?) {
+        guard let item = item else { return }
+        
+        Task {
+            if let data = try? await item.loadTransferable(type: Data.self),
+               let image = UIImage(data: data),
+               let ciImage = CIImage(image: image) {
+                
+                let detector = CIDetector(ofType: CIDetectorTypeQRCode, context: nil, options: [CIDetectorAccuracy: CIDetectorAccuracyHigh])
+                if let features = detector?.features(in: ciImage) as? [CIQRCodeFeature],
+                   let firstFeature = features.first,
+                   let qrCodeString = firstFeature.messageString {
+                    
+                    // Parse nexus://product/SKU format
+                    let skuCode = qrCodeString.replacingOccurrences(of: "nexus://product/", with: "")
+                    
+                    await MainActor.run {
+                        simulateScan(forSku: skuCode)
+                    }
+                } else {
+                    print("No QR code found in selected image.")
+                }
             }
         }
     }
@@ -219,7 +218,7 @@ struct BarcodeScannerView: View {
                         .font(.system(size: 13))
                         .foregroundColor(RSMSColors.secondaryText)
                     
-                    Text("₹\(Int(product.price))")
+                    Text("$\(String(format: "%.2f", product.price))")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(RSMSColors.burgundy)
                     
@@ -313,7 +312,7 @@ struct BarcodeScannerView: View {
                     .font(.system(size: 14, weight: .bold, design: .rounded))
                     .foregroundColor(RSMSColors.primaryText)
                 
-                Text("Price: ₹\(Int(alt.price))  •  Size: \(alt.size)")
+                Text("Price: $\(String(format: "%.2f", alt.price))  •  Size: \(alt.size)")
                     .font(.system(size: 11))
                     .foregroundColor(RSMSColors.secondaryText)
             }
@@ -363,5 +362,118 @@ struct BarcodeScannerView: View {
             item.stock > 0 &&
             abs(item.price - product.price) / product.price <= 0.3
         }
+    }
+}
+
+// MARK: - Camera Scanner View
+import AVFoundation
+
+struct CameraScannerView: UIViewControllerRepresentable {
+    
+    class Coordinator: NSObject, AVCaptureMetadataOutputObjectsDelegate {
+        var parent: CameraScannerView
+        
+        init(parent: CameraScannerView) {
+            self.parent = parent
+        }
+        
+        func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
+            if let metadataObject = metadataObjects.first {
+                guard let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject else { return }
+                guard let stringValue = readableObject.stringValue else { return }
+                
+                // Vibrate on successful scan
+                AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
+                
+                parent.didFindCode(stringValue)
+            }
+        }
+    }
+    
+    var didFindCode: (String) -> Void
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
+    }
+    
+    func makeUIViewController(context: Context) -> ScannerViewController {
+        let viewController = ScannerViewController()
+        viewController.delegate = context.coordinator
+        return viewController
+    }
+    
+    func updateUIViewController(_ uiViewController: ScannerViewController, context: Context) {
+        // No updates needed for now
+    }
+}
+
+class ScannerViewController: UIViewController {
+    var captureSession: AVCaptureSession!
+    var previewLayer: AVCaptureVideoPreviewLayer!
+    var delegate: AVCaptureMetadataOutputObjectsDelegate?
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        view.backgroundColor = UIColor.black
+        captureSession = AVCaptureSession()
+        
+        guard let videoCaptureDevice = AVCaptureDevice.default(for: .video) else { return }
+        let videoInput: AVCaptureDeviceInput
+        
+        do {
+            videoInput = try AVCaptureDeviceInput(device: videoCaptureDevice)
+        } catch {
+            return
+        }
+        
+        if (captureSession.canAddInput(videoInput)) {
+            captureSession.addInput(videoInput)
+        } else {
+            return
+        }
+        
+        let metadataOutput = AVCaptureMetadataOutput()
+        
+        if (captureSession.canAddOutput(metadataOutput)) {
+            captureSession.addOutput(metadataOutput)
+            
+            metadataOutput.setMetadataObjectsDelegate(delegate, queue: DispatchQueue.main)
+            metadataOutput.metadataObjectTypes = [.qr, .ean8, .ean13, .pdf417]
+        } else {
+            return
+        }
+        
+        previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
+        previewLayer.frame = view.layer.bounds
+        previewLayer.videoGravity = .resizeAspectFill
+        view.layer.addSublayer(previewLayer)
+        
+        DispatchQueue.global(qos: .background).async {
+            self.captureSession.startRunning()
+        }
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        if (captureSession?.isRunning == false) {
+            DispatchQueue.global(qos: .background).async {
+                self.captureSession.startRunning()
+            }
+        }
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        if (captureSession?.isRunning == true) {
+            captureSession.stopRunning()
+        }
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        previewLayer?.frame = view.layer.bounds
     }
 }

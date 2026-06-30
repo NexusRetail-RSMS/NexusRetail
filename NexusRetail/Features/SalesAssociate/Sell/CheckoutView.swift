@@ -37,7 +37,7 @@ struct CheckoutView: View {
                                         
                                         Spacer()
                                         
-                                        Text("₹\(Int(item.price))")
+                                        Text("$\(String(format: "%.2f", item.price))")
                                             .font(.system(size: 14, weight: .bold))
                                             .foregroundColor(RSMSColors.primaryText)
                                     }
@@ -130,7 +130,7 @@ struct CheckoutView: View {
                             path.append(POSFlowDestination.payment)
                         } label: {
                             HStack {
-                                Text("Pay ₹\(Int(viewModel.totalAmount))")
+                                Text("Pay $\(String(format: "%.2f", viewModel.totalAmount))")
                                     .font(.system(size: 16, weight: .bold))
                                 Spacer()
                                 Image(systemName: "lock.fill")
