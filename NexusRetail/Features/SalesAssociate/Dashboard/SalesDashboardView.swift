@@ -175,9 +175,13 @@ struct SalesDashboardView: View {
                 }
                 .padding(.horizontal, 18)
                 .padding(.vertical, 16)
-                .background(RSMSColors.burgundy)
+                .background(LinearGradient(
+                    colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ))
                 .clipShape(RoundedRectangle(cornerRadius: 18))
-                .shadow(color: RSMSColors.burgundy.opacity(0.18), radius: 10, x: 0, y: 5)
+                .shadow(color: RSMSColors.darkBurgundy.opacity(0.18), radius: 10, x: 0, y: 5)
             }
             .buttonStyle(.plain)
         }
@@ -187,8 +191,16 @@ struct SalesDashboardView: View {
     private var floatingQRButton: some View {
         NavigationLink(value: POSFlowDestination.barcodeScanner) {
             ZStack {
-                Circle().fill(Color.red).frame(width: 60, height: 60)
-                    .shadow(color: Color.red.opacity(0.3), radius: 10, x: 0, y: 5)
+                Circle().fill(Color(
+                    red: 122/255,
+                    green: 22/255,
+                    blue: 34/255
+                )).frame(width: 100, height: 60)
+                    .shadow(color: Color(
+                        red: 122/255,
+                        green: 22/255,
+                        blue: 34/255
+                    ).opacity(0.5), radius: 10, x: 0, y: 5)
                 Image(systemName: "qrcode.viewfinder").font(.system(size: 28, weight: .bold)).foregroundColor(.white)
             }
         }

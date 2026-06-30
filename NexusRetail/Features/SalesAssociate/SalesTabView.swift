@@ -14,17 +14,12 @@ struct SalesTabView: View {
 
     var body: some View {
         TabView {
-            // Tab 1 — Dashboard (POS + KPIs + Revenue Chart)
             SalesDashboardView()
                 .tabItem { Label("Dashboard", systemImage: "square.grid.2x2.fill") }
-
-            // Tab 2 — Clients (Clienteling CRM)
             NavigationStack {
                 ClientelingView()
             }
             .tabItem { Label("Clients", systemImage: "person.2.fill") }
-
-            // Tab 3 — Appointments
             NavigationStack {
                 AppointmentsView(clients: clientelingVM.clients)
             }

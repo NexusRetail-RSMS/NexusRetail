@@ -19,13 +19,23 @@ struct AppointmentsView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 22) {
+
+                // Custom Header
+                HStack {
+                    Text("Appointments")
+                        .font(.system(size: 34, weight: .bold))
+
+                    Spacer()
+                }
+
                 bookAppointmentButton
+
                 upcomingAppointmentsCard
             }
             .screenPadding()
         }
         .background(RSMSColors.background.ignoresSafeArea())
-        .navigationTitle("Appointments")
+        .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $isBookingPresented) {
             BookAppointmentSheet(clients: clients, viewModel: viewModel)
         }

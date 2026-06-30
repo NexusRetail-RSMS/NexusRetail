@@ -12,8 +12,25 @@ struct ClientelingView: View {
     @State private var isNewClientPresented = false
 
     var body: some View {
-        List {
-            Section {
+        VStack(spacing: 16) {
+            HStack {
+                Text("Clients")
+                    .font(.system(size: 34, weight: .bold))
+
+                Spacer()
+            }
+
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
+
+                TextField("Search clients", text: $viewModel.searchText)
+            }
+            .padding(12)
+            .background(Color(.systemGray6))
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+
+            List {
                 ForEach(viewModel.filteredClients) { client in
                     NavigationLink {
                         ClientDetailView(client: client)
@@ -22,26 +39,12 @@ struct ClientelingView: View {
                     }
                 }
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
         }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
+        .padding(.horizontal, 20)
         .background(RSMSColors.background.ignoresSafeArea())
-        .navigationTitle("Clients")
-        .searchable(text: $viewModel.searchText, prompt: "Search clients")
-//        .toolbar {
-//            ToolbarItem(placement: .topBarTrailing) {
-//                Button {
-//                    isNewClientPresented = true
-//                } label: {
-//                    Image(systemName: "person.badge.plus")
-//                        .foregroundStyle(RSMSColors.burgundy)
-//                }
-//               // .accessibilityLabel("Add client")
-//            }
-//        }
-//        .sheet(isPresented: $isNewClientPresented) {
-//            NewClientSheet(viewModel: viewModel)
-//        }
+        .toolbar(.hidden, for: .navigationBar)
     }
 
     // MARK: - Row
