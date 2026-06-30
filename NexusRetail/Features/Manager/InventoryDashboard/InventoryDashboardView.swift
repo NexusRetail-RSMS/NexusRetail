@@ -47,16 +47,13 @@ struct InventoryDashboardView: View {
                         
                         // Inventory List
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("Current Inventory")
-                                .font(RSMSFonts.headline)
-                                .foregroundColor(RSMSColors.primaryText)
-                                .padding(.horizontal, RSMSSpacing.md)
-                                .padding(.top, RSMSSpacing.sm)
-                            
                             ForEach(viewModel.filteredItems) { item in
-                                InventoryItemRow(item: item)
-                                    .padding(.horizontal, RSMSSpacing.md)
-                                    .id(item.id)
+                                NavigationLink(destination: InventoryItemDetailView(item: item, viewModel: viewModel)) {
+                                    InventoryItemRow(item: item)
+                                }
+                                .buttonStyle(.plain)
+                                .padding(.horizontal, RSMSSpacing.md)
+                                .id(item.id)
                             }
                             
                             if viewModel.filteredItems.isEmpty {
