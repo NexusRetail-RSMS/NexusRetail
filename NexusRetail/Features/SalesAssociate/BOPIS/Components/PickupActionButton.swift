@@ -24,8 +24,8 @@ struct PickupActionButton: View {
     
     private var buttonTitle: String {
         switch status {
-        case .pendingPreparation:
-            return "Prepare Order"
+        case .pending:
+            return "Pack Order"
         case .readyForPickup:
             return "Notify Customer"
         case .waitingForCustomer:

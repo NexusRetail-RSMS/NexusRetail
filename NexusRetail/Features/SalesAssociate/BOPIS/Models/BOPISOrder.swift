@@ -6,7 +6,7 @@
 import Foundation
 
 enum BOPISOrderStatus: String, CaseIterable, Identifiable {
-    case pendingPreparation = "Pending Preparation"
+    case pending = "Pending"
     case readyForPickup = "Ready for Pickup"
     case waitingForCustomer = "Waiting for Customer"
     case collected = "Collected"
@@ -23,5 +23,5 @@ struct BOPISOrder: Identifiable, Equatable {
     var status: BOPISOrderStatus
     let itemCount: Int
     let totalAmount: Double
-    let verificationCode: String?
+    var verificationCode: String?
 }

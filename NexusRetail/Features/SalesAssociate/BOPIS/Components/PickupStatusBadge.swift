@@ -10,7 +10,7 @@ struct PickupStatusBadge: View {
     
     private var badgeColor: Color {
         switch status {
-        case .pendingPreparation:
+        case .pending:
             return RSMSColors.warning
         case .readyForPickup:
             return RSMSColors.success

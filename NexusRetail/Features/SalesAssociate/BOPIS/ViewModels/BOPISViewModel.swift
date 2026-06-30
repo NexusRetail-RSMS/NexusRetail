@@ -50,6 +50,14 @@ class BOPISViewModel {
     
     func notifyCustomer(id: UUID) {
         if let index = orders.firstIndex(where: { $0.id == id }) {
+            let order = orders[index]
+            let initials = order.customerName.components(separatedBy: " ")
+                .compactMap { $0.first }
+                .map { String($0) }
+                .joined()
+                .uppercased()
+            let randomCode = String(format: "%04d", Int.random(in: 1000...9999))
+            orders[index].verificationCode = "\(initials)-\(randomCode)"
             orders[index].status = .waitingForCustomer
         }
     }
@@ -69,7 +77,7 @@ class BOPISViewModel {
                 customerName: "Eleanor Vance",
                 phoneNumber: "+1 (555) 123-4567",
                 pickupTime: "Today, 2:00 PM",
-                status: .pendingPreparation,
+                status: .pending,
                 itemCount: 2,
                 totalAmount: 1450.00,
                 verificationCode: nil
@@ -80,7 +88,7 @@ class BOPISViewModel {
                 customerName: "James Holden",
                 phoneNumber: "+1 (555) 987-6543",
                 pickupTime: "Today, 3:30 PM",
-                status: .pendingPreparation,
+                status: .pending,
                 itemCount: 1,
                 totalAmount: 320.00,
                 verificationCode: nil

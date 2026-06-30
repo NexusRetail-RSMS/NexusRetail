@@ -43,10 +43,8 @@ struct BOPISView: View {
                     }
                 }
             }
-            .navigationTitle("Buy Online Pickup")
+            .navigationTitle("BOPIS")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(RSMSColors.cream, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
         }
     }
     
@@ -79,7 +77,7 @@ struct BOPISView: View {
     private func handleAction(for order: BOPISOrder) {
         withAnimation {
             switch order.status {
-            case .pendingPreparation:
+            case .pending:
                 viewModel.prepareOrder(id: order.id)
             case .readyForPickup:
                 viewModel.notifyCustomer(id: order.id)
