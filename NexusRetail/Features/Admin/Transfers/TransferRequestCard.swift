@@ -15,17 +15,16 @@ struct TransferRequestCard: View {
         let manager = viewModel.manager(for: request.managerID)
         let store = viewModel.store(for: request.storeID)
         
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 0) {
             // Header: Manager & Store + Badges
             HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(manager?.name ?? "Unknown Manager")
-                        .font(.title3)
-                        .fontWeight(.bold)
+                        .font(.system(size: 22, weight: .semibold))
                         .foregroundColor(.primary)
                     
                     Text(store?.name ?? "Unknown Store")
-                        .font(.subheadline)
+                        .font(.system(size: 14))
                         .foregroundColor(.secondary)
                 }
                 
@@ -35,76 +34,75 @@ struct TransferRequestCard: View {
             }
             
             Divider()
+                .padding(.top, 10)
+                .padding(.bottom, 12)
             
             // Product Info
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(product?.name ?? "Unknown Item")
-                    .font(.headline)
+                    .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.primary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
                 
                 Text(product?.category ?? "Category")
-                    .font(.subheadline)
+                    .font(.system(size: 14))
                     .foregroundColor(.secondary)
             }
             
             // Stock Info
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text("Requested")
-                        .font(.caption)
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.secondary)
                     Text("\(request.requestedQuantity)")
-                        .font(.title3)
-                        .fontWeight(.bold)
+                        .font(.system(size: 20, weight: .bold))
                 }
                 
                 Spacer()
                 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .trailing, spacing: 2) {
                     let available = product?.warehouseQuantity ?? 0
                     Text("Available")
-                        .font(.caption)
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.secondary)
                     
                     Text("\(available)")
-                        .font(.title3)
-                        .fontWeight(.bold)
-                        .foregroundColor(available >= request.requestedQuantity ? .green : .red)
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(available >= request.requestedQuantity ? .primary : .red)
                 }
             }
+            .padding(.top, 12)
             
             // Actions
             if request.status == .pending || request.status == .awaitingRestock {
                 let isSufficient = (product?.warehouseQuantity ?? 0) >= request.requestedQuantity
                 
-                HStack(spacing: 12) {
+                HStack(spacing: 10) {
                     if isSufficient {
                         Button {
                             withAnimation { viewModel.approveRequest(request) }
                         } label: {
                             Text("Approve")
-                                .font(.headline)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.8)
+                                .font(.system(size: 15, weight: .semibold))
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
+                                .frame(height: 42)
                                 .background(Color.nexusRed)
                                 .foregroundColor(.white)
-                                .cornerRadius(12)
+                                .cornerRadius(10)
                         }
                     } else {
                         Button {
                             showingPurchaseOrderSheet = true
                         } label: {
                             Text("Purchase Order")
-                                .font(.headline)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.8)
+                                .font(.system(size: 15, weight: .semibold))
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
+                                .frame(height: 42)
                                 .background(Color.nexusRed)
                                 .foregroundColor(.white)
-                                .cornerRadius(12)
+                                .cornerRadius(10)
                         }
                     }
                     
@@ -112,31 +110,29 @@ struct TransferRequestCard: View {
                         showingDenialAlert = true
                     } label: {
                         Text("Deny")
-                            .font(.headline)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
+                            .font(.system(size: 15, weight: .semibold))
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
+                            .frame(height: 42)
                             .background(Color.nexusRed.opacity(0.1))
                             .foregroundColor(Color.nexusRed)
-                            .cornerRadius(12)
+                            .cornerRadius(10)
                     }
                 }
-                .padding(.top, 8)
+                .padding(.top, 16)
             }
             
             if let reason = request.denialReason {
                 Text("Reason: \(reason)")
                     .font(.caption)
                     .foregroundColor(.red)
-                    .padding(.top, 4)
+                    .padding(.top, 8)
             }
         }
-        .padding(20)
+        .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+                .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 2)
         )
         .alert("Deny Request", isPresented: $showingDenialAlert) {
             TextField("Reason (optional)", text: $denialReason)
@@ -161,13 +157,12 @@ struct StatusBadge: View {
     let status: TransferRequestStatus
     var body: some View {
         Text(status.rawValue)
-            .font(.caption)
-            .fontWeight(.bold)
+            .font(.system(size: 12, weight: .semibold))
             .foregroundColor(status.color)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(status.color.opacity(0.1))
-            .cornerRadius(8)
+            .cornerRadius(6)
     }
 }
 
