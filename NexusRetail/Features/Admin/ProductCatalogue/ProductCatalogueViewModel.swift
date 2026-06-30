@@ -61,7 +61,7 @@ final class ProductCatalogueViewModel: ObservableObject {
     @Published var searchText = ""
     @Published var selectedCategory = "All"
 
-    let categoryOptions = ["All", "Watches", "Bags", "Fragrances", "Clothes", "Jewelry"]
+    let categoryOptions = ["All", "Watches", "Bags", "Perfumes", "Clothes", "Jewellery"]
 
     @Published private(set) var allProducts: [CatalogueProduct]
     private var timer: AnyCancellable?
@@ -88,39 +88,60 @@ final class ProductCatalogueViewModel: ObservableObject {
         startAutoScroll()
     }
 
+    /// Extracts a direct Pexels image URL from a Pexels photo page URL.
+    func extractPexelsImageUrl(from pageUrl: String) -> String? {
+        var cleanUrl = pageUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+        if cleanUrl.hasSuffix("/") {
+            cleanUrl.removeLast()
+        }
+        guard let lastComponent = cleanUrl.split(separator: "/").last else { return nil }
+        
+        let idString = lastComponent.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+        guard !idString.isEmpty else { return nil }
+        
+        return "https://images.pexels.com/photos/\(idString)/pexels-photo-\(idString).jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+    }
+
     func fetchProducts() async {
         do {
-            let response: [CatalogueProductRPC] = try await SupabaseManager.shared.client
-                .rpc("get_catalogue_products")
+            struct ProductResponse: Codable {
+                let item_id: Int64
+                let item_name: String
+                let category: String
+                let price: Double
+                let pexels_page: String?
+                let image_url: String?
+                let description: String?
+            }
+            
+            let response: [ProductResponse] = try await SupabaseManager.shared.client
+                .from("products")
+                .select("item_id, item_name, category, price, pexels_page, image_url, description")
                 .execute()
                 .value
             
-            let formatter = DateFormatter()
-            formatter.dateFormat = "yyyy-MM-dd"
+            print("ProductCatalogueViewModel: Loaded \(response.count) products from products table")
             
             let displayFormatter = DateFormatter()
             displayFormatter.dateStyle = .medium
+            let fallbackDate = displayFormatter.string(from: Date())
             
-            let mapped = response.map { rpc -> CatalogueProduct in
-                let dateStr: String
-                if let parsed = formatter.date(from: rpc.launch_date) {
-                    dateStr = displayFormatter.string(from: parsed)
-                } else {
-                    dateStr = rpc.launch_date
-                }
+            let mapped = response.map { product -> CatalogueProduct in
+                // Extract image from pexels_page or fallback to image_url
+                let pexelsImageUrl = extractPexelsImageUrl(from: product.pexels_page ?? "") ?? product.image_url
                 
                 return CatalogueProduct(
-                    id: rpc.id,
-                    name: rpc.name,
-                    sku: rpc.sku_code ?? "N/A",
-                    category: rpc.category,
-                    price: rpc.price,
-                    stock: rpc.stock,
-                    date: dateStr,
+                    id: UUID(uuidString: String(format: "00000000-0000-0000-0000-%012d", product.item_id)) ?? UUID(),
+                    name: product.item_name,
+                    sku: "SKU-\(product.item_id)",
+                    category: product.category,
+                    price: product.price,
+                    stock: 50, // default fallback stock
+                    date: fallbackDate,
                     imageName: nil,
-                    imageUrl: rpc.image_url,
+                    imageUrl: pexelsImageUrl,
                     image: nil,
-                    qrCode: rpc.qr_code
+                    qrCode: nil
                 )
             }
             
