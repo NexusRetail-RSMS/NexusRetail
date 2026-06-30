@@ -15,7 +15,7 @@ struct FilterSegmentControl: View {
                     selectedFilter = nil
                 }
                 
-                ForEach(BOPISOrderStatus.allCases) { status in
+                ForEach([BOPISOrderStatus.pending, BOPISOrderStatus.waitingForCustomer]) { status in
                     FilterPill(title: status.rawValue, isSelected: selectedFilter == status) {
                         selectedFilter = status
                     }

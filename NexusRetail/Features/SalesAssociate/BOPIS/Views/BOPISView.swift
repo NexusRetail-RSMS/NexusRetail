@@ -50,6 +50,14 @@ struct BOPISView: View {
             }
             .navigationTitle("BOPIS")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink(destination: BOPISHistoryView(viewModel: viewModel)) {
+                        Image(systemName: "clock")
+                            .foregroundColor(RSMSColors.burgundy)
+                    }
+                }
+            }
             .sheet(item: $orderToPack) { order in
                 BOPISPackOrderView(order: order) {
                     viewModel.packAndNotify(id: order.id)
