@@ -8,6 +8,7 @@ import Supabase
 
 /// Admin shell: tabs for Dashboard, Stores, Products, Transfers, Managers.
 struct AdminTabView: View {
+    @State private var isAddManagerPresented = false
     @State private var navStore = AdminNavigationStore()
     @State private var transfersVM = AdminTransfersViewModel()
     
@@ -16,13 +17,12 @@ struct AdminTabView: View {
             // 1. Dashboard
             NavigationStack {
                 AdminDashboardView()
-                    .modifier(AdminToolbarModifier(title: "Dashboard"))
             }
             .tabItem {
                 Label("Dashboard", systemImage: "house")
             }
             .tag(AdminTab.dashboard)
-            
+
             // 2. Stores
             NavigationStack {
                 StoreListView()
@@ -31,33 +31,29 @@ struct AdminTabView: View {
                 Label("Stores", systemImage: "building.2")
             }
             .tag(AdminTab.stores)
-            
+
             // 3. Products
             NavigationStack {
                 ProductCatalogueView()
-                    // ProductCatalogueView draws its own header, so we hide
-                    // the NavigationStack bar to avoid a double title.
                     .navigationBarHidden(true)
             }
             .tabItem {
                 Label("Products", systemImage: "tag")
             }
             .tag(AdminTab.products)
-            
+
             // 4. Transfers
             NavigationStack {
                 AdminTransfersView()
-                    .modifier(AdminToolbarModifier(title: "Transfers"))
             }
             .tabItem {
                 Label("Transfers", systemImage: "arrow.left.arrow.right")
             }
             .tag(AdminTab.transfers)
-            
+
             // 5. Managers
             NavigationStack {
-                AdminManagersView()
-                    .modifier(AdminToolbarModifier(title: "Managers"))
+                ManagersTabRoot(isAddManagerPresented: $isAddManagerPresented)
             }
             .tabItem {
                 Label("Managers", systemImage: "person.2")
@@ -67,6 +63,26 @@ struct AdminTabView: View {
         .tint(RSMSColors.burgundy)
         .environment(navStore)
         .environment(transfersVM)
+    }
+}
+
+/// Wrapper that provides a custom header for the Managers tab matching the Stores page style.
+private struct ManagersTabRoot: View {
+    @Binding var isAddManagerPresented: Bool
+    @State private var searchText = ""
+
+    var body: some View {
+        AdminManagersView(isAddManagerPresented: $isAddManagerPresented, searchText: $searchText)
+            .toolbar(.hidden, for: .navigationBar)
+    }
+}
+
+/// Wrapper that provides a custom large-title header for the Transfers tab, matching the Managers tab style.
+private struct TransfersTabRoot: View {
+
+    var body: some View {
+        AdminTransfersView()
+            .toolbar(.hidden, for: .navigationBar)
     }
 }
 
@@ -117,6 +133,7 @@ struct AdminToolbarModifier: ViewModifier {
         return "AD"
     }
 }
+
 
 /// A reusable placeholder view for the admin tabs.
 struct AdminPlaceholderView: View {

@@ -13,6 +13,7 @@ import SwiftUI
 struct PaymentConfigurationView: View {
 
     @State private var viewModel = PaymentConfigurationViewModel()
+    @Environment(\.dismiss) private var dismiss
 
     let isAdmin: Bool
     let storeID: UUID
@@ -24,25 +25,29 @@ struct PaymentConfigurationView: View {
                 .ignoresSafeArea()
 
             ScrollView {
-                VStack(alignment: .leading, spacing: RSMSSpacing.xl) {
+                VStack(alignment: .leading, spacing: 0) {
 
-                    // MARK: - Header
+                    // MARK: - Custom Header
+                    customHeaderSection
 
-                    headerSection
+                    // MARK: - Content Area
+                    VStack(alignment: .leading, spacing: RSMSSpacing.xl) {
+                        
+                        // Page Intro
+                        pageIntroSection
 
-                    // MARK: - Provider Cards
+                        // MARK: - Provider Cards
+                        providerCards
 
-                    providerCards
-
-                    // MARK: - Status Banner
-
-                    paymentReadinessBanner
-
-                    Spacer(minLength: RSMSSpacing.xxxl)
+                        // MARK: - Status Banner
+                        paymentReadinessBanner
+                    }
+                    .padding(.horizontal, RSMSSpacing.lg)
+                    .padding(.top, RSMSSpacing.xl)
+                    .padding(.bottom, RSMSSpacing.xxl)
                 }
-                .padding(.horizontal, RSMSSpacing.lg)
-                .padding(.top, RSMSSpacing.md)
             }
+            .ignoresSafeArea(edges: .top)
 
             // MARK: - Loading Overlay
 
@@ -50,11 +55,7 @@ struct PaymentConfigurationView: View {
                 loadingOverlay
             }
         }
-        .navigationTitle("Payment Configuration")
-        .navigationBarTitleDisplayMode(.large)
-        .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(RSMSColors.burgundy, for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
+        .navigationBarHidden(true)
         .task {
             await viewModel.loadConfigurations(storeID: storeID)
         }
@@ -72,7 +73,51 @@ struct PaymentConfigurationView: View {
 
     // MARK: - Header Section
 
-    private var headerSection: some View {
+    private var customHeaderSection: some View {
+        HStack(alignment: .center, spacing: RSMSSpacing.md) {
+            Button {
+                dismiss()
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.2))
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                }
+            }
+            .accessibilityLabel("Back")
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(viewModel.storeName)
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+                
+                Text("Payment Configuration")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.8))
+            }
+            
+            Spacer()
+        }
+        .padding(.horizontal, RSMSSpacing.lg)
+        .padding(.top, 60)
+        .padding(.bottom, RSMSSpacing.xxxl)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            LinearGradient(
+                colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .clipShape(HeaderCurve())
+    }
+
+    private var pageIntroSection: some View {
         VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
             Text("Payment Gateways")
                 .font(RSMSFonts.title)
@@ -83,7 +128,6 @@ struct PaymentConfigurationView: View {
                 .foregroundColor(RSMSColors.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.bottom, RSMSSpacing.xs)
     }
 
     // MARK: - Provider Cards

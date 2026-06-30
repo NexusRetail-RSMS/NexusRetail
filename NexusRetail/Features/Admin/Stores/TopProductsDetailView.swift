@@ -9,6 +9,7 @@
 
 import SwiftUI
 import Charts
+import Supabase
 
 // MARK: - Product Data Model
 
@@ -24,7 +25,7 @@ struct TopProduct: Identifiable {
 
 struct TopProductsDetailView: View {
     let store: Store
-    @State private var selectedRange: StoreChartTimeRange = .month
+    @State private var selectedRange: StoreChartTimeRange = .weekly(Date())
     @Environment(\.dismiss) private var dismiss
 
     // Colors for the donut slices
@@ -37,9 +38,8 @@ struct TopProductsDetailView: View {
         Color(hex: "264653"),
     ]
 
-    private var products: [TopProduct] {
-        TopProductsSampleData.products(for: store, range: selectedRange)
-    }
+    @State private var products: [TopProduct] = []
+    @State private var isLoading = false
 
     private var totalUnits: Int {
         products.reduce(0) { $0 + $1.unitsSold }
@@ -47,10 +47,18 @@ struct TopProductsDetailView: View {
 
     private var periodLabel: String {
         switch selectedRange {
-        case .day:   return "Today"
-        case .week:  return "This Week"
-        case .month: return "This Month"
-        case .year:  return "This Year"
+        case .weekly(let date):
+            let formatter = DateFormatter()
+            formatter.dateStyle = .medium
+            return formatter.string(from: date)
+        case .monthly(let date):
+            let formatter = DateFormatter()
+            formatter.dateFormat = "MMMM yyyy"
+            return formatter.string(from: date)
+        case .yearly(let date):
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy"
+            return formatter.string(from: date)
         }
     }
 
@@ -58,60 +66,81 @@ struct TopProductsDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
 
-                // Back button + title
                 HStack {
-                    Button { dismiss() } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(RSMSColors.burgundy)
-                            .frame(width: 36, height: 36)
-                            .background(RSMSColors.burgundy.opacity(0.1))
-                            .clipShape(Circle())
-                    }
+                    Text("Top Products")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(RSMSColors.primaryText)
+                    
                     Spacer()
+                    
+                    Menu {
+                        Button("Weekly") { selectedRange = .weekly(Date()) }
+                        Button("Monthly") { selectedRange = .monthly(Date()) }
+                        Button("Yearly") { selectedRange = .yearly(Date()) }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text(selectedRange.isWeekly ? "Weekly" : (selectedRange.isMonthly ? "Monthly" : "Yearly"))
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 12))
+                        }
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(RSMSColors.primaryText)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.gray.opacity(0.1))
+                        .clipShape(Capsule())
+                    }
                 }
                 .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.top, RSMSSpacing.md)
-
-                Text("Top Products")
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(RSMSColors.primaryText)
-                    .padding(.horizontal, RSMSSpacing.lg)
-                    .padding(.top, RSMSSpacing.md)
 
                 // Segmented picker
-                Picker("Range", selection: $selectedRange) {
-                    ForEach(StoreChartTimeRange.allCases) { range in
-                        Text(range.rawValue).tag(range)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, RSMSSpacing.lg)
-                .padding(.top, RSMSSpacing.md)
-
-                // Total units label
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("TOTAL UNITS SOLD")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(RSMSColors.secondaryText)
-                        .tracking(1)
-
-                    Text(formatNumber(totalUnits))
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(RSMSColors.burgundy)
-                }
-                .padding(.horizontal, RSMSSpacing.lg)
-                .padding(.top, RSMSSpacing.lg)
+                SwipeableCalendarView(selectedRange: $selectedRange)
+                    .padding(.horizontal, RSMSSpacing.lg)
+                    .padding(.top, RSMSSpacing.md)
 
                 Text(periodLabel)
                     .font(RSMSFonts.subheadline)
                     .foregroundColor(RSMSColors.secondaryText)
                     .padding(.horizontal, RSMSSpacing.lg)
-                    .padding(.top, RSMSSpacing.xs)
+                    .padding(.top, RSMSSpacing.md)
 
                 // Donut chart
-                ZStack {
-                    Chart(products) { product in
+                if isLoading {
+                    VStack {
+                        Spacer()
+                        ProgressView()
+                            .tint(RSMSColors.burgundy)
+                        Spacer()
+                    }
+                    .frame(height: 240)
+                } else if products.isEmpty {
+                    ZStack {
+                        Chart {
+                            SectorMark(
+                                angle: .value("Placeholder", 1),
+                                innerRadius: .ratio(0.6),
+                                angularInset: 2
+                            )
+                            .foregroundStyle(RSMSColors.burgundy.opacity(0.1))
+                            .cornerRadius(6)
+                        }
+                        .frame(height: 240)
+                        
+                        VStack(spacing: 4) {
+                            Image(systemName: "bag")
+                                .font(.system(size: 24))
+                                .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                            Text("No products data")
+                                .font(.system(size: 11))
+                                .foregroundColor(RSMSColors.secondaryText)
+                        }
+                    }
+                    .padding(.horizontal, RSMSSpacing.lg)
+                    .padding(.top, RSMSSpacing.xl)
+                } else {
+                    ZStack {
+                        Chart(products) { product in
                         SectorMark(
                             angle: .value("Units", product.unitsSold),
                             innerRadius: .ratio(0.6),
@@ -134,6 +163,7 @@ struct TopProductsDetailView: View {
                 .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.top, RSMSSpacing.xl)
                 .animation(.easeInOut(duration: 0.3), value: selectedRange)
+                }
 
                 // Legend (2-column grid)
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: RSMSSpacing.sm) {
@@ -163,36 +193,49 @@ struct TopProductsDetailView: View {
                         .foregroundColor(RSMSColors.primaryText)
                         .padding(.bottom, RSMSSpacing.md)
 
-                    ForEach(Array(products.enumerated()), id: \.element.id) { index, product in
-                        HStack(spacing: RSMSSpacing.md) {
-                            // Rank badge
-                            Text("#\(index + 1)")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.white)
-                                .frame(width: 32, height: 32)
-                                .background(product.color)
-                                .clipShape(Circle())
-
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(product.name)
-                                    .font(RSMSFonts.body)
-                                    .foregroundColor(RSMSColors.primaryText)
-                                Text("\(formatNumber(product.unitsSold)) units")
-                                    .font(RSMSFonts.caption)
-                                    .foregroundColor(RSMSColors.secondaryText)
-                            }
-
-                            Spacer()
-
-                            Text("₹\(formatNumber(Int(product.revenue)))")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(RSMSColors.primaryText)
+                    if products.isEmpty {
+                        VStack(spacing: RSMSSpacing.sm) {
+                            Image(systemName: "list.number")
+                                .font(.system(size: 28))
+                                .foregroundColor(RSMSColors.secondaryText.opacity(0.4))
+                            Text("No ranking data available")
+                                .foregroundColor(RSMSColors.secondaryText)
+                                .font(RSMSFonts.subheadline)
                         }
-                        .padding(.vertical, RSMSSpacing.md)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, RSMSSpacing.xl)
+                    } else {
+                        ForEach(Array(products.enumerated()), id: \.element.id) { index, product in
+                            HStack(spacing: RSMSSpacing.md) {
+                                // Rank badge
+                                Text("#\(index + 1)")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .frame(width: 32, height: 32)
+                                    .background(product.color)
+                                    .clipShape(Circle())
 
-                        if index < products.count - 1 {
-                            Divider()
-                                .foregroundColor(RSMSColors.divider)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(product.name)
+                                        .font(RSMSFonts.body)
+                                        .foregroundColor(RSMSColors.primaryText)
+                                    Text("\(formatNumber(product.unitsSold)) units")
+                                        .font(RSMSFonts.caption)
+                                        .foregroundColor(RSMSColors.secondaryText)
+                                }
+
+                                Spacer()
+
+                                Text("₹\(formatNumber(Int(product.revenue)))")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundColor(RSMSColors.primaryText)
+                            }
+                            .padding(.vertical, RSMSSpacing.md)
+
+                            if index < products.count - 1 {
+                                Divider()
+                                    .foregroundColor(RSMSColors.divider)
+                            }
                         }
                     }
                 }
@@ -206,7 +249,74 @@ struct TopProductsDetailView: View {
             }
         }
         .background(RSMSColors.background.ignoresSafeArea())
-        .navigationBarHidden(true)
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.visible, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    dismiss()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 16, weight: .semibold))
+                    }
+                    .foregroundColor(RSMSColors.burgundy)
+                }
+            }
+        }
+        .task(id: selectedRange) {
+            await fetchData()
+        }
+    }
+    
+    // MARK: - Data Fetching
+    
+    struct NullableUUID: Encodable {
+        let value: UUID?
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.singleValueContainer()
+            if let value = value {
+                try container.encode(value)
+            } else {
+                try container.encodeNil()
+            }
+        }
+    }
+
+    struct RpcParams: Encodable {
+        let p_store_id: NullableUUID
+        let p_period: String
+        let p_limit: Int
+    }
+    
+    private func fetchData() async {
+        isLoading = true
+        defer { isLoading = false }
+        
+        let storeId: UUID? = store.id.uuidString == "00000000-0000-0000-0000-000000000000" ? nil : store.id
+        let params = RpcParams(p_store_id: NullableUUID(value: storeId), p_period: selectedRange.rawValue, p_limit: 5)
+        
+        do {
+            let fetchedProducts: [DashboardTopProduct] = try await SupabaseManager.shared.client
+                .rpc("store_top_products_by_period", params: params)
+                .execute()
+                .value
+                
+            let mapped = fetchedProducts.enumerated().map { index, p in
+                TopProduct(
+                    name: p.name,
+                    unitsSold: p.units,
+                    revenue: p.revenue,
+                    color: TopProductsDetailView.sliceColors[index % TopProductsDetailView.sliceColors.count]
+                )
+            }
+            
+            await MainActor.run {
+                self.products = mapped
+            }
+        } catch {
+            print("Error fetching top products: \(error)")
+        }
     }
 
     private func formatNumber(_ value: Int) -> String {
@@ -214,45 +324,5 @@ struct TopProductsDetailView: View {
         f.numberStyle = .decimal
         f.groupingSeparator = ","
         return f.string(from: NSNumber(value: value)) ?? "\(value)"
-    }
-}
-
-// MARK: - Sample data
-
-enum TopProductsSampleData {
-    static func products(for store: Store, range: StoreChartTimeRange) -> [TopProduct] {
-        let seed = abs(store.name.hashValue)
-        let multiplier: Double
-        switch range {
-        case .day:   multiplier = 0.03
-        case .week:  multiplier = 0.25
-        case .month: multiplier = 1.0
-        case .year:  multiplier = 12.0
-        }
-
-        let colors = TopProductsDetailView.sliceColors
-
-        let productNames = [
-            "iPhone 16 Pro",
-            "MacBook Air M4",
-            "AirPods Pro 3",
-            "Apple Watch Ultra",
-            "iPad Air M3",
-            "HomePod Mini",
-        ]
-
-        let baseSales = [420, 280, 350, 190, 230, 150]
-
-        return productNames.enumerated().map { i, name in
-            let units = Int(Double(baseSales[i] + (seed + i * 13) % 200) * multiplier)
-            let price = Double([79990, 114900, 24900, 89900, 69900, 10900][i])
-            return TopProduct(
-                name: name,
-                unitsSold: max(units, 1),
-                revenue: Double(units) * price,
-                color: colors[i % colors.count]
-            )
-        }
-        .sorted { $0.unitsSold > $1.unitsSold }
     }
 }

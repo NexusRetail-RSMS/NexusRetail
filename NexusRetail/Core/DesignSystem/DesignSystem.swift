@@ -67,49 +67,116 @@ struct KPICardView: View {
     let value: String
     let icon: String
     let trend: String?
+    var color: Color = RSMSColors.burgundy
     
     var body: some View {
-        VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
-            HStack {
-                ZStack {
-                    Circle()
-                        .fill(RSMSColors.burgundy.opacity(0.08))
-                        .frame(width: 32, height: 32)
-                    
-                    Image(systemName: icon)
-                        .foregroundColor(RSMSColors.burgundy)
-                        .font(.system(size: 14))
-                }
+        HStack(spacing: RSMSSpacing.sm) {
+            // Single-color icon on the left
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.18))
+                    .frame(width: 48, height: 48)
                 
-                Spacer()
-                
-                if let trend = trend {
-                    Text(trend)
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(trend.contains("+") || trend.contains("approved") ? RSMSColors.success : .orange)
-                }
+                Image(systemName: icon)
+                    .foregroundColor(color)
+                    .font(.system(size: 20, weight: .semibold))
             }
             
-            VStack(alignment: .leading, spacing: 2) {
+            // Value + label on the right
+            VStack(alignment: .leading, spacing: 3) {
                 Text(value)
-                    .font(RSMSFonts.largeTitle)
-                    .fontWeight(.bold)
+                    .font(.system(size: 24, weight: .bold))
                     .foregroundColor(RSMSColors.primaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
                 
                 Text(title)
-                    .font(RSMSFonts.caption)
+                    .font(.system(size: 13))
                     .foregroundColor(RSMSColors.secondaryText)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            
+            Spacer(minLength: 0)
         }
-        .padding(RSMSSpacing.md)
-        .background(RSMSColors.cardBackground)
+        .padding(.horizontal, RSMSSpacing.md)
+        .frame(height: 94) // Fixed height to ensure all cards match
+        .background(color.opacity(0.04))
         .cornerRadius(RSMSRadius.medium)
         .overlay(
             RoundedRectangle(cornerRadius: RSMSRadius.medium)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                .stroke(color.opacity(0.12), lineWidth: 1)
         )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title): \(value)")
-        .accessibilityHint(trend ?? "")
     }
 }
+
+/// Custom shape that gives the header a smooth curved bottom edge
+/// instead of a harsh straight line. Used in premium top headers.
+public struct HeaderCurve: Shape {
+    public init() {}
+    
+    public func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: .zero)
+        path.addLine(to: CGPoint(x: rect.maxX, y: 0))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - 20))
+        path.addQuadCurve(
+            to: CGPoint(x: 0, y: rect.maxY - 20),
+            control: CGPoint(x: rect.midX, y: rect.maxY + 10)
+        )
+        path.closeSubpath()
+        return path
+    }
+}
+
+/// A reusable search bar styled after the iOS system search bar.
+/// Rounded pill with a magnifying glass on the left and a mic icon
+/// on the right (collapses to xmark when text is present).
+struct NexusSearchBar: View {
+    @Binding var text: String
+    var placeholder: String = "Search"
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(RSMSColors.secondaryText)
+
+            TextField(placeholder, text: $text)
+                .font(.system(size: 17))
+                .foregroundStyle(RSMSColors.primaryText)
+                .focused($isFocused)
+                .submitLabel(.search)
+
+            Spacer(minLength: 0)
+
+            if text.isEmpty {
+                Image(systemName: "mic.fill")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(RSMSColors.secondaryText)
+                    .transition(.opacity.combined(with: .scale))
+            } else {
+                Button {
+                    text = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 17))
+                        .foregroundStyle(RSMSColors.secondaryText)
+                }
+                .transition(.opacity.combined(with: .scale))
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(Color(.systemFill))
+        )
+        .animation(.easeInOut(duration: 0.18), value: text.isEmpty)
+        .onTapGesture { isFocused = true }
+    }
+}
+

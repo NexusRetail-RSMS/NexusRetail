@@ -1,86 +1,624 @@
+//
+//  AdminManagersView.swift
+//  NexusRetail
+//
+
 import SwiftUI
 
-struct AdminManagersView: View {
-    @Environment(AdminNavigationStore.self) private var navStore
-    @Environment(AdminTransfersViewModel.self) private var viewModel
-    
-    @State private var searchText = ""
-    
-    var filteredManagers: [AdminTransferManager] {
-        if searchText.isEmpty {
-            return viewModel.managers
-        } else {
-            return viewModel.managers.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
-        }
+// MARK: - Data Model
+
+struct DisplayManager: Identifiable, Hashable {
+    let id: UUID
+    var name: String
+    var storeName: String
+    var country: String
+    var performanceScore: Int
+    var revenue: String
+    var imageUrl: String?
+    // Contact info
+    var phone: String = ""
+    var email: String = ""
+    var address: String = ""
+    // Stats
+    var productsSold: Int = 0
+    var createdAt: Date = Date()
+}
+
+// Removed ManagersStore
+
+// MARK: - Helpers
+
+func flagEmoji(for country: String) -> String {
+    let map: [String: String] = [
+        "United States":        "🇺🇸",
+        "United Kingdom":       "🇬🇧",
+        "Canada":               "🇨🇦",
+        "Australia":            "🇦🇺",
+        "Germany":              "🇩🇪",
+        "France":               "🇫🇷",
+        "Japan":                "🇯🇵",
+        "India":                "🇮🇳",
+        "Singapore":            "🇸🇬",
+        "United Arab Emirates": "🇦🇪",
+    ]
+    return map[country] ?? "🌍"
+}
+
+func performanceColor(for score: Int) -> Color {
+    if score >= 90 { return RSMSColors.success }
+    if score >= 75 { return RSMSColors.warning }
+    return RSMSColors.error
+}
+
+// MARK: - Bookmark Badge Shape
+
+struct BookmarkShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width
+        let h = rect.height
+        let notch = h * 0.28
+        var p = Path()
+        p.move(to: CGPoint(x: 0, y: 0))
+        p.addLine(to: CGPoint(x: w, y: 0))
+        p.addLine(to: CGPoint(x: w, y: h))
+        p.addLine(to: CGPoint(x: w / 2, y: h - notch))
+        p.addLine(to: CGPoint(x: 0, y: h))
+        p.closeSubpath()
+        return p
     }
-    
+}
+
+// MARK: - Filter State
+
+enum PerformanceSortOrder: String, CaseIterable {
+    case none       = "None"
+    case topToLow   = "Highest Performance"
+    case lowToTop   = "Lowest Performance"
+    }
+
+// MARK: - Main View
+
+struct AdminManagersView: View {
+    @Binding var isAddManagerPresented: Bool
+    @Binding var searchText: String
+    @State private var viewModel = ManagersViewModel()
+    @State private var topPerformerPage = 0
+    @State private var scrolledID: UUID?
+    @State private var selectedCountryFilter = "All"
+    @State private var selectedPerformanceSort: PerformanceSortOrder = .none
+    @State private var editingManager: DisplayManager? = nil
+    @State private var isRecentlyAddedSort = false
+    @State private var managerToDelete: DisplayManager? = nil
+
+    private let topCount = 3
+
+    private var allCountries: [String] {
+        let names = viewModel.managers.map { $0.country }
+        return Array(Set(names)).sorted()
+    }
+
+    var filteredManagers: [DisplayManager] {
+        var result = viewModel.managers.filter { manager in
+            let matchesSearch = searchText.isEmpty
+                || manager.name.localizedCaseInsensitiveContains(searchText)
+                || manager.storeName.localizedCaseInsensitiveContains(searchText)
+            let matchesCountry = selectedCountryFilter == "All"
+                || manager.country == selectedCountryFilter
+            return matchesSearch && matchesCountry
+        }
+        if isRecentlyAddedSort {
+            result.sort { $0.createdAt > $1.createdAt }
+        } else {
+            switch selectedPerformanceSort {
+            case .topToLow: result.sort { $0.performanceScore > $1.performanceScore }
+            case .lowToTop: result.sort { $0.performanceScore < $1.performanceScore }
+            case .none: break
+            }
+        }
+        return result
+    }
+
+    var isFiltered: Bool {
+        selectedCountryFilter != "All" || selectedPerformanceSort != .none || isRecentlyAddedSort
+    }
+
     var body: some View {
-        List {
-            ForEach(filteredManagers) { manager in
-                NavigationLink(value: manager.id) {
-                    ManagerRow(manager: manager)
+        ZStack {
+            RSMSColors.background
+                .ignoresSafeArea()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: RSMSSpacing.xl) {
+                    VStack(spacing: RSMSSpacing.md) {
+                        HStack {
+                            Text("Managers")
+                                .font(.largeTitle)
+                                .fontWeight(.bold)
+                                .foregroundColor(RSMSColors.primaryText)
+
+                            Spacer()
+
+                            Button {
+                                isAddManagerPresented = true
+                            } label: {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 20, weight: .medium))
+                                    .foregroundColor(RSMSColors.burgundy)
+                                    .frame(width: 44, height: 44)
+                                    .background(RSMSColors.burgundy.opacity(0.1))
+                                    .clipShape(Circle())
+                            }
+                            .accessibilityLabel("Add new manager")
+                        }
+
+                        NexusSearchBar(text: $searchText, placeholder: "Search managers, stores…")
+                    }
+                    .padding(.horizontal, RSMSSpacing.lg)
+                    .padding(.top, 16)
+
+                    // MARK: Top Performers
+                    VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
+                        Text("Top Performers")
+                            .font(RSMSFonts.headline)
+                            .foregroundColor(RSMSColors.darkBrown)
+                            .padding(.horizontal, RSMSSpacing.lg)
+
+                        let topManagers = Array(viewModel.managers.prefix(topCount).enumerated())
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            LazyHStack(spacing: RSMSSpacing.md) {
+                                ForEach(topManagers, id: \.element.id) { index, manager in
+                                    TopPerformanceCard(
+                                        manager: manager,
+                                        rank: index + 1,
+                                        onEdit: {
+                                            editingManager = manager
+                                        },
+                                        onDelete: {
+                                            managerToDelete = manager
+                                        },
+                                        onResetPassword: { newPassword in
+                                            return await viewModel.resetPassword(for: manager.id, email: manager.email, newPassword: newPassword)
+                                        }
+                                    )
+                                }
+                            }
+                            .scrollTargetLayout()
+                            .padding(.horizontal, RSMSSpacing.lg)
+                        }
+                        .scrollTargetBehavior(.viewAligned)
+                        .scrollPosition(id: $scrolledID)
+                        .onChange(of: scrolledID) { _, newID in
+                            if let newID = newID, let idx = topManagers.firstIndex(where: { $0.element.id == newID }) {
+                                topPerformerPage = idx
+                            }
+                        }
+
+                        // Page dots (synced with actual count of top managers)
+                        let actualTopCount = min(topCount, viewModel.managers.count)
+                        HStack(spacing: 6) {
+                            ForEach(0..<actualTopCount, id: \.self) { i in
+                                Circle()
+                                    .fill(i == topPerformerPage ? RSMSColors.burgundy : RSMSColors.cardBorder)
+                                    .frame(width: i == topPerformerPage ? 8 : 6,
+                                           height: i == topPerformerPage ? 8 : 6)
+                                    .animation(.spring(response: 0.3), value: topPerformerPage)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, RSMSSpacing.xs)
+                    }
+
+
+                    // MARK: All Managers Header
+                    HStack(alignment: .center) {
+                        Text("All Managers")
+                            .font(RSMSFonts.headline)
+                            .foregroundColor(RSMSColors.darkBrown)
+                        Spacer()
+                        Menu {
+                            Picker(selection: $selectedCountryFilter) {
+                                Text("All Countries").tag("All")
+                                ForEach(allCountries, id: \.self) { country in
+                                    Text("\(country) \(flagEmoji(for: country))").tag(country)
+                                }
+                            } label: {
+                                Label("Country", systemImage: "globe")
+                            }
+                            .pickerStyle(.menu)
+                            
+                            Picker(selection: $selectedPerformanceSort) {
+                                ForEach(PerformanceSortOrder.allCases, id: \.self) { option in
+                                    Text(option.rawValue).tag(option)
+                                }
+                            } label: {
+                                Label("Performance", systemImage: "chart.bar.fill")
+                            }
+                            .pickerStyle(.menu)
+                            
+                            Button {
+                                isRecentlyAddedSort.toggle()
+                            } label: {
+                                Label(isRecentlyAddedSort ? "✓ Recently Added" : "Recently Added", systemImage: "clock")
+                            }
+
+                            if isFiltered {
+                                Divider()
+                                Button(role: .destructive) {
+                                    selectedCountryFilter = "All"
+                                    selectedPerformanceSort = .none
+                                    isRecentlyAddedSort = false
+                                } label: {
+                                    Label("Reset Filters", systemImage: "trash")
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "line.3.horizontal.decrease")
+                                .font(.system(size: 17, weight: .medium))
+                                .foregroundColor(isFiltered ? RSMSColors.burgundy : RSMSColors.primaryText)
+                                .frame(width: 40, height: 40)
+                                .background(isFiltered
+                                    ? RSMSColors.burgundy.opacity(0.12)
+                                    : Color.black.opacity(0.05))
+                                .clipShape(Circle())
+                        }
+                        .id("\(selectedCountryFilter)_\(selectedPerformanceSort.rawValue)")
+                    }
+                    .padding(.horizontal, RSMSSpacing.lg)
+
+                    // MARK: Manager List
+                    if filteredManagers.isEmpty {
+                        VStack(spacing: RSMSSpacing.md) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 44))
+                                .foregroundColor(RSMSColors.secondaryText)
+                            Text("Not Present")
+                                .font(RSMSFonts.headline)
+                                .foregroundColor(RSMSColors.primaryText)
+                            Text("No manager or store matches '\(searchText)'.")
+                                .font(RSMSFonts.subheadline)
+                                .foregroundColor(RSMSColors.secondaryText)
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 40)
+                        .padding(.horizontal, RSMSSpacing.xxxl)
+                    } else {
+                        LazyVStack(spacing: RSMSSpacing.md) {
+                            ForEach(filteredManagers) { manager in
+                                ManagerListCard(
+                                    manager: manager,
+                                    onEdit: {
+                                        editingManager = manager
+                                    },
+                                    onDelete: {
+                                        managerToDelete = manager
+                                    },
+                                    onResetPassword: { newPassword in
+                                        return await viewModel.resetPassword(for: manager.id, email: manager.email, newPassword: newPassword)
+                                    }
+                                )
+                            }
+                        }
+                        .padding(.horizontal, RSMSSpacing.lg)
+                        .padding(.bottom, RSMSSpacing.xl)
+                    }
+                }
+                .padding(.top, RSMSSpacing.sm)
+            }
+        }
+        .sheet(isPresented: $isAddManagerPresented) {
+            NewManagerSheet(onCreate: { email, password, name, phone, store, imageUrl in
+                return await viewModel.createManager(email: email, password: password, name: name, phone: phone, address: store, imageUrl: imageUrl)
+            })
+        }
+        .sheet(item: $editingManager) { mgr in
+            if let idx = viewModel.managers.firstIndex(where: { $0.id == mgr.id }) {
+                EditManagerSheet(manager: Binding(
+                    get: { viewModel.managers[idx] },
+                    set: { newMgr in
+                        viewModel.managers[idx] = newMgr
+                        // We would call a viewModel.updateManager(newMgr) here
+                    }
+                ))
+            } else {
+                EditManagerSheet(manager: .constant(mgr))
+            }
+        }
+        .onChange(of: selectedPerformanceSort) { _, newVal in
+            if newVal != .none { isRecentlyAddedSort = false }
+        }
+        .onChange(of: isRecentlyAddedSort) { _, newVal in
+            if newVal { selectedPerformanceSort = .none }
+        }
+        .task {
+            await viewModel.loadManagers()
+        }
+        .refreshable {
+            await viewModel.loadManagers()
+        }
+        .alert("Delete Manager", isPresented: Binding(
+            get: { managerToDelete != nil },
+            set: { if !$0 { managerToDelete = nil } }
+        )) {
+            Button("Cancel", role: .cancel) {
+                managerToDelete = nil
+            }
+            Button("Delete", role: .destructive) {
+                if let manager = managerToDelete {
+                    Task {
+                        _ = await viewModel.deleteManager(id: manager.id)
+                    }
+                    managerToDelete = nil
                 }
             }
-        }
-        .searchable(text: $searchText, prompt: "Search managers")
-        .scrollContentBackground(.hidden)
-        .background(Color.nexusBackground)
-        .navigationDestination(for: UUID.self) { managerId in
-            if let manager = viewModel.manager(for: managerId) {
-                AdminManagerProfileView(manager: manager)
-            }
-        }
-        // Handle programmatic navigation from Transfers tab
-        .onChange(of: navStore.selectedManagerID) { _, newManagerID in
-            // When deep linking from another tab, we need to handle the navigation
-            // A simple way is to use a NavigationStack state, but since we are just
-            // switching to the tab and letting the user see the profile, we can use an inline push or sheet.
-            // For true programmatic navigation within NavigationStack, we'd bind a path.
-            // For now, this is handled by the NavigationStack picking up the value if we set a path.
+        } message: {
+            Text("Are you sure you want to delete this manager? This action cannot be undone and will revoke their access.")
         }
     }
 }
 
-struct ManagerRow: View {
-    let manager: AdminTransferManager
-    
+// MARK: - Top Performance Card
+
+struct TopPerformanceCard: View {
+    let manager: DisplayManager
+    let rank: Int
+    var onEdit: (() -> Void)? = nil
+    var onDelete: (() -> Void)? = nil
+    var onResetPassword: ((String) async -> Bool)? = nil
+
+    private var rankColor: Color {
+        switch rank {
+        case 1:  return Color(hex: "D4A017")  // gold
+        case 2:  return Color(hex: "8B8B8D")  // silver
+        default: return Color(hex: "A0522D")  // bronze
+        }
+    }
+
     var body: some View {
-        HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(Color.nexusRed.opacity(0.1))
-                    .frame(width: 50, height: 50)
-                
-                Text(manager.avatarInitials)
-                    .font(.headline)
-                    .foregroundColor(Color.nexusRed)
+        NavigationLink(destination: ManagerDetailView(manager: manager, onResetPassword: onResetPassword, onDelete: onDelete)) {
+            ZStack(alignment: .topLeading) {
+                // Card background
+                RoundedRectangle(cornerRadius: RSMSRadius.extraLarge)
+                    .fill(RSMSColors.cardBackground)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: RSMSRadius.extraLarge)
+                            .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                    )
+                    .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
+
+                VStack(spacing: 0) {
+                    // Top Row: Performance Score badge
+                    HStack {
+                        Spacer()
+                        Text("\(manager.performanceScore)%")
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .foregroundColor(performanceColor(for: manager.performanceScore))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(performanceColor(for: manager.performanceScore).opacity(0.12))
+                            .cornerRadius(RSMSRadius.small)
+                    }
+
+                    // Middle: Avatar + Name + Store
+                    HStack(alignment: .center, spacing: RSMSSpacing.md) {
+                        // Avatar
+                        ZStack {
+                            Circle()
+                                .fill(RSMSColors.burgundy.opacity(0.1))
+                                .frame(width: 55, height: 55)
+                            if let urlString = manager.imageUrl, let url = URL(string: urlString) {
+                                AsyncImage(url: url) { image in
+                                    image
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 55, height: 55)
+                                        .clipShape(Circle())
+                                } placeholder: {
+                                    ProgressView()
+                                        .frame(width: 55, height: 55)
+                                }
+                            } else {
+                                Image(systemName: "person.fill")
+                                    .foregroundColor(RSMSColors.burgundy)
+                                    .font(.system(size: 22))
+                            }
+                        }
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(manager.name)
+                                .font(.system(size: 19, weight: .bold, design: .rounded))
+                                .foregroundColor(RSMSColors.primaryText)
+                                .lineLimit(1)
+
+                            Text(manager.storeName)
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(RSMSColors.secondaryText)
+                                .lineLimit(1)
+                        }
+
+                        Spacer()
+                    }
+                    .padding(.top, RSMSSpacing.md)
+
+                    Spacer(minLength: RSMSSpacing.sm)
+
+                    // Bottom Row: Country & Revenue
+                    HStack(alignment: .bottom) {
+                        HStack(spacing: 5) {
+                            Text(flagEmoji(for: manager.country))
+                                .font(.system(size: 18))
+                            Text(manager.country)
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(RSMSColors.secondaryText)
+                                .lineLimit(1)
+                        }
+
+                        Spacer()
+
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text("Revenue")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(RSMSColors.secondaryText)
+                            Text(manager.revenue)
+                                .font(.system(size: 19, weight: .bold, design: .rounded))
+                                .foregroundColor(RSMSColors.primaryText)
+                        }
+                    }
+                }
+                .padding(16)
+
+                // Bookmark badge centered horizontally with profile avatar (center at x: 43.5)
+                ZStack {
+                    BookmarkShape()
+                        .fill(rankColor)
+                        .frame(width: 28, height: 36)
+                        .shadow(color: rankColor.opacity(0.3), radius: 3, x: 0, y: 2)
+                    Text("\(rank)")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(.white)
+                        .offset(y: -2)
+                }
+                .offset(x: 29.5, y: 0)
             }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(manager.name)
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                
-                Text(manager.storeName)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-            
-            Spacer()
-            
-            VStack(alignment: .trailing, spacing: 4) {
-                if manager.pendingRequests > 0 {
-                    Text("\(manager.pendingRequests) Pending")
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .foregroundColor(.orange)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.orange.opacity(0.1))
-                        .cornerRadius(8)
+            .frame(width: 320, height: 190)
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            Button {
+                onEdit?()
+            } label: {
+                Label {
+                    Text("Edit")
+                } icon: {
+                    Image(systemName: "square.and.pencil")
+                        .renderingMode(.template)
+                        .foregroundColor(.black)
                 }
             }
+            .tint(.black)
+
+            Button(role: .destructive) {
+                onDelete?()
+            } label: {
+                Label {
+                    Text("Delete")
+                } icon: {
+                    Image(systemName: "trash")
+                        .renderingMode(.template)
+                        .foregroundColor(.red)
+                }
+            }
+            .tint(.red)
         }
-        .padding(.vertical, 4)
+        .tint(.black)
+    }
+}
+
+// MARK: - Manager List Card
+
+struct ManagerListCard: View {
+    let manager: DisplayManager
+    var onEdit: (() -> Void)? = nil
+    var onDelete: (() -> Void)? = nil
+    var onResetPassword: ((String) async -> Bool)? = nil
+
+    var body: some View {
+        NavigationLink(destination: ManagerDetailView(manager: manager, onResetPassword: onResetPassword, onDelete: onDelete)) {
+            HStack(spacing: RSMSSpacing.md) {
+                // Avatar
+                ZStack {
+                    Circle()
+                        .fill(RSMSColors.burgundy.opacity(0.1))
+                        .frame(width: 55, height: 55)
+                    if let urlString = manager.imageUrl, let url = URL(string: urlString) {
+                        AsyncImage(url: url) { image in
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 55, height: 55)
+                                .clipShape(Circle())
+                        } placeholder: {
+                            ProgressView()
+                                .frame(width: 55, height: 55)
+                        }
+                    } else {
+                        Image(systemName: "person.fill")
+                            .foregroundColor(RSMSColors.burgundy)
+                            .font(.system(size: 22))
+                    }
+                }
+
+                // Text info
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(manager.storeName)
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundColor(RSMSColors.primaryText)
+                    Text(manager.name)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(RSMSColors.secondaryText)
+                    HStack(spacing: 4) {
+                        Text(flagEmoji(for: manager.country))
+                            .font(.system(size: 16))
+                        Text(manager.country)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(RSMSColors.secondaryText)
+                    }
+                }
+
+                Spacer()
+
+                // Performance badge
+                Text("\(manager.performanceScore)%")
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .foregroundColor(performanceColor(for: manager.performanceScore))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(performanceColor(for: manager.performanceScore).opacity(0.12))
+                    .cornerRadius(RSMSRadius.small)
+
+                // Chevron
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(RSMSColors.secondaryText)
+            }
+            .padding(16)
+            .frame(minHeight: 85)
+            .background(RSMSColors.cardBackground)
+            .cornerRadius(RSMSRadius.extraLarge)
+            .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
+            .overlay(
+                RoundedRectangle(cornerRadius: RSMSRadius.large)
+                    .stroke(RSMSColors.cardBorder, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            Button {
+                onEdit?()
+            } label: {
+                Label {
+                    Text("Edit")
+                } icon: {
+                    Image(systemName: "square.and.pencil")
+                        .renderingMode(.template)
+                        .foregroundColor(.black)
+                }
+            }
+            .tint(.black)
+
+            Button(role: .destructive) {
+                onDelete?()
+            } label: {
+                Label {
+                    Text("Delete")
+                } icon: {
+                    Image(systemName: "trash")
+                        .renderingMode(.template)
+                        .foregroundColor(.red)
+                }
+            }
+            .tint(.red)
+        }
+        .tint(.black)
     }
 }

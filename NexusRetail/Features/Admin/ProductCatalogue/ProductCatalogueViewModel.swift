@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import Supabase
 
 // MARK: - Models
 
@@ -9,7 +10,8 @@ struct TrendingProduct: Identifiable {
     let stockStatus: String
     let units: Int
     let price: Double
-    let imageName: String
+    let imageName: String?
+    let imageUrl: String?
 }
 
 struct CatalogueProduct: Identifiable {
@@ -21,7 +23,31 @@ struct CatalogueProduct: Identifiable {
     var stock: Int
     var date: String
     var imageName: String?
+    var imageUrl: String?
     var image: UIImage?
+    var qrCode: String?
+}
+
+struct CatalogueProductRPC: Codable {
+    let id: UUID
+    let name: String
+    let sku_code: String?
+    let category: String
+    let price: Double
+    let stock: Int
+    let launch_date: String
+    let image_url: String?
+    let qr_code: String?
+}
+
+struct AddProductParams: Encodable {
+    let p_name: String
+    let p_category: String
+    let p_description: String
+    let p_price: Double
+    let p_stock: Int
+    let p_launch_date: String
+    let p_image_url: String
 }
 
 // MARK: - ViewModel
@@ -54,37 +80,147 @@ final class ProductCatalogueViewModel: ObservableObject {
     }
 
     init() {
-        self.trendingProducts = [
-            TrendingProduct(id: UUID(), name: "Noiré Burgundy Tote", stockStatus: "In Stock", units: 24, price: 1290, imageName: "bag"),
-            TrendingProduct(id: UUID(), name: "Classic Leather Wallet", stockStatus: "In Stock", units: 58, price: 450, imageName: "hero"),
-            TrendingProduct(id: UUID(), name: "Silk Evening Scarf", stockStatus: "Low Stock", units: 7, price: 320, imageName: "watch"),
-            TrendingProduct(id: UUID(), name: "Monogram Crossbody", stockStatus: "In Stock", units: 31, price: 980, imageName: "perfume")
-        ]
-        self.allProducts = [
-            CatalogueProduct(id: UUID(), name: "Aurelia Croco Tote", sku: "BAG-AUR-204", category: "Bags", price: 2450, stock: 128, date: "Jan 12, 2026", imageName: "bag"),
-            CatalogueProduct(id: UUID(), name: "Véloute Silk Blouse", sku: "APP-VEL-031", category: "Fragrances", price: 890,   stock: 44, date: "Feb 02, 2026", imageName: "perfume"),
-            CatalogueProduct(id: UUID(), name: "Monogram Crossbody", sku: "BAG-MON-117", category: "Bags", price: 980, stock: 31,  date: "Mar 15, 2026", imageName: "hero"),
-            CatalogueProduct(id: UUID(), name: "Aurum Tourbillon", sku: "WCH-AUR-088", category: "Watches", price: 18900, stock: 6,   date: "Mar 03, 2026", imageName: "watch"),
-            CatalogueProduct(id: UUID(), name: "Nocturne Velvet Fragrances",sku: "BAG-NOC-055", category: "Fragrances", price: 640,   stock: 57, date: "Nov 10, 2025", imageName: "perfume"),
-            CatalogueProduct(id: UUID(), name: "Classic Leather Watches", sku: "ACC-CLW-009", category: "Watches", price: 450,   stock: 89, date: "Oct 22, 2025", imageName: "watch"),
-            CatalogueProduct(id: UUID(), name: "L'Éclat Noir Parfum", sku: "FRG-ECL-512", category: "Fragrances", price: 320,   stock: 48, date: "Feb 20, 2026", imageName: "perfume"),
-            CatalogueProduct(id: UUID(), name: "Ivory Pearl Earrings", sku: "JWL-IPE-201", category: "Watches", price: 580, stock: 96, date: "Jan 05, 2026", imageName: "watch"),
-            CatalogueProduct(id: UUID(), name: "Sable Trench Coat", sku: "APP-SBL-340", category: "Bags", price: 3200, stock: 62, date: "Aug 01, 2026", imageName: "hero"),
-            CatalogueProduct(id: UUID(), name: "Obsidian Chronograph", sku: "WCH-OBS-099", category: "Watches", price: 24500, stock: 498, date: "Sep 15, 2026", imageName: "watch")
-        ]
+        self.trendingProducts = []
+        self.allProducts = []
+        Task {
+            await fetchProducts()
+        }
         startAutoScroll()
+    }
+
+    func fetchProducts() async {
+        do {
+            let response: [CatalogueProductRPC] = try await SupabaseManager.shared.client
+                .rpc("get_catalogue_products")
+                .execute()
+                .value
+            
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd"
+            
+            let displayFormatter = DateFormatter()
+            displayFormatter.dateStyle = .medium
+            
+            let mapped = response.map { rpc -> CatalogueProduct in
+                let dateStr: String
+                if let parsed = formatter.date(from: rpc.launch_date) {
+                    dateStr = displayFormatter.string(from: parsed)
+                } else {
+                    dateStr = rpc.launch_date
+                }
+                
+                return CatalogueProduct(
+                    id: rpc.id,
+                    name: rpc.name,
+                    sku: rpc.sku_code ?? "N/A",
+                    category: rpc.category,
+                    price: rpc.price,
+                    stock: rpc.stock,
+                    date: dateStr,
+                    imageName: nil,
+                    imageUrl: rpc.image_url,
+                    image: nil,
+                    qrCode: rpc.qr_code
+                )
+            }
+            
+            self.allProducts = mapped
+            
+            struct TopProductsRPCParams: Encodable {
+                let p_period: String
+                let p_limit: Int
+                let p_country: String?
+            }
+            
+            struct MinimalTopProduct: Decodable {
+                let id: UUID
+                let units: Int
+                
+                enum CodingKeys: String, CodingKey {
+                    case id = "sku_id"
+                    case units
+                }
+            }
+            
+            let topParams = TopProductsRPCParams(p_period: "month", p_limit: 4, p_country: nil)
+            let topProductsResp: [MinimalTopProduct] = try await SupabaseManager.shared.client
+                .rpc("top_products", params: topParams)
+                .execute()
+                .value
+            
+            self.trendingProducts = topProductsResp.compactMap { top in
+                guard let match = mapped.first(where: { $0.id == top.id }) else { return nil }
+                return TrendingProduct(
+                    id: match.id,
+                    name: match.name,
+                    stockStatus: match.stock > 10 ? "In Stock" : "Low Stock",
+                    units: top.units,
+                    price: match.price,
+                    imageName: match.imageName,
+                    imageUrl: match.imageUrl
+                )
+            }
+        } catch {
+            print("Error fetching products: \(error)")
+        }
+    }
+
+    func generateSKU(for category: String) -> String {
+        let prefix = category.prefix(3).uppercased()
+        let randomNum = String(format: "%04d", Int.random(in: 1...9999))
+        return "\(prefix)-\(randomNum)"
+    }
+    
+    private func uploadImage(_ image: UIImage) async throws -> String {
+        guard let data = image.jpegData(compressionQuality: 0.8) else {
+            throw URLError(.badServerResponse)
+        }
+        let path = "products/\(UUID().uuidString).jpg"
+        let fileOptions = FileOptions(contentType: "image/jpeg")
+        try await SupabaseManager.shared.client.storage
+            .from("product-images")
+            .upload(path, data: data, options: fileOptions)
+        
+        let url = try SupabaseManager.shared.client.storage
+            .from("product-images")
+            .getPublicURL(path: path)
+        return url.absoluteString
     }
 
     func addProduct(name: String, sku: String, category: String, price: Double, stock: Int, launchDate: Date, image: UIImage?) {
         let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        let newProduct = CatalogueProduct(
-            id: UUID(), name: name, sku: sku, category: category,
-            price: price, stock: stock,
-            date: formatter.string(from: launchDate),
-            imageName: nil, image: image
-        )
-        allProducts.insert(newProduct, at: 0)
+        formatter.dateFormat = "yyyy-MM-dd"
+        let dateStr = formatter.string(from: launchDate)
+        
+        Task {
+            var uploadedUrl = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800"
+            if let image = image {
+                do {
+                    uploadedUrl = try await uploadImage(image)
+                } catch {
+                    print("Failed to upload image: \(error)")
+                }
+            }
+            
+            let params = AddProductParams(
+                p_name: name,
+                p_category: category,
+                p_description: "Added from app",
+                p_price: price,
+                p_stock: stock,
+                p_launch_date: dateStr,
+                p_image_url: uploadedUrl
+            )
+            
+            do {
+                try await SupabaseManager.shared.client
+                    .rpc("add_catalogue_product", params: params)
+                    .execute()
+                await fetchProducts()
+            } catch {
+                print("Error adding product: \(error)")
+            }
+        }
     }
     
     func updateProduct(
@@ -120,6 +256,7 @@ final class ProductCatalogueViewModel: ObservableObject {
             .autoconnect()
             .sink { [weak self] _ in
                 guard let self else { return }
+                guard !self.trendingProducts.isEmpty else { return }
                 withAnimation(.easeInOut(duration: 0.4)) {
                     self.currentTrendingIndex = (self.currentTrendingIndex + 1) % self.trendingProducts.count
                 }

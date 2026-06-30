@@ -4,7 +4,9 @@
 //
 //  Top product-sales bar chart with its OWN Weekly ↔ Monthly toggle
 //  (independent from the Revenue chart).
-//  Uses gold/tan bars matching the screenshot aesthetic.
+//  Each category bar uses a shade from the brand gradient palette
+//  (#200E01 → #5B0202 → #8B0000 → #EDE7C7) for a homogenous look.
+//  Categories are labeled on the X-axis so no separate legend is needed.
 //
 
 import SwiftUI
@@ -30,60 +32,78 @@ struct ProductSalesChart: View {
             }
 
             // Chart
-            Chart(data) { point in
-                BarMark(
-                    x: .value("Category", shortLabel(point.category)),
-                    y: .value("Sales", point.sales)
-                )
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [RSMSColors.darkBrown, RSMSColors.darkBrown.opacity(0.8)],
-                        startPoint: .bottom,
-                        endPoint: .top
-                    )
-                )
-                .cornerRadius(4)
-                .annotation(position: .top, spacing: 4) {
-                    Text("\(point.sales)")
-                        .font(.system(size: 9, weight: .semibold))
-                        .foregroundColor(RSMSColors.secondaryText)
-                }
-            }
-            .chartYScale(domain: 0...maxValue)
-            .chartYAxis {
-                AxisMarks(position: .leading, values: .automatic(desiredCount: 5)) { value in
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
-                        .foregroundStyle(RSMSColors.divider)
-                    AxisValueLabel {
-                        if let v = value.as(Int.self) {
-                            Text("\(v)")
-                                .font(.system(size: 10))
-                                .foregroundColor(RSMSColors.secondaryText)
-                        }
+            if data.isEmpty {
+                ZStack {
+                    Chart {
+                        SectorMark(
+                            angle: .value("Placeholder", 1),
+                            innerRadius: .ratio(0.65),
+                            angularInset: 2
+                        )
+                        .foregroundStyle(RSMSColors.burgundy.opacity(0.1))
+                        .cornerRadius(4)
+                    }
+                    .chartLegend(.hidden)
+                    .frame(height: 200)
+                    
+                    VStack(spacing: 2) {
+                        Image(systemName: "bag")
+                            .font(.system(size: 22))
+                            .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                        Text("No product data")
+                            .font(.system(size: 10))
+                            .foregroundColor(RSMSColors.secondaryText)
                     }
                 }
-            }
-            .chartXAxis {
-                AxisMarks { value in
-                    AxisValueLabel {
-                        if let cat = value.as(String.self) {
-                            Text(cat)
-                                .font(.system(size: 10, weight: .medium))
-                                .foregroundColor(RSMSColors.secondaryText)
-                        }
+                .padding(.top, RSMSSpacing.sm)
+            } else {
+                ZStack {
+                    Chart(data) { point in
+                        SectorMark(
+                            angle: .value("Sales", point.sales),
+                            innerRadius: .ratio(0.65),
+                            angularInset: 2
+                        )
+                        .foregroundStyle(by: .value("Category", shortLabel(point.category)))
+                        .cornerRadius(4)
+                    }
+                    .chartForegroundStyleScale([
+                        "Couture": RSMSColors.burgundy,
+                        "Fragrance": Color(hex: "F4A261"),
+                        "Jewelry": Color(hex: "E9C46A"),
+                        "Leather": Color(hex: "2A9D8F"),
+                        "Watches": Color(hex: "264653"),
+                        "Accessories": Color(hex: "8A2BE2")
+                    ])
+                    .chartLegend(.hidden)
+                    .frame(height: 200)
+
+                    VStack {
+                        Text("Total Units")
+                            .font(.system(size: 10))
+                            .foregroundColor(RSMSColors.secondaryText)
+                        Text("\(data.map(\.sales).reduce(0, +))")
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundColor(RSMSColors.primaryText)
                     }
                 }
+                .padding(.top, RSMSSpacing.sm)
             }
-            .frame(height: 200)
 
             // Legend
-            HStack(spacing: RSMSSpacing.sm) {
-                Circle()
-                    .fill(RSMSColors.darkBrown)
-                    .frame(width: 8, height: 8)
-                Text("Units sold (\(timeRange.rawValue.lowercased()))")
-                    .font(.system(size: 10))
-                    .foregroundColor(RSMSColors.secondaryText)
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: RSMSSpacing.sm) {
+                ForEach(data) { point in
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(colorFor(category: shortLabel(point.category)))
+                            .frame(width: 8, height: 8)
+                        Text(shortLabel(point.category))
+                            .font(.system(size: 12))
+                            .foregroundColor(RSMSColors.secondaryText)
+                            .lineLimit(1)
+                        Spacer()
+                    }
+                }
             }
         }
         .padding(RSMSSpacing.lg)
@@ -101,10 +121,22 @@ struct ProductSalesChart: View {
         default:              return category
         }
     }
+    
+    private func colorFor(category: String) -> Color {
+        switch category {
+        case "Couture": return RSMSColors.burgundy
+        case "Fragrance": return Color(hex: "F4A261")
+        case "Jewelry": return Color(hex: "E9C46A")
+        case "Leather": return Color(hex: "2A9D8F")
+        case "Watches": return Color(hex: "264653")
+        case "Accessories": return Color(hex: "8A2BE2")
+        default: return RSMSColors.chartBar
+        }
+    }
 }
 
 #Preview {
-    @Previewable @State var range: SalesTimeRange = .weekly
+    @Previewable @State var range: SalesTimeRange = .monthly
     let vm = DashboardViewModel()
     ProductSalesChart(data: vm.productChartData, maxValue: vm.productMaxValue, timeRange: $range)
         .padding()
