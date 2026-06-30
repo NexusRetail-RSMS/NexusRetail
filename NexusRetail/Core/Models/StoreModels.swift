@@ -21,6 +21,10 @@ struct Store: Codable, Identifiable, Hashable {
     let managerID: UUID?
     let isWarehouse: Bool?
     let status: StoreStatus?
+    let latitude: Double?
+    let longitude: Double?
+    let city: String?
+    let country: String?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -33,6 +37,10 @@ struct Store: Codable, Identifiable, Hashable {
         case managerID = "manager_id"
         case isWarehouse = "is_warehouse"
         case status
+        case latitude
+        case longitude
+        case city
+        case country
     }
     
     var readableLocale: String {

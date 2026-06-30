@@ -46,6 +46,13 @@ struct StoreFormView: View {
             _timezone = State(initialValue: store.timezone ?? "Asia/Kolkata")
             _selectedManagerID = State(initialValue: store.managerID)
             _isActive = State(initialValue: store.status == .active)
+            _country = State(initialValue: store.country ?? "")
+            _city = State(initialValue: store.city ?? "")
+            if let lat = store.latitude, let lng = store.longitude {
+                let coord = CLLocationCoordinate2D(latitude: lat, longitude: lng)
+                _pickedCoordinate = State(initialValue: coord)
+                _position = State(initialValue: .camera(MapCamera(centerCoordinate: coord, distance: 5000)))
+            }
         }
     }
     
@@ -190,7 +197,11 @@ struct StoreFormView: View {
                                     currencyCode: currencyCode,
                                     timezone: timezone,
                                     managerID: selectedManagerID,
-                                    status: isActive ? .active : .archived
+                                    status: isActive ? .active : .archived,
+                                    latitude: pickedCoordinate?.latitude,
+                                    longitude: pickedCoordinate?.longitude,
+                                    city: city,
+                                    country: country
                                 )
                                 if success { dismiss() }
                             } else {
@@ -204,7 +215,11 @@ struct StoreFormView: View {
                                     managerID: selectedManagerID,
                                     status: isActive ? .active : .archived,
                                     includeRazorpay: includeRazorpay,
-                                    includeCard: includeCard
+                                    includeCard: includeCard,
+                                    latitude: pickedCoordinate?.latitude,
+                                    longitude: pickedCoordinate?.longitude,
+                                    city: city,
+                                    country: country
                                 )
                                 if success { dismiss() }
                             }
