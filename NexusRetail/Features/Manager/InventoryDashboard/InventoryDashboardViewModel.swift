@@ -10,8 +10,31 @@ import SwiftUI
 class InventoryDashboardViewModel {
     var inventoryItems: [InventoryItem] = []
     
+    var searchText: String = ""
+    var selectedFilter: InventoryStatus? = nil
+    
+    var pendingRequestsCount: Int = 0
+    var showSuccessToast: Bool = false
+    
     init() {
         loadMockData()
+    }
+    
+    var filteredItems: [InventoryItem] {
+        var result = inventoryItems
+        
+        if let filter = selectedFilter {
+            result = result.filter { $0.status == filter }
+        }
+        
+        if !searchText.isEmpty {
+            result = result.filter { 
+                $0.name.localizedCaseInsensitiveContains(searchText) || 
+                $0.sku.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+        
+        return result
     }
     
     var lowStockItems: [InventoryItem] {
@@ -20,20 +43,45 @@ class InventoryDashboardViewModel {
     
     private func loadMockData() {
         inventoryItems = [
+            // Current 3, Min 10 => 30% => Low Stock
             InventoryItem(id: UUID(), name: "Premium Leather Jacket", sku: "JKT-001", category: "Apparel", currentStock: 3, minimumRequired: 10, price: 12999, imageUrl: nil),
+            // Current 45, Min 20 => Healthy
             InventoryItem(id: UUID(), name: "Classic Cotton T-Shirt", sku: "TSH-042", category: "Apparel", currentStock: 45, minimumRequired: 20, price: 999, imageUrl: nil),
+            // Current 2, Min 15 => 13% => Critical
             InventoryItem(id: UUID(), name: "Slim Fit Denim Jeans", sku: "DNM-103", category: "Apparel", currentStock: 2, minimumRequired: 15, price: 3499, imageUrl: nil),
+            // Current 1, Min 12 => 8% => Critical
             InventoryItem(id: UUID(), name: "Sports Running Shoes", sku: "SHO-099", category: "Footwear", currentStock: 1, minimumRequired: 12, price: 4999, imageUrl: nil),
+            // Current 8, Min 25 => 32% => Low Stock
             InventoryItem(id: UUID(), name: "Elegant Silk Scarf", sku: "SCF-011", category: "Accessories", currentStock: 8, minimumRequired: 25, price: 1499, imageUrl: nil),
+            // Current 15, Min 10 => Healthy
             InventoryItem(id: UUID(), name: "Winter Wool Beanie", sku: "BNI-005", category: "Accessories", currentStock: 15, minimumRequired: 10, price: 799, imageUrl: nil)
         ]
     }
     
     func requestStock(for payloads: [StockRequestPayload]) {
-        // In a real app, this would send an API request to Supabase.
-        print("Stock requested for: \(payloads.map { "\($0.item.name) (Qty: \($0.quantity), Urgency: \($0.urgency.rawValue))" }.joined(separator: ", "))")
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyyMMdd"
+        let dateString = formatter.string(from: Date())
+        let randomNum = String(format: "%04d", Int.random(in: 1...9999))
         
-        // Mock updating the local state (optional for mock, but good for UX)
-        // Here we could simulate the items no longer being low stock, or just showing a success message.
+        let request = StockRequest(
+            id: "REQ-\(dateString)-\(randomNum)",
+            date: Date(),
+            storeId: "STR-01",
+            managerId: "MGR-99",
+            status: "Pending",
+            items: payloads
+        )
+        
+        print("Stock request generated: \(request.id)")
+        // In a real app, this would send an API request.
+        
+        pendingRequestsCount += 1
+        
+        // Temporarily show toast
+        showSuccessToast = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            self.showSuccessToast = false
+        }
     }
 }

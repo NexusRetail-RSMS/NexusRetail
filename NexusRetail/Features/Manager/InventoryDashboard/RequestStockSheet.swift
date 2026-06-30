@@ -13,6 +13,7 @@ struct RequestStockSheet: View {
     @State private var selectedItems: Set<UUID> = []
     @State private var quantities: [UUID: Int] = [:]
     @State private var urgencies: [UUID: StockRequestUrgency] = [:]
+    @State private var reasons: [UUID: String] = [:]
     @State private var isSubmitting = false
     
     var body: some View {
@@ -70,13 +71,13 @@ struct RequestStockSheet: View {
                                             Spacer()
                                             
                                             VStack(alignment: .trailing, spacing: 2) {
-                                                Text("\(item.currentStock)")
+                                                Text("\(item.currentStock) / \(item.minimumRequired)")
                                                     .font(RSMSFonts.headline)
-                                                    .foregroundColor(RSMSColors.error)
+                                                    .foregroundColor(item.status == .critical ? RSMSColors.error : RSMSColors.warning)
                                                     .fontWeight(.bold)
-                                                Text("in stock")
+                                                Text("Current / Min")
                                                     .font(RSMSFonts.caption)
-                                                    .foregroundColor(RSMSColors.error)
+                                                    .foregroundColor(RSMSColors.secondaryText)
                                             }
                                         }
                                     }
@@ -119,6 +120,20 @@ struct RequestStockSheet: View {
                                             .labelsHidden()
                                             .tint(RSMSColors.burgundy)
                                         }
+                                        
+                                        HStack {
+                                            Text("Reason:")
+                                                .font(RSMSFonts.subheadline)
+                                                .foregroundColor(RSMSColors.primaryText)
+                                            Spacer()
+                                            TextField("Optional", text: Binding(
+                                                get: { reasons[item.id, default: ""] },
+                                                set: { reasons[item.id] = $0 }
+                                            ))
+                                            .multilineTextAlignment(.trailing)
+                                            .font(RSMSFonts.body)
+                                            .foregroundColor(RSMSColors.primaryText)
+                                        }
                                     }
                                 }
                                 .padding(.vertical, 8)
@@ -160,7 +175,10 @@ struct RequestStockSheet: View {
                 .map { item in
                     let qty = quantities[item.id] ?? max(1, item.minimumRequired - item.currentStock)
                     let urgency = urgencies[item.id] ?? .medium
-                    return StockRequestPayload(item: item, quantity: qty, urgency: urgency)
+                    let rawReason = reasons[item.id]?.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let finalReason = rawReason?.isEmpty == true ? nil : rawReason
+                    
+                    return StockRequestPayload(item: item, quantity: qty, urgency: urgency, reason: finalReason)
                 }
             
             onSubmit(requestedItems)

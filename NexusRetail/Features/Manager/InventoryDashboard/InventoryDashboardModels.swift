@@ -4,6 +4,15 @@
 //
 
 import Foundation
+import SwiftUI
+
+enum InventoryStatus: String, CaseIterable, Identifiable {
+    case healthy = "Healthy"
+    case lowStock = "Low Stock"
+    case critical = "Critical"
+    
+    var id: String { self.rawValue }
+}
 
 /// Represents an item in the store's inventory
 struct InventoryItem: Identifiable, Equatable {
@@ -16,9 +25,19 @@ struct InventoryItem: Identifiable, Equatable {
     let price: Double
     let imageUrl: String?
     
-    /// Returns true if the current stock is strictly less than the minimum required
+    var status: InventoryStatus {
+        if Double(currentStock) <= 0.25 * Double(minimumRequired) {
+            return .critical
+        } else if currentStock <= minimumRequired {
+            return .lowStock
+        } else {
+            return .healthy
+        }
+    }
+    
+    /// Convenience boolean for easy filtering of anything requiring action
     var isLowStock: Bool {
-        return currentStock < minimumRequired
+        return status == .lowStock || status == .critical
     }
 }
 
@@ -38,4 +57,15 @@ struct StockRequestPayload: Identifiable {
     let item: InventoryItem
     var quantity: Int
     var urgency: StockRequestUrgency
+    var reason: String?
+}
+
+/// Overall stock request container
+struct StockRequest: Identifiable {
+    let id: String // E.g. REQ-20260630-0001
+    let date: Date
+    let storeId: String
+    let managerId: String
+    let status: String // E.g. "Pending"
+    let items: [StockRequestPayload]
 }
