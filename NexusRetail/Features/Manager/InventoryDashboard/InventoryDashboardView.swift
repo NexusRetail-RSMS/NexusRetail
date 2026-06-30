@@ -7,7 +7,6 @@ import SwiftUI
 
 struct InventoryDashboardView: View {
     @State private var viewModel = InventoryDashboardViewModel()
-    @State private var showRequestSheet = false
     
     var body: some View {
         ZStack {
@@ -84,27 +83,6 @@ struct InventoryDashboardView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showRequestSheet = true
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.body.weight(.bold))
-                        .foregroundColor(.white)
-                        .padding(8)
-                        .background(RSMSColors.burgundy)
-                        .clipShape(Circle())
-                }
-                .accessibilityLabel("Request Stock")
-            }
-        }
-        .sheet(isPresented: $showRequestSheet) {
-            RequestStockSheet(lowStockItems: viewModel.lowStockItems) { requestedItems in
-                viewModel.requestStock(for: requestedItems)
-            }
-            .presentationDetents([.medium, .large])
-        }
     }
 }
 
@@ -213,10 +191,6 @@ struct InventoryItemRow: View {
                     .font(RSMSFonts.headline)
                     .fontWeight(.bold)
                     .foregroundColor(item.status == .healthy ? RSMSColors.primaryText : (item.status == .lowStock ? RSMSColors.warning : RSMSColors.error))
-                
-                Text("Min: \(item.minimumRequired)")
-                    .font(RSMSFonts.caption)
-                    .foregroundColor(RSMSColors.secondaryText)
             }
         }
         .padding(16)
