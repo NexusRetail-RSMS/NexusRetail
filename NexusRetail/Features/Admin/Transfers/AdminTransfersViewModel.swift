@@ -128,12 +128,49 @@ class AdminTransfersViewModel {
         
         // Update associated transfer request
         if let reqIndex = requests.firstIndex(where: { $0.id == delivery.transferRequestID }) {
-            requests[reqIndex].status = .approved // It's technically delivered, but we can set it to approved/delivered. We'll set dispatchStatus.
+            requests[reqIndex].status = .approved
             requests[reqIndex].dispatchStatus = "Delivered"
         }
+    }
+    
+    func simulateFullDelivery(for delivery: AdminDelivery) async {
+        let stepDuration = UInt64(20 * 1_000_000_000) // 20 seconds per transition (3 transitions = 60s / 1 min)
+        let id = delivery.id
         
-        // Remove from active deliveries in a real app this might happen, but for now we'll just keep it in the array and filter it in the UI. 
-        // The prompt says: "Remove the delivery from Active Deliveries" so the view should filter for `status != .delivered`
+        await MainActor.run {
+            if let idx = self.deliveries.firstIndex(where: { $0.id == id }) {
+                self.deliveries[idx].status = .preparing
+            }
+        }
+        
+        try? await Task.sleep(nanoseconds: stepDuration)
+        
+        await MainActor.run {
+            if let idx = self.deliveries.firstIndex(where: { $0.id == id }) {
+                self.deliveries[idx].status = .dispatched
+            }
+        }
+        
+        try? await Task.sleep(nanoseconds: stepDuration)
+        
+        await MainActor.run {
+            if let idx = self.deliveries.firstIndex(where: { $0.id == id }) {
+                self.deliveries[idx].status = .inTransit
+            }
+        }
+        
+        try? await Task.sleep(nanoseconds: stepDuration)
+        
+        await MainActor.run {
+            if let idx = self.deliveries.firstIndex(where: { $0.id == id }) {
+                self.deliveries[idx].status = .delivered
+                self.deliveries[idx].actualDeliveryDate = Date()
+                if let reqIndex = self.requests.firstIndex(where: { $0.id == self.deliveries[idx].transferRequestID }) {
+                    self.requests[reqIndex].status = .approved
+                    self.requests[reqIndex].dispatchStatus = "Delivered"
+                }
+            }
+        }
     }
     
     func product(for id: UUID) -> AdminTransferProduct? {
