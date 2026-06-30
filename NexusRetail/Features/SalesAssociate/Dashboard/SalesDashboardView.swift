@@ -35,7 +35,6 @@ struct SalesDashboardView: View {
                         revenueChartSection
                         quickActionsSection
                         recentActivitySection
-                        dealsBannerSection
                         Spacer(minLength: 80)
                     }
                     .padding(.horizontal, RSMSSpacing.lg)
@@ -267,28 +266,4 @@ struct SalesDashboardView: View {
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(RSMSColors.cardBorder, lineWidth: 1))
     }
 
-    // MARK: - Deals Banner
-    private var dealsBannerSection: some View {
-        HStack(spacing: 16) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.12)).frame(width: 44, height: 44)
-                Image(systemName: "tag.fill").font(.system(size: 16)).foregroundColor(.white)
-            }
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Deals & Offers").font(.system(size: 14, weight: .bold, design: .rounded)).foregroundColor(.white)
-                Text("Check ongoing offers and discounts").font(.system(size: 11)).foregroundColor(.white.opacity(0.75))
-            }
-            Spacer()
-            HStack(spacing: 4) {
-                Text("View Offers").font(.system(size: 11, weight: .bold))
-                Image(systemName: "chevron.right").font(.system(size: 9, weight: .bold))
-            }
-            .foregroundColor(.white)
-            .padding(.horizontal, 12).padding(.vertical, 8)
-            .background(Color.white.opacity(0.16)).clipShape(Capsule())
-        }
-        .padding(16)
-        .background(LinearGradient(colors: [RSMSColors.darkBurgundy, Color(red: 0.3, green: 0.02, blue: 0.05)], startPoint: .topLeading, endPoint: .bottomTrailing))
-        .clipShape(RoundedRectangle(cornerRadius: 18))
-    }
 }

@@ -10,6 +10,7 @@ import SwiftUI
 struct BookAppointmentSheet: View {
     let clients: [AssociateClient]
     var viewModel: AppointmentsViewModel
+
     @Environment(\.dismiss) private var dismiss
 
     @State private var selectedClientName: String
@@ -17,7 +18,7 @@ struct BookAppointmentSheet: View {
     @State private var mode: AppointmentMode = .inStore
 
     init(clients: [AssociateClient], viewModel: AppointmentsViewModel) {
-        self.clients   = clients
+        self.clients = clients
         self.viewModel = viewModel
         _selectedClientName = State(initialValue: clients.first?.name ?? "")
     }
@@ -25,37 +26,99 @@ struct BookAppointmentSheet: View {
     var body: some View {
         NavigationStack {
             Form {
+
+                // MARK: Client
                 Section("Client") {
-                    Picker("Client", selection: $selectedClientName) {
+                    Picker("Select Client", selection: $selectedClientName) {
                         ForEach(clients) { client in
-                            Text(client.name).tag(client.name)
+                            Text(client.name)
+                                .tag(client.name)
                         }
                     }
                 }
 
-                Section("Appointment") {
+                // MARK: Appointment Details
+                Section("Appointment Details") {
+
                     DatePicker(
-                        "Date & Time",
+                        "Date",
                         selection: $appointmentDate,
                         in: Date.now...,
-                        displayedComponents: [.date, .hourAndMinute]
+                        displayedComponents: .date
                     )
-                    Picker("Type", selection: $mode) {
-                        ForEach(AppointmentMode.allCases) { m in
-                            Label(m.title, systemImage: m.icon).tag(m)
+
+                    DatePicker(
+                        "Time",
+                        selection: $appointmentDate,
+                        displayedComponents: .hourAndMinute
+                    )
+
+                    VStack(alignment: .leading, spacing: 16) {
+
+                        Text("Appointment Type")
+                            .font(.headline)
+
+                        Button {
+                            mode = .inStore
+                        } label: {
+                            HStack {
+                                Image(systemName:
+                                        mode == .inStore
+                                        ? "largecircle.fill.circle"
+                                        : "circle")
+                                    .foregroundColor(RSMSColors.burgundy)
+
+                                Label("In Store",
+                                      systemImage: "building.2")
+
+                                Spacer()
+                            }
                         }
+                        .buttonStyle(.plain)
+
+                        Button {
+                            mode = .video
+                        } label: {
+                            HStack {
+                                Image(systemName:
+                                        mode == .video
+                                        ? "largecircle.fill.circle"
+                                        : "circle")
+                                    .foregroundColor(RSMSColors.burgundy)
+
+                                Label("Video Consultation",
+                                      systemImage: "video")
+
+                                Spacer()
+                            }
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .pickerStyle(.segmented)
+                    .padding(.vertical, 4)
                 }
 
+                // MARK: Confirm Button
                 Section {
                     Button {
-                        viewModel.book(clientName: selectedClientName, date: appointmentDate, mode: mode)
+
+                        viewModel.book(
+                            clientName: selectedClientName,
+                            date: appointmentDate,
+                            mode: mode
+                        )
+
                         dismiss()
+
                     } label: {
                         HStack {
                             Spacer()
-                            Label("Confirm Booking", systemImage: "calendar.badge.plus")
+
+                            Label(
+                                "Confirm Booking",
+                                systemImage: "calendar.badge.plus"
+                            )
+                            .fontWeight(.semibold)
+
                             Spacer()
                         }
                     }
@@ -67,7 +130,9 @@ struct BookAppointmentSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") {
+                        dismiss()
+                    }
                 }
             }
         }
