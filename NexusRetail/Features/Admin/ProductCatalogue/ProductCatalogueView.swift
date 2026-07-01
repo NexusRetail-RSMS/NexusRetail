@@ -72,11 +72,6 @@ struct ProductCatalogueView: View {
     private var productList: some View {
         ScrollView {
             LazyVStack(spacing: 0) {
-                headerSection
-                    .padding(.horizontal, RSMSSpacing.lg)
-                    .padding(.top, 16)
-                    .padding(.bottom, 8)
-
                 if viewModel.searchText.isEmpty {
                     trendingSection
                 }
@@ -110,6 +105,13 @@ struct ProductCatalogueView: View {
             .padding(.top, RSMSSpacing.sm)
             .padding(.bottom, 20)
         }
+        .safeAreaInset(edge: .top) {
+            headerSection
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, 16)
+                .padding(.bottom, 8)
+                .background(.ultraThinMaterial)
+        }
         .scrollIndicators(.hidden)
         .background(RSMSColors.background)
         .animation(.easeInOut(duration: 0.2), value: viewModel.searchText)
@@ -127,22 +129,28 @@ struct ProductCatalogueView: View {
             EmptyView()
         } else {
             VStack(spacing: 10) {
-                GeometryReader { geo in
-                    TabView(selection: $viewModel.currentTrendingIndex) {
-                        ForEach(Array(viewModel.trendingProducts.enumerated()), id: \.element.id) { index, product in
+                ScrollView(.horizontal, showsIndicators: false) {
+                    LazyHStack(spacing: 0) {
+                        ForEach(Array(viewModel.trendingProducts.enumerated()), id: \.offset) { index, product in
                             trendingCard(for: product)
-                                .tag(index)
+                                .padding(.horizontal, RSMSSpacing.lg)
+                                .containerRelativeFrame(.horizontal)
+                                .id(index)
                         }
                     }
-                    .tabViewStyle(.page(indexDisplayMode: .never))
-                    .frame(width: geo.size.width, height: 210)
-                    .simultaneousGesture(
-                        DragGesture()
-                            .onChanged { _ in viewModel.stopAutoScroll() }
-                            .onEnded   { _ in viewModel.resumeAutoScroll() }
-                    )
+                    .scrollTargetLayout()
                 }
+                .scrollTargetBehavior(.paging)
+                .scrollPosition(id: Binding(
+                    get: { viewModel.currentTrendingIndex },
+                    set: { if let newIndex = $0 { viewModel.currentTrendingIndex = newIndex } }
+                ))
                 .frame(height: 210)
+                .simultaneousGesture(
+                    DragGesture()
+                        .onChanged { _ in viewModel.stopAutoScroll() }
+                        .onEnded   { _ in viewModel.resumeAutoScroll() }
+                )
 
                 HStack(spacing: 6) {
                     ForEach(viewModel.trendingProducts.indices, id: \.self) { i in
@@ -155,7 +163,6 @@ struct ProductCatalogueView: View {
                     }
                 }
             }
-            .padding(.horizontal, RSMSSpacing.lg)
             .padding(.bottom, 12)
         }
     }
@@ -171,6 +178,7 @@ struct ProductCatalogueView: View {
                         image
                             .resizable()
                             .scaledToFill()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     case .failure:
                         Color.gray.opacity(0.3)
                     @unknown default:
@@ -184,7 +192,7 @@ struct ProductCatalogueView: View {
                 Image(imageName)
                     .resizable()
                     .scaledToFill()
-                    .frame(maxWidth: .infinity)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .frame(height: 210)
                     .clipped()
             } else {
@@ -225,8 +233,9 @@ struct ProductCatalogueView: View {
             .padding(18)
         }
         .frame(height: 210)
+        .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .shadow(color: Color.black.opacity(0.18), radius: 14, x: 0, y: 6)
+        .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 4)
     }
 
     private var productsHeader: some View {

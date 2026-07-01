@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		32639EAD2FF50928009CFC5E /* ItemRecommendation.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = 32639DF72FF50928009CFC5E /* ItemRecommendation.mlmodel */; };
 		327BE9D92FEB91EC00A9318C /* Config.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 327BE9D82FEB91EC00A9318C /* Config.xcconfig */; };
 		C7B5B7912FEB0A8100E6CF91 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = C7B5B7902FEB0A8100E6CF91 /* Auth */; };
 		C7B5B7932FEB0A8100E6CF91 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = C7B5B7922FEB0A8100E6CF91 /* Functions */; };
@@ -17,6 +18,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		32639DF72FF50928009CFC5E /* ItemRecommendation.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = ItemRecommendation.mlmodel; sourceTree = "<group>"; };
 		327BE9D82FEB91EC00A9318C /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		C7B5B6A92FEA47B800E6CF91 /* NexusRetail.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NexusRetail.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -66,6 +68,7 @@
 				C7B5B6AA2FEA47B800E6CF91 /* Products */,
 				C7B5B78F2FEB0A7800E6CF91 /* Frameworks */,
 				327BE9D82FEB91EC00A9318C /* Config.xcconfig */,
+				32639DF72FF50928009CFC5E /* ItemRecommendation.mlmodel */,
 			);
 			sourceTree = "<group>";
 		};
@@ -168,6 +171,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				32639EAD2FF50928009CFC5E /* ItemRecommendation.mlmodel in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

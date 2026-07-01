@@ -34,17 +34,26 @@ struct ProductSearchView: View {
             
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    // Custom Curved Header
-                    customHeaderSection
-                    
                     if selectedProduct == nil {
-                        // Search Mode
-                        searchContentSection
+                        // Search Results List
+                        searchResultsSection
                     } else if let product = selectedProduct {
                         // Out of Stock / Product Detail Mode
                         productDetailSection(product)
                     }
                 }
+            }
+            .safeAreaInset(edge: .top, spacing: 0) {
+                VStack(spacing: 0) {
+                    customHeaderSection
+                    if selectedProduct == nil {
+                        searchBarSection
+                            .padding(.horizontal, RSMSSpacing.lg)
+                            .padding(.top, RSMSSpacing.md)
+                            .padding(.bottom, RSMSSpacing.sm)
+                    }
+                }
+                .background(.ultraThinMaterial)
             }
             .ignoresSafeArea(edges: .top)
         }
@@ -114,36 +123,36 @@ struct ProductSearchView: View {
     }
     
     // MARK: - Search Mode View
-    private var searchContentSection: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            // Search Bar
-            HStack(spacing: 12) {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(RSMSColors.secondaryText)
-                
-                TextField("Search by name, SKU, or category...", text: $searchText)
-                    .textFieldStyle(.plain)
-                    .autocorrectionDisabled()
-                
-                if !searchText.isEmpty {
-                    Button {
-                        searchText = ""
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(RSMSColors.secondaryText.opacity(0.6))
-                    }
+    private var searchBarSection: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(RSMSColors.secondaryText)
+            
+            TextField("Search by name, SKU, or category...", text: $searchText)
+                .textFieldStyle(.plain)
+                .autocorrectionDisabled()
+            
+            if !searchText.isEmpty {
+                Button {
+                    searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(RSMSColors.secondaryText.opacity(0.6))
                 }
             }
-            .padding(14)
-            .background(RSMSColors.cardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 14))
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(RSMSColors.cardBorder, lineWidth: 1)
-            )
-            .shadow(color: Color.black.opacity(0.02), radius: 4, x: 0, y: 2)
-            
-            // Search Results List
+        }
+        .padding(14)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.02), radius: 4, x: 0, y: 2)
+    }
+
+    private var searchResultsSection: some View {
+        VStack(alignment: .leading, spacing: 20) {
             if isLoading {
                 HStack {
                     Spacer()

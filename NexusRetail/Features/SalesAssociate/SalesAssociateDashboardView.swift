@@ -120,7 +120,12 @@ struct SalesAssociateDashboardView: View {
         VStack(spacing: 0) {
             let preview = Array(clients.prefix(3).enumerated())
             ForEach(preview, id: \.element.id) { index, client in
-                clientRow(client)
+                NavigationLink {
+                    ClientDetailView(client: client)
+                } label: {
+                    clientRow(client)
+                }
+                .buttonStyle(.plain)
                 if index < preview.count - 1 {
                     Rectangle()
                         .fill(Color.black.opacity(0.055))
