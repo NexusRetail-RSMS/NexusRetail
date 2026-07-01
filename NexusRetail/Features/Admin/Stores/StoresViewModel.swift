@@ -54,7 +54,7 @@ class StoresViewModel {
     }
     
     /// Creates a new store and re-fetches the list.
-    func create(name: String, address: String, phone: String, locale: String, currencyCode: String, timezone: String, managerID: UUID?, status: StoreStatus, includeRazorpay: Bool, includeCard: Bool, latitude: Double?, longitude: Double?, city: String?, country: String?) async -> UUID? {
+    func create(name: String, address: String, phone: String, locale: String, currencyCode: String, timezone: String, managerID: UUID?, status: StoreStatus, razorpayConfig: PaymentTerminalConfig, stripeConfig: PaymentTerminalConfig, latitude: Double?, longitude: Double?, city: String?, country: String?) async -> UUID? {
         guard !name.isEmpty, !address.isEmpty else {
             errorMessage = "Name and Address are required."
             return nil
@@ -88,29 +88,14 @@ class StoresViewModel {
         )
         
         var terminals: [PaymentTerminal] = []
-        if includeRazorpay {
-            let initialConfig = PaymentTerminalConfig(
-                isEnabled: false,
-                status: .notConfigured,
-                environment: .test,
-                credential1: nil,
-                credential2: nil,
-                updatedAt: nil
-            )
-            terminals.append(PaymentTerminal(id: UUID(), storeID: newStoreId, type: .razorpay, config: initialConfig))
-        }
-        if includeCard {
-            let initialConfig = PaymentTerminalConfig(
-                isEnabled: false,
-                status: .notConfigured,
-                environment: .test,
-                credential1: nil,
-                credential2: nil,
-                updatedAt: nil
-            )
-            terminals.append(PaymentTerminal(id: UUID(), storeID: newStoreId, type: .card, config: initialConfig))
+        
+        if razorpayConfig.isEnabled {
+            terminals.append(PaymentTerminal(id: UUID(), storeID: newStoreId, type: .razorpay, config: razorpayConfig))
         }
         
+        if stripeConfig.isEnabled {
+            terminals.append(PaymentTerminal(id: UUID(), storeID: newStoreId, type: .card, config: stripeConfig))
+        }
         do {
             try await repository.createStore(newStore, terminals: terminals)
             await load() // Refresh list
