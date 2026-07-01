@@ -115,33 +115,6 @@ struct AdminManagersView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: RSMSSpacing.xl) {
-                    VStack(spacing: RSMSSpacing.md) {
-                        HStack {
-                            Text("Managers")
-                                .font(.largeTitle)
-                                .fontWeight(.bold)
-                                .foregroundColor(RSMSColors.primaryText)
-
-                            Spacer()
-
-                            Button {
-                                isAddManagerPresented = true
-                            } label: {
-                                Image(systemName: "plus")
-                                    .font(.system(size: 20, weight: .medium))
-                                    .foregroundColor(RSMSColors.burgundy)
-                                    .frame(width: 44, height: 44)
-                                    .background(RSMSColors.burgundy.opacity(0.1))
-                                    .clipShape(Circle())
-                            }
-                            .accessibilityLabel("Add new manager")
-                        }
-
-                        NexusSearchBar(text: $searchText, placeholder: "Search managers, stores…")
-                    }
-                    .padding(.horizontal, RSMSSpacing.lg)
-                    .padding(.top, 16)
-
                     // MARK: Top Performers
                     VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
                         Text("Top Performers")
@@ -298,7 +271,38 @@ struct AdminManagersView: View {
                 }
                 .padding(.top, RSMSSpacing.sm)
             }
+            .safeAreaInset(edge: .top) {
+                VStack(spacing: RSMSSpacing.md) {
+                    HStack {
+                        Text("Managers")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(RSMSColors.primaryText)
+
+                        Spacer()
+
+                        Button {
+                            isAddManagerPresented = true
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.system(size: 20, weight: .medium))
+                                .foregroundColor(RSMSColors.burgundy)
+                                .frame(width: 44, height: 44)
+                                .background(RSMSColors.burgundy.opacity(0.1))
+                                .clipShape(Circle())
+                        }
+                        .accessibilityLabel("Add new manager")
+                    }
+
+                    NexusSearchBar(text: $searchText, placeholder: "Search managers, stores…")
+                }
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, 16)
+                .padding(.bottom, 8)
+                .background(.ultraThinMaterial)
+            }
         }
+        .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $isAddManagerPresented) {
             NewManagerSheet(onCreate: { email, password, name, phone, storeName, address, country, imageUrl in
                 return await viewModel.createManager(

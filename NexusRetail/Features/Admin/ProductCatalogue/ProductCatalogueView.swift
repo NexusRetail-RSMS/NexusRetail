@@ -72,11 +72,6 @@ struct ProductCatalogueView: View {
     private var productList: some View {
         ScrollView {
             LazyVStack(spacing: 0) {
-                headerSection
-                    .padding(.horizontal, RSMSSpacing.lg)
-                    .padding(.top, 16)
-                    .padding(.bottom, 8)
-
                 if viewModel.searchText.isEmpty {
                     trendingSection
                 }
@@ -109,6 +104,13 @@ struct ProductCatalogueView: View {
             }
             .padding(.top, RSMSSpacing.sm)
             .padding(.bottom, 20)
+        }
+        .safeAreaInset(edge: .top) {
+            headerSection
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, 16)
+                .padding(.bottom, 8)
+                .background(.ultraThinMaterial)
         }
         .scrollIndicators(.hidden)
         .background(RSMSColors.background)
