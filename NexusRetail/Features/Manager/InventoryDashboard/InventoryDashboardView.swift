@@ -200,7 +200,7 @@ struct InventoryDashboardView: View {
     // MARK: - Inventory List
     
     private var inventoryList: some View {
-        LazyVStack(spacing: RSMSSpacing.md) {
+        Group {
             if viewModel.filteredItems.isEmpty {
                 emptyState(
                     icon: "shippingbox",
@@ -208,13 +208,15 @@ struct InventoryDashboardView: View {
                     message: viewModel.searchText.isEmpty ? "No inventory items match the current filter." : "No results for \"\(viewModel.searchText)\"."
                 )
             } else {
-                ForEach(viewModel.filteredItems) { item in
-                    NavigationLink(destination: ProductDetailView(item: item, viewModel: viewModel, storeID: sessionStore.currentUser?.storeID)) {
-                        InventoryRow(item: item) {
-                            viewModel.triggerRestock(for: item)
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)], spacing: 16) {
+                    ForEach(viewModel.filteredItems) { item in
+                        NavigationLink(destination: ProductDetailView(item: item, viewModel: viewModel, storeID: sessionStore.currentUser?.storeID)) {
+                            InventoryGridItemCard(item: item) {
+                                viewModel.triggerRestock(for: item)
+                            }
                         }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
             }
         }
@@ -265,113 +267,7 @@ struct CategoryChip: View {
     }
 }
 
-// MARK: - Inventory Row
-
-struct InventoryRow: View {
-    let item: InventoryItemRow
-    let onRestock: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 12) {
-                // Thumbnail
-                AsyncImage(url: URL(string: item.imageUrl ?? "")) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    default:
-                        ZStack {
-                            Color.gray.opacity(0.08)
-                            Image(systemName: "shippingbox")
-                                .foregroundColor(RSMSColors.secondaryText.opacity(0.4))
-                                .font(.title3)
-                        }
-                    }
-                }
-                .frame(width: 56, height: 56)
-                .cornerRadius(10)
-                .clipped()
-                
-                // Info
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(item.name)
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(RSMSColors.primaryText)
-                        .lineLimit(1)
-                    
-                    Text("\(item.skuCode) · \(item.category)")
-                        .font(.system(size: 12))
-                        .foregroundColor(RSMSColors.secondaryText)
-                        .lineLimit(1)
-                    
-                    // Progress bar
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 3)
-                                .fill(Color.gray.opacity(0.12))
-                                .frame(height: 6)
-                            
-                            RoundedRectangle(cornerRadius: 3)
-                                .fill(item.progressColor)
-                                .frame(width: geo.size.width * item.stockProgress, height: 6)
-                        }
-                    }
-                    .frame(height: 6)
-                }
-                
-                Spacer(minLength: 0)
-                
-                // Right side: status pill + stock
-                VStack(alignment: .trailing, spacing: 6) {
-                    // Status pill
-                    Text(item.stockStatus.rawValue)
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(item.stockStatus.color)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(item.stockStatus.color.opacity(0.12))
-                        .cornerRadius(10)
-                    
-                    // Stock count
-                    Text("\(item.onHand) / Min: \(item.reorderThreshold)")
-                        .font(.system(size: 11))
-                        .foregroundColor(RSMSColors.secondaryText)
-                }
-            }
-            
-            // Restock button for low stock items
-            if item.isLowStock {
-                Button(action: onRestock) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 11))
-                        Text("Request Restock")
-                            .font(.system(size: 12, weight: .medium))
-                    }
-                    .foregroundColor(RSMSColors.burgundy)
-                    .padding(.vertical, 6)
-                    .frame(maxWidth: .infinity)
-                    .background(RSMSColors.burgundy.opacity(0.08))
-                    .cornerRadius(8)
-                }
-                .buttonStyle(.plain)
-                .padding(.top, 10)
-            }
-        }
-        .padding(14)
-        .background(Color.white)
-        .cornerRadius(RSMSRadius.medium)
-        .shadow(color: Color.black.opacity(0.04), radius: 6, y: 2)
-        .overlay(
-            RoundedRectangle(cornerRadius: RSMSRadius.medium)
-                .stroke(item.isLowStock ? RSMSColors.warning.opacity(0.25) : Color.clear, lineWidth: 1)
-        )
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(item.name), \(item.onHand) of \(item.reorderThreshold) in stock, \(item.stockStatus.rawValue)")
-    }
-}
+// Removed InventoryGridItemCard as it was extracted to a separate file
 
 // MARK: - Transfer Request Card
 
