@@ -6,6 +6,28 @@
 import SwiftUI
 import Supabase
 
+struct StaffStatsRPC: Decodable {
+    let id: UUID
+    let name: String?
+    let email: String?
+    let role: String?
+    let phone: String?
+    let imageUrl: String?
+    let productsSold: Int?
+    let revenue: Double?
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case email
+        case role
+        case phone
+        case imageUrl = "image_url"
+        case productsSold = "products_sold"
+        case revenue
+    }
+}
+
 @Observable
 class StaffViewModel {
     var employees: [DisplayEmployee] = []
@@ -36,33 +58,31 @@ class StaffViewModel {
         isLoading = true
         errorMessage = nil
         do {
-            let response: [AppUser] = try await SupabaseManager.shared.client
-                .from("app_user")
-                .select()
-                .in("role", values: ["sales_associate", "after_sales"])
-                .order("name", ascending: true)
+            let response: [StaffStatsRPC] = try await SupabaseManager.shared.client
+                .rpc("get_staff_stats")
                 .execute()
                 .value
-            self.employees = response.map { user in
-                let isAfterSales = user.role == .afterSales
+            
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .currency
+            formatter.currencyCode = "USD"
+            formatter.maximumFractionDigits = 0
+            
+            self.employees = response.map { stat in
+                let isAfterSales = stat.role == "after_sales"
                 let roleStr = isAfterSales ? "After Sales Associate" : "Sales Associate"
-                let baseSold = abs(user.id.hashValue % 100) + 40
-                let baseRev = baseSold * 320
-                let formatter = NumberFormatter()
-                formatter.numberStyle = .currency
-                formatter.currencyCode = "USD"
-                formatter.maximumFractionDigits = 0
-                let revStr = formatter.string(from: NSNumber(value: baseRev)) ?? "$\(baseRev)"
+                let revVal = stat.revenue ?? 0
+                let revStr = formatter.string(from: NSNumber(value: revVal)) ?? "$\(revVal)"
                 
                 return DisplayEmployee(
-                    id: user.id,
-                    name: user.name ?? "Staff Member",
+                    id: stat.id,
+                    name: stat.name ?? "Staff Member",
                     role: roleStr,
-                    productsSold: baseSold,
+                    productsSold: stat.productsSold ?? 0,
                     revenue: revStr,
-                    imageUrl: user.imageUrl,
-                    phone: user.phone ?? "",
-                    email: user.email ?? ""
+                    imageUrl: stat.imageUrl,
+                    phone: stat.phone ?? "",
+                    email: stat.email ?? ""
                 )
             }
             saveToCache()
