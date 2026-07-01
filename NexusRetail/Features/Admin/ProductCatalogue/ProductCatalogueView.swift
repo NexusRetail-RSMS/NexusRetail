@@ -129,22 +129,14 @@ struct ProductCatalogueView: View {
             EmptyView()
         } else {
             VStack(spacing: 10) {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    LazyHStack(spacing: 0) {
-                        ForEach(Array(viewModel.trendingProducts.enumerated()), id: \.offset) { index, product in
-                            trendingCard(for: product)
-                                .padding(.horizontal, RSMSSpacing.lg)
-                                .containerRelativeFrame(.horizontal)
-                                .id(index)
-                        }
+                TabView(selection: $viewModel.currentTrendingIndex) {
+                    ForEach(Array(viewModel.trendingProducts.enumerated()), id: \.offset) { index, product in
+                        trendingCard(for: product)
+                            .padding(.horizontal, RSMSSpacing.lg)
+                            .tag(index)
                     }
-                    .scrollTargetLayout()
                 }
-                .scrollTargetBehavior(.paging)
-                .scrollPosition(id: Binding(
-                    get: { viewModel.currentTrendingIndex },
-                    set: { if let newIndex = $0 { viewModel.currentTrendingIndex = newIndex } }
-                ))
+                .tabViewStyle(.page(indexDisplayMode: .never))
                 .frame(height: 210)
                 .simultaneousGesture(
                     DragGesture()
