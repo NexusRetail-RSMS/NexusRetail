@@ -173,7 +173,7 @@ struct NexusSearchBar: View {
         .padding(.vertical, 10)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color(.systemFill))
+                .fill(.ultraThinMaterial)
         )
         .animation(.easeInOut(duration: 0.18), value: text.isEmpty)
         .onTapGesture { isFocused = true }

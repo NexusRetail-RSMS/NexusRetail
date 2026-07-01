@@ -24,13 +24,6 @@ struct InventoryDashboardView: View {
             } else {
                 ScrollView {
                     VStack(spacing: RSMSSpacing.lg) {
-                        // MARK: - Header
-                        headerSection
-                            .padding(.top, RSMSSpacing.sm)
-                        
-                        // MARK: - Search
-                        searchBar
-                        
                         // MARK: - Filter/Category Chips
                         filterSection
                         
@@ -38,6 +31,15 @@ struct InventoryDashboardView: View {
                         inventoryList
                     }
                     .padding(.bottom, RSMSSpacing.xxxl)
+                }
+                .safeAreaInset(edge: .top) {
+                    VStack(spacing: RSMSSpacing.lg) {
+                        headerSection
+                            .padding(.top, RSMSSpacing.sm)
+                        searchBar
+                    }
+                    .padding(.bottom, RSMSSpacing.sm)
+                    .background(.ultraThinMaterial)
                 }
                 .background(RSMSColors.background.ignoresSafeArea())
                 .refreshable {
