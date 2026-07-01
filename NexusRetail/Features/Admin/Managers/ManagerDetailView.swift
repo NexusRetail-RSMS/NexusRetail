@@ -489,14 +489,20 @@ struct EditManagerSheet: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        let fullName = "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces)
-                        manager.name    = fullName.isEmpty ? manager.name : fullName
-                        manager.phone   = phone
-                        manager.email   = email
-                        manager.address = address
-                        // Update binding, no local store anymore
-                        // manager.photoData logic removed for now
-                        dismiss()
+                        Task {
+                            let fullName = "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces)
+                            manager.name    = fullName.isEmpty ? manager.name : fullName
+                            manager.phone   = phone
+                            manager.email   = email
+                            manager.address = address
+
+                            if let selectedImageData {
+                            if let uploadedURL = try? await ImageUploader.upload(data: selectedImageData, bucket: "store-images", folder: "managers") {
+                                manager.imageUrl = uploadedURL
+                                }
+                            }
+                            dismiss()
+                        }
                     } label: {
                         Image(systemName: "checkmark")
                             .font(.system(size: 16, weight: .semibold))

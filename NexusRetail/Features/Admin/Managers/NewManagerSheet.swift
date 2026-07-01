@@ -151,8 +151,13 @@ struct NewManagerSheet: View {
                                 let fullName = "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces)
                                 let managerName = fullName.isEmpty ? "New Manager" : fullName
                                 
+                                var uploadedImageURL: String? = nil
+                                if let selectedImage, let data = selectedImage.jpegData(compressionQuality: 0.8) {
+                                    uploadedImageURL = try? await ImageUploader.upload(data: data, bucket: "store-images", folder: "managers")
+                                }
+                                
                                 if let onCreate = onCreate {
-                                    let success = await onCreate(email, password, managerName, phone, address, nil)
+                                    let success = await onCreate(email, password, managerName, phone, address, uploadedImageURL)
                                     if success {
                                         dismiss()
                                     }
