@@ -31,7 +31,8 @@ struct AdminDashboardView: View {
             name: viewModel.displayCountry == "All Global" ? "Global Sales" : "\(viewModel.displayCountry) Sales",
             address: nil, locale: "en_US", currencyCode: "USD", timezone: nil,
             phone: nil, managerID: nil, isWarehouse: false, status: .active,
-            latitude: nil, longitude: nil, city: nil, country: nil
+            latitude: nil, longitude: nil, city: nil, country: nil,
+            imageURL: nil
         )
     }
 
@@ -158,7 +159,7 @@ struct AdminDashboardView: View {
                         viewModel.selectedCountry = nil
                     }
                 } label: {
-                    Text("All Global")
+                    Text("🌍 All Global")
                 }
                 ForEach(viewModel.countries, id: \.self) { country in
                     Button {
@@ -166,7 +167,7 @@ struct AdminDashboardView: View {
                             viewModel.selectedCountry = country
                         }
                     } label: {
-                        Text("\(countryCode(for: country)) \(country)")
+                        Text("\(countryFlag(for: country)) \(country)")
                     }
                 }
             } label: {
@@ -176,13 +177,11 @@ struct AdminDashboardView: View {
                         .frame(width: 44, height: 44)
 
                     if let selected = viewModel.selectedCountry {
-                        Text(countryCode(for: selected))
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundStyle(RSMSColors.burgundy)
+                        Text(countryFlag(for: selected))
+                            .font(.system(size: 22))
                     } else {
-                        Text("ALL")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundStyle(RSMSColors.burgundy)
+                        Text("🌍")
+                            .font(.system(size: 22))
                     }
                 }
             }
@@ -197,22 +196,9 @@ struct AdminDashboardView: View {
                         .fill(RSMSColors.burgundy)
                         .frame(width: 44, height: 44)
 
-                    if let urlString = sessionStore.currentUser?.imageUrl, let url = URL(string: urlString) {
-                        AsyncImage(url: url) { image in
-                            image
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 44, height: 44)
-                                .clipShape(Circle())
-                        } placeholder: {
-                            ProgressView()
-                                .frame(width: 44, height: 44)
-                        }
-                    } else {
-                        Text(initials(for: sessionStore.currentUser?.name))
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white)
-                    }
+                    Text(initials(for: sessionStore.currentUser?.name))
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white)
                 }
             }
             .accessibilityLabel("Profile")
@@ -234,24 +220,24 @@ struct AdminDashboardView: View {
         return "AD"
     }
 
-    /// Maps a country name to its 2-letter country code.
-    private func countryCode(for country: String) -> String {
+    /// Maps a country name to its flag emoji.
+    private func countryFlag(for country: String) -> String {
         let map: [String: String] = [
-            "United States":        "US",
-            "USA":                  "US",
-            "United Kingdom":       "UK",
-            "UK":                   "UK",
-            "Canada":               "CA",
-            "Australia":            "AU",
-            "Germany":              "DE",
-            "France":               "FR",
-            "Japan":                "JP",
-            "India":                "IN",
-            "Singapore":            "SG",
-            "United Arab Emirates": "AE",
-            "UAE":                  "AE",
+            "United States":        "🇺🇸",
+            "USA":                  "🇺🇸",
+            "United Kingdom":       "🇬🇧",
+            "UK":                   "🇬🇧",
+            "Canada":               "🇨🇦",
+            "Australia":            "🇦🇺",
+            "Germany":              "🇩🇪",
+            "France":               "🇫🇷",
+            "Japan":                "🇯🇵",
+            "India":                "🇮🇳",
+            "Singapore":            "🇸🇬",
+            "United Arab Emirates": "🇦🇪",
+            "UAE":                  "🇦🇪",
         ]
-        return map[country] ?? String(country.prefix(2)).uppercased()
+        return map[country] ?? "🌍"
     }
 
     // MARK: - KPI Cards
