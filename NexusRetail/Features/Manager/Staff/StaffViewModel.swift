@@ -12,22 +12,10 @@ class StaffViewModel {
     var isLoading = false
     var errorMessage: String? = nil
     
-    private let localCacheKey = "nexus_local_staff_cache"
+    private let localCacheKey = "nexus_local_staff_cache_v2"
 
     init() {
-        let cached = loadFromCache()
-        if !cached.isEmpty {
-            self.employees = cached
-        } else {
-            // Sample initial data for immediate rendering / fallback
-            self.employees = [
-                DisplayEmployee(id: UUID(), name: "Sarah Jenkins", role: "Sales Associate", productsSold: 142, revenue: "$48,500", imageUrl: nil, phone: "+1 (555) 234-5678", email: "sarah.j@nexusretail.com"),
-                DisplayEmployee(id: UUID(), name: "David Miller", role: "Sales Associate", productsSold: 118, revenue: "$39,200", imageUrl: nil, phone: "+1 (555) 876-5432", email: "david.m@nexusretail.com"),
-                DisplayEmployee(id: UUID(), name: "Elena Rostova", role: "Sales Associate", productsSold: 94, revenue: "$31,400", imageUrl: nil, phone: "+1 (555) 345-6789", email: "elena.r@nexusretail.com"),
-                DisplayEmployee(id: UUID(), name: "Marcus Aurelius", role: "After Sales Associate", productsSold: 65, revenue: "$18,900", imageUrl: nil, phone: "+1 (555) 901-2345", email: "marcus.a@nexusretail.com")
-            ]
-            saveToCache()
-        }
+        self.employees = loadFromCache()
     }
 
     private func saveToCache() {
@@ -55,46 +43,27 @@ class StaffViewModel {
                 .order("name", ascending: true)
                 .execute()
                 .value
-            
-            let currentLocalList = self.employees
-            
-            if !response.isEmpty {
-                var merged: [DisplayEmployee] = []
-                let fetchedIds = Set(response.map { $0.id })
+            self.employees = response.map { user in
+                let isAfterSales = user.role == .afterSales
+                let roleStr = isAfterSales ? "After Sales Associate" : "Sales Associate"
+                let baseSold = abs(user.id.hashValue % 100) + 40
+                let baseRev = baseSold * 320
+                let formatter = NumberFormatter()
+                formatter.numberStyle = .currency
+                formatter.currencyCode = "USD"
+                formatter.maximumFractionDigits = 0
+                let revStr = formatter.string(from: NSNumber(value: baseRev)) ?? "$\(baseRev)"
                 
-                // Keep any newly added local employees that aren't in Supabase yet
-                for emp in currentLocalList where !fetchedIds.contains(emp.id) {
-                    merged.append(emp)
-                }
-                
-                // Map fetched records, preserving local edits/photos if present
-                for user in response {
-                    if let existingLocal = currentLocalList.first(where: { $0.id == user.id }) {
-                        merged.append(existingLocal)
-                    } else {
-                        let isAfterSales = user.role == .afterSales
-                        let roleStr = isAfterSales ? "After Sales Associate" : "Sales Associate"
-                        let baseSold = abs(user.id.hashValue % 100) + 40
-                        let baseRev = baseSold * 320
-                        let formatter = NumberFormatter()
-                        formatter.numberStyle = .currency
-                        formatter.currencyCode = "USD"
-                        formatter.maximumFractionDigits = 0
-                        let revStr = formatter.string(from: NSNumber(value: baseRev)) ?? "$\(baseRev)"
-                        
-                        merged.append(DisplayEmployee(
-                            id: user.id,
-                            name: user.name ?? "Staff Member",
-                            role: roleStr,
-                            productsSold: baseSold,
-                            revenue: revStr,
-                            imageUrl: user.imageUrl,
-                            phone: user.phone ?? "",
-                            email: user.email ?? ""
-                        ))
-                    }
-                }
-                self.employees = merged
+                return DisplayEmployee(
+                    id: user.id,
+                    name: user.name ?? "Staff Member",
+                    role: roleStr,
+                    productsSold: baseSold,
+                    revenue: revStr,
+                    imageUrl: user.imageUrl,
+                    phone: user.phone ?? "",
+                    email: user.email ?? ""
+                )
             }
             saveToCache()
         } catch {
