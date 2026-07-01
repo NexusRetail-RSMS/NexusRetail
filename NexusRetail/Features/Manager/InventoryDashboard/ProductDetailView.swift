@@ -21,7 +21,6 @@ struct ProductDetailView: View {
     @State private var priceSaved: Bool = false
     
     @State private var restockQty: Int = 10
-    @State private var restockUrgency: UrgencyLevel = .medium
     @State private var isRequestingRestock: Bool = false
     @State private var restockSuccess: Bool = false
     @State private var showSuccessAnimation: Bool = false
@@ -320,18 +319,6 @@ struct ProductDetailView: View {
                     .foregroundColor(RSMSColors.primaryText)
             }
             
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Urgency")
-                    .font(.system(size: 13))
-                    .foregroundColor(RSMSColors.secondaryText)
-                Picker("Urgency", selection: $restockUrgency) {
-                    ForEach(UrgencyLevel.allCases, id: \.self) { level in
-                        Text(level.displayName).tag(level)
-                    }
-                }
-                .pickerStyle(.segmented)
-            }
-            
             Button {
                 submitRestock()
             } label: {
@@ -435,7 +422,7 @@ struct ProductDetailView: View {
                 return
             }
             
-            let success = await viewModel.saveLocalPrice(itemID: item.itemId, storeID: validStoreID, price: price)
+            let success = await viewModel.saveLocalPrice(itemId: item.itemId, storeID: validStoreID, price: price)
             await MainActor.run {
                 isSavingPrice = false
                 priceSaved = success
@@ -473,7 +460,7 @@ struct ProductDetailView: View {
                 return
             }
             
-            let errorStr = await viewModel.requestRestock(itemID: item.itemId, quantity: restockQty, urgency: restockUrgency, storeID: validStoreID)
+            let errorStr = await viewModel.requestRestock(itemId: item.itemId, quantity: restockQty, storeID: validStoreID)
             await MainActor.run {
                 isRequestingRestock = false
                 restockError = errorStr

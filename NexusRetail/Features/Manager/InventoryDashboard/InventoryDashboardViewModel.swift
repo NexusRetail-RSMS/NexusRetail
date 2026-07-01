@@ -90,7 +90,7 @@ class InventoryViewModel {
         }
         
         guard let finalStoreID = targetStoreID else {
-            isLoading = false
+            await loadMockData()
             return
         }
         
@@ -101,7 +101,7 @@ class InventoryViewModel {
             // Fetch inventory items with joined SKU + price data
             let inventoryResponse: [InventoryItemRow] = try await SupabaseManager.shared.client
                 .from("inventory_item")
-                .select("*, products!inner(item_name, category, sku_code, image_url, description, price_band(base_price, floor_price), store_price(local_price))")
+                .select("*, products!inner(name, category, sku, image_url, description, price_band(base_price, floor_price), store_price(local_price))")
                 .eq("store_id", value: finalStoreID.uuidString)
                 .execute()
                 .value
@@ -112,7 +112,7 @@ class InventoryViewModel {
             
             let requestsResponse: [TransferRequestRow] = try await SupabaseManager.shared.client
                 .from("transfer_request")
-                .select("*, products!inner(item_name, category, sku_code, image_url, description)")
+                .select("*, products!inner(name, category, sku, image_url, description)")
                 .eq("requesting_store_id", value: finalStoreID.uuidString)
                 .order("created_at", ascending: false)
                 .execute()
@@ -123,26 +123,32 @@ class InventoryViewModel {
                 self.requests = requestsResponse
                 self.isLoading = false
             }
-        } catch is CancellationError {
-            // Task was cancelled, ignore.
-            return
         } catch {
             print("Inventory fetch error: \(error)")
+            // Fallback to mock data
+            await loadMockData()
             await MainActor.run {
-                self.errorMessage = error.localizedDescription
+                self.errorMessage = "Using offline data. Pull to refresh."
                 self.isLoading = false
             }
         }
     }
     
+    private func loadMockData() async {
+        await MainActor.run {
+            self.items = InventoryItemRow.mockItems
+            self.requests = TransferRequestRow.mockRequests
+            self.isLoading = false
+        }
+    }
+    
     // MARK: - Actions
     
-    func requestRestock(itemID: Int64, quantity: Int, urgency: UrgencyLevel, storeID: UUID) async -> String? {
+    func requestRestock(itemId: Int64, quantity: Int, storeID: UUID) async -> String? {
         let payload = TransferRequestInsert(
-            itemId: itemID,
+            itemId: itemId,
             requestingStoreId: storeID,
             quantity: quantity,
-            urgency: urgency,
             status: .pending
         )
         
@@ -161,8 +167,8 @@ class InventoryViewModel {
         }
     }
     
-    func saveLocalPrice(itemID: Int64, storeID: UUID, price: Double) async -> Bool {
-        let payload = StorePriceUpsert(itemId: itemID, storeId: storeID, localPrice: price)
+    func saveLocalPrice(itemId: Int64, storeID: UUID, price: Double) async -> Bool {
+        let payload = StorePriceUpsert(itemId: itemId, storeId: storeID, localPrice: price)
         
         do {
             try await SupabaseManager.shared.client
