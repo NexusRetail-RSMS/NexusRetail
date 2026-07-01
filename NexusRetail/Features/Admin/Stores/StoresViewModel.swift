@@ -54,16 +54,16 @@ class StoresViewModel {
     }
     
     /// Creates a new store and re-fetches the list.
-    func create(name: String, address: String, phone: String, locale: String, currencyCode: String, timezone: String, managerID: UUID?, status: StoreStatus, includeRazorpay: Bool, includeCard: Bool, latitude: Double?, longitude: Double?, city: String?, country: String?) async -> Bool {
+    func create(name: String, address: String, phone: String, locale: String, currencyCode: String, timezone: String, managerID: UUID?, status: StoreStatus, includeRazorpay: Bool, includeCard: Bool, latitude: Double?, longitude: Double?, city: String?, country: String?) async -> UUID? {
         guard !name.isEmpty, !address.isEmpty else {
             errorMessage = "Name and Address are required."
-            return false
+            return nil
         }
 
         // One-manager-one-store rule
         if let mid = managerID, stores.contains(where: { $0.managerID == mid }) {
             errorMessage = "This manager is already assigned to another store. Each manager can only manage one store."
-            return false
+            return nil
         }
 
         isLoading = true
@@ -114,11 +114,11 @@ class StoresViewModel {
         do {
             try await repository.createStore(newStore, terminals: terminals)
             await load() // Refresh list
-            return true
+            return newStoreId
         } catch {
             self.errorMessage = "Failed to create store: \(error.localizedDescription)"
             isLoading = false
-            return false
+            return nil
         }
     }
     

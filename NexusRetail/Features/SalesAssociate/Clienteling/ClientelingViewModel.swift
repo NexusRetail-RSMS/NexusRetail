@@ -28,16 +28,15 @@ final class ClientelingViewModel {
     }
 
     // MARK: - Mutations
-    func addClient(name: String, phone: String, preferences: String) {
+    func addClient(name: String, phone: String, email: String = "", preferences: String) {
         let trimmedPrefs = preferences.trimmingCharacters(in: .whitespacesAndNewlines)
         clients.insert(
             AssociateClient(
                 name: name.trimmingCharacters(in: .whitespacesAndNewlines),
                 phone: phone.trimmingCharacters(in: .whitespacesAndNewlines),
+                email: email.trimmingCharacters(in: .whitespacesAndNewlines),
                 preferences: trimmedPrefs.isEmpty ? "Preferences to be captured" : trimmedPrefs,
-                tier: "New",
-                purchasePattern: "New client. Purchase pattern will appear after assisted selling history is available.",
-                recommendedNext: "Discovery edit"
+                purchasePattern: "New client. Purchase pattern will appear after assisted selling history is available."
             ),
             at: 0
         )

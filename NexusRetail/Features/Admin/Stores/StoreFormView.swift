@@ -28,6 +28,7 @@ struct StoreFormView: View {
     
     @State private var includeRazorpay: Bool = false
     @State private var includeCard: Bool = false
+    @State private var newStoreID: UUID? = nil
     
     let currencies = ["INR", "USD", "EUR", "AED", "GBP"]
     let locales = ["en_IN", "en_US", "en_GB", "fr_FR", "ar_AE"]
@@ -58,7 +59,10 @@ struct StoreFormView: View {
     
     var body: some View {
         NavigationStack {
-            Form {
+            if let storeID = newStoreID {
+                PaymentConfigurationView(isAdmin: true, storeID: storeID)
+            } else {
+                Form {
                 // Store Image Placeholder
                 Section {
                     ZStack {
@@ -214,7 +218,7 @@ struct StoreFormView: View {
                                 )
                                 if success { dismiss() }
                             } else {
-                                let success = await viewModel.create(
+                                let createdID = await viewModel.create(
                                     name: name,
                                     address: fullAddress.trimmingCharacters(in: CharacterSet(charactersIn: ", ")),
                                     phone: phone,
@@ -230,7 +234,13 @@ struct StoreFormView: View {
                                     city: city,
                                     country: country
                                 )
-                                if success { dismiss() }
+                                if let id = createdID {
+                                    if includeRazorpay || includeCard {
+                                        newStoreID = id
+                                    } else {
+                                        dismiss()
+                                    }
+                                }
                             }
                         }
                     }
@@ -247,6 +257,7 @@ struct StoreFormView: View {
                         .background(Color(uiColor: .systemBackground))
                         .cornerRadius(8)
                 }
+            }
             }
         }
     }
