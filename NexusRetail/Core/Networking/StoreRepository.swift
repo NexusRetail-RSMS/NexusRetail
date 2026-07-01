@@ -21,15 +21,13 @@ struct StoreRepository {
     }
     
     /// Fetches all users with the 'manager' role.
-    func fetchManagers() async throws -> [AppUser] {
-        let response: [AppUser] = try await client
-            .from("app_user")
-            .select()
-            .eq("role", value: "manager")
-            .order("name", ascending: true)
+    /// Fetches all managers with aggregated stats (performance, revenue, tenure).
+    func fetchManagers() async throws -> [DisplayManager] {
+        let stats: [ManagerStatsRPC] = try await client
+            .rpc("get_manager_stats")
             .execute()
             .value
-        return response
+        return stats.map(DisplayManager.init(rpc:))
     }
     
     /// Creates a new store and optionally attaches payment terminals.

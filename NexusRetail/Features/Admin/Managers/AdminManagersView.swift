@@ -622,3 +622,42 @@ struct ManagerListCard: View {
         .tint(.black)
     }
 }
+
+extension DisplayManager {
+    init(rpc: ManagerStatsRPC) {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "USD"
+        formatter.maximumFractionDigits = 0
+        let revString = formatter.string(from: NSNumber(value: rpc.revenue ?? 0)) ?? "$0"
+
+        var parsedDate = Date()
+        if let dateStr = rpc.createdAt {
+            let iso1 = ISO8601DateFormatter()
+            iso1.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let date = iso1.date(from: dateStr) {
+                parsedDate = date
+            } else {
+                let iso2 = ISO8601DateFormatter()
+                if let date = iso2.date(from: dateStr) {
+                    parsedDate = date
+                }
+            }
+        }
+
+        self.init(
+            id: rpc.id,
+            name: rpc.name ?? "Unknown",
+            storeName: rpc.storeName ?? "Unassigned",
+            country: rpc.country ?? "Unassigned",
+            performanceScore: rpc.performanceScore ?? 0,
+            revenue: revString,
+            imageUrl: rpc.imageUrl,
+            phone: rpc.phone ?? "",
+            email: rpc.email ?? "",
+            address: rpc.address ?? "",
+            productsSold: rpc.productsSold ?? 0,
+            createdAt: parsedDate
+        )
+    }
+}

@@ -9,14 +9,12 @@ import SwiftUI
 @Observable
 class StoresViewModel {
     var stores: [Store] = []
-    var managers: [AppUser] = []
+    var managers: [DisplayManager] = []
 
     /// Returns managers that are not already assigned to any store,
     /// plus the manager currently assigned to `excludingStoreID` (so editing a store keeps its own manager visible).
-    func availableManagers(excludingStoreID: UUID? = nil) -> [AppUser] {
-        // Collect all manager IDs that are already assigned to a store
+    func availableManagers(excludingStoreID: UUID? = nil) -> [DisplayManager] {
         let assignedManagerIDs: Set<UUID> = stores.reduce(into: Set<UUID>()) { result, store in
-            // If we're editing a store, don't count its own manager as "taken"
             if let exclude = excludingStoreID, store.id == exclude { return }
             if let mid = store.managerID { result.insert(mid) }
         }
@@ -84,7 +82,8 @@ class StoresViewModel {
             latitude: latitude,
             longitude: longitude,
             city: (city?.isEmpty ?? true) ? nil : city,
-            country: (country?.isEmpty ?? true) ? nil : country
+            country: (country?.isEmpty ?? true) ? nil : country,
+            imageURL: nil
         )
         
         var terminals: [PaymentTerminal] = []
@@ -160,7 +159,8 @@ class StoresViewModel {
             latitude: latitude,
             longitude: longitude,
             city: (city?.isEmpty ?? true) ? nil : city,
-            country: (country?.isEmpty ?? true) ? nil : country
+            country: (country?.isEmpty ?? true) ? nil : country,
+            imageURL: existingStore.imageURL
         )
         
         do {

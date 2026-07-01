@@ -10,53 +10,8 @@ class ManagersViewModel {
     func loadManagers() async {
         isLoading = true
         errorMessage = nil
-
         do {
-            let stats: [ManagerStatsRPC] = try await SupabaseManager.shared.client
-                .rpc("get_manager_stats")
-                .execute()
-                .value
-            
-            // Map RPC model to DisplayManager
-            let formatter = NumberFormatter()
-            formatter.numberStyle = .currency
-            formatter.currencyCode = "USD"
-            formatter.maximumFractionDigits = 0
-
-            self.managers = stats.map { stat in
-                let revString = formatter.string(from: NSNumber(value: stat.revenue ?? 0)) ?? "$0"
-                
-                // Parse date
-                var parsedDate = Date()
-                if let dateStr = stat.createdAt {
-                    let isoFormatter = ISO8601DateFormatter()
-                    isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-                    if let date = isoFormatter.date(from: dateStr) {
-                        parsedDate = date
-                    } else {
-                        let isoFormatter2 = ISO8601DateFormatter()
-                        if let date = isoFormatter2.date(from: dateStr) {
-                            parsedDate = date
-                        }
-                    }
-                }
-                
-                return DisplayManager(
-                    id: stat.id,
-                    name: stat.name ?? "Unknown",
-                    storeName: stat.storeName ?? "Unassigned",
-                    country: stat.country ?? "Unassigned",
-                    performanceScore: stat.performanceScore ?? 0,
-                    revenue: revString,
-                    imageUrl: stat.imageUrl,
-                    phone: stat.phone ?? "",
-                    email: stat.email ?? "",
-                    address: stat.address ?? "",
-                    productsSold: stat.productsSold ?? 0,
-                    createdAt: parsedDate
-                )
-            }
-            // Sort by performance score descending
+            self.managers = try await StoreRepository().fetchManagers()
             self.managers.sort { $0.performanceScore > $1.performanceScore }
         } catch {
             print("Error loading managers: \(error)")

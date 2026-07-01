@@ -3,11 +3,11 @@ import SwiftUI
 struct WarehouseCategoryView: View {
     let title: String
     let filter: StockHealth?
-    
+
     @Environment(AdminTransfersViewModel.self) private var viewModel
     @State private var searchText = ""
     @State private var isRefreshing = false
-    
+
     var filteredProducts: [AdminTransferProduct] {
         var result = viewModel.products
         if !searchText.isEmpty {
@@ -18,12 +18,29 @@ struct WarehouseCategoryView: View {
         }
         return result
     }
-    
+
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: 16) {
-                ForEach(filteredProducts) { product in
-                    WarehouseProductRow(product: product)
+            LazyVStack(spacing: 14) {
+                if filteredProducts.isEmpty {
+                    VStack(spacing: 18) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.gray.opacity(0.07))
+                                .frame(width: 92, height: 92)
+                            Image(systemName: "shippingbox")
+                                .font(.system(size: 34, weight: .light))
+                                .foregroundColor(.gray.opacity(0.7))
+                        }
+                        Text("No products found")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(.primary)
+                    }
+                    .padding(.top, 64)
+                } else {
+                    ForEach(filteredProducts) { product in
+                        WarehouseProductRow(product: product)
+                    }
                 }
             }
             .padding()

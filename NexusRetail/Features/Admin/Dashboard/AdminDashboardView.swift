@@ -31,7 +31,8 @@ struct AdminDashboardView: View {
             name: viewModel.displayCountry == "All Global" ? "Global Sales" : "\(viewModel.displayCountry) Sales",
             address: nil, locale: "en_US", currencyCode: "USD", timezone: nil,
             phone: nil, managerID: nil, isWarehouse: false, status: .active,
-            latitude: nil, longitude: nil, city: nil, country: nil
+            latitude: nil, longitude: nil, city: nil, country: nil,
+            imageURL: nil
         )
     }
 

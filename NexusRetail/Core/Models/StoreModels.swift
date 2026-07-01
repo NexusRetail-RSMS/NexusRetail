@@ -25,6 +25,7 @@ struct Store: Codable, Identifiable, Hashable {
     let longitude: Double?
     let city: String?
     let country: String?
+    let imageURL: String?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -41,6 +42,7 @@ struct Store: Codable, Identifiable, Hashable {
         case longitude
         case city
         case country
+        case imageURL = "image_url"
     }
     
     var readableLocale: String {
@@ -112,4 +114,3 @@ struct NestedSKU: Codable, Identifiable {
     let name: String
     let category: String
 }
-
