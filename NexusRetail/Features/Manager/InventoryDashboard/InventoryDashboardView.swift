@@ -53,10 +53,10 @@ struct InventoryDashboardView: View {
         }
         .sheet(isPresented: $viewModel.showRestockSheet) {
             if let item = viewModel.restockItem {
-                RequestStockSheet(item: item, storeID: sessionStore.currentUser?.storeID) { skuID, qty, urgency in
+                RequestStockSheet(item: item, storeID: sessionStore.currentUser?.storeID) { skuID, qty in
                     if let storeID = sessionStore.currentUser?.storeID {
                         Task {
-                            _ = await viewModel.requestRestock(skuID: skuID, quantity: qty, urgency: urgency, storeID: storeID)
+                            _ = await viewModel.requestRestock(skuID: skuID, quantity: qty, storeID: storeID)
                         }
                     }
                 }
@@ -417,18 +417,6 @@ struct ManagerTransferRequestCard: View {
                 Label("\(request.quantity) units", systemImage: "cube.box")
                     .font(.system(size: 12))
                     .foregroundColor(RSMSColors.secondaryText)
-                
-                Spacer()
-                
-                // Urgency
-                HStack(spacing: 4) {
-                    Circle()
-                        .fill(request.urgency.color)
-                        .frame(width: 6, height: 6)
-                    Text(request.urgency.displayName)
-                        .font(.system(size: 12))
-                        .foregroundColor(RSMSColors.secondaryText)
-                }
                 
                 Spacer()
                 

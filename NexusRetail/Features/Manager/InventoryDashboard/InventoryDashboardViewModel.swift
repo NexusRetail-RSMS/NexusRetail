@@ -144,12 +144,11 @@ class InventoryViewModel {
     
     // MARK: - Actions
     
-    func requestRestock(skuID: UUID, quantity: Int, urgency: UrgencyLevel, storeID: UUID) async -> String? {
+    func requestRestock(skuID: UUID, quantity: Int, storeID: UUID) async -> String? {
         let payload = TransferRequestInsert(
             skuId: skuID,
             requestingStoreId: storeID,
             quantity: quantity,
-            urgency: urgency,
             status: .pending
         )
         

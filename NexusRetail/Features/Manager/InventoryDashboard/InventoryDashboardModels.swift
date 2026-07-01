@@ -110,25 +110,6 @@ enum TransferStatus: String, Codable, CaseIterable {
     }
 }
 
-/// Urgency level — matches the DB enum
-enum UrgencyLevel: String, Codable, CaseIterable {
-    case low
-    case medium
-    case high
-    
-    var displayName: String {
-        rawValue.capitalized
-    }
-    
-    var color: Color {
-        switch self {
-        case .low: return RSMSColors.success
-        case .medium: return RSMSColors.warning
-        case .high: return RSMSColors.error
-        }
-    }
-}
-
 // MARK: - Codable DTOs
 
 /// Nested SKU info returned by the Supabase join
@@ -240,7 +221,6 @@ struct TransferRequestRow: Codable, Identifiable {
     let requestingStoreId: UUID
     let sourceStoreId: UUID?
     let quantity: Int
-    let urgency: UrgencyLevel
     let status: TransferStatus
     let createdAt: Date
     let sku: SKUInfo
@@ -250,7 +230,7 @@ struct TransferRequestRow: Codable, Identifiable {
         case skuId = "sku_id"
         case requestingStoreId = "requesting_store_id"
         case sourceStoreId = "source_store_id"
-        case quantity, urgency, status
+        case quantity, status
         case createdAt = "created_at"
         case sku
     }
@@ -271,13 +251,12 @@ struct TransferRequestInsert: Codable {
     let skuId: UUID
     let requestingStoreId: UUID
     let quantity: Int
-    let urgency: UrgencyLevel
     let status: TransferStatus
     
     enum CodingKeys: String, CodingKey {
         case skuId = "sku_id"
         case requestingStoreId = "requesting_store_id"
-        case quantity, urgency, status
+        case quantity, status
     }
 }
 
@@ -352,11 +331,11 @@ extension InventoryItemRow {
 
 extension TransferRequestRow {
     static let mockRequests: [TransferRequestRow] = [
-        TransferRequestRow(id: UUID(), skuId: UUID(), requestingStoreId: UUID(), sourceStoreId: nil, quantity: 10, urgency: .high, status: .pending, createdAt: Date().addingTimeInterval(-86400),
+        TransferRequestRow(id: UUID(), skuId: UUID(), requestingStoreId: UUID(), sourceStoreId: nil, quantity: 10, status: .pending, createdAt: Date().addingTimeInterval(-86400),
                            sku: SKUInfo(name: "Celeste Watch #9", category: "Watches", skuCode: "WAT-2254", imageUrl: nil, description: nil, priceBand: nil, storePrice: nil)),
-        TransferRequestRow(id: UUID(), skuId: UUID(), requestingStoreId: UUID(), sourceStoreId: nil, quantity: 5, urgency: .medium, status: .approved, createdAt: Date().addingTimeInterval(-172800),
+        TransferRequestRow(id: UUID(), skuId: UUID(), requestingStoreId: UUID(), sourceStoreId: nil, quantity: 5, status: .approved, createdAt: Date().addingTimeInterval(-172800),
                            sku: SKUInfo(name: "Noir Leather Bag", category: "Leather Goods", skuCode: "LEA-7385", imageUrl: nil, description: nil, priceBand: nil, storePrice: nil)),
-        TransferRequestRow(id: UUID(), skuId: UUID(), requestingStoreId: UUID(), sourceStoreId: UUID(), quantity: 20, urgency: .low, status: .dispatched, createdAt: Date().addingTimeInterval(-345600),
+        TransferRequestRow(id: UUID(), skuId: UUID(), requestingStoreId: UUID(), sourceStoreId: UUID(), quantity: 20, status: .dispatched, createdAt: Date().addingTimeInterval(-345600),
                            sku: SKUInfo(name: "Crystal Earrings Duo", category: "Jewelry", skuCode: "JEW-3310", imageUrl: nil, description: nil, priceBand: nil, storePrice: nil))
     ]
 }

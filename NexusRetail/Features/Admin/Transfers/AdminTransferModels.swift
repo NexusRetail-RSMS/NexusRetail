@@ -61,7 +61,6 @@ struct AdminStockRequest: Identifiable, Codable {
     let requestingStoreId: UUID
     let sourceStoreId: UUID?
     let quantity: Int
-    let urgency: UrgencyLevel
     var status: TransferStatus
     let createdAt: Date
     var updatedAt: Date?
@@ -78,7 +77,7 @@ struct AdminStockRequest: Identifiable, Codable {
         case skuId = "sku_id"
         case requestingStoreId = "requesting_store_id"
         case sourceStoreId = "source_store_id"
-        case quantity, urgency, status
+        case quantity, status
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case sku

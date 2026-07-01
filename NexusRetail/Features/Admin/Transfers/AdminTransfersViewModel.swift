@@ -91,11 +91,10 @@ class AdminTransfersViewModel {
 
     // MARK: - Schedule
 
-    func scheduleRequest(_ request: AdminStockRequest) {
+    func scheduleRequest(_ request: AdminStockRequest, autoApproveDate: Date) {
         guard let index = requests.firstIndex(where: { $0.id == request.id }) else { return }
 
         let now = Date()
-        let autoApproveDate = Calendar.current.date(byAdding: .day, value: 7, to: now) ?? now.addingTimeInterval(604800)
 
         Task {
             do {

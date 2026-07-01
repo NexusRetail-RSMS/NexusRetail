@@ -153,8 +153,8 @@ struct TransferRequestCard: View {
     private var requestInfoRow: some View {
         HStack(spacing: 0) {
             InfoColumn(title: "Requested", value: "\(request.quantity)")
-            InfoColumn(title: "Store", value: request.store?.city ?? request.storeName)
-            InfoColumn(title: "Requested On", value: formattedDate)
+            Spacer()
+            InfoColumn(title: "Requested On", value: formattedDate, alignment: .trailing)
         }
     }
 
@@ -192,19 +192,26 @@ struct TransferRequestCard: View {
 struct InfoColumn: View {
     let title: String
     let value: String
+    var alignment: HorizontalAlignment = .leading
+
+    private var textAlignment: TextAlignment {
+        alignment == .trailing ? .trailing : .leading
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: alignment, spacing: 4) {
             Text(title)
-                .font(.system(size: 11, weight: .medium))
+                .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.secondary)
+                .multilineTextAlignment(textAlignment)
 
             Text(value)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(RSMSColors.primaryText)
                 .lineLimit(1)
+                .multilineTextAlignment(textAlignment)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: Alignment(horizontal: alignment, vertical: .center))
     }
 }
 
@@ -215,30 +222,66 @@ struct ScheduleSheet: View {
     @Environment(AdminTransfersViewModel.self) private var viewModel
     @Environment(\.dismiss) private var dismiss
 
+    @State private var selectedDate: Date = {
+        Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date()
+    }()
+
+    private var minimumDate: Date {
+        Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
+    }
+
+    private var formattedDate: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d MMM yyyy"
+        return formatter.string(from: selectedDate)
+    }
+
     var body: some View {
-        VStack(spacing: 24) {
-            Spacer()
-
-            Image(systemName: "calendar.badge.clock")
-                .font(.system(size: 48))
-                .foregroundColor(RSMSColors.burgundy)
-
+        VStack(spacing: 0) {
+            // Header
             VStack(spacing: 8) {
+                Image(systemName: "calendar.badge.clock")
+                    .font(.system(size: 40))
+                    .foregroundColor(RSMSColors.burgundy)
+
                 Text("Schedule Request")
                     .font(.title2)
                     .fontWeight(.bold)
 
-                Text("This request will automatically be approved after 7 days unless you approve it earlier.")
+                Text("Choose the date on which this request should be automatically approved. You can approve it earlier at any time from the Waiting tab.")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal)
+                    .padding(.horizontal, 24)
+            }
+            .padding(.top, 32)
+            .padding(.bottom, 24)
+
+            // Date Picker
+            VStack(spacing: 12) {
+                DatePicker(
+                    "Auto Approve On",
+                    selection: $selectedDate,
+                    in: minimumDate...,
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.graphical)
+                .tint(Color.nexusRed)
+                .padding(.horizontal, 20)
+
+                Text("Auto approval will occur on **\(formattedDate)**")
+                    .font(.system(size: 13))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
             }
 
+            Spacer()
+
+            // Actions
             VStack(spacing: 12) {
                 Button {
                     withAnimation {
-                        viewModel.scheduleRequest(request)
+                        viewModel.scheduleRequest(request, autoApproveDate: selectedDate)
                     }
                     dismiss()
                 } label: {
@@ -263,12 +306,11 @@ struct ScheduleSheet: View {
                         .cornerRadius(12)
                 }
             }
-            .padding(.horizontal)
-
-            Spacer()
+            .padding(.horizontal, 24)
+            .padding(.bottom, 32)
         }
         .background(RSMSColors.background)
-        .presentationDetents([.height(400)])
+        .presentationDetents([.large])
     }
 }
 
@@ -358,28 +400,33 @@ struct WaitingRequestCard: View {
 
             // Quantity & Schedule Dates
             HStack(spacing: 0) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Requested")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.secondary)
-                    Text("\(request.quantity)")
-                        .font(.system(size: 20, weight: .bold))
-                }
-
-                Spacer()
+                InfoColumn(title: "Requested", value: "\(request.quantity)", alignment: .leading)
 
                 if let scheduledAt = request.scheduledAt {
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Text("Scheduled")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.secondary)
-                        Text(scheduledAt.formatted(date: .abbreviated, time: .omitted))
-                            .font(.system(size: 12))
-                            .foregroundColor(.primary)
-                    }
+                    InfoColumn(
+                        title: "Scheduled On",
+                        value: scheduledAt.formatted(date: .abbreviated, time: .omitted),
+                        alignment: .trailing
+                    )
                 }
             }
             .padding(.top, 12)
+
+            if let autoApprove = request.autoApproveAt {
+                HStack(spacing: 0) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Auto Approves On")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.secondary)
+                        Text(autoApprove.formatted(date: .abbreviated, time: .omitted))
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(countdownColor)
+                    }
+
+                    Spacer()
+                }
+                .padding(.top, 8)
+            }
 
             // Approve Early Button
             Button {
@@ -488,7 +535,7 @@ struct ApprovedRequestCard: View {
 
                 if let approvedAt = request.approvedAt {
                     VStack(alignment: .trailing, spacing: 3) {
-                        Text("Approved")
+                        Text("Approved On")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(.secondary)
                         Text(approvedAt.formatted(date: .abbreviated, time: .omitted))
