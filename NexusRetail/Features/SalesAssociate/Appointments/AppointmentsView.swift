@@ -8,7 +8,6 @@ struct AppointmentsView: View {
             clientPhone: "+91 98765 43210",
             date: Calendar.current.date(bySettingHour: 10, minute: 30, second: 0, of: .now) ?? .now,
             mode: .inStore,
-            status: .confirmed,
             productOrNote: "Louis Vuitton Neverfull PM"
         ),
         AssociateAppointment(
@@ -17,7 +16,6 @@ struct AppointmentsView: View {
             clientPhone: "+91 91234 56789",
             date: Calendar.current.date(bySettingHour: 14, minute: 0, second: 0, of: .now) ?? .now,
             mode: .inStore,
-            status: .pending,
             productOrNote: "Cartier Tank Must Watch"
         ),
         AssociateAppointment(
@@ -26,7 +24,6 @@ struct AppointmentsView: View {
             clientPhone: "+91 99887 76655",
             date: Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.date(bySettingHour: 11, minute: 15, second: 0, of: .now) ?? .now) ?? .now,
             mode: .inStore,
-            status: .confirmed,
             productOrNote: "Hermès Birkin 30 Consultation"
         ),
         AssociateAppointment(
@@ -35,7 +32,6 @@ struct AppointmentsView: View {
             clientPhone: "+91 90909 80808",
             date: Calendar.current.date(byAdding: .day, value: 3, to: Calendar.current.date(bySettingHour: 14, minute: 15, second: 0, of: .now) ?? .now) ?? .now,
             mode: .video,
-            status: .confirmed,
             productOrNote: "Rolex Datejust Styling Call"
         ),
         AssociateAppointment(
@@ -44,7 +40,6 @@ struct AppointmentsView: View {
             clientPhone: "+91 95005 60607",
             date: Calendar.current.date(byAdding: .day, value: 5, to: Calendar.current.date(bySettingHour: 12, minute: 30, second: 0, of: .now) ?? .now) ?? .now,
             mode: .video,
-            status: .pending,
             productOrNote: "Chanel Classic Flap Sourcing"
         )
     ]
@@ -141,6 +136,9 @@ struct AppointmentsView: View {
             }
             .background(RSMSColors.background.ignoresSafeArea())
             .navigationBarHidden(true)
+            .onAppear {
+                ClientDirectory.seedIfNeeded(from: appointments)
+            }
             .sheet(isPresented: $showingNewAppointment) {
                 NewAppointmentView { newAppt in
                     appointments.append(newAppt)
@@ -171,23 +169,22 @@ struct AppointmentsView: View {
     // MARK: - Card
 
     private func appointmentCard(_ appt: AssociateAppointment) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Label(appt.time, systemImage: "clock")
-                    .font(.system(size: 13, weight: .medium))
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(appt.clientName)
+                    .font(.system(size: 19, weight: .bold))
                     .foregroundStyle(RSMSColors.darkBrown)
-                Spacer()
-                statusBadge(appt.status)
+
+                Text(appt.productOrNote)
+                    .font(.system(size: 14))
+                    .foregroundStyle(RSMSColors.secondaryText)
             }
-
-            Text(appt.clientName)
-                .font(.system(size: 19, weight: .bold))
+            
+            Spacer()
+            
+            Label(appt.time, systemImage: "clock")
+                .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(RSMSColors.darkBrown)
-
-            Text(appt.productOrNote)
-                .font(.system(size: 14))
-                .foregroundStyle(RSMSColors.secondaryText)
-
         }
         .padding(16)
         .background(
@@ -195,16 +192,6 @@ struct AppointmentsView: View {
                 .fill(RSMSColors.cardBackground)
                 .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 3)
         )
-    }
-
-    private func statusBadge(_ status: AppointmentStatus) -> some View {
-        Label(status.title, systemImage: status.icon)
-            .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(status.color)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(status.color.opacity(0.14))
-            .clipShape(Capsule())
     }
 }
 
