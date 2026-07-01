@@ -59,7 +59,7 @@ struct AdminProfileSheet: View {
                                             .frame(width: 110, height: 110)
                                             .clipShape(Circle())
                                     } else if let urlString = currentImageUrl, let url = URL(string: urlString) {
-                                        AsyncImage(url: url) { image in
+                                        CachedAsyncImage(url: url) { image in
                                             image
                                                 .resizable()
                                                 .scaledToFill()
@@ -115,7 +115,7 @@ struct AdminProfileSheet: View {
                                         .frame(width: 110, height: 110)
                                         .clipShape(Circle())
                                 } else if let urlString = sessionStore.currentUser?.imageUrl, let url = URL(string: urlString) {
-                                    AsyncImage(url: url) { image in
+                                    CachedAsyncImage(url: url) { image in
                                         image
                                             .resizable()
                                             .scaledToFill()
@@ -413,6 +413,11 @@ struct AdminProfileSheet: View {
                 } catch {
                     print("Failed to upload profile photo in background: \(error)")
                 }
+            }
+
+            // Prevent saving local file URLs to Supabase if an upload failed or was cached locally
+            if let url = uploadedUrl, url.hasPrefix("file://") {
+                uploadedUrl = nil
             }
 
             let updateData: [String: String?] = [

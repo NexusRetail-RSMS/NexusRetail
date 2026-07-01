@@ -44,7 +44,7 @@ struct SalesDashboardView: View {
                 floatingQRButton
             }
             .navigationBarHidden(true)
-            .sheet(isPresented: $isProfilePresented) { SalesProfileSheet() }
+            .sheet(isPresented: $isProfilePresented) { AdminProfileSheet() }
             .navigationDestination(for: POSFlowDestination.self) { dest in
                 switch dest {
                 case .newSale:       NewSaleView(path: $navigationPath)
@@ -74,9 +74,22 @@ struct SalesDashboardView: View {
             Button { isProfilePresented = true } label: {
                 ZStack {
                     Circle().fill(RSMSColors.burgundy).frame(width: 44, height: 44)
-                    Text(salesInitials(for: sessionStore.currentUser?.name))
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white)
+                    if let urlString = sessionStore.currentUser?.imageUrl, let url = URL(string: urlString) {
+                        CachedAsyncImage(url: url) { image in
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 44, height: 44)
+                                .clipShape(Circle())
+                        } placeholder: {
+                            ProgressView()
+                                .frame(width: 44, height: 44)
+                        }
+                    } else {
+                        Text(salesInitials(for: sessionStore.currentUser?.name))
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                    }
                 }
             }
             .buttonStyle(.plain)

@@ -107,7 +107,7 @@ struct AdminToolbarModifier: ViewModifier {
                                 .frame(width: 32, height: 32)
                             
                             if let urlString = sessionStore.currentUser?.imageUrl, let url = URL(string: urlString) {
-                                AsyncImage(url: url) { image in
+                                CachedAsyncImage(url: url) { image in
                                     image
                                         .resizable()
                                         .scaledToFill()
