@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Supabase
 
 struct InventoryCatalogView: View {
     @Environment(SessionStore.self) private var sessionStore
@@ -14,15 +15,28 @@ struct InventoryCatalogView: View {
     @State private var isLoading = false
     @State private var searchText = ""
 
+    @State private var selectedCategory: String? = nil
+
+    var categories: [String] {
+        let allCategories = Set(products.map { $0.category })
+        return Array(allCategories).sorted()
+    }
+
     var filteredProducts: [POSProduct] {
+        var base = products
+        
+        if let category = selectedCategory {
+            base = base.filter { $0.category == category }
+        }
+        
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        let base = query.isEmpty
-            ? products
-            : products.filter {
+        if !query.isEmpty {
+            base = base.filter {
                 $0.name.localizedCaseInsensitiveContains(query) ||
                 $0.sku.localizedCaseInsensitiveContains(query) ||
                 $0.category.localizedCaseInsensitiveContains(query)
             }
+        }
         return base.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
@@ -35,6 +49,8 @@ struct InventoryCatalogView: View {
                     VStack(alignment: .leading, spacing: RSMSSpacing.lg) {
 
                         searchBar
+                        
+                        filterScrollView
 
                         if isLoading {
                             HStack {
@@ -95,6 +111,44 @@ struct InventoryCatalogView: View {
                 .stroke(RSMSColors.cardBorder, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.02), radius: 4, x: 0, y: 2)
+    }
+
+    // MARK: - Filter Pills
+    private var filterScrollView: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 12) {
+                filterPill(title: "All", isSelected: selectedCategory == nil) {
+                    withAnimation { selectedCategory = nil }
+                }
+                ForEach(categories, id: \.self) { category in
+                    filterPill(title: category, isSelected: selectedCategory == category) {
+                        withAnimation {
+                            if selectedCategory == category {
+                                selectedCategory = nil
+                            } else {
+                                selectedCategory = category
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func filterPill(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(isSelected ? RSMSColors.background : RSMSColors.primaryText)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(isSelected ? RSMSColors.primaryText : RSMSColors.cardBackground)
+                .clipShape(Capsule())
+                .overlay(
+                    Capsule()
+                        .stroke(isSelected ? Color.clear : RSMSColors.cardBorder, lineWidth: 1)
+                )
+        }
     }
 
     // MARK: - Empty State
@@ -174,7 +228,43 @@ struct InventoryCatalogView: View {
     // MARK: - Data Loading
     private func loadProducts() async {
         isLoading = true
-        products = await POSProductRepository.shared.fetchProducts(storeID: sessionStore.currentUser?.storeID)
+        do {
+            struct ProductResponse: Codable {
+                let item_id: Int64
+                let item_name: String
+                let category: String
+                let price: Double
+                let pexels_page: String?
+                let image_url: String?
+            }
+            
+            let response: [ProductResponse] = try await SupabaseManager.shared.client
+                .from("products")
+                .select("item_id, item_name, category, price, pexels_page, image_url")
+                .execute()
+                .value
+            
+            var mapped: [POSProduct] = []
+            for product in response {
+                let uuid = UUID(uuidString: String(format: "00000000-0000-0000-0000-%012d", product.item_id)) ?? UUID()
+                let pexelsImageUrl = POSProductRepository.shared.extractPexelsImageUrl(from: product.pexels_page ?? "") ?? product.image_url
+                
+                mapped.append(POSProduct(
+                    id: uuid,
+                    itemId: product.item_id,
+                    name: product.item_name,
+                    sku: "SKU-\(product.item_id)",
+                    category: product.category,
+                    price: product.price,
+                    stock: Int.random(in: 1...50), // Random stock for now or join with inventory
+                    size: "M",
+                    imageUrl: pexelsImageUrl
+                ))
+            }
+            self.products = mapped
+        } catch {
+            print("Error fetching from Supabase products table: \(error)")
+        }
         isLoading = false
     }
 }
