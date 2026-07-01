@@ -34,77 +34,90 @@ enum StoreChartTimeRange: Equatable {
 
 struct SwipeableCalendarView: View {
     @Binding var selectedRange: StoreChartTimeRange
-    
-    @State private var selectedWeekOffset: Int = 0
-    @State private var selectedMonthOffset: Int = 0
-    @State private var selectedYearOffset: Int = 0
-    
-    func week(offset: Int) -> [Date] {
-        let calendar = Calendar.current
+
+    // Current page offsets — 0 = today/this week/this month/this year
+    @State private var weekOffset:  Int = 0
+    @State private var monthOffset: Int = 0
+    @State private var yearOffset:  Int = 0
+
+    private let calendar = Calendar.current
+
+    // MARK: - Date helpers
+
+    /// Start date of the week at `offset` weeks from today's week
+    private func weekStart(offset: Int) -> Date {
         let today = Date()
-        guard let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: today)),
-              let targetStart = calendar.date(byAdding: .weekOfYear, value: offset, to: startOfWeek) else {
-            return []
-        }
-        return (0..<7).compactMap { dayOffset in
-            calendar.date(byAdding: .day, value: dayOffset, to: targetStart)
-        }
+        let startOfThisWeek = calendar.date(
+            from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: today)
+        ) ?? today
+        return calendar.date(byAdding: .weekOfYear, value: offset, to: startOfThisWeek) ?? today
     }
-    
-    func months(offset: Int) -> [Date] {
-        let calendar = Calendar.current
+
+    /// First day of the month at `offset` months from today's month
+    private func monthStart(offset: Int) -> Date {
         let today = Date()
-        let monthComponent = calendar.component(.month, from: today)
-        let isSecondHalf = monthComponent > 6
-        
-        guard let startOfYear = calendar.date(from: calendar.dateComponents([.year], from: today)),
-              let targetStart = calendar.date(byAdding: .month, value: (isSecondHalf ? 6 : 0) + (offset * 6), to: startOfYear) else {
-            return []
-        }
-        return (0..<6).compactMap { mOffset in
-            calendar.date(byAdding: .month, value: mOffset, to: targetStart)
-        }
+        let startOfThisMonth = calendar.date(
+            from: calendar.dateComponents([.year, .month], from: today)
+        ) ?? today
+        return calendar.date(byAdding: .month, value: offset, to: startOfThisMonth) ?? today
     }
-    
-    func years(offset: Int) -> [Date] {
-        let calendar = Calendar.current
+
+    /// First day of the year at `offset` years from today's year
+    private func yearStart(offset: Int) -> Date {
         let today = Date()
-        guard let startOfYear = calendar.date(from: calendar.dateComponents([.year], from: today)),
-              let targetStart = calendar.date(byAdding: .year, value: offset * 5, to: startOfYear) else {
-            return []
-        }
-        return (0..<5).compactMap { yOffset in
-            calendar.date(byAdding: .year, value: yOffset, to: targetStart)
-        }
+        let startOfThisYear = calendar.date(
+            from: calendar.dateComponents([.year], from: today)
+        ) ?? today
+        return calendar.date(byAdding: .year, value: offset, to: startOfThisYear) ?? today
     }
-    
+
+    /// All 7 dates in the week starting at `weekStart(offset:)`
+    private func weekDays(offset: Int) -> [Date] {
+        let start = weekStart(offset: offset)
+        return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: start) }
+    }
+
+    // MARK: - Navigation
+
     private func goBack() {
-        withAnimation(.easeInOut(duration: 0.25)) {
-            if case .weekly = selectedRange {
-                selectedWeekOffset -= 1
-            } else if case .monthly = selectedRange {
-                selectedMonthOffset -= 1
-            } else {
-                selectedYearOffset -= 1
+        withAnimation(.easeInOut(duration: 0.2)) {
+            switch selectedRange {
+            case .weekly:
+                weekOffset -= 1
+                selectedRange = .weekly(weekStart(offset: weekOffset))
+            case .monthly:
+                monthOffset -= 1
+                selectedRange = .monthly(monthStart(offset: monthOffset))
+            case .yearly:
+                yearOffset -= 1
+                selectedRange = .yearly(yearStart(offset: yearOffset))
             }
         }
     }
-    
+
     private func goForward() {
-        withAnimation(.easeInOut(duration: 0.25)) {
-            if case .weekly = selectedRange {
-                if selectedWeekOffset < 0 { selectedWeekOffset += 1 }
-            } else if case .monthly = selectedRange {
-                if selectedMonthOffset < 0 { selectedMonthOffset += 1 }
-            } else {
-                if selectedYearOffset < 0 { selectedYearOffset += 1 }
+        withAnimation(.easeInOut(duration: 0.2)) {
+            switch selectedRange {
+            case .weekly:
+                guard weekOffset < 0 else { return }
+                weekOffset += 1
+                selectedRange = .weekly(weekStart(offset: weekOffset))
+            case .monthly:
+                guard monthOffset < 0 else { return }
+                monthOffset += 1
+                selectedRange = .monthly(monthStart(offset: monthOffset))
+            case .yearly:
+                guard yearOffset < 0 else { return }
+                yearOffset += 1
+                selectedRange = .yearly(yearStart(offset: yearOffset))
             }
         }
     }
-    
+
+    // MARK: - Body
+
     var body: some View {
         HStack(spacing: 8) {
-            // Left chevron — tappable button
             Button(action: goBack) {
                 Image(systemName: "chevron.left")
                     .foregroundColor(RSMSColors.secondaryText)
@@ -113,122 +126,123 @@ struct SwipeableCalendarView: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            
+
             Group {
-                if case .weekly(_) = selectedRange {
-                    weeklyPager
-                } else if case .monthly(_) = selectedRange {
-                    monthlyPager
-                } else {
-                    yearlyPager
+                switch selectedRange {
+                case .weekly:  weeklyPager
+                case .monthly: monthlyPager
+                case .yearly:  yearlyPager
                 }
             }
-            
-            // Right chevron — tappable button
+
             Button(action: goForward) {
                 Image(systemName: "chevron.right")
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(canGoForward ? RSMSColors.secondaryText : RSMSColors.secondaryText.opacity(0.3))
                     .font(.system(size: 14, weight: .bold))
                     .frame(width: 32, height: 44)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .disabled(!canGoForward)
         }
         .padding(.vertical, 4)
         .padding(.horizontal)
-        .background(Color.clear)
     }
-    
+
+    private var canGoForward: Bool {
+        switch selectedRange {
+        case .weekly:  return weekOffset < 0
+        case .monthly: return monthOffset < 0
+        case .yearly:  return yearOffset < 0
+        }
+    }
+
+    // MARK: - Pagers
+
+    /// Weekly: show 7 day buttons, swipe left/right to change week
     private var weeklyPager: some View {
-        TabView(selection: $selectedWeekOffset) {
-            ForEach(-50...0, id: \.self) { offset in
-                VStack(spacing: 10) {
-                    // Day name headers inside TabView so they swipe too
-                    HStack {
-                        ForEach(["S", "M", "T", "W", "T", "F", "S"], id: \.self) { day in
-                            Text(day)
-                                .font(.system(size: 12, weight: .bold))
+        TabView(selection: $weekOffset) {
+            ForEach(-52...0, id: \.self) { offset in
+                HStack(spacing: 0) {
+                    ForEach(weekDays(offset: offset), id: \.self) { date in
+                        VStack(spacing: 3) {
+                            Text(dayLetter(date))
+                                .font(.system(size: 11, weight: .bold))
                                 .foregroundColor(RSMSColors.secondaryText)
-                                .frame(maxWidth: .infinity)
+                            Text(String(calendar.component(.day, from: date)))
+                                .font(.system(size: 15, weight: isToday(date) ? .bold : .regular))
+                                .foregroundColor(isToday(date) ? RSMSColors.burgundy : RSMSColors.primaryText)
                         }
-                    }
-                    
-                    HStack {
-                        ForEach(week(offset: offset), id: \.self) { date in
-                            Text(String(Calendar.current.component(.day, from: date)))
-                                .font(.system(size: 16, weight: .regular))
-                                .foregroundColor(RSMSColors.primaryText)
-                                .frame(maxWidth: .infinity)
-                        }
+                        .frame(maxWidth: .infinity)
                     }
                 }
                 .tag(offset)
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
-        .frame(height: 55)
-        .onChange(of: selectedWeekOffset) { _, newOffset in
-            if let targetDate = week(offset: newOffset).first {
-                selectedRange = .weekly(targetDate)
-            }
+        .frame(height: 52)
+        .onChange(of: weekOffset) { _, newOffset in
+            selectedRange = .weekly(weekStart(offset: newOffset))
         }
     }
-    
+
+    /// Monthly: one month per page, show month+year label
     private var monthlyPager: some View {
-        TabView(selection: $selectedMonthOffset) {
-            ForEach(-50...0, id: \.self) { offset in
-                HStack {
-                    ForEach(months(offset: offset), id: \.self) { date in
-                        Text(formattedMonth(date))
-                            .font(.system(size: 16, weight: .regular))
-                            .foregroundColor(RSMSColors.primaryText)
-                            .frame(maxWidth: .infinity)
-                    }
-                }
-                .tag(offset)
+        TabView(selection: $monthOffset) {
+            ForEach(-120...0, id: \.self) { offset in
+                Text(formattedMonthYear(monthStart(offset: offset)))
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(RSMSColors.primaryText)
+                    .frame(maxWidth: .infinity)
+                    .tag(offset)
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
         .frame(height: 30)
-        .onChange(of: selectedMonthOffset) { _, newOffset in
-            if let targetDate = months(offset: newOffset).first {
-                selectedRange = .monthly(targetDate)
-            }
+        .onChange(of: monthOffset) { _, newOffset in
+            selectedRange = .monthly(monthStart(offset: newOffset))
         }
     }
-    
+
+    /// Yearly: one year per page
     private var yearlyPager: some View {
-        TabView(selection: $selectedYearOffset) {
+        TabView(selection: $yearOffset) {
             ForEach(-20...0, id: \.self) { offset in
-                HStack {
-                    ForEach(years(offset: offset), id: \.self) { date in
-                        Text(formattedYear(date))
-                            .font(.system(size: 16, weight: .regular))
-                            .foregroundColor(RSMSColors.primaryText)
-                            .frame(maxWidth: .infinity)
-                    }
-                }
-                .tag(offset)
+                Text(formattedYear(yearStart(offset: offset)))
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(RSMSColors.primaryText)
+                    .frame(maxWidth: .infinity)
+                    .tag(offset)
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
         .frame(height: 30)
-        .onChange(of: selectedYearOffset) { _, newOffset in
-            if let targetDate = years(offset: newOffset).first {
-                selectedRange = .yearly(targetDate)
-            }
+        .onChange(of: yearOffset) { _, newOffset in
+            selectedRange = .yearly(yearStart(offset: newOffset))
         }
     }
-    
-    private func formattedMonth(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM"
-        return formatter.string(from: date)
+
+    // MARK: - Formatting helpers
+
+    private func dayLetter(_ date: Date) -> String {
+        let f = DateFormatter()
+        f.dateFormat = "EEEEE"   // single-letter day name
+        return f.string(from: date)
     }
-    
+
+    private func isToday(_ date: Date) -> Bool {
+        calendar.isDateInToday(date)
+    }
+
+    private func formattedMonthYear(_ date: Date) -> String {
+        let f = DateFormatter()
+        f.dateFormat = "MMMM yyyy"
+        return f.string(from: date)
+    }
+
     private func formattedYear(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy"
-        return formatter.string(from: date)
+        let f = DateFormatter()
+        f.dateFormat = "yyyy"
+        return f.string(from: date)
     }
 }

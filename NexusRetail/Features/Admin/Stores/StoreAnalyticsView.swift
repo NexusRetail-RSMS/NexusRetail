@@ -258,14 +258,20 @@ struct StoreAnalyticsView: View {
     }
 
     private var timeRangePicker: some View {
-        Picker("Time range", selection: $analyticsVM.timeRange) {
-            ForEach(timeRanges, id: \.self) { range in
-                Text(range).tag(range)
+        VStack(spacing: RSMSSpacing.sm) {
+            Picker("Time range", selection: $analyticsVM.timeRange) {
+                ForEach(timeRanges, id: \.self) { range in
+                    Text(range).tag(range)
+                }
             }
+            .pickerStyle(.segmented)
+            .tint(RSMSColors.burgundy)
+            .frame(maxWidth: .infinity)
+
+            // Swipeable calendar — bound directly to the VM's calendarRange
+            // so swiping months/weeks/years updates the charts immediately
+            SwipeableCalendarView(selectedRange: $analyticsVM.calendarRange)
         }
-        .pickerStyle(.segmented)
-        .tint(RSMSColors.burgundy)
-        .frame(maxWidth: .infinity)
     }
 
     private var salesTrend: [Double] {
@@ -444,9 +450,30 @@ struct StoreAnalyticsView: View {
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(RSMSColors.primaryText)
             Spacer()
-            Text(analyticsVM.timeRange)
+            // Show the resolved period label from the calendar range
+            Text(calendarPeriodLabel)
                 .font(.system(size: 11))
                 .foregroundColor(RSMSColors.secondaryText)
+        }
+    }
+
+    private var calendarPeriodLabel: String {
+        switch analyticsVM.calendarRange {
+        case .weekly(let date):
+            let f = DateFormatter()
+            f.dateFormat = "d MMM yyyy"
+            let cal = Calendar.current
+            let start = cal.date(from: cal.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)) ?? date
+            let end   = cal.date(byAdding: .day, value: 6, to: start) ?? date
+            return "\(f.string(from: start)) – \(f.string(from: end))"
+        case .monthly(let date):
+            let f = DateFormatter()
+            f.dateFormat = "MMMM yyyy"
+            return f.string(from: date)
+        case .yearly(let date):
+            let f = DateFormatter()
+            f.dateFormat = "yyyy"
+            return analyticsVM.timeRange == "All Time" ? "All Time" : f.string(from: date)
         }
     }
 
