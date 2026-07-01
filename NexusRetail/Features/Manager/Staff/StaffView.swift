@@ -8,13 +8,23 @@
 import SwiftUI
 
 struct StaffView: View {
+    @State private var viewModel = StaffViewModel()
     @State private var isAddEmployeePresented = false
     @State private var searchText = ""
     @State private var selectedRoleFilter: EmployeeRoleFilter = .sales
+    @State private var editingEmployee: DisplayEmployee? = nil
     
     enum EmployeeRoleFilter: String, CaseIterable {
         case sales = "Sales Associate"
         case afterSales = "After Sales Associate"
+    }
+    
+    var filteredEmployees: [DisplayEmployee] {
+        viewModel.employees.filter { emp in
+            let matchesSearch = searchText.isEmpty || emp.name.localizedCaseInsensitiveContains(searchText) || emp.email.localizedCaseInsensitiveContains(searchText)
+            let matchesRole = emp.role == selectedRoleFilter.rawValue
+            return matchesSearch && matchesRole
+        }
     }
     
     var body: some View {
@@ -59,17 +69,89 @@ struct StaffView: View {
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.bottom, RSMSSpacing.md)
             
-            // MARK: - Content
-            ManagerPlaceholderView(
-                title: "Employees",
-                message: "Monitor staff check-ins, tasks, and sales metrics.",
-                icon: "person.2.fill"
-            )
+            // MARK: - Content List
+            ScrollView {
+                VStack(spacing: RSMSSpacing.md) {
+                    if filteredEmployees.isEmpty {
+                        VStack(spacing: RSMSSpacing.md) {
+                            Image(systemName: "person.slash")
+                                .font(.system(size: 44))
+                                .foregroundColor(RSMSColors.secondaryText)
+                            Text("No Employees Found")
+                                .font(RSMSFonts.headline)
+                                .foregroundColor(RSMSColors.primaryText)
+                            Text("No employee matches your search or role filter.")
+                                .font(RSMSFonts.subheadline)
+                                .foregroundColor(RSMSColors.secondaryText)
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 40)
+                    } else {
+                        ForEach(filteredEmployees) { employee in
+                            NavigationLink(destination: EmployeeDetailView(
+                                employee: employee,
+                                onUpdate: { updatedEmployee in
+                                    viewModel.updateEmployee(updatedEmployee)
+                                    if updatedEmployee.role == "After Sales Associate" {
+                                        selectedRoleFilter = .afterSales
+                                    } else {
+                                        selectedRoleFilter = .sales
+                                    }
+                                },
+                                onDelete: {
+                                    Task {
+                                        _ = await viewModel.deleteEmployee(id: employee.id)
+                                    }
+                                }
+                            )) {
+                                EmployeeCard(
+                                    employee: employee,
+                                    onEdit: {
+                                        editingEmployee = employee
+                                    },
+                                    onDelete: {
+                                        Task {
+                                            _ = await viewModel.deleteEmployee(id: employee.id)
+                                        }
+                                    }
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.bottom, RSMSSpacing.xl)
+            }
         }
         .background(RSMSColors.background.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
+        .task {
+            await viewModel.loadStaff()
+        }
+        .refreshable {
+            await viewModel.loadStaff()
+        }
         .sheet(isPresented: $isAddEmployeePresented) {
-            NewEmployeeSheet()
+            NewEmployeeSheet(onCreate: { newEmployee, password in
+                viewModel.addEmployee(newEmployee, password: password)
+                if newEmployee.role == "After Sales Associate" {
+                    selectedRoleFilter = .afterSales
+                } else {
+                    selectedRoleFilter = .sales
+                }
+            })
+        }
+        .sheet(item: $editingEmployee) { emp in
+            EditEmployeeSheet(employee: emp, onSave: { updatedEmployee in
+                viewModel.updateEmployee(updatedEmployee)
+                if updatedEmployee.role == "After Sales Associate" {
+                    selectedRoleFilter = .afterSales
+                } else {
+                    selectedRoleFilter = .sales
+                }
+            })
         }
     }
 }

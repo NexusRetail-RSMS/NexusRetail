@@ -11,24 +11,35 @@ struct StoreDetailView: View {
     @Bindable var viewModel: StoresViewModel
     @State private var isShowingEditForm = false
     
+    private var currentStore: Store {
+        viewModel.stores.first(where: { $0.id == store.id }) ?? store
+    }
+    
+    private var currentManager: AppUser? {
+        if let managerID = currentStore.managerID {
+            return viewModel.managers.first(where: { $0.id == managerID })
+        }
+        return nil
+    }
+    
     var body: some View {
         ScrollView {
             VStack(spacing: RSMSSpacing.lg) {
                 // Header
                 VStack(spacing: RSMSSpacing.sm) {
-                    Image(systemName: store.isWarehouse == true ? "shippingbox.fill" : "building.2.fill")
+                    Image(systemName: currentStore.isWarehouse == true ? "shippingbox.fill" : "building.2.fill")
                         .font(.system(size: 64))
                         .foregroundColor(RSMSColors.burgundy)
                         .padding(24)
                         .background(RSMSColors.burgundy.opacity(0.1))
                         .clipShape(Circle())
                     
-                    Text(store.name)
+                    Text(currentStore.name)
                         .font(RSMSFonts.title)
                         .fontWeight(.bold)
                         .foregroundColor(RSMSColors.primaryText)
                     
-                    if let status = store.status {
+                    if let status = currentStore.status {
                         StatusPill(label: status.rawValue.capitalized, color: status == .active ? RSMSColors.success : .gray)
                             .padding(.top, 4)
                     }
@@ -41,17 +52,17 @@ struct StoreDetailView: View {
                 
                 // Info Cards
                 VStack(spacing: RSMSSpacing.md) {
-                    DetailCard(icon: "mappin.and.ellipse", title: "Address", value: store.address ?? "Not provided")
-                    DetailCard(icon: "phone.fill", title: "Phone", value: store.phone ?? "Not provided")
-                    DetailCard(icon: "person.text.rectangle", title: "Manager", value: manager?.name ?? "Unassigned")
-                    DetailCard(icon: "globe", title: "Locale & Timezone", value: "\(store.readableLocale) • \(store.timezone ?? "N/A")")
-                    DetailCard(icon: "dollarsign.circle", title: "Currency", value: store.currencyCode ?? "N/A")
+                    DetailCard(icon: "mappin.and.ellipse", title: "Address", value: currentStore.address ?? "Not provided")
+                    DetailCard(icon: "phone.fill", title: "Phone", value: currentStore.phone ?? "Not provided")
+                    DetailCard(icon: "person.text.rectangle", title: "Manager", value: currentManager?.name ?? "Unassigned")
+                    DetailCard(icon: "globe", title: "Locale & Timezone", value: "\(currentStore.readableLocale) • \(currentStore.timezone ?? "N/A")")
+                    DetailCard(icon: "dollarsign.circle", title: "Currency", value: currentStore.currencyCode ?? "N/A")
                 }
                 .padding(.horizontal, RSMSSpacing.lg)
             }
         }
         .background(RSMSColors.background.ignoresSafeArea())
-        .navigationTitle(store.name)
+        .navigationTitle(currentStore.name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -61,7 +72,7 @@ struct StoreDetailView: View {
             }
         }
         .sheet(isPresented: $isShowingEditForm) {
-            StoreFormView(viewModel: viewModel, editingStore: store)
+            StoreFormView(viewModel: viewModel, editingStore: currentStore)
         }
     }
 }

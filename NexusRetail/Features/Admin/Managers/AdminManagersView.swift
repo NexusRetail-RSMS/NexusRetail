@@ -67,6 +67,7 @@ enum PerformanceSortOrder: String, CaseIterable {
 struct AdminManagersView: View {
     @Binding var isAddManagerPresented: Bool
     @Binding var searchText: String
+    @Environment(AdminNavigationStore.self) private var navStore
     @State private var viewModel = ManagersViewModel()
     @State private var topPerformerPage = 0
     @State private var scrolledID: Int?
@@ -373,6 +374,13 @@ struct AdminManagersView: View {
         }
         .task {
             await viewModel.loadManagers()
+        }
+        .onChange(of: navStore.selectedTab) { _, newTab in
+            if newTab == .managers {
+                Task {
+                    await viewModel.loadManagers()
+                }
+            }
         }
         .refreshable {
             await viewModel.loadManagers()

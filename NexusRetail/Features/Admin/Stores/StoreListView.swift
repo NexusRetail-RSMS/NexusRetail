@@ -9,6 +9,7 @@ struct StoreListView: View {
     @State private var viewModel = StoresViewModel()
     @State private var isShowingCreateForm = false
     @State private var searchText = ""
+    @Environment(AdminNavigationStore.self) private var navStore
     
     private var filteredStores: [Store] {
         if searchText.isEmpty {
@@ -16,6 +17,22 @@ struct StoreListView: View {
         } else {
             return viewModel.stores.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
         }
+    }
+    
+    private var emptyStateSection: some View {
+        VStack(spacing: RSMSSpacing.md) {
+            Image(systemName: "building.2.crop.circle")
+                .font(.system(size: 64))
+                .foregroundColor(RSMSColors.burgundy)
+            Text("No Stores Found")
+                .font(RSMSFonts.title)
+                .fontWeight(.bold)
+                .foregroundColor(RSMSColors.primaryText)
+            Text("Tap + to add your first store.")
+                .font(RSMSFonts.subheadline)
+                .foregroundColor(RSMSColors.secondaryText)
+        }
+        .frame(maxWidth: .infinity, minHeight: 300)
     }
     
     var body: some View {
@@ -50,20 +67,9 @@ struct StoreListView: View {
                         }
                         .padding()
                         .frame(maxWidth: .infinity, minHeight: 300)
-                    } else if viewModel.stores.isEmpty {
-                        VStack(spacing: RSMSSpacing.md) {
-                            Image(systemName: "building.2.crop.circle")
-                                .font(.system(size: 64))
-                                .foregroundColor(RSMSColors.burgundy)
-                            Text("No Stores Found")
-                                .font(RSMSFonts.title)
-                                .fontWeight(.bold)
-                                .foregroundColor(RSMSColors.primaryText)
-                            Text("Tap + to add your first store.")
-                                .font(RSMSFonts.subheadline)
-                                .foregroundColor(RSMSColors.secondaryText)
-                        }
-                        .frame(maxWidth: .infinity, minHeight: 300)
+                    } else if filteredStores.isEmpty {
+                        emptyStateSection
+                            .padding(.top, RSMSSpacing.xxl)
                     } else {
                         LazyVStack(spacing: RSMSSpacing.md) {
                             ForEach(filteredStores) { store in
@@ -74,7 +80,8 @@ struct StoreListView: View {
                             }
                         }
                         .padding(.horizontal, RSMSSpacing.lg)
-                        .padding(.bottom, RSMSSpacing.md)
+                        .padding(.top, RSMSSpacing.md)
+                        .padding(.bottom, RSMSSpacing.xxl)
                     }
                 }
             }
@@ -91,8 +98,13 @@ struct StoreListView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .task {
-            if viewModel.stores.isEmpty {
-                await viewModel.load()
+            await viewModel.load()
+        }
+        .onChange(of: navStore.selectedTab) { _, newTab in
+            if newTab == .stores {
+                Task {
+                    await viewModel.load()
+                }
             }
         }
         .sheet(isPresented: $isShowingCreateForm) {

@@ -10,6 +10,7 @@ import PhotosUI
 
 struct NewEmployeeSheet: View {
     @Environment(\.dismiss) private var dismiss
+    var onCreate: ((DisplayEmployee, String) -> Void)? = nil
 
     @State private var firstName = ""
     @State private var lastName = ""
@@ -181,8 +182,28 @@ struct NewEmployeeSheet: View {
     private func saveEmployee() async {
         isSaving = true
         generatePassword()
-        // Simulate save
-        try? await Task.sleep(nanoseconds: 1_000_000_000)
+        
+        let fullName = "\(firstName.trimmingCharacters(in: .whitespaces)) \(lastName.trimmingCharacters(in: .whitespaces))"
+        let roleStr = selectedRole == .afterSales ? "After Sales Associate" : "Sales Associate"
+        
+        let newEmp = DisplayEmployee(
+            id: UUID(),
+            name: fullName,
+            role: roleStr,
+            productsSold: 0,
+            revenue: "$0",
+            imageUrl: nil,
+            phone: phone,
+            email: email
+        )
+        
+        // Simulate save / persist
+        try? await Task.sleep(nanoseconds: 300_000_000)
+        
+        if let onCreate = onCreate {
+            onCreate(newEmp, password)
+        }
+        
         isSaving = false
         showSuccessAlert = true
     }
