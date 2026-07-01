@@ -75,6 +75,7 @@ class SellViewModel {
             var container = encoder.singleValueContainer()
             switch value {
             case let intVal as Int: try container.encode(intVal)
+            case let int64Val as Int64: try container.encode(int64Val)
             case let doubleVal as Double: try container.encode(doubleVal)
             case let stringVal as String: try container.encode(stringVal)
             case let uuidVal as UUID: try container.encode(uuidVal)
@@ -99,7 +100,7 @@ class SellViewModel {
         
         let pItems: [[String: AnyCodable]] = itemCounts.values.map { (product, quantity) in
             return [
-                "sku_id": AnyCodable(value: product.id),
+                "item_id": AnyCodable(value: product.itemId),
                 "quantity": AnyCodable(value: quantity),
                 "price": AnyCodable(value: product.price)
             ]

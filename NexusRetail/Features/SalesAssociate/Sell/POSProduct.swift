@@ -47,11 +47,12 @@ class POSProductRepository {
                 let price: Double
                 let pexels_page: String?
                 let image_url: String?
+                let sku_code: String?
             }
             
             let response: [ProductResponse] = try await SupabaseManager.shared.client
                 .from("products")
-                .select("item_id, item_name, category, price, pexels_page, image_url")
+                .select("item_id, item_name, category, price, pexels_page, image_url, sku_code")
                 .execute()
                 .value
             
@@ -77,7 +78,7 @@ class POSProductRepository {
                     id: uuid,
                     itemId: product.item_id,
                     name: product.item_name,
-                    sku: "SKU-\(product.item_id)",
+                    sku: product.sku_code ?? "SKU-\(product.item_id)",
                     category: product.category,
                     price: product.price,
                     stock: 50, // default fallback stock
