@@ -130,6 +130,7 @@ enum PerformanceSortOrder: String, CaseIterable {
 struct AdminManagersView: View {
     @Binding var isAddManagerPresented: Bool
     @Binding var searchText: String
+    @Environment(AdminNavigationStore.self) private var navStore
     @State private var viewModel = ManagersViewModel()
     @State private var topPerformerPage = 0
     @State private var scrolledID: Int?
@@ -178,6 +179,32 @@ struct AdminManagersView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: RSMSSpacing.xl) {
+                    VStack(spacing: RSMSSpacing.md) {
+                        HStack {
+                            Text("Managers")
+                                .font(.largeTitle)
+                                .fontWeight(.bold)
+                                .foregroundColor(RSMSColors.primaryText)
+
+                            Spacer()
+
+                            Button {
+                                isAddManagerPresented = true
+                            } label: {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundColor(RSMSColors.burgundy)
+                                    .frame(width: 44, height: 44)
+                                    .glassEffect(.regular.tint(RSMSColors.burgundy.opacity(0.1)).interactive(), in: Circle())
+                            }
+                            .accessibilityLabel("Add new manager")
+                        }
+
+                        NexusSearchBar(text: $searchText, placeholder: "Search managers, stores…")
+                    }
+                    .padding(.horizontal, RSMSSpacing.lg)
+                    .padding(.top, 16)
+
                     // MARK: Top Performers
                     VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
                         Text("Top Performers")
@@ -410,6 +437,13 @@ struct AdminManagersView: View {
         }
         .task {
             await viewModel.loadManagers()
+        }
+        .onChange(of: navStore.selectedTab) { _, newTab in
+            if newTab == .managers {
+                Task {
+                    await viewModel.loadManagers()
+                }
+            }
         }
         .refreshable {
             await viewModel.loadManagers()

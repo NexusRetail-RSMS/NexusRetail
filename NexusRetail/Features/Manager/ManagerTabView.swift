@@ -35,12 +35,7 @@ struct ManagerTabView: View {
             
             // 3. Employees
             NavigationStack {
-                ManagerPlaceholderView(
-                    title: "Employees",
-                    message: "Monitor staff check-ins, tasks, and sales metrics.",
-                    icon: "person.2.fill"
-                )
-                .modifier(ManagerToolbarModifier(title: "Employees"))
+                StaffView()
             }
             .tabItem {
                 Label("Employees", systemImage: "person.2")
