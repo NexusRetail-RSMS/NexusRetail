@@ -93,8 +93,8 @@ struct KPICardView: View {
                 Text(title)
                     .font(.system(size: 13))
                     .foregroundColor(RSMSColors.secondaryText)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             
             Spacer(minLength: 0)
@@ -180,3 +180,53 @@ struct NexusSearchBar: View {
     }
 }
 
+/// A drop-in replacement for AsyncImage that caches images in memory/disk
+/// to prevent reloading the same image repeatedly.
+public struct CachedAsyncImage<Content: View, Placeholder: View>: View {
+    let url: URL?
+    let content: (Image) -> Content
+    let placeholder: () -> Placeholder
+
+    @State private var image: Image?
+
+    public init(url: URL?, @ViewBuilder content: @escaping (Image) -> Content, @ViewBuilder placeholder: @escaping () -> Placeholder) {
+        self.url = url
+        self.content = content
+        self.placeholder = placeholder
+    }
+
+    public var body: some View {
+        if let image = image {
+            content(image)
+        } else {
+            placeholder()
+                .task {
+                    await loadImage()
+                }
+        }
+    }
+
+    private func loadImage() async {
+        guard let url = url else { return }
+        
+        let request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad)
+        
+        if let cachedResponse = URLCache.shared.cachedResponse(for: request),
+           let uiImage = UIImage(data: cachedResponse.data) {
+            self.image = Image(uiImage: uiImage)
+            return
+        }
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200,
+               let uiImage = UIImage(data: data) {
+                let cachedData = CachedURLResponse(response: response, data: data)
+                URLCache.shared.storeCachedResponse(cachedData, for: request)
+                self.image = Image(uiImage: uiImage)
+            }
+        } catch {
+            print("Failed to load image: \(error)")
+        }
+    }
+}

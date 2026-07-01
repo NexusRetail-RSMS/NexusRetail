@@ -69,11 +69,18 @@ struct ProductSalesChart: View {
                     }
                     .chartForegroundStyleScale([
                         "Couture": RSMSColors.burgundy,
+                        "Perfume": Color(hex: "F4A261"),
+                        "Perfumes": Color(hex: "F4A261"),
+                        "Fragrances": Color(hex: "F4A261"),
                         "Fragrance": Color(hex: "F4A261"),
+                        "Jewellery": Color(hex: "E9C46A"),
                         "Jewelry": Color(hex: "E9C46A"),
                         "Leather": Color(hex: "2A9D8F"),
+                        "Leather Goods": Color(hex: "2A9D8F"),
                         "Watches": Color(hex: "264653"),
-                        "Accessories": Color(hex: "8A2BE2")
+                        "Accessories": Color(hex: "8A2BE2"),
+                        "Bags": Color(hex: "2A9D8F"),
+                        "Clothes": RSMSColors.burgundy
                     ])
                     .chartLegend(.hidden)
                     .frame(height: 200)
@@ -117,7 +124,8 @@ struct ProductSalesChart: View {
     private func shortLabel(_ category: String) -> String {
         switch category {
         case "Leather Goods": return "Leather"
-        case "Fragrances":    return "Fragrance"
+        case "Perfumes":      return "Perfume"
+        case "Jewellery":     return "Jewellery"
         default:              return category
         }
     }
@@ -125,11 +133,13 @@ struct ProductSalesChart: View {
     private func colorFor(category: String) -> Color {
         switch category {
         case "Couture": return RSMSColors.burgundy
-        case "Fragrance": return Color(hex: "F4A261")
-        case "Jewelry": return Color(hex: "E9C46A")
-        case "Leather": return Color(hex: "2A9D8F")
+        case "Perfume", "Perfumes", "Fragrances", "Fragrance": return Color(hex: "F4A261")
+        case "Jewellery", "Jewelry": return Color(hex: "E9C46A")
+        case "Leather", "Leather Goods": return Color(hex: "2A9D8F")
         case "Watches": return Color(hex: "264653")
         case "Accessories": return Color(hex: "8A2BE2")
+        case "Bags": return Color(hex: "2A9D8F")
+        case "Clothes": return RSMSColors.burgundy
         default: return RSMSColors.chartBar
         }
     }

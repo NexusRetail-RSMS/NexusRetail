@@ -98,6 +98,7 @@ struct DeliveryDetailView: View {
     let delivery: AdminDelivery
     @Environment(AdminTransfersViewModel.self) private var viewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var isSimulating = false
     
     // Derived property to make sure we have the latest status
     var currentDelivery: AdminDelivery {
@@ -150,20 +151,32 @@ struct DeliveryDetailView: View {
                 .padding(.horizontal)
                 
                 // Simulate Button
-                if currentDelivery.status == .inTransit {
+                if currentDelivery.status != .delivered {
                     Button {
-                        withAnimation {
-                            viewModel.simulateStoreDelivery(for: currentDelivery)
+                        isSimulating = true
+                        Task {
+                            await viewModel.simulateFullDelivery(for: currentDelivery)
+                            isSimulating = false
                         }
                     } label: {
-                        Text("Simulate Delivery")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.nexusDark)
-                            .foregroundColor(Color.nexusBackground)
-                            .cornerRadius(12)
+                        if isSimulating {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: Color.nexusBackground))
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.nexusDark)
+                                .cornerRadius(12)
+                        } else {
+                            Text("Simulate Delivery")
+                                .font(.headline)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.nexusDark)
+                                .foregroundColor(Color.nexusBackground)
+                                .cornerRadius(12)
+                        }
                     }
+                    .disabled(isSimulating)
                     .padding(.horizontal)
                 }
             }

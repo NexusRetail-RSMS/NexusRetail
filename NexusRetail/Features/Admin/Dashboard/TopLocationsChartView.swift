@@ -1,146 +1,75 @@
+//
+//  TopLocationsChartView.swift
+//  NexusRetail
+//
+//  Interactive MapKit-based store map for the Admin Dashboard.
+//  Replaces the static GeoJSON vector map with native Apple Maps,
+//  animated country zoom, store markers with clustering, and
+//  country-level statistics.
+//
+
 import SwiftUI
+import MapKit
 import CoreLocation
+
+// MARK: - Main View
 
 struct TopLocationsChartView: View {
     let revenueByCountry: [CountryRevenue]
-    @State private var countryPolygons: [CountryPolygon] = []
-    
-    // Zoom and Pan state for the preview
-    @State private var scale: CGFloat = 1.0
-    @State private var offset: CGSize = .zero
-    
-    @State private var timeRange: StoreChartTimeRange = .monthly(Date())
+    let selectedCountry: String?
+
+    @State private var mapVM = StoreMapViewModel()
     @State private var showingDetail = false
-    @State private var selectedCountry: String? = nil
-    
-    private var maxRevenue: Double {
-        revenueByCountry.map(\.revenue).max() ?? 1
-    }
-    
+    @State private var timeRange: StoreChartTimeRange = .monthly(Date())
+    @State private var countryPolygons: [CountryPolygon] = []
+    @State private var selectedStore: StoreMapItem?
+
     var body: some View {
-        VStack(alignment: .leading, spacing: RSMSSpacing.lg) {
-            
-            // Title (Moved above the graph)
-            Text("Top Customer Locations")
-                .font(RSMSFonts.headline)
-                .foregroundColor(RSMSColors.primaryText)
-            
-            // Custom Vector Map View
-            ZStack {
-                Color.white // Plain white background
-                    .onTapGesture {
-                        showingDetail = true
-                    }
-                
-                // Draw countries
-                ForEach(countryPolygons) { country in
-                    let isSelected = selectedCountry == country.name
-                    
-                    CountryShape(polygons: country.polygons)
-                        .fill(getFillColor(for: country.name).opacity(getOpacity(for: country.name, isSelected: isSelected)))
-                        .stroke(isSelected ? Color.blue : Color.white, lineWidth: isSelected ? 1.5 : 0.5)
-                        .onTapGesture {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                if selectedCountry == country.name {
-                                    selectedCountry = nil
-                                } else {
-                                    selectedCountry = country.name
-                                }
-                            }
-                        }
-                }
+        VStack(alignment: .leading, spacing: 0) {
+
+            // MARK: - Header
+            headerSection
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, RSMSSpacing.lg)
+                .padding(.bottom, RSMSSpacing.md)
+
+            // MARK: - Map
+            mapSection
+                .padding(.horizontal, RSMSSpacing.md)
+
+            // MARK: - Stats Summary
+            statsSection
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, RSMSSpacing.md)
+
+            // MARK: - Store Pills (when country selected)
+            if selectedCountry != nil {
+                storePillsSection
+                    .padding(.top, RSMSSpacing.sm)
+                    .padding(.horizontal, RSMSSpacing.lg)
             }
-            .contentShape(Rectangle()) // Ensure drag/zoom works on whitespace
-            .aspectRatio(1.8, contentMode: .fit)
-            .scaleEffect(scale)
-            .offset(offset)
-            .gesture(
-                MagnificationGesture()
-                    .onChanged { value in
-                        scale = max(1.0, value.magnitude)
-                    }
-                    .onEnded { _ in
-                        if scale <= 1.0 {
-                            withAnimation { offset = .zero }
-                        }
-                    }
-            )
-            .gesture(
-                DragGesture()
-                    .onChanged { value in
-                        if scale > 1.0 {
-                            offset = value.translation
-                        }
-                    }
-                    .onEnded { _ in
-                        if scale <= 1.0 {
-                            withAnimation { offset = .zero }
-                        }
-                    }
-            )
-            .clipped()
-            .cornerRadius(RSMSRadius.medium)
-            
-            // Clickable details section to open the detail view
-            VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
-                // Dynamic Details based on selection
-                if let selected = selectedCountry, let data = revenueByCountry.first(where: { $0.country == selected }) {
-                    HStack(alignment: .lastTextBaseline, spacing: RSMSSpacing.sm) {
-                        Text("₹\(shortCurrency(data.revenue))")
-                            .font(.system(size: 36, weight: .bold))
-                            .foregroundColor(RSMSColors.primaryText)
-                        
-                        Text("revenue in \(selected)")
-                            .font(RSMSFonts.subheadline)
-                            .foregroundColor(RSMSColors.secondaryText)
-                    }
-                } else {
-                    let total = revenueByCountry.reduce(0) { $0 + $1.revenue }
-                    HStack(alignment: .lastTextBaseline, spacing: RSMSSpacing.sm) {
-                        Text("₹\(shortCurrency(total))")
-                            .font(.system(size: 36, weight: .bold))
-                            .foregroundColor(RSMSColors.primaryText)
-                        
-                        Text("Total Worldwide")
-                            .font(RSMSFonts.subheadline)
-                            .foregroundColor(RSMSColors.secondaryText)
-                    }
-                }
-                
-                Text("Tap here to see detailed country stats.")
-                    .font(.system(size: 13))
-                    .foregroundColor(RSMSColors.secondaryText)
-            }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                showingDetail = true
-            }
-            
-            // Legend / Data List in same line
-            HStack(spacing: RSMSSpacing.lg) {
-                HStack(spacing: 6) {
-                    Circle().fill(Color(hex: "007AFF")).frame(width: 8, height: 8)
-                    Text("Massive").font(.system(size: 12)).foregroundColor(RSMSColors.secondaryText)
-                }
-                HStack(spacing: 6) {
-                    Circle().fill(Color(hex: "F4A261")).frame(width: 8, height: 8)
-                    Text("Large").font(.system(size: 12)).foregroundColor(RSMSColors.secondaryText)
-                }
-                HStack(spacing: 6) {
-                    Circle().fill(Color(hex: "E9C46A")).frame(width: 8, height: 8)
-                    Text("Medium").font(.system(size: 12)).foregroundColor(RSMSColors.secondaryText)
-                }
-            }
+
+            Spacer().frame(height: RSMSSpacing.lg)
         }
-        .padding(RSMSSpacing.lg)
         .background(RSMSColors.cardBackground)
         .cornerRadius(RSMSRadius.large)
-        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+        .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
+        .task {
+            await mapVM.updateCountry(selectedCountry, revenueByCountry: revenueByCountry)
+        }
+        .onChange(of: selectedCountry) { _, newValue in
+            Task {
+                await mapVM.updateCountry(newValue, revenueByCountry: revenueByCountry)
+            }
+        }
         .fullScreenCover(isPresented: $showingDetail) {
-            TopLocationsDetailView(countryPolygons: countryPolygons, revenueByCountry: revenueByCountry)
+            TopLocationsDetailView(
+                countryPolygons: countryPolygons,
+                revenueByCountry: revenueByCountry
+            )
         }
         .onAppear {
-            // Load GeoJSON in background so we don't block the main thread
+            // Load GeoJSON for detail view (unchanged)
             DispatchQueue.global(qos: .userInitiated).async {
                 let loaded = GeoJSONLoader.loadCountries()
                 DispatchQueue.main.async {
@@ -149,63 +78,453 @@ struct TopLocationsChartView: View {
             }
         }
     }
-    
-    private func getFillColor(for countryName: String) -> Color {
-        guard let data = revenueByCountry.first(where: { $0.country == countryName }), maxRevenue > 0 else {
-            return Color(hex: "E5E5EA")
-        }
-        let ratio = data.revenue / maxRevenue
-        if ratio > 0.66 { return Color(hex: "007AFF") }
-        if ratio > 0.33 { return Color(hex: "F4A261") }
-        return Color(hex: "E9C46A")
-    }
-    
-    private func getOpacity(for countryName: String, isSelected: Bool) -> Double {
-        let hasData = revenueByCountry.contains(where: { $0.country == countryName })
-        return isSelected ? 1.0 : (hasData ? 0.8 : 0.4)
-    }
-    
-    private func shortCurrency(_ value: Double) -> String {
-        if value >= 1_000_000 { return String(format: "%.1fM", value / 1_000_000) }
-        if value >= 1_000 { return String(format: "%.1fK", value / 1_000) }
-        return String(format: "%.0f", value)
-    }
-}
 
-private struct LocationRow: View {
-    let color: Color
-    let label: String
-    let value: String
-    
-    var body: some View {
-        HStack(spacing: RSMSSpacing.sm) {
-            Circle()
-                .fill(color)
-                .frame(width: 10, height: 10)
-            
-            Text(label)
-                .font(.system(size: 14))
-                .foregroundColor(RSMSColors.secondaryText)
-            
+    // MARK: - Header
+
+    private var headerSection: some View {
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(selectedCountry != nil ? "\(CountryMapRegion.flags[selectedCountry ?? ""] ?? "📍") \(selectedCountry ?? "")" : "Top Customer Locations")
+                    .font(RSMSFonts.headline)
+                    .foregroundColor(RSMSColors.primaryText)
+
+                if selectedCountry == nil {
+                    Text("Stores across all regions")
+                        .font(.system(size: 12))
+                        .foregroundColor(RSMSColors.secondaryText)
+                }
+            }
+
             Spacer()
-            
-            Text(value)
-                .font(.system(size: 14, weight: .bold))
-                .foregroundColor(RSMSColors.primaryText)
+
+            // Detail button
+            Button {
+                showingDetail = true
+            } label: {
+                Image(systemName: "arrow.up.left.and.arrow.down.right")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(RSMSColors.burgundy)
+                    .padding(8)
+                    .background(RSMSColors.burgundy.opacity(0.08))
+                    .clipShape(Circle())
+            }
         }
+    }
+
+    // MARK: - Map Section
+
+    private var mapSection: some View {
+        Map(position: $mapVM.cameraPosition) {
+            // Store markers / annotations
+            ForEach(mapVM.stores) { store in
+                Annotation(store.name, coordinate: store.coordinate) {
+                    StoreMarkerView(store: store, isSelected: selectedStore?.id == store.id)
+                        .onTapGesture {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                if selectedStore?.id == store.id {
+                                    selectedStore = nil
+                                } else {
+                                    selectedStore = store
+                                }
+                            }
+                        }
+                }
+                .annotationTitles(.hidden)
+            }
+        }
+        .mapStyle(.standard(elevation: .realistic, pointsOfInterest: .excludingAll))
+        .mapControls {
+            MapCompass()
+            MapScaleView()
+        }
+        .frame(height: 260)
+        .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.medium))
+        .overlay(
+            RoundedRectangle(cornerRadius: RSMSRadius.medium)
+                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+        )
+        .overlay(alignment: .bottom) {
+            // Selected store callout
+            if let store = selectedStore {
+                storeCallout(store)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .padding(RSMSSpacing.sm)
+            }
+        }
+        .overlay(alignment: .topTrailing) {
+            // Loading indicator
+            if mapVM.isLoadingStores {
+                ProgressView()
+                    .tint(RSMSColors.burgundy)
+                    .padding(8)
+                    .background(.ultraThinMaterial)
+                    .clipShape(Circle())
+                    .padding(RSMSSpacing.sm)
+            }
+        }
+        .animation(.easeInOut(duration: 0.3), value: selectedStore?.id)
+    }
+
+    // MARK: - Store Callout Overlay
+
+    private func storeCallout(_ store: StoreMapItem) -> some View {
+        let currency = CountryMapRegion.currencySymbols[store.country] ?? "₹"
+        return HStack(spacing: RSMSSpacing.md) {
+            // Icon
+            ZStack {
+                Circle()
+                    .fill(RSMSColors.burgundy)
+                    .frame(width: 36, height: 36)
+                Image(systemName: "building.2.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(store.name)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(RSMSColors.primaryText)
+                    .lineLimit(1)
+
+                HStack(spacing: RSMSSpacing.sm) {
+                    if let city = store.city {
+                        Label(city, systemImage: "mappin")
+                            .font(.system(size: 11))
+                            .foregroundColor(RSMSColors.secondaryText)
+                    }
+                    Text("·")
+                        .foregroundColor(RSMSColors.secondaryText)
+                    Text(StoreMapViewModel.shortCurrency(store.revenue, symbol: currency))
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(RSMSColors.burgundy)
+                    Text("·")
+                        .foregroundColor(RSMSColors.secondaryText)
+                    Text("\(store.orderCount) orders")
+                        .font(.system(size: 11))
+                        .foregroundColor(RSMSColors.secondaryText)
+                }
+            }
+
+            Spacer(minLength: 0)
+
+            // Dismiss
+            Button {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    selectedStore = nil
+                }
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 18))
+                    .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+            }
+        }
+        .padding(.horizontal, RSMSSpacing.md)
+        .padding(.vertical, RSMSSpacing.sm)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.medium))
+        .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
+    }
+
+    // MARK: - Stats Section
+
+    private var statsSection: some View {
+        Group {
+            if let stats = mapVM.stats {
+                if selectedCountry != nil {
+                    // Country-specific stats
+                    countryStatsView(stats)
+                } else {
+                    // World stats
+                    worldStatsView(stats)
+                }
+            }
+        }
+        .animation(.easeInOut(duration: 0.3), value: mapVM.stats?.country)
+    }
+
+    private func worldStatsView(_ stats: CountryMapStats) -> some View {
+        VStack(spacing: RSMSSpacing.md) {
+            HStack(spacing: 0) {
+                statPill(
+                    icon: "building.2.fill",
+                    value: "\(stats.storeCount)",
+                    label: "Total Stores",
+                    color: RSMSColors.burgundy
+                )
+
+                Spacer()
+
+                statPill(
+                    icon: "indianrupeesign.circle.fill",
+                    value: StoreMapViewModel.shortCurrency(stats.revenue),
+                    label: "Revenue",
+                    color: Color(hex: "2A9D8F")
+                )
+
+                Spacer()
+
+                statPill(
+                    icon: "globe",
+                    value: "\(Set(mapVM.stores.map { $0.country }).count)",
+                    label: "Countries",
+                    color: Color(hex: "E76F51")
+                )
+            }
+            
+            if let topCountry = stats.topCountryName, let topDetail = stats.topCountryDetail {
+                HStack(spacing: 10) {
+                    ZStack {
+                        Circle()
+                            .fill(Color(hex: "D4A017").opacity(0.12))
+                            .frame(width: 28, height: 28)
+                        Image(systemName: "crown.fill")
+                            .foregroundColor(Color(hex: "D4A017"))
+                            .font(.system(size: 12, weight: .bold))
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 4) {
+                            Text("Top Region:")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(RSMSColors.secondaryText)
+                            Text("\(CountryMapRegion.flags[topCountry] ?? "") \(topCountry)")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(RSMSColors.primaryText)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                        }
+                        
+                        Text(topDetail)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(RSMSColors.burgundy)
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color(hex: "F4A261").opacity(0.08))
+                .cornerRadius(RSMSRadius.small)
+            }
+        }
+    }
+
+    private func countryStatsView(_ stats: CountryMapStats) -> some View {
+        VStack(spacing: RSMSSpacing.md) {
+            // Revenue headline
+            HStack(alignment: .lastTextBaseline, spacing: RSMSSpacing.sm) {
+                Text(StoreMapViewModel.shortCurrency(stats.revenue, symbol: stats.currencySymbol))
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundColor(RSMSColors.primaryText)
+
+                Text("Revenue")
+                    .font(RSMSFonts.subheadline)
+                    .foregroundColor(RSMSColors.secondaryText)
+
+                Spacer()
+            }
+
+            // Stat chips row
+            HStack(spacing: RSMSSpacing.sm) {
+                statChip(icon: "building.2.fill", value: "\(stats.storeCount)", label: "Stores")
+                statChip(icon: "cart.fill", value: "\(stats.orderCount)", label: "Orders")
+                statChip(icon: "person.2.fill", value: "\(stats.managerCount)", label: "Managers")
+            }
+            
+            if let topStore = stats.topStoreName, let topDetail = stats.topStoreDetail {
+                HStack(spacing: 10) {
+                    ZStack {
+                        Circle()
+                            .fill(Color(hex: "D4A017").opacity(0.12))
+                            .frame(width: 28, height: 28)
+                        Image(systemName: "crown.fill")
+                            .foregroundColor(Color(hex: "D4A017"))
+                            .font(.system(size: 12, weight: .bold))
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 4) {
+                            Text("Top Store:")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(RSMSColors.secondaryText)
+                            Text(topStore)
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(RSMSColors.primaryText)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                        }
+                        
+                        Text(topDetail)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(RSMSColors.burgundy)
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color(hex: "F4A261").opacity(0.08))
+                .cornerRadius(RSMSRadius.small)
+            }
+        }
+    }
+
+    // MARK: - Store Pills (scrollable for country view)
+
+    private var storePillsSection: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: RSMSSpacing.sm) {
+                ForEach(mapVM.stores.prefix(10)) { store in
+                    storePill(store)
+                        .onTapGesture {
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                selectedStore = store
+                                // Zoom to this store
+                                mapVM.cameraPosition = .region(
+                                    MKCoordinateRegion(
+                                        center: store.coordinate,
+                                        span: MKCoordinateSpan(latitudeDelta: 0.5, longitudeDelta: 0.5)
+                                    )
+                                )
+                            }
+                        }
+                }
+            }
+        }
+    }
+
+    private func storePill(_ store: StoreMapItem) -> some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(RSMSColors.burgundy)
+                .frame(width: 6, height: 6)
+
+            Text(store.city ?? store.name)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(RSMSColors.primaryText)
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(
+            selectedStore?.id == store.id
+                ? RSMSColors.burgundy.opacity(0.12)
+                : Color(hex: "F5F5F5")
+        )
+        .clipShape(Capsule())
+        .overlay(
+            Capsule()
+                .stroke(
+                    selectedStore?.id == store.id
+                        ? RSMSColors.burgundy.opacity(0.3)
+                        : Color.clear,
+                    lineWidth: 1
+                )
+        )
+    }
+
+    // MARK: - Reusable Components
+
+    private func statPill(icon: String, value: String, label: String, color: Color) -> some View {
+        VStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(color)
+
+            Text(value)
+                .font(.system(size: 17, weight: .bold))
+                .foregroundColor(RSMSColors.primaryText)
+
+            Text(label)
+                .font(.system(size: 11))
+                .foregroundColor(RSMSColors.secondaryText)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func statChip(icon: String, value: String, label: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 11))
+                .foregroundColor(RSMSColors.burgundy)
+
+            Text(value)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(RSMSColors.primaryText)
+
+            Text(label)
+                .font(.system(size: 12))
+                .foregroundColor(RSMSColors.secondaryText)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(RSMSColors.burgundy.opacity(0.05))
+        .clipShape(Capsule())
     }
 }
 
-// Shape that draws an array of polygons using a simple equirectangular projection
-struct CountryShape: Shape {
-    let polygons: [[CLLocationCoordinate2D]]
-    
+// MARK: - Custom Store Marker View
+
+/// A branded map marker with a burgundy pin appearance.
+private struct StoreMarkerView: View {
+    let store: StoreMapItem
+    let isSelected: Bool
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ZStack {
+                // Outer glow when selected
+                if isSelected {
+                    Circle()
+                        .fill(RSMSColors.burgundy.opacity(0.15))
+                        .frame(width: 40, height: 40)
+                }
+
+                // Main pin circle
+                Circle()
+                    .fill(isSelected ? RSMSColors.darkBurgundy : RSMSColors.burgundy)
+                    .frame(width: isSelected ? 28 : 22, height: isSelected ? 28 : 22)
+                    .shadow(color: RSMSColors.burgundy.opacity(0.35), radius: 4, x: 0, y: 2)
+
+                // Icon
+                Image(systemName: "building.2.fill")
+                    .font(.system(size: isSelected ? 12 : 9, weight: .bold))
+                    .foregroundColor(.white)
+            }
+
+            // Triangle pointer
+            Triangle()
+                .fill(isSelected ? RSMSColors.darkBurgundy : RSMSColors.burgundy)
+                .frame(width: 10, height: 6)
+                .offset(y: -1)
+        }
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+    }
+}
+
+// MARK: - Triangle Shape
+
+private struct Triangle: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
-        
+        path.move(to: CGPoint(x: rect.midX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.closeSubpath()
+        return path
+    }
+}
+
+// MARK: - Country Shape (used by TopLocationsDetailView)
+
+/// Shape that draws an array of polygons using a simple equirectangular projection.
+struct CountryShape: Shape {
+    let polygons: [[CLLocationCoordinate2D]]
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+
         for polygon in polygons {
             if polygon.isEmpty { continue }
-            
+
             var subpath = Path()
             for (i, coord) in polygon.enumerated() {
                 // Simple equirectangular projection
@@ -214,14 +533,14 @@ struct CountryShape: Shape {
                 // Latitude: -90 to 90 -> 1 to 0 (since Y is down)
                 // We crop some Antarctica and top Arctic to make it look better
                 // Valid latitude typically -60 to 85
-                let normalizedLat = (coord.latitude + 60) / 145.0 
+                let normalizedLat = (coord.latitude + 60) / 145.0
                 let y = 1.0 - normalizedLat
-                
+
                 let point = CGPoint(
                     x: CGFloat(x) * rect.width,
                     y: CGFloat(y) * rect.height
                 )
-                
+
                 if i == 0 {
                     subpath.move(to: point)
                 } else {
@@ -231,13 +550,22 @@ struct CountryShape: Shape {
             subpath.closeSubpath()
             path.addPath(subpath)
         }
-        
+
         return path
     }
 }
 
+// MARK: - Preview
+
 #Preview {
-    TopLocationsChartView(revenueByCountry: [])
-        .padding()
-        .background(RSMSColors.background)
+    TopLocationsChartView(
+        revenueByCountry: [
+            CountryRevenue(country: "India", revenue: 5_000_000),
+            CountryRevenue(country: "France", revenue: 3_200_000),
+            CountryRevenue(country: "UAE", revenue: 2_100_000),
+        ],
+        selectedCountry: nil
+    )
+    .padding()
+    .background(RSMSColors.background)
 }

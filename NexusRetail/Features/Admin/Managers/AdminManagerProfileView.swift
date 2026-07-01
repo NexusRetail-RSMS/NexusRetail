@@ -54,7 +54,7 @@ struct AdminManagerProfileView: View {
                         .font(.headline)
                         .padding(.horizontal)
                     
-                    let recentRequests = viewModel.requests.filter { $0.managerID == manager.id }.sorted { $0.requestDate > $1.requestDate }
+                    let recentRequests = viewModel.requests.filter { $0.managerName == manager.name }.sorted { $0.createdAt > $1.createdAt }
                     
                     if recentRequests.isEmpty {
                         Text("No recent requests")
@@ -62,7 +62,7 @@ struct AdminManagerProfileView: View {
                             .padding(.horizontal)
                     } else {
                         ForEach(recentRequests) { request in
-                            let product = viewModel.product(for: request.productID)
+                            let product = viewModel.product(for: request.skuId)
                             ManagerRequestRow(request: request, productName: product?.name ?? "Unknown")
                         }
                     }
@@ -133,14 +133,14 @@ struct ManagerRequestRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(productName)
                     .font(.headline)
-                Text("\(request.requestedQuantity) units • \(request.requestDate.formatted(date: .abbreviated, time: .omitted))")
+                Text("\(request.quantity) units • \(request.createdAt.formatted(date: .abbreviated, time: .omitted))")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
             
             Spacer()
             
-            Text(request.status.rawValue)
+            Text(request.status.displayName)
                 .font(.caption)
                 .fontWeight(.bold)
                 .foregroundColor(request.status.color)

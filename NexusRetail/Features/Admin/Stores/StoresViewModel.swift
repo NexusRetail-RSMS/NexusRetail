@@ -54,7 +54,7 @@ class StoresViewModel {
     }
     
     /// Creates a new store and re-fetches the list.
-    func create(name: String, address: String, phone: String, locale: String, currencyCode: String, timezone: String, managerID: UUID?, status: StoreStatus, includeRazorpay: Bool, includeCard: Bool) async -> Bool {
+    func create(name: String, address: String, phone: String, locale: String, currencyCode: String, timezone: String, managerID: UUID?, status: StoreStatus, includeRazorpay: Bool, includeCard: Bool, latitude: Double?, longitude: Double?, city: String?, country: String?) async -> Bool {
         guard !name.isEmpty, !address.isEmpty else {
             errorMessage = "Name and Address are required."
             return false
@@ -80,7 +80,11 @@ class StoresViewModel {
             phone: phone.isEmpty ? nil : phone,
             managerID: managerID,
             isWarehouse: false,
-            status: status
+            status: status,
+            latitude: latitude,
+            longitude: longitude,
+            city: (city?.isEmpty ?? true) ? nil : city,
+            country: (country?.isEmpty ?? true) ? nil : country
         )
         
         var terminals: [PaymentTerminal] = []
@@ -119,7 +123,7 @@ class StoresViewModel {
     }
     
     /// Updates an existing store.
-    func update(storeId: UUID, name: String, address: String, phone: String, locale: String, currencyCode: String, timezone: String, managerID: UUID?, status: StoreStatus) async -> Bool {
+    func update(storeId: UUID, name: String, address: String, phone: String, locale: String, currencyCode: String, timezone: String, managerID: UUID?, status: StoreStatus, latitude: Double?, longitude: Double?, city: String?, country: String?) async -> Bool {
         guard !name.isEmpty else {
             errorMessage = "Name is required."
             return false
@@ -152,7 +156,11 @@ class StoresViewModel {
             phone: phone.isEmpty ? nil : phone,
             managerID: managerID,
             isWarehouse: existingStore.isWarehouse,
-            status: status
+            status: status,
+            latitude: latitude,
+            longitude: longitude,
+            city: (city?.isEmpty ?? true) ? nil : city,
+            country: (country?.isEmpty ?? true) ? nil : country
         )
         
         do {

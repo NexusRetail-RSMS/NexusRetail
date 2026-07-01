@@ -329,7 +329,7 @@ private struct ProductRowCard: View {
                             Text(product.name)
                                 .font(.system(size: 15, weight: .semibold))
                                 .foregroundStyle(RSMSColors.darkBrown)
-                                .lineLimit(1)
+                                .lineLimit(2)
 
                             Text(product.category)
                                 .font(.system(size: 12))

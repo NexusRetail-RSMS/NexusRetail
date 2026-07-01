@@ -1,98 +1,118 @@
+//
+//  AppointmentsView.swift
+//  NexusRetail
+//
+//  Appointments tab — shows upcoming appointments and a "Book" CTA.
+//  Driven by AppointmentsViewModel.
+//
+
 import SwiftUI
 
 struct AppointmentsView: View {
-    @State private var appointments: [AssociateAppointment] = [
-        AssociateAppointment(clientName: "Ananya Rao",  date: Calendar.current.date(bySettingHour: 16, minute: 30, second: 0, of: .now) ?? .now, mode: .inStore),
-        AssociateAppointment(clientName: "Kabir Mehta", date: Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.date(bySettingHour: 11, minute: 0, second: 0, of: .now) ?? .now) ?? .now, mode: .video),
-        AssociateAppointment(clientName: "Mira Kapoor", date: Calendar.current.date(byAdding: .day, value: 3, to: Calendar.current.date(bySettingHour: 14, minute: 15, second: 0, of: .now) ?? .now) ?? .now, mode: .inStore),
-        AssociateAppointment(clientName: "Rhea Sethi",  date: Calendar.current.date(byAdding: .day, value: 5, to: Calendar.current.date(bySettingHour: 12, minute: 30, second: 0, of: .now) ?? .now) ?? .now, mode: .video)
-    ]
-    
-    private var sortedAppointments: [AssociateAppointment] {
-        appointments.sorted { $0.date < $1.date }
-    }
+    @State private var viewModel = AppointmentsViewModel()
+    @State private var isBookingPresented = false
+    @State private var isMorePresented    = false
 
-    private var upcomingAppointments: [AssociateAppointment] {
-        let cutoff = Calendar.current.date(byAdding: .day, value: 2, to: .now) ?? .now
-        return sortedAppointments.filter { $0.date >= .now && $0.date < cutoff }.dropFirst().map { $0 }
-    }
-
-    private var laterAppointments: [AssociateAppointment] {
-        let cutoff = Calendar.current.date(byAdding: .day, value: 2, to: .now) ?? .now
-        return sortedAppointments.filter { $0.date >= cutoff }
-    }
-    
-    private var allUpcomingAppointments: [AssociateAppointment] {
-        sortedAppointments.filter { $0.date >= .now }
-    }
+    // Clienteling VM is passed in so we can read the client list for the booking picker.
+    let clients: [AssociateClient]
 
     var body: some View {
-        NavigationStack {
-            List {
-                let todayAppts = upcomingAppointments
-                let futureAppts = laterAppointments
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 22) {
 
-                if !todayAppts.isEmpty {
-                    Section("Today & Tomorrow") {
-                        ForEach(todayAppts) { appt in
-                            appointmentRow(appt)
-                                .listRowInsets(EdgeInsets())
-                        }
-                    }
+                // Custom Header
+                HStack {
+                    Text("Appointments")
+                        .font(.system(size: 34, weight: .bold))
+
+                    Spacer()
                 }
 
-                if !futureAppts.isEmpty {
-                    Section("Later") {
-                        ForEach(futureAppts) { appt in
-                            appointmentRow(appt)
-                                .listRowInsets(EdgeInsets())
-                        }
-                    }
-                }
+                bookAppointmentButton
 
-                if allUpcomingAppointments.isEmpty {
-                    ContentUnavailableView(
-                        "No Appointments",
-                        systemImage: "calendar.badge.exclamationmark",
-                        description: Text("No upcoming appointments scheduled.")
-                    )
-                }
+                upcomingAppointmentsCard
             }
-            .listStyle(.insetGrouped)
-            .navigationTitle("Appointments")
-            .navigationBarTitleDisplayMode(.large)
+            .screenPadding()
+        }
+        .background(RSMSColors.background.ignoresSafeArea())
+        .toolbar(.hidden, for: .navigationBar)
+        .sheet(isPresented: $isBookingPresented) {
+            BookAppointmentSheet(clients: clients, viewModel: viewModel)
+        }
+        .sheet(isPresented: $isMorePresented) {
+            MoreAppointmentsSheet(appointments: viewModel.laterAppointments)
         }
     }
-    
-    private func appointmentRow(_ appt: AssociateAppointment) -> some View {
-        HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 11, style: .continuous)
-                    .fill(RSMSColors.burgundy.opacity(0.09))
-                    .frame(width: 42, height: 42)
-                Image(systemName: appt.mode.icon)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(RSMSColors.burgundy)
+
+    // MARK: - Hero CTA
+    private var bookAppointmentButton: some View {
+        Button {
+            isBookingPresented = true
+        } label: {
+            HStack(spacing: 16) {
+                Image(systemName: "calendar.badge.plus")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 54, height: 54)
+                    .background(.white.opacity(0.18))
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Book Appointment")
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                    Text("Video or in-store consultation")
+                        .font(RSMSFonts.subheadline)
+                        .foregroundStyle(.white.opacity(0.74))
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(.white.opacity(0.55))
             }
-            VStack(alignment: .leading, spacing: 3) {
-                Text(appt.clientName)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(RSMSColors.primaryText)
-                Text(appt.time)
-                    .font(.system(size: 12))
-                    .foregroundStyle(RSMSColors.secondaryText)
-            }
-            Spacer()
-            Text(appt.mode.title)
-                .font(.system(size: 10, weight: .bold))
-                .kerning(0.2)
-                .foregroundStyle(RSMSColors.burgundy)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(RSMSColors.burgundy.opacity(0.09))
-                .clipShape(Capsule())
+            .padding(18)
+            .background(
+                LinearGradient(
+                    colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 14)
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Upcoming Card
+    private var upcomingAppointmentsCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Upcoming Appointments")
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .foregroundStyle(RSMSColors.primaryText)
+                Spacer()
+                if !viewModel.laterAppointments.isEmpty {
+                    Button("View More") {
+                        isMorePresented = true
+                    }
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(RSMSColors.burgundy)
+                }
+            }
+
+            VStack(spacing: 0) {
+                if viewModel.twoDayAppointments.isEmpty {
+                    emptyStateRow(title: "No appointments in the next 2 days", icon: "calendar")
+                } else {
+                    ForEach(Array(viewModel.twoDayAppointments.enumerated()), id: \.element.id) { index, appt in
+                        appointmentRow(appt)
+                        if index < viewModel.twoDayAppointments.count - 1 {
+                            Divider().padding(.leading, 72)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(20)
+        .luxuryCard()
     }
 }

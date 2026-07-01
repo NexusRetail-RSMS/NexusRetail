@@ -6,65 +6,98 @@
 import SwiftUI
 import Observation
 
+struct StaffPerformancePoint: Identifiable, Equatable {
+    let id = UUID()
+    let name: String
+    let score: Int
+}
+
 @Observable
 final class ManagerDashboardViewModel {
     
     // MARK: - Properties
     
-    var timeRange: ManagerSalesTimeRange = .weekly
+    // Toggles for the main dashboard charts
+    var topProductsTimeRange: SalesTimeRange = .monthly
+    var staffTimeRange: SalesTimeRange = .monthly
     
     // MARK: - Mock Data
     
     let managerName = "Alex"
     let storeName = "Jewellery Store, Indiranagar"
     
-    let todayRevenue = "₹1,25,000"
-    let revenueTrend = "+12.4%"
-    
-    let transactions = "42"
-    let averageTicket = "₹2,976"
-    let returns = "2"
-    
-    let productsInStock = "3,450"
-    let productsInStockTrend = "+12"
-    
+    // New KPI Metrics
+    let todayRevenue = "₹1.25L"
+    let pendingRequests = "5"
     let lowStockItems = "18"
-    let lowStockTrend = "+3"
+    let todayReturns = "2"
     
+    // Detail Chart Data (Revenue History)
     var sixMonthTotal: String {
-        timeRange == .weekly ? "₹12.2L" : "₹84.5L"
+        "₹12.2L"
     }
     
     var peakMonth: String {
-        timeRange == .weekly ? "Sat" : "Jun"
+        "Sat"
     }
     
-    // Chart Data
     var revenueChartData: [ManagerRevenueChartPoint] {
-        switch timeRange {
-        case .weekly:
+        return [
+            ManagerRevenueChartPoint(label: "Mon", revenue: 1.2),
+            ManagerRevenueChartPoint(label: "Tue", revenue: 1.5),
+            ManagerRevenueChartPoint(label: "Wed", revenue: 1.1),
+            ManagerRevenueChartPoint(label: "Thu", revenue: 1.8),
+            ManagerRevenueChartPoint(label: "Fri", revenue: 2.1),
+            ManagerRevenueChartPoint(label: "Sat", revenue: 2.5),
+            ManagerRevenueChartPoint(label: "Sun", revenue: 2.0)
+        ]
+    }
+    
+    var revenueMaxValue: Double {
+        3.0
+    }
+    
+    // Main Dashboard Charts Data
+    
+    var topProductsData: [ProductChartPoint] {
+        let isQuarterly = topProductsTimeRange == .quarterly
+        if isQuarterly {
             return [
-                ManagerRevenueChartPoint(label: "Mon", revenue: 1.2),
-                ManagerRevenueChartPoint(label: "Tue", revenue: 1.5),
-                ManagerRevenueChartPoint(label: "Wed", revenue: 1.1),
-                ManagerRevenueChartPoint(label: "Thu", revenue: 1.8),
-                ManagerRevenueChartPoint(label: "Fri", revenue: 2.1),
-                ManagerRevenueChartPoint(label: "Sat", revenue: 2.5),
-                ManagerRevenueChartPoint(label: "Sun", revenue: 2.0)
+                ProductChartPoint(category: "Jewelry", sales: 420),
+                ProductChartPoint(category: "Watches", sales: 380),
+                ProductChartPoint(category: "Accessories", sales: 310),
+                ProductChartPoint(category: "Leather", sales: 250)
             ]
-        case .monthly:
+        } else {
             return [
-                ManagerRevenueChartPoint(label: "Jan", revenue: 12.5),
-                ManagerRevenueChartPoint(label: "Feb", revenue: 14.0),
-                ManagerRevenueChartPoint(label: "Mar", revenue: 11.2),
-                ManagerRevenueChartPoint(label: "Apr", revenue: 15.6),
-                ManagerRevenueChartPoint(label: "May", revenue: 13.4),
-                ManagerRevenueChartPoint(label: "Jun", revenue: 16.8)
+                ProductChartPoint(category: "Jewelry", sales: 150),
+                ProductChartPoint(category: "Watches", sales: 130),
+                ProductChartPoint(category: "Accessories", sales: 90),
+                ProductChartPoint(category: "Leather", sales: 75)
             ]
         }
     }
     
-    var revenueMaxValue: Double {
-        timeRange == .weekly ? 3.0 : 20.0
+    var topProductsMaxValue: Int {
+        topProductsTimeRange == .quarterly ? 500 : 200
+    }
+    
+    var staffPerformanceData: [StaffPerformancePoint] {
+        let isQuarterly = staffTimeRange == .quarterly
+        if isQuarterly {
+            return [
+                StaffPerformancePoint(name: "Aman", score: 95),
+                StaffPerformancePoint(name: "Priya", score: 88),
+                StaffPerformancePoint(name: "Rahul", score: 82),
+                StaffPerformancePoint(name: "Sneha", score: 78)
+            ]
+        } else {
+            return [
+                StaffPerformancePoint(name: "Aman", score: 92),
+                StaffPerformancePoint(name: "Priya", score: 85),
+                StaffPerformancePoint(name: "Rahul", score: 80),
+                StaffPerformancePoint(name: "Sneha", score: 75)
+            ]
+        }
     }
 }

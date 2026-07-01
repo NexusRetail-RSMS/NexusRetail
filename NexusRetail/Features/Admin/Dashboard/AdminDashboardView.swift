@@ -30,7 +30,8 @@ struct AdminDashboardView: View {
             id: UUID(uuidString: "00000000-0000-0000-0000-000000000000") ?? UUID(),
             name: viewModel.displayCountry == "All Global" ? "Global Sales" : "\(viewModel.displayCountry) Sales",
             address: nil, locale: "en_US", currencyCode: "USD", timezone: nil,
-            phone: nil, managerID: nil, isWarehouse: false, status: .active
+            phone: nil, managerID: nil, isWarehouse: false, status: .active,
+            latitude: nil, longitude: nil, city: nil, country: nil
         )
     }
 
@@ -105,7 +106,7 @@ struct AdminDashboardView: View {
                             .onTapGesture { isShowingProductsDetail = true }
 
                             // MARK: - Top Locations
-                            TopLocationsChartView(revenueByCountry: viewModel.byCountry)
+                            TopLocationsChartView(revenueByCountry: viewModel.byCountry, selectedCountry: viewModel.selectedCountry)
                         }
                         .padding(.horizontal, RSMSSpacing.lg)
                         .padding(.top, RSMSSpacing.xxl)
@@ -194,9 +195,22 @@ struct AdminDashboardView: View {
                         .fill(RSMSColors.burgundy)
                         .frame(width: 44, height: 44)
 
-                    Text(initials(for: sessionStore.currentUser?.name))
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white)
+                    if let urlString = sessionStore.currentUser?.imageUrl, let url = URL(string: urlString) {
+                        AsyncImage(url: url) { image in
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 44, height: 44)
+                                .clipShape(Circle())
+                        } placeholder: {
+                            ProgressView()
+                                .frame(width: 44, height: 44)
+                        }
+                    } else {
+                        Text(initials(for: sessionStore.currentUser?.name))
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                    }
                 }
             }
             .accessibilityLabel("Profile")
