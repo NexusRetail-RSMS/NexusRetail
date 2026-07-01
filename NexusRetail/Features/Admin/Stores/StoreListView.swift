@@ -30,8 +30,6 @@ struct StoreListView: View {
 
             ScrollView {
                 VStack(spacing: 0) {
-                    headerSection
-
                     if viewModel.isLoading && viewModel.stores.isEmpty {
                         VStack(spacing: 14) {
                             ProgressView()
@@ -118,6 +116,10 @@ struct StoreListView: View {
                         .padding(.bottom, RSMSSpacing.md)
                     }
                 }
+            }
+            .safeAreaInset(edge: .top) {
+                headerSection
+                    .background(.ultraThinMaterial)
             }
             .refreshable {
                 await viewModel.load()

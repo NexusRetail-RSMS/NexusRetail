@@ -184,8 +184,40 @@ final class ProductCatalogueViewModel: ObservableObject {
                     imageUrl: match.imageUrl
                 )
             }
+            
+            if self.trendingProducts.isEmpty {
+                self.trendingProducts = mapped.prefix(4).map { match in
+                    TrendingProduct(
+                        id: match.id,
+                        name: match.name,
+                        stockStatus: match.stock > 10 ? "In Stock" : "Low Stock",
+                        units: 150, // Fallback units
+                        price: match.price,
+                        imageName: match.imageName,
+                        imageUrl: match.imageUrl
+                    )
+                }
+            }
         } catch {
             print("Error fetching products: \(error)")
+            // Fallback if the RPC fails entirely
+            let displayFormatter = DateFormatter()
+            displayFormatter.dateStyle = .medium
+            let fallbackDate = displayFormatter.string(from: Date())
+            
+            if self.trendingProducts.isEmpty && !self.allProducts.isEmpty {
+                self.trendingProducts = self.allProducts.prefix(4).map { match in
+                    TrendingProduct(
+                        id: match.id,
+                        name: match.name,
+                        stockStatus: match.stock > 10 ? "In Stock" : "Low Stock",
+                        units: 150, // Fallback units
+                        price: match.price,
+                        imageName: match.imageName,
+                        imageUrl: match.imageUrl
+                    )
+                }
+            }
         }
     }
 

@@ -95,19 +95,6 @@ struct TopLocationsChartView: View {
                 }
             }
 
-            Spacer()
-
-            // Detail button
-            Button {
-                showingDetail = true
-            } label: {
-                Image(systemName: "arrow.up.left.and.arrow.down.right")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(RSMSColors.burgundy)
-                    .padding(8)
-                    .background(RSMSColors.burgundy.opacity(0.08))
-                    .clipShape(Circle())
-            }
         }
     }
 
@@ -370,55 +357,69 @@ struct TopLocationsChartView: View {
     // MARK: - Store Pills (scrollable for country view)
 
     private var storePillsSection: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: RSMSSpacing.sm) {
-                ForEach(mapVM.stores.prefix(10)) { store in
-                    storePill(store)
-                        .onTapGesture {
-                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                selectedStore = store
-                                // Zoom to this store
-                                mapVM.cameraPosition = .region(
-                                    MKCoordinateRegion(
-                                        center: store.coordinate,
-                                        span: MKCoordinateSpan(latitudeDelta: 0.5, longitudeDelta: 0.5)
-                                    )
-                                )
-                            }
-                        }
+        HStack {
+            Text("Store Locations")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(RSMSColors.secondaryText)
+            
+            Spacer()
+            
+            Menu {
+                Button {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                        selectedStore = nil
+                        mapVM.cameraPosition = .region(CountryMapRegion.region(for: selectedCountry))
+                    }
+                } label: {
+                    Text("All Stores")
+                    if selectedStore == nil {
+                        Image(systemName: "checkmark")
+                    }
                 }
-            }
-        }
-    }
-
-    private func storePill(_ store: StoreMapItem) -> some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(RSMSColors.burgundy)
-                .frame(width: 6, height: 6)
-
-            Text(store.city ?? store.name)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(RSMSColors.primaryText)
-                .lineLimit(1)
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(
-            selectedStore?.id == store.id
-                ? RSMSColors.burgundy.opacity(0.12)
-                : Color(hex: "F5F5F5")
-        )
-        .clipShape(Capsule())
-        .overlay(
-            Capsule()
-                .stroke(
-                    selectedStore?.id == store.id
-                        ? RSMSColors.burgundy.opacity(0.3)
-                        : Color.clear,
-                    lineWidth: 1
+                
+                Divider()
+                
+                ForEach(mapVM.stores) { store in
+                    Button {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            selectedStore = store
+                            // Zoom to this store
+                            mapVM.cameraPosition = .region(
+                                MKCoordinateRegion(
+                                    center: store.coordinate,
+                                    span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+                                )
+                            )
+                        }
+                    } label: {
+                        Text(store.name)
+                        if selectedStore?.id == store.id {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Text(mapVM.stores.isEmpty ? "No Stores" : (selectedStore?.name ?? "Select Store"))
+                        .font(.system(size: 13, weight: .medium))
+                        .lineLimit(1)
+                    if !mapVM.stores.isEmpty {
+                        Image(systemName: "line.3.horizontal.decrease.circle.fill")
+                            .font(.system(size: 14))
+                    }
+                }
+                .foregroundColor(mapVM.stores.isEmpty ? RSMSColors.secondaryText : RSMSColors.burgundy)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .background(
+                    mapVM.stores.isEmpty
+                        ? RSMSColors.secondaryText.opacity(0.08)
+                        : RSMSColors.burgundy.opacity(0.12)
                 )
-        )
+                .clipShape(Capsule())
+            }
+            .disabled(mapVM.stores.isEmpty)
+        }
     }
 
     // MARK: - Reusable Components
