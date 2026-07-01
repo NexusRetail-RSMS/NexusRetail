@@ -20,18 +20,35 @@ struct NewManagerSheet: View {
     @State private var storeAddress = ""
 
     @State private var isSaving = false
+    @State private var showSuccessAlert = false
 
     @State private var selectedCountry = "United States"
     private let countries = ["United States", "United Kingdom", "Canada", "Australia", "India", "Germany", "France", "Japan", "United Arab Emirates", "Singapore"]
 
     @State private var selectedPhoto: PhotosPickerItem? = nil
     @State private var selectedImage: UIImage? = nil
+    @State private var stores: [Store] = []
+    
+    private var pickerStoreNames: [String] {
+        var names = stores.map { $0.name }
+        if !storeName.isEmpty && !names.contains(storeName) {
+            names.insert(storeName, at: 0)
+        }
+        return names
+    }
+    
+    private var pickerCountries: [String] {
+        var list = countries
+        if !selectedCountry.isEmpty && !list.contains(selectedCountry) {
+            list.append(selectedCountry)
+        }
+        return list
+    }
 
     private var isFormValid: Bool {
         let hasFirstName = !firstName.trimmingCharacters(in: .whitespaces).isEmpty
         let hasEmail = !email.trimmingCharacters(in: .whitespaces).isEmpty
-        let hasPassword = !password.isEmpty
-        return hasFirstName && hasEmail && hasPassword && !isSaving
+        return hasFirstName && hasEmail && !isSaving
     }
 
     private func generatePassword() {
@@ -48,14 +65,9 @@ struct NewManagerSheet: View {
                         PhotosPicker(selection: $selectedPhoto, matching: .images) {
                             ZStack {
                                 Circle()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [Color(hex: "3B3060"), Color(hex: "2A2048")],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
+                                    .fill(RSMSColors.burgundy.opacity(0.15))
                                     .frame(width: 110, height: 110)
+                                    .shadow(color: RSMSColors.burgundy.opacity(0.15), radius: 10, x: 0, y: 4)
 
                                 if let image = selectedImage {
                                     Image(uiImage: image)
@@ -68,7 +80,7 @@ struct NewManagerSheet: View {
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: 52, height: 52)
-                                        .foregroundColor(.white)
+                                        .foregroundColor(RSMSColors.burgundy)
                                 }
                             }
                         }
@@ -118,50 +130,43 @@ struct NewManagerSheet: View {
 
                 // ── Store Details ──────────────────────────────────────
                 Section("Store Details") {
-                    TextField("Store Name", text: $storeName)
-                        .autocorrectionDisabled()
+                    Picker("Store Name", selection: $storeName) {
+                        ForEach(pickerStoreNames, id: \.self) { name in
+                            Text(name).tag(name)
+                        }
+                    }
+                    .tint(RSMSColors.burgundy)
 
-                    TextField("Store Address", text: $storeAddress)
+                    TextField("Store Address", text: $storeAddress, axis: .vertical)
 
                     Picker("Country", selection: $selectedCountry) {
-                        ForEach(countries, id: \.self) { country in
+                        ForEach(pickerCountries, id: \.self) { country in
                             Text(country).tag(country)
                         }
                     }
                     .tint(RSMSColors.burgundy)
-                }
-
-                // ── Credentials ────────────────────────────────────────
-                Section("Credentials") {
-                    HStack {
-                        TextField("Password", text: $password)
-
-                        Button(action: generatePassword) {
-                            Text("Generate")
-                                .font(RSMSFonts.caption.weight(.bold))
-                                .foregroundColor(RSMSColors.burgundy)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 4)
-                                .background(RSMSColors.burgundy.opacity(0.1))
-                                .clipShape(Capsule())
-                        }
-                    }
                 }
             }
             .navigationTitle("Add New Manager")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
-                        .tint(RSMSColors.burgundy)
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(RSMSColors.burgundy)
+                    }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     if isSaving {
                         ProgressView()
                     } else {
-                        Button("Save") {
+                        Button {
                             Task {
                                 isSaving = true
+                                generatePassword()
                                 let fullName = "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces)
                                 let managerName = fullName.isEmpty ? "New Manager" : fullName
 
@@ -177,19 +182,58 @@ struct NewManagerSheet: View {
                                         nil
                                     )
                                     if success {
-                                        dismiss()
+                                        isSaving = false
+                                        showSuccessAlert = true
+                                    } else {
+                                        isSaving = false
                                     }
                                 } else {
                                     dismiss()
                                 }
-                                isSaving = false
                             }
+                        } label: {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(isFormValid ? RSMSColors.burgundy : Color.secondary)
                         }
-                        .fontWeight(.bold)
-                        .tint(RSMSColors.burgundy)
                         .disabled(!isFormValid)
                     }
                 }
+            }
+            .task {
+                do {
+                    self.stores = try await StoreRepository().fetchStores()
+                    // Set default selection to first store if currently empty
+                    if let firstStore = self.stores.first, storeName.isEmpty {
+                        self.storeName = firstStore.name
+                        // Also auto-populate address and country for the default store
+                        if let addr = firstStore.address {
+                            self.storeAddress = addr
+                        }
+                        if let cntry = firstStore.country, !cntry.isEmpty {
+                            self.selectedCountry = cntry
+                        }
+                    }
+                } catch {
+                    print("Failed to fetch stores: \(error)")
+                }
+            }
+            .onChange(of: storeName) { _, newStoreName in
+                if let matchedStore = stores.first(where: { $0.name == newStoreName }) {
+                    if let addr = matchedStore.address {
+                        self.storeAddress = addr
+                    }
+                    if let cntry = matchedStore.country, !cntry.isEmpty {
+                        self.selectedCountry = cntry
+                    }
+                }
+            }
+            .alert("Manager Created", isPresented: $showSuccessAlert) {
+                Button("OK") {
+                    dismiss()
+                }
+            } message: {
+                Text("The manager account has been created. The username and password have been sent to the manager's registered email.")
             }
         }
     }
