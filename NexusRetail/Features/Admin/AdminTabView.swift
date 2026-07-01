@@ -73,7 +73,6 @@ private struct ManagersTabRoot: View {
 
     var body: some View {
         AdminManagersView(isAddManagerPresented: $isAddManagerPresented, searchText: $searchText)
-            .toolbar(.hidden, for: .navigationBar)
     }
 }
 
