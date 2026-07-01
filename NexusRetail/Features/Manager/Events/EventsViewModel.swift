@@ -58,6 +58,23 @@ class EventsViewModel {
         isLoading = false
     }
     
+    private func fetchCurrentUserStoreId() async -> UUID? {
+        do {
+            let user = try await SupabaseManager.shared.client.auth.session.user
+            struct UserProfile: Codable { let store_id: UUID? }
+            let profiles: [UserProfile] = try await SupabaseManager.shared.client
+                .from("app_user")
+                .select("store_id")
+                .eq("id", value: user.id)
+                .execute()
+                .value
+            return profiles.first?.store_id
+        } catch {
+            print("Failed to fetch user profile: \(error)")
+            return nil
+        }
+    }
+    
     func addEvent(title: String, date: Date) async {
         let newId = UUID()
         let formatter = DateFormatter()
@@ -81,9 +98,11 @@ class EventsViewModel {
         }
         
         do {
+            let storeId = await fetchCurrentUserStoreId()
+            
             let appEvent = AppEvent(
                 id: newId,
-                store_id: nil, // We'll just leave it nil for now unless we know the current store ID
+                store_id: storeId,
                 launch_sku_id: nil,
                 name: title,
                 scheduled_at: date,
