@@ -65,30 +65,36 @@ class ManagersViewModel {
         isLoading = false
     }
 
-    func createManager(email: String, password: String, name: String, phone: String, storeName: String, address: String, country: String, imageUrl: String?) async -> Bool {
+    func createManager(email: String, password: String, name: String, phone: String, storeName: String, address: String, country: String, image: UIImage?) async -> Bool {
         isLoading = true
         errorMessage = nil
         do {
+            var uploadedUrl = ""
+            if let img = image {
+                do {
+                    uploadedUrl = try await uploadImage(img)
+                } catch {
+                    print("Image upload failed: \(error)")
+                }
+            }
             struct Params: Encodable {
                 let manager_email: String
                 let manager_password: String
                 let manager_name: String
                 let manager_phone: String
-                let manager_store_name: String
                 let manager_address: String
-                let manager_country: String
                 let manager_image_url: String
             }
+
+            let finalAddress = address.isEmpty ? country : "\(address), \(country)"
 
             let params = Params(
                 manager_email: email,
                 manager_password: password,
                 manager_name: name,
                 manager_phone: phone,
-                manager_store_name: storeName,
-                manager_address: address,
-                manager_country: country,
-                manager_image_url: imageUrl ?? ""
+                manager_address: finalAddress,
+                manager_image_url: uploadedUrl
             )
 
             try await SupabaseManager.shared.client
@@ -108,32 +114,32 @@ class ManagersViewModel {
         }
     }
 
-    func updateManager(_ manager: DisplayManager) async -> Bool {
+    func updateManager(_ manager: DisplayManager, newImage: UIImage? = nil) async -> Bool {
         isLoading = true
         errorMessage = nil
         do {
-            struct Params: Encodable {
-                let manager_id: UUID
-                let manager_name: String
-                let manager_phone: String
-                let manager_email: String
-                let manager_store_name: String
-                let manager_address: String
-                let manager_country: String
+            let finalAddress = manager.address.isEmpty ? manager.country : (manager.address.hasSuffix(manager.country) ? manager.address : "\(manager.address), \(manager.country)")
+
+            var updateData: [String: AnyJSON] = [
+                "name": .string(manager.name),
+                "phone": .string(manager.phone),
+                "email": .string(manager.email),
+                "address": .string(finalAddress)
+            ]
+            
+            if let img = newImage {
+                do {
+                    let uploadedUrl = try await uploadImage(img)
+                    updateData["image_url"] = .string(uploadedUrl)
+                } catch {
+                    print("Image upload failed during update: \(error)")
+                }
             }
-
-            let params = Params(
-                manager_id: manager.id,
-                manager_name: manager.name,
-                manager_phone: manager.phone,
-                manager_email: manager.email,
-                manager_store_name: manager.storeName,
-                manager_address: manager.address,
-                manager_country: manager.country
-            )
-
+            
             try await SupabaseManager.shared.client
-                .rpc("update_manager", params: params)
+                .from("app_user")
+                .update(updateData)
+                .eq("id", value: manager.id)
                 .execute()
 
             // Refresh local list so changes appear immediately
@@ -236,5 +242,38 @@ class ManagersViewModel {
         } catch {
             print("Network error sending Resend email: \(error)")
         }
+    }
+    
+    private func uploadImage(_ image: UIImage) async throws -> String {
+        // Resize image to max 400x400 to prevent timeouts
+        let targetSize = CGSize(width: 400, height: 400)
+        let size = image.size
+        let widthRatio  = targetSize.width  / size.width
+        let heightRatio = targetSize.height / size.height
+        let newSize: CGSize
+        if(widthRatio > heightRatio) {
+            newSize = CGSize(width: size.width * heightRatio, height: size.height * heightRatio)
+        } else {
+            newSize = CGSize(width: size.width * widthRatio,  height: size.height * widthRatio)
+        }
+        let rect = CGRect(origin: .zero, size: newSize)
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        image.draw(in: rect)
+        let resizedImage = UIGraphicsGetImageFromCurrentImageContext() ?? image
+        UIGraphicsEndImageContext()
+
+        guard let data = resizedImage.jpegData(compressionQuality: 0.5) else {
+            throw URLError(.badServerResponse)
+        }
+        let path = "profiles/\(UUID().uuidString).jpg"
+        let fileOptions = FileOptions(contentType: "image/jpeg")
+        try await SupabaseManager.shared.client.storage
+            .from("product-images")
+            .upload(path, data: data, options: fileOptions)
+
+        let url = try SupabaseManager.shared.client.storage
+            .from("product-images")
+            .getPublicURL(path: path)
+        return url.absoluteString
     }
 }

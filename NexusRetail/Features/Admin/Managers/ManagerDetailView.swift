@@ -23,9 +23,9 @@ struct ManagerDetailView: View {
     
     var onResetPassword: ((String) async -> Bool)?
     var onDelete: (() -> Void)?
-    var onUpdate: ((DisplayManager) async -> Void)?
-    
-    init(manager: DisplayManager, onResetPassword: ((String) async -> Bool)? = nil, onDelete: (() -> Void)? = nil, onUpdate: ((DisplayManager) async -> Void)? = nil) {
+    var onUpdate: ((DisplayManager, UIImage?) async -> Void)?
+
+    init(manager: DisplayManager, onResetPassword: ((String) async -> Bool)? = nil, onDelete: (() -> Void)? = nil, onUpdate: ((DisplayManager, UIImage?) async -> Void)? = nil) {
         _manager = State(initialValue: manager)
         self.onResetPassword = onResetPassword
         self.onDelete = onDelete
@@ -216,8 +216,8 @@ struct ManagerDetailView: View {
             }
         }
         .sheet(isPresented: $isEditPresented) {
-            EditManagerSheet(manager: $manager, onSave: { updatedManager in
-                await onUpdate?(updatedManager)
+            EditManagerSheet(manager: $manager, onSave: { updatedManager, newImage in
+                await onUpdate?(updatedManager, newImage)
             })
         }
         .alert("Credentials Reset", isPresented: $showResetSuccessAlert) {
@@ -302,10 +302,9 @@ struct EditManagerSheet: View {
     }
     
     private let countries = ["United States", "United Kingdom", "Canada", "Australia", "India", "Germany", "France", "Japan", "United Arab Emirates", "Singapore"]
-    
-    var onSave: ((DisplayManager) async -> Void)? = nil
-    
-    init(manager: Binding<DisplayManager>, onSave: ((DisplayManager) async -> Void)? = nil) {
+    var onSave: ((DisplayManager, UIImage?) async -> Void)? = nil
+
+    init(manager: Binding<DisplayManager>, onSave: ((DisplayManager, UIImage?) async -> Void)? = nil) {
         _manager = manager
         let m = manager.wrappedValue
         let parts = m.name.components(separatedBy: " ")
@@ -465,7 +464,8 @@ struct EditManagerSheet: View {
                                 manager.storeName = storeName
                                 manager.address   = storeAddress
                                 manager.country   = selectedCountry
-                                await onSave?(manager)
+                                let newImage = selectedImageData != nil ? UIImage(data: selectedImageData!) : nil
+                                await onSave?(manager, newImage)
                                 isSaving = false
                                 dismiss()
                             }

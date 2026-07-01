@@ -352,7 +352,24 @@ struct AdminProfileSheet: View {
     }
 
     private func uploadImage(_ image: UIImage) async throws -> String {
-        guard let data = image.jpegData(compressionQuality: 0.8) else {
+        // Resize image to max 400x400 to prevent timeouts
+        let targetSize = CGSize(width: 400, height: 400)
+        let size = image.size
+        let widthRatio  = targetSize.width  / size.width
+        let heightRatio = targetSize.height / size.height
+        let newSize: CGSize
+        if(widthRatio > heightRatio) {
+            newSize = CGSize(width: size.width * heightRatio, height: size.height * heightRatio)
+        } else {
+            newSize = CGSize(width: size.width * widthRatio,  height: size.height * widthRatio)
+        }
+        let rect = CGRect(origin: .zero, size: newSize)
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        image.draw(in: rect)
+        let resizedImage = UIGraphicsGetImageFromCurrentImageContext() ?? image
+        UIGraphicsEndImageContext()
+
+        guard let data = resizedImage.jpegData(compressionQuality: 0.5) else {
             throw URLError(.badServerResponse)
         }
         let path = "profiles/\(UUID().uuidString).jpg"

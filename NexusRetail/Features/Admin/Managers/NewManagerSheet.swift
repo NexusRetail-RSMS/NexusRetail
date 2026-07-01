@@ -9,7 +9,7 @@ import PhotosUI
 struct NewManagerSheet: View {
     @Environment(\.dismiss) private var dismiss
 
-    var onCreate: ((String, String, String, String, String, String, String, String?) async -> Bool)? = nil
+    var onCreate: ((String, String, String, String, String, String, String, UIImage?) async -> Bool)? = nil
 
     @State private var firstName = ""
     @State private var lastName = ""
@@ -179,7 +179,7 @@ struct NewManagerSheet: View {
                                         storeName,
                                         storeAddress,
                                         selectedCountry,
-                                        nil
+                                        selectedImage
                                     )
                                     if success {
                                         isSaving = false
