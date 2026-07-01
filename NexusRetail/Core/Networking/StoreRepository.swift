@@ -24,8 +24,7 @@ struct StoreRepository {
     /// Fetches all managers with aggregated stats (performance, revenue, tenure).
     func fetchManagers() async throws -> [DisplayManager] {
         let stats: [ManagerStatsRPC] = try await client
-            .rpc("get_manager_stats")
-            .execute()
+            .rpc("get_manager_stats")            .execute()
             .value
         return stats.map(DisplayManager.init(rpc:))
     }

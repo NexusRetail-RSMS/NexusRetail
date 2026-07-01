@@ -75,7 +75,7 @@ struct NewAppointmentView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SessionStore.self) private var sessionStore
 
-    var onSave: (AssociateAppointment) -> Void
+    var viewModel: AppointmentsViewModel
 
     @State private var clientName: String = ""
     @State private var clientEmail: String = ""
@@ -229,10 +229,24 @@ struct NewAppointmentView: View {
             
             await MainActor.run {
                 isSendingEmail = false
-                // Persist the client and the appointment regardless of mail outcome
+                // Persist the client locally and then to DB
                 ClientDirectory.upsert(name: appt.clientName, email: appt.clientEmail, phone: appt.clientPhone)
-                onSave(appt)
-                if success {
+            }
+            guard let associateId = sessionStore.currentUser?.id else { return }
+            
+            let saveSuccess = await viewModel.saveAppointment(
+                associateId: associateId,
+                clientName: appt.clientName,
+                clientEmail: appt.clientEmail,
+                clientPhone: appt.clientPhone,
+                date: appt.date,
+                mode: appt.mode,
+                status: appt.status,
+                notes: appt.productOrNote
+            )
+            
+            await MainActor.run {
+                if success && saveSuccess {
                     showingSuccessAlert = true
                 } else {
                     dismiss()
@@ -310,5 +324,5 @@ struct NewAppointmentView: View {
 
 
 #Preview {
-    NewAppointmentView { _ in }
+    NewAppointmentView(viewModel: AppointmentsViewModel())
 }

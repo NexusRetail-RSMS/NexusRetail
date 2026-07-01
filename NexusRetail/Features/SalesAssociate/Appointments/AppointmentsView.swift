@@ -1,53 +1,8 @@
 import SwiftUI
 
 struct AppointmentsView: View {
-    @State private var appointments: [AssociateAppointment] = [
-        AssociateAppointment(
-            clientName: "Sarah Johnson",
-            clientEmail: "sarah.johnson@example.com",
-            clientPhone: "+91 98765 43210",
-            date: Calendar.current.date(bySettingHour: 10, minute: 30, second: 0, of: .now) ?? .now,
-            mode: .inStore,
-            status: .confirmed,
-            productOrNote: "Louis Vuitton Neverfull PM"
-        ),
-        AssociateAppointment(
-            clientName: "Marcus Chen",
-            clientEmail: "marcus.chen@example.com",
-            clientPhone: "+91 91234 56789",
-            date: Calendar.current.date(bySettingHour: 14, minute: 0, second: 0, of: .now) ?? .now,
-            mode: .inStore,
-            status: .pending,
-            productOrNote: "Cartier Tank Must Watch"
-        ),
-        AssociateAppointment(
-            clientName: "Isabella Rossi",
-            clientEmail: "isabella.rossi@example.com",
-            clientPhone: "+91 99887 76655",
-            date: Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.date(bySettingHour: 11, minute: 15, second: 0, of: .now) ?? .now) ?? .now,
-            mode: .inStore,
-            status: .confirmed,
-            productOrNote: "Hermès Birkin 30 Consultation"
-        ),
-        AssociateAppointment(
-            clientName: "Kabir Mehta",
-            clientEmail: "kabir.mehta@example.com",
-            clientPhone: "+91 90909 80808",
-            date: Calendar.current.date(byAdding: .day, value: 3, to: Calendar.current.date(bySettingHour: 14, minute: 15, second: 0, of: .now) ?? .now) ?? .now,
-            mode: .video,
-            status: .confirmed,
-            productOrNote: "Rolex Datejust Styling Call"
-        ),
-        AssociateAppointment(
-            clientName: "Rhea Sethi",
-            clientEmail: "rhea.sethi@example.com",
-            clientPhone: "+91 95005 60607",
-            date: Calendar.current.date(byAdding: .day, value: 5, to: Calendar.current.date(bySettingHour: 12, minute: 30, second: 0, of: .now) ?? .now) ?? .now,
-            mode: .video,
-            status: .pending,
-            productOrNote: "Chanel Classic Flap Sourcing"
-        )
-    ]
+    @Environment(SessionStore.self) private var sessionStore
+    @State private var viewModel = AppointmentsViewModel()
 
     @State private var showingNewAppointment = false
 
@@ -61,7 +16,7 @@ struct AppointmentsView: View {
     // MARK: - Filtering / Grouping
 
     private var filtered: [AssociateAppointment] {
-        appointments
+        viewModel.appointments
             .filter { appt in
                 appt.date >= Calendar.current.startOfDay(for: .now) &&
                 ((selectedFilter == .inStore && appt.mode == .inStore) ||
@@ -141,10 +96,13 @@ struct AppointmentsView: View {
             }
             .background(RSMSColors.background.ignoresSafeArea())
             .navigationBarHidden(true)
-            .sheet(isPresented: $showingNewAppointment) {
-                NewAppointmentView { newAppt in
-                    appointments.append(newAppt)
+            .task {
+                if let associateId = sessionStore.currentUser?.id {
+                    await viewModel.fetchAppointments(for: associateId)
                 }
+            }
+            .sheet(isPresented: $showingNewAppointment) {
+                NewAppointmentView(viewModel: viewModel)
             }
         }
         .tint(RSMSColors.burgundy)
