@@ -49,6 +49,7 @@ struct AdminTabView: View {
             .tabItem {
                 Label("Transfers", systemImage: "arrow.left.arrow.right")
             }
+            .badge(transfersVM.activeRequestsCount)
             .tag(AdminTab.transfers)
 
             // 5. Managers

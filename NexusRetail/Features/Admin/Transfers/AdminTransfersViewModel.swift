@@ -5,267 +5,169 @@ import Supabase
 @Observable
 class AdminTransfersViewModel {
     var requests: [AdminStockRequest] = []
-    var products: [AdminTransferProduct] = []
-    var purchaseOrders: [AdminPurchaseOrder] = []
-    var deliveries: [AdminDelivery] = []
-    
-    // The warehouse store ID
-    var warehouseStoreID: UUID?
-    
+
     var isLoading = false
     var errorMessage: String?
-    
-    init() {
-        // Will be called by views
+
+    // MARK: - Computed
+
+    var activeRequestsCount: Int {
+        requests.filter { $0.status == .pending }.count
     }
-    
+
+    var pendingRequests: [AdminStockRequest] {
+        requests.filter { $0.status == .pending }
+            .sorted { $0.createdAt > $1.createdAt }
+    }
+
+    var waitingRequests: [AdminStockRequest] {
+        requests.filter { $0.status == .routed }
+            .sorted { $0.scheduledAt ?? $0.createdAt > $1.scheduledAt ?? $1.createdAt }
+    }
+
+    var approvedRequests: [AdminStockRequest] {
+        requests.filter { $0.status == .approved }
+            .sorted { $0.approvedAt ?? $0.createdAt > $1.approvedAt ?? $1.createdAt }
+    }
+
+    // MARK: - Load
+
     @MainActor
     func load() async {
         isLoading = true
         errorMessage = nil
-        
+
         do {
-            // 1. Get warehouse store or fallback to first available store
-            let stores: [Store] = try await SupabaseManager.shared.client
-                .from("store")
-                .select("*")
-                .execute()
-                .value
-            
-            // Try to find a warehouse, otherwise just use any store (useful for dev/mock environments)
-            guard let warehouse = stores.first(where: { $0.isWarehouse == true }) ?? stores.first else {
-                errorMessage = "No store found in DB to use as warehouse."
-                isLoading = false
-                return
-            }
-            
-            self.warehouseStoreID = warehouse.id
-            
-            // 2. Fetch warehouse inventory
-            let inventoryItems: [InventoryItemRow] = try await SupabaseManager.shared.client
-                .from("inventory_item")
-                .select("*, sku(*)")
-                .eq("store_id", value: warehouse.id)
-                .execute()
-                .value
-            
-            self.products = inventoryItems.map { item in
-                AdminTransferProduct(
-                    id: item.skuId, // Using SKU id as product ID for easy lookup
-                    name: item.sku.name,
-                    sku: item.sku.skuCode ?? "—",
-                    category: item.sku.category ?? "Uncategorized",
-                    warehouseQuantity: item.onHand,
-                    reorderLevel: 20, // Default reorder level
-                    lastUpdated: Date()
-                )
-            }
-            
-            // 3. Fetch all transfer requests
             let fetchedRequests: [AdminStockRequest] = try await SupabaseManager.shared.client
                 .from("transfer_request")
                 .select("*, sku(*), store!requesting_store_id(*, manager:app_user!store_manager_fk(*))")
                 .order("created_at", ascending: false)
                 .execute()
                 .value
-            
+
             self.requests = fetchedRequests
-            
+
+            // Check for auto-approvals on load
+            checkAutoApprovals()
         } catch is CancellationError {
-            // Ignore task cancellation
             print("Admin transfers load cancelled")
         } catch {
             print("Failed to load admin transfers data: \(error)")
             self.errorMessage = "Error: \(error.localizedDescription)"
         }
-        
+
         isLoading = false
     }
-    
+
+    // MARK: - Status Update
+
     struct StatusUpdate: Encodable {
         let status: String
     }
-    
+
+    // MARK: - Approve Immediately
+
     func approveRequest(_ request: AdminStockRequest) {
-        guard let index = requests.firstIndex(where: { $0.id == request.id }),
-              let productIndex = products.firstIndex(where: { $0.id == request.skuId }) else { return }
-        
-        if products[productIndex].warehouseQuantity >= request.quantity {
-            let warehouseId = self.warehouseStoreID
-            
+        guard let index = requests.firstIndex(where: { $0.id == request.id }) else { return }
+
+        Task {
+            do {
+                try await SupabaseManager.shared.client
+                    .from("transfer_request")
+                    .update(StatusUpdate(status: TransferStatus.approved.rawValue))
+                    .eq("id", value: request.id)
+                    .execute()
+
+                await MainActor.run {
+                    requests[index].status = .approved
+                    requests[index].approvedAt = Date()
+                    requests[index].approvalMethod = .immediate
+                }
+            } catch {
+                print("Failed to approve request: \(error)")
+            }
+        }
+    }
+
+    // MARK: - Schedule
+
+    func scheduleRequest(_ request: AdminStockRequest) {
+        guard let index = requests.firstIndex(where: { $0.id == request.id }) else { return }
+
+        let now = Date()
+        let autoApproveDate = Calendar.current.date(byAdding: .day, value: 7, to: now) ?? now.addingTimeInterval(604800)
+
+        Task {
+            do {
+                try await SupabaseManager.shared.client
+                    .from("transfer_request")
+                    .update(StatusUpdate(status: TransferStatus.routed.rawValue))
+                    .eq("id", value: request.id)
+                    .execute()
+
+                await MainActor.run {
+                    requests[index].status = .routed
+                    requests[index].scheduledAt = now
+                    requests[index].autoApproveAt = autoApproveDate
+                    requests[index].approvalMethod = .scheduled
+                }
+            } catch {
+                print("Failed to schedule request: \(error)")
+            }
+        }
+    }
+
+    // MARK: - Approve Early
+
+    func approveEarly(_ request: AdminStockRequest) {
+        guard let index = requests.firstIndex(where: { $0.id == request.id }) else { return }
+
+        Task {
+            do {
+                try await SupabaseManager.shared.client
+                    .from("transfer_request")
+                    .update(StatusUpdate(status: TransferStatus.approved.rawValue))
+                    .eq("id", value: request.id)
+                    .execute()
+
+                await MainActor.run {
+                    requests[index].status = .approved
+                    requests[index].approvedAt = Date()
+                    requests[index].approvalMethod = .early
+                }
+            } catch {
+                print("Failed to approve early: \(error)")
+            }
+        }
+    }
+
+    // MARK: - Auto Approval
+
+    func checkAutoApprovals() {
+        let now = Date()
+
+        for (index, request) in requests.enumerated() {
+            guard request.status == .routed,
+                  let autoApproveAt = request.autoApproveAt,
+                  autoApproveAt <= now else { continue }
+
             Task {
                 do {
-                    // Update transfer request status
                     try await SupabaseManager.shared.client
                         .from("transfer_request")
                         .update(StatusUpdate(status: TransferStatus.approved.rawValue))
                         .eq("id", value: request.id)
                         .execute()
-                    
-                    // Note: In a real app we would decrement the warehouse inventory here
-                    // using a Postgres RPC. For now, we update local state.
-                    
+
                     await MainActor.run {
-                        // Deduct stock locally
-                        products[productIndex].warehouseQuantity -= request.quantity
-                        products[productIndex].lastUpdated = Date()
-                        
-                        // Update request
                         requests[index].status = .approved
-                        
-                        // Create a mock delivery for the UI
-                        let newDelivery = AdminDelivery(
-                            id: "DEL-\(Int.random(in: 1000...9999))",
-                            transferRequestID: request.id.uuidString,
-                            productID: request.skuId,
-                            quantity: request.quantity,
-                            destinationStoreID: request.requestingStoreId,
-                            destinationStoreName: request.storeName,
-                            managerID: UUID(), // We don't have manager ID directly
-                            managerName: request.managerName,
-                            managerAvatarInitials: String(request.managerName.prefix(2)),
-                            dispatchDate: Date(),
-                            estimatedArrival: Calendar.current.date(byAdding: .day, value: 2, to: Date()) ?? Date(),
-                            status: .preparing,
-                            trackingNumber: "TRK\(Int.random(in: 10000000...99999999))"
-                        )
-                        deliveries.insert(newDelivery, at: 0)
+                        requests[index].approvedAt = Date()
+                        requests[index].approvalMethod = .scheduled
                     }
                 } catch {
-                    print("Failed to approve request: \(error)")
+                    print("Failed to auto-approve request: \(error)")
                 }
             }
         }
-    }
-    
-    func denyRequest(_ request: AdminStockRequest, reason: String) {
-        guard let index = requests.firstIndex(where: { $0.id == request.id }) else { return }
-        
-        Task {
-            do {
-                try await SupabaseManager.shared.client
-                    .from("transfer_request")
-                    .update(StatusUpdate(status: TransferStatus.unfulfillable.rawValue))
-                    .eq("id", value: request.id)
-                    .execute()
-                
-                await MainActor.run {
-                    requests[index].status = .unfulfillable
-                }
-            } catch {
-                print("Failed to deny request: \(error)")
-            }
-        }
-    }
-    
-    func createPurchaseOrder(for product: AdminTransferProduct, quantity: Int, supplier: String, notes: String?) {
-        let newPO = AdminPurchaseOrder(
-            id: "PO-\(Int.random(in: 1000...9999))",
-            productID: product.id,
-            supplierName: supplier,
-            quantity: quantity,
-            createdDate: Date(),
-            estimatedDeliveryDate: Calendar.current.date(byAdding: .day, value: 3, to: Date()) ?? Date(),
-            status: .ordered,
-            notes: notes
-        )
-        purchaseOrders.insert(newPO, at: 0)
-        
-        if let productIndex = products.firstIndex(where: { $0.id == product.id }) {
-            products[productIndex].warehouseQuantity += quantity
-            products[productIndex].lastUpdated = Date()
-            
-            // Auto-check pending requests that were blocked
-            for (reqIndex, request) in requests.enumerated() {
-                if request.status == .pending && request.skuId == product.id {
-                    if products[productIndex].warehouseQuantity >= request.quantity {
-                        // requests[reqIndex].status = .pending
-                    }
-                }
-            }
-        }
-    }
-    
-    func simulateDelivery(for order: AdminPurchaseOrder) {
-        guard let index = purchaseOrders.firstIndex(where: { $0.id == order.id }),
-              let productIndex = products.firstIndex(where: { $0.id == order.productID }) else { return }
-        
-        // Update PO
-        purchaseOrders[index].status = .delivered
-        purchaseOrders[index].deliveryDate = Date()
-        
-        // Update Inventory
-        products[productIndex].warehouseQuantity += order.quantity
-        products[productIndex].lastUpdated = Date()
-        
-        // Auto-check pending requests that were blocked
-        for (reqIndex, request) in requests.enumerated() {
-            if request.status == .pending && request.skuId == order.productID {
-                if products[productIndex].warehouseQuantity >= request.quantity {
-                    // Make it ready to approve
-                    // requests[reqIndex].status = .pending
-                }
-            }
-        }
-    }
-    
-    func simulateStoreDelivery(for delivery: AdminDelivery) {
-        guard let index = deliveries.firstIndex(where: { $0.id == delivery.id }) else { return }
-        
-        // Update delivery status
-        deliveries[index].status = .delivered
-        deliveries[index].actualDeliveryDate = Date()
-        
-        // Update associated transfer request
-        if let reqIndex = requests.firstIndex(where: { $0.id.uuidString == delivery.transferRequestID }) {
-            requests[reqIndex].status = .delivered
-        }
-    }
-    
-    func simulateFullDelivery(for delivery: AdminDelivery) async {
-        let stepDuration = UInt64(20 * 1_000_000_000) // 20 seconds per transition (3 transitions = 60s / 1 min)
-        let id = delivery.id
-        
-        await MainActor.run {
-            if let idx = self.deliveries.firstIndex(where: { $0.id == id }) {
-                self.deliveries[idx].status = .preparing
-            }
-        }
-        
-        try? await Task.sleep(nanoseconds: stepDuration)
-        
-        await MainActor.run {
-            if let idx = self.deliveries.firstIndex(where: { $0.id == id }) {
-                self.deliveries[idx].status = .dispatched
-            }
-        }
-        
-        try? await Task.sleep(nanoseconds: stepDuration)
-        
-        await MainActor.run {
-            if let idx = self.deliveries.firstIndex(where: { $0.id == id }) {
-                self.deliveries[idx].status = .inTransit
-            }
-        }
-        
-        try? await Task.sleep(nanoseconds: stepDuration)
-        
-        await MainActor.run {
-            if let idx = self.deliveries.firstIndex(where: { $0.id == id }) {
-                self.deliveries[idx].status = .delivered
-                self.deliveries[idx].actualDeliveryDate = Date()
-                if let reqIndex = self.requests.firstIndex(where: { $0.id.uuidString == self.deliveries[idx].transferRequestID }) {
-                    self.requests[reqIndex].status = .delivered
-                }
-            }
-        }
-    }
-    
-    func product(for id: UUID) -> AdminTransferProduct? {
-        products.first(where: { $0.id == id })
-    }
-    
-    private func loadMockData() {
-        // Mock data removed
     }
 }
