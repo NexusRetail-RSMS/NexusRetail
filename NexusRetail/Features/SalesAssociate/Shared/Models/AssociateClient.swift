@@ -11,10 +11,9 @@ struct AssociateClient: Identifiable {
     let id          = UUID()
     let name:       String
     let phone:      String
+    let email:      String
     let preferences: String
-    let tier:       String
     let purchasePattern: String
-    let recommendedNext: String
 
     var initials: String {
         name
@@ -34,26 +33,23 @@ enum SalesAssociateSampleData {
         AssociateClient(
             name: "Ananya Rao",
             phone: "+91 98765 43210",
+            email: "ananya.rao@example.com",
             preferences: "Minimal gold, silk sarees",
-            tier: "VIP",
-            purchasePattern: "Buys festive wear every 5-6 weeks, prefers warm gold accents.",
-            recommendedNext: "Kundan choker and ivory silk dupatta"
+            purchasePattern: "Buys festive wear every 5-6 weeks, prefers warm gold accents."
         ),
         AssociateClient(
             name: "Kabir Mehta",
             phone: "+91 98111 22009",
+            email: "kabir.mehta@example.com",
             preferences: "Tailored jackets, navy tones",
-            tier: "Gold",
-            purchasePattern: "Often buys structured workwear and premium accessories.",
-            recommendedNext: "Navy linen blazer and leather card case"
+            purchasePattern: "Often buys structured workwear and premium accessories."
         ),
         AssociateClient(
             name: "Mira Kapoor",
             phone: "+91 90000 77123",
+            email: "mira.kapoor@example.com",
             preferences: "Statement earrings, emerald",
-            tier: "Silver",
-            purchasePattern: "Responds well to limited-drop jewelry recommendations.",
-            recommendedNext: "Emerald drop earrings and velvet evening clutch"
+            purchasePattern: "Responds well to limited-drop jewelry recommendations."
         )
     ]
 

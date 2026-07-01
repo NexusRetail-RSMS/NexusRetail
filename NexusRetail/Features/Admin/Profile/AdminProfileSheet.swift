@@ -202,17 +202,6 @@ struct AdminProfileSheet: View {
                                 valueColor: RSMSColors.burgundy)
                     }
 
-                    // MARK: - Payment Configuration
-                    Section {
-                        NavigationLink(destination: AdminStorePaymentSelectorView()) {
-                            Label {
-                                Text("Payment Configuration")
-                            } icon: {
-                                Image(systemName: "creditcard.fill")
-                                    .foregroundColor(RSMSColors.burgundy)
-                            }
-                        }
-                    }
 
                     // MARK: - Sign Out
                     Section {
@@ -506,91 +495,3 @@ struct AdminProfileSheet: View {
 
 
 
-// MARK: - Store Selector for Payment Configuration
-struct AdminStorePaymentSelectorView: View {
-    @State private var stores: [Store] = []
-    @State private var isLoading = false
-    @State private var errorMessage: String? = nil
-    
-    var body: some View {
-        ZStack {
-            RSMSColors.background
-                .ignoresSafeArea()
-            
-            Group {
-                if isLoading {
-                    ProgressView("Loading stores...")
-                        .tint(RSMSColors.burgundy)
-                        .frame(maxHeight: .infinity)
-                } else if let error = errorMessage {
-                    VStack(spacing: RSMSSpacing.md) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.largeTitle)
-                            .foregroundColor(RSMSColors.error)
-                        Text(error)
-                            .font(RSMSFonts.subheadline)
-                            .foregroundColor(RSMSColors.secondaryText)
-                            .multilineTextAlignment(.center)
-                    }
-                    .padding()
-                    .frame(maxHeight: .infinity)
-                } else if stores.isEmpty {
-                    VStack(spacing: RSMSSpacing.md) {
-                        Image(systemName: "building.2.crop.circle")
-                            .font(.system(size: 64))
-                            .foregroundColor(RSMSColors.burgundy)
-                        Text("No Stores Found")
-                            .font(RSMSFonts.title)
-                            .fontWeight(.bold)
-                            .foregroundColor(RSMSColors.primaryText)
-                    }
-                    .frame(maxHeight: .infinity)
-                } else {
-                    List {
-                        ForEach(stores) { store in
-                            NavigationLink(destination: PaymentConfigurationView(isAdmin: true, storeID: store.id)) {
-                                HStack(spacing: 12) {
-                                    Image(systemName: store.isWarehouse == true ? "shippingbox.fill" : "building.2.fill")
-                                        .foregroundColor(RSMSColors.burgundy)
-                                        .font(.system(size: 18))
-                                        .frame(width: 24)
-                                    
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(store.name)
-                                            .font(RSMSFonts.body)
-                                            .fontWeight(.semibold)
-                                            .foregroundColor(RSMSColors.primaryText)
-                                        if let address = store.address {
-                                            Text(address)
-                                                .font(RSMSFonts.caption)
-                                                .foregroundColor(RSMSColors.secondaryText)
-                                                .lineLimit(1)
-                                        }
-                                    }
-                                }
-                                .padding(.vertical, 4)
-                            }
-                        }
-                    }
-                    .listStyle(.insetGrouped)
-                }
-            }
-        }
-        .navigationTitle("Select Store")
-        .navigationBarTitleDisplayMode(.inline)
-        .task {
-            await loadStores()
-        }
-    }
-    
-    private func loadStores() async {
-        isLoading = true
-        errorMessage = nil
-        do {
-            self.stores = try await StoreRepository().fetchStores()
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-        isLoading = false
-    }
-}
