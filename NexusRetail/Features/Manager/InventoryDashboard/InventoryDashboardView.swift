@@ -111,15 +111,15 @@ struct InventoryDashboardView: View {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundColor(RSMSColors.secondaryText)
                     }
+                } else {
+                    Image(systemName: "mic.fill")
+                        .foregroundColor(RSMSColors.secondaryText)
                 }
             }
-            .padding(12)
-            .background(Color.white)
-            .cornerRadius(RSMSRadius.medium)
-            .overlay(
-                RoundedRectangle(cornerRadius: RSMSRadius.medium)
-                    .stroke(RSMSColors.inputBorder, lineWidth: 1)
-            )
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(Color(UIColor.systemGray5))
+            .clipShape(Capsule())
             
             // Filter Menu (Sort + Low Stock Filter)
             Menu {
