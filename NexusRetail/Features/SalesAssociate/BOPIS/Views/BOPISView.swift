@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct BOPISView: View {
+    @Environment(SessionStore.self) private var sessionStore
     @State private var viewModel = BOPISViewModel()
     @State private var searchText = ""
     @State private var selectedFilter: BOPISOrderStatus? = nil
@@ -70,6 +71,9 @@ struct BOPISView: View {
             } message: {
                 Text("\(notifiedCustomerName) has been sent a verification code for pickup.")
             }
+        }
+        .task {
+            await viewModel.loadData(storeID: sessionStore.currentUser?.storeID)
         }
     }
     

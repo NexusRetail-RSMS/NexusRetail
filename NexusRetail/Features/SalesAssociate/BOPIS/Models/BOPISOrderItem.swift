@@ -12,4 +12,5 @@ struct BOPISOrderItem: Identifiable, Equatable {
     let quantity: Int
     let price: Double
     let qrCode: String
+    var imageUrl: String?
 }

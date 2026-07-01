@@ -122,14 +122,27 @@ private struct PackItemRow: View {
     
     var body: some View {
         HStack(spacing: RSMSSpacing.md) {
-            // Placeholder Image
-            RoundedRectangle(cornerRadius: RSMSRadius.small)
-                .fill(RSMSColors.cream)
-                .frame(width: 60, height: 60)
-                .overlay(
-                    Image(systemName: "bag.fill")
-                        .foregroundColor(RSMSColors.burgundy.opacity(0.3))
-                )
+            if let urlStr = item.imageUrl, let url = URL(string: urlStr) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .empty:
+                        ProgressView()
+                            .frame(width: 60, height: 60)
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 60, height: 60)
+                            .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.small))
+                    case .failure:
+                        fallbackImage
+                    @unknown default:
+                        fallbackImage
+                    }
+                }
+            } else {
+                fallbackImage
+            }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.name)
@@ -165,5 +178,16 @@ private struct PackItemRow: View {
         .background(Color.white)
         .cornerRadius(RSMSRadius.medium)
         .shadow(color: Color.black.opacity(0.05), radius: 4, y: 2)
+    }
+    
+    @ViewBuilder
+    private var fallbackImage: some View {
+        RoundedRectangle(cornerRadius: RSMSRadius.small)
+            .fill(RSMSColors.cream)
+            .frame(width: 60, height: 60)
+            .overlay(
+                Image(systemName: "bag.fill")
+                    .foregroundColor(RSMSColors.burgundy.opacity(0.3))
+            )
     }
 }
