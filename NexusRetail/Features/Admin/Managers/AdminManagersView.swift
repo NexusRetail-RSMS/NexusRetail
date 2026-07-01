@@ -138,8 +138,8 @@ struct AdminManagersView: View {
                                         onResetPassword: { newPassword in
                                             return await viewModel.resetPassword(for: manager.id, email: manager.email, newPassword: newPassword)
                                         },
-                                        onUpdate: { updatedManager in
-                                            _ = await viewModel.updateManager(updatedManager)
+                                        onUpdate: { updatedManager, newImage in
+                                            return await viewModel.updateManager(updatedManager, newImage: newImage)
                                         }
                                     )
                                 }
@@ -259,8 +259,8 @@ struct AdminManagersView: View {
                                     onResetPassword: { newPassword in
                                         return await viewModel.resetPassword(for: manager.id, email: manager.email, newPassword: newPassword)
                                     },
-                                    onUpdate: { updatedManager in
-                                        _ = await viewModel.updateManager(updatedManager)
+                                    onUpdate: { updatedManager, newImage in
+                                        return await viewModel.updateManager(updatedManager, newImage: newImage)
                                     }
                                 )
                             }
@@ -304,7 +304,7 @@ struct AdminManagersView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $isAddManagerPresented) {
-            NewManagerSheet(onCreate: { email, password, name, phone, storeName, address, country, imageUrl in
+            NewManagerSheet(onCreate: { email, password, name, phone, storeName, address, country, image in
                 return await viewModel.createManager(
                     email: email,
                     password: password,
@@ -313,7 +313,7 @@ struct AdminManagersView: View {
                     storeName: storeName,
                     address: address,
                     country: country,
-                    imageUrl: imageUrl
+                    image: image
                 )
             })
         }
@@ -326,15 +326,15 @@ struct AdminManagersView: View {
                             viewModel.managers[idx] = newMgr
                         }
                     ),
-                    onSave: { updatedManager in
-                        _ = await viewModel.updateManager(updatedManager)
+                    onSave: { updatedManager, newImage in
+                        return await viewModel.updateManager(updatedManager, newImage: newImage)
                     }
                 )
             } else {
                 EditManagerSheet(
                     manager: .constant(mgr),
-                    onSave: { updatedManager in
-                        _ = await viewModel.updateManager(updatedManager)
+                    onSave: { updatedManager, newImage in
+                        return await viewModel.updateManager(updatedManager, newImage: newImage)
                     }
                 )
             }
@@ -380,7 +380,7 @@ struct TopPerformanceCard: View {
     var onEdit: (() -> Void)? = nil
     var onDelete: (() -> Void)? = nil
     var onResetPassword: ((String) async -> Bool)? = nil
-    var onUpdate: ((DisplayManager) async -> Void)? = nil
+    var onUpdate: ((DisplayManager, UIImage?) async -> String?)? = nil
 
     private var rankColor: Color {
         switch rank {
@@ -518,7 +518,7 @@ struct ManagerListCard: View {
     var onEdit: (() -> Void)? = nil
     var onDelete: (() -> Void)? = nil
     var onResetPassword: ((String) async -> Bool)? = nil
-    var onUpdate: ((DisplayManager) async -> Void)? = nil
+    var onUpdate: ((DisplayManager, UIImage?) async -> String?)? = nil
 
     var body: some View {
         NavigationLink(destination: ManagerDetailView(manager: manager, onResetPassword: onResetPassword, onDelete: onDelete, onUpdate: onUpdate)) {

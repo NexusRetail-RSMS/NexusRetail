@@ -50,7 +50,7 @@ struct CardGatewayConfigurationView: View {
                     } else {
                         VStack(alignment: .leading, spacing: RSMSSpacing.xl) {
                             subtitleSection
-                            environmentSection
+
                             credentialSection
                             securityBadge
 
@@ -139,28 +139,7 @@ struct CardGatewayConfigurationView: View {
             .padding(.bottom, RSMSSpacing.xs)
     }
 
-    // MARK: - Environment Picker
 
-    private var environmentSection: some View {
-        VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
-            Text("Environment")
-                .font(RSMSFonts.headline)
-                .foregroundColor(RSMSColors.darkBrown)
-
-            Picker("Environment", selection: $viewModel.environment) {
-                ForEach(PaymentEnvironment.allCases, id: \.self) { env in
-                    Text(env.displayName).tag(env)
-                }
-            }
-            .pickerStyle(.segmented)
-            .tint(RSMSColors.burgundy)
-            .disabled(!isAdmin)
-        }
-        .padding(RSMSSpacing.lg)
-        .background(RSMSColors.cardBackground)
-        .cornerRadius(RSMSRadius.large)
-        .shadow(color: .black.opacity(0.04), radius: 6, x: 0, y: 2)
-    }
 
     // MARK: - Credential Fields
 

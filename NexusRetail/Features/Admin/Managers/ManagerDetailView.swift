@@ -10,198 +10,185 @@ import PhotosUI
 
 struct ManagerDetailView: View {
     @Environment(\.dismiss) private var dismiss
-
+    
     // We keep a local copy so edits reflect immediately
     @State private var manager: DisplayManager
     @State private var isEditPresented = false
     
     @State private var isResettingPassword = false
     @State private var showResetAlert = false
+    @State private var showResetSuccessAlert = false
     @State private var newPassword = ""
     @State private var showDeleteAlert = false
-
+    
     var onResetPassword: ((String) async -> Bool)?
     var onDelete: (() -> Void)?
-    var onUpdate: ((DisplayManager) async -> Void)?
+    var onUpdate: ((DisplayManager, UIImage?) async -> String?)?
 
-    init(manager: DisplayManager, onResetPassword: ((String) async -> Bool)? = nil, onDelete: (() -> Void)? = nil, onUpdate: ((DisplayManager) async -> Void)? = nil) {
+    init(manager: DisplayManager, onResetPassword: ((String) async -> Bool)? = nil, onDelete: (() -> Void)? = nil, onUpdate: ((DisplayManager, UIImage?) async -> String?)? = nil) {
         _manager = State(initialValue: manager)
         self.onResetPassword = onResetPassword
         self.onDelete = onDelete
         self.onUpdate = onUpdate
     }
-
+    
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-
-                // ── Header ──────────────────────────────────────────────
-                VStack(spacing: RSMSSpacing.md) {
+        List {
+            // MARK: - Avatar Header Section
+            Section {
+                VStack(spacing: 14) {
                     // Avatar
                     ZStack {
                         Circle()
                             .fill(RSMSColors.burgundy.opacity(0.15))
-                            .frame(width: 100, height: 100)
-
+                            .frame(width: 110, height: 110)
+                        
                         if let urlString = manager.imageUrl, let url = URL(string: urlString) {
                             AsyncImage(url: url) { image in
                                 image
                                     .resizable()
                                     .scaledToFill()
-                                    .frame(width: 100, height: 100)
+                                    .frame(width: 110, height: 110)
                                     .clipShape(Circle())
                             } placeholder: {
                                 ProgressView()
-                                    .frame(width: 100, height: 100)
+                                    .frame(width: 110, height: 110)
                             }
                         } else {
                             Image(systemName: "person.fill")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 50, height: 50)
+                                .frame(width: 58, height: 58)
                                 .foregroundColor(RSMSColors.burgundy)
                         }
                     }
                     .shadow(color: RSMSColors.burgundy.opacity(0.15), radius: 10, x: 0, y: 4)
-
+                    
                     // Full name on one line
                     Text(manager.name)
-                        .font(RSMSFonts.title)
+                        .font(.system(size: 22, weight: .bold))
                         .foregroundColor(RSMSColors.primaryText)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.top, RSMSSpacing.xxl)
-                .padding(.bottom, RSMSSpacing.md)
-                .background(RSMSColors.background)
-
-                // ── Contact Info ────────────────────────────────────────
-                DetailSection(title: "CONTACT") {
-                    if !manager.phone.isEmpty {
-                        ManagerProfileDetailRow(icon: "phone.fill", iconColor: RSMSColors.success, label: manager.phone)
-                    }
-                    if !manager.phone.isEmpty && (!manager.email.isEmpty || !manager.address.isEmpty) {
-                        Divider().padding(.leading, 58)
-                    }
-                    if !manager.email.isEmpty {
-                        ManagerProfileDetailRow(icon: "envelope.fill", iconColor: RSMSColors.burgundy, label: manager.email)
-                    }
-                    if !manager.email.isEmpty && !manager.address.isEmpty {
-                        Divider().padding(.leading, 58)
-                    }
-                    if !manager.address.isEmpty {
-                        ManagerProfileDetailRow(icon: "location.fill", iconColor: RSMSColors.error, label: manager.address)
-                    }
-                    if manager.phone.isEmpty && manager.email.isEmpty && manager.address.isEmpty {
-                        ManagerProfileDetailRow(icon: "info.circle.fill", iconColor: RSMSColors.secondaryText, label: "No contact info available")
-                    }
+                .padding(.vertical, 20)
+            }
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets())
+            
+            // MARK: - Contact Info
+            Section(header: Text("Manager Information")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(RSMSColors.secondaryText)
+                .textCase(.none)
+            ) {
+                infoRow(icon: "person.badge.shield.checkmark.fill",
+                        label: "Role",
+                        value: "Manager",
+                        valueColor: RSMSColors.burgundy)
+                
+                if !manager.phone.isEmpty {
+                    infoRow(icon: "phone.fill",
+                            label: "Phone",
+                            value: manager.phone)
                 }
-
-                // ── Store ───────────────────────────────────────────────
-                DetailSection(title: "STORE") {
-                    ManagerProfileDetailRow(
-                        icon: "building.2.fill",
-                        iconColor: RSMSColors.warning,
-                        label: manager.storeName.isEmpty ? "Not Assigned" : manager.storeName,
-                        isSecondary: manager.storeName.isEmpty
-                    )
+                
+                if !manager.email.isEmpty {
+                    infoRow(icon: "envelope.fill",
+                            label: "Email",
+                            value: manager.email)
                 }
-                .padding(.bottom, 0)
-
-                // ── Stats ───────────────────────────────────────────────
-                DetailSection(title: "PERFORMANCE") {
-                    // Revenue
-                    HStack(spacing: 14) {
-                        Image(systemName: "dollarsign.circle.fill")
-                            .font(.system(size: 22, weight: .medium))
-                            .foregroundColor(RSMSColors.success)
-                            .frame(width: 32, height: 32)
-                        Text("Revenue")
-                            .font(RSMSFonts.body)
-                            .foregroundColor(RSMSColors.primaryText)
-                        Spacer()
-                        Text(manager.revenue.isEmpty ? "$0" : manager.revenue)
-                            .font(RSMSFonts.body.weight(.semibold))
-                            .foregroundColor(RSMSColors.secondaryText)
-                    }
-                    .padding(.horizontal, RSMSSpacing.lg)
-                    .frame(minHeight: 48)
-
-                    Divider().padding(.leading, 58)
-
-                    // Products sold
-                    HStack(spacing: 14) {
-                        Image(systemName: "shippingbox.fill")
-                            .font(.system(size: 20, weight: .medium))
-                            .foregroundColor(RSMSColors.burgundy)
-                            .frame(width: 32, height: 32)
-                        Text("Products Sold")
-                            .font(RSMSFonts.body)
-                            .foregroundColor(RSMSColors.primaryText)
-                        Spacer()
-                        Text("\(manager.productsSold)")
-                            .font(RSMSFonts.body.weight(.semibold))
-                            .foregroundColor(RSMSColors.secondaryText)
-                    }
-                    .padding(.horizontal, RSMSSpacing.lg)
-                    .frame(minHeight: 48)
+            }
+            
+            // MARK: - Store
+            Section(header: Text("Store Information")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(RSMSColors.secondaryText)
+                .textCase(.none)
+            ) {
+                infoRow(icon: "building.2.fill",
+                        label: "Store",
+                        value: manager.storeName.isEmpty ? "Not Assigned" : manager.storeName,
+                        valueColor: manager.storeName.isEmpty ? RSMSColors.secondaryText : RSMSColors.primaryText)
+                
+                if !manager.address.isEmpty {
+                    infoRow(icon: "location.fill",
+                            label: "Address",
+                            value: manager.address,
+                            multiline: true)
                 }
-
-                if onResetPassword != nil {
-                    VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
-                        Text("ACCOUNT")
-                            .font(RSMSFonts.caption.weight(.semibold))
-                            .foregroundColor(RSMSColors.secondaryText)
-                            .padding(.horizontal, RSMSSpacing.xl)
-
-                        Button {
-                            showResetAlert = true
-                        } label: {
-                            HStack(spacing: 14) {
-                                Text("Reset Credentials")
-                                    .font(RSMSFonts.body)
-                                    .foregroundColor(RSMSColors.primaryText)
-                                Spacer()
-                                Image(systemName: "key.fill")
-                                    .foregroundColor(RSMSColors.warning)
+                
+                if !manager.country.isEmpty {
+                    infoRow(icon: "globe",
+                            label: "Country",
+                            value: manager.country,
+                            valueColor: RSMSColors.burgundy)
+                }
+            }
+            
+            // // MARK: - Performance
+            // Section(header: Text("Performance")
+            //     .font(.system(size: 17, weight: .semibold))
+            //     .foregroundColor(RSMSColors.secondaryText)
+            //     .textCase(.none)
+            // ) {
+            //     infoRow(icon: "dollarsign.circle.fill",
+            //             label: "Revenue",
+            //             value: manager.revenue.isEmpty ? "$0" : manager.revenue)
+                
+            //     infoRow(icon: "shippingbox.fill",
+            //             label: "Products Sold",
+            //             value: "\(manager.productsSold)")
+            // }
+            
+            // MARK: - Account
+            if onResetPassword != nil {
+                Section(header: Text("Account")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(RSMSColors.secondaryText)
+                    .textCase(.none)
+                ) {
+                    Button {
+                        Task {
+                            isResettingPassword = true
+                            let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
+                            let generatedPassword = String((0..<12).map { _ in chars.randomElement()! })
+                            if let onResetPassword = onResetPassword {
+                                _ = await onResetPassword(generatedPassword)
                             }
-                            .padding(.horizontal, RSMSSpacing.lg)
-                            .frame(minHeight: 48)
-                            .background(RSMSColors.cardBackground)
-                            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                            isResettingPassword = false
+                            showResetSuccessAlert = true
                         }
-                        .padding(.horizontal, RSMSSpacing.lg)
-                    }
-                    .padding(.top, RSMSSpacing.md)
-                }
-
-                if onDelete != nil {
-                    VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
-                        Button {
-                            showDeleteAlert = true
-                        } label: {
-                            HStack(spacing: 14) {
-                                Image(systemName: "trash.fill")
-                                    .font(.system(size: 17, weight: .medium))
-                                    .foregroundColor(RSMSColors.error)
-                                    .frame(width: 32, height: 32)
-                                Text("Delete Manager")
-                                    .font(RSMSFonts.body.weight(.semibold))
-                                    .foregroundColor(RSMSColors.error)
-                                Spacer()
-                            }
-                            .padding(.horizontal, RSMSSpacing.lg)
-                            .frame(minHeight: 48)
-                            .background(RSMSColors.cardBackground)
-                            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    } label: {
+                        HStack {
+                            Text("Reset Credentials")
+                                .font(RSMSFonts.body)
+                                .foregroundColor(RSMSColors.primaryText)
+                            Spacer()
+                            Image(systemName: "key.fill")
+                                .foregroundColor(RSMSColors.burgundy)
                         }
-                        .padding(.horizontal, RSMSSpacing.lg)
                     }
-                    .padding(.top, RSMSSpacing.sm)
                 }
-
-                Spacer(minLength: RSMSSpacing.xxxl)
+            }
+            
+            // MARK: - Delete Manager
+            if onDelete != nil {
+                Section {
+                    Button(role: .destructive) {
+                        showDeleteAlert = true
+                    } label: {
+                        HStack {
+                            Spacer()
+                            Text("Delete Manager")
+                                .fontWeight(.semibold)
+                            Spacer()
+                        }
+                    }
+                }
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
         .background(RSMSColors.background.ignoresSafeArea())
         .navigationBarBackButtonHidden(true)
         .toolbar(.visible, for: .navigationBar)
@@ -216,7 +203,7 @@ struct ManagerDetailView: View {
                         .foregroundColor(RSMSColors.burgundy)
                 }
             }
-
+            
             // Edit button on RIGHT
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
@@ -229,28 +216,17 @@ struct ManagerDetailView: View {
             }
         }
         .sheet(isPresented: $isEditPresented) {
-            EditManagerSheet(manager: $manager, onSave: { updatedManager in
-                await onUpdate?(updatedManager)
+            EditManagerSheet(manager: $manager, onSave: { updatedManager, newImage in
+                if let onUpdate = onUpdate {
+                    return await onUpdate(updatedManager, newImage)
+                }
+                return nil
             })
         }
-        .alert("Reset Password", isPresented: $showResetAlert) {
-            TextField("New Password", text: $newPassword)
-            Button("Cancel", role: .cancel) {
-                newPassword = ""
-            }
-            Button("Reset") {
-                Task {
-                    isResettingPassword = true
-                    if let onResetPassword = onResetPassword {
-                        _ = await onResetPassword(newPassword)
-                    }
-                    isResettingPassword = false
-                    newPassword = ""
-                }
-            }
-            .disabled(newPassword.isEmpty)
+        .alert("Credentials Reset", isPresented: $showResetSuccessAlert) {
+            Button("OK") {}
         } message: {
-            Text("Enter a new password for this manager.")
+            Text("A link to reset credentials has been sent to the manager's registered email.")
         }
         .alert("Delete Manager", isPresented: $showDeleteAlert) {
             Button("Cancel", role: .cancel) { }
@@ -264,56 +240,33 @@ struct ManagerDetailView: View {
             Text("Are you sure you want to delete this manager? This action cannot be undone and will revoke their access.")
         }
     }
-}
-
-// MARK: - Reusable Detail Components
-
-private struct DetailSection<Content: View>: View {
-    let title: String
-    @ViewBuilder let content: () -> Content
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(title)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(RSMSColors.secondaryText)
-                .padding(.horizontal, RSMSSpacing.xl)
-                .padding(.top, RSMSSpacing.md)
-                .padding(.bottom, 6)
-
-            VStack(spacing: 0) {
-                content()
-            }
-            .background(RSMSColors.cardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .padding(.horizontal, RSMSSpacing.lg)
-        }
-        .padding(.bottom, RSMSSpacing.xs)
-    }
-}
-
-private struct ManagerProfileDetailRow: View {
-    let icon: String
-    let iconColor: Color
-    let label: String
-    var isSecondary: Bool = false
-
-    var body: some View {
-        HStack(spacing: 14) {
+    
+    // MARK: - Native Info Row
+    @ViewBuilder
+    private func infoRow(
+        icon: String,
+        label: String,
+        value: String,
+        valueColor: Color = .secondary,
+        multiline: Bool = false
+    ) -> some View {
+        HStack(alignment: multiline ? .top : .center, spacing: 12) {
             Image(systemName: icon)
-                .font(.system(size: 18, weight: .medium))
-                .foregroundColor(iconColor)
-                .frame(width: 32, height: 32)
-
+                .foregroundColor(RSMSColors.burgundy)
+                .frame(width: 20)
+            
             Text(label)
-                .font(RSMSFonts.body)
-                .foregroundColor(isSecondary ? RSMSColors.secondaryText : RSMSColors.primaryText)
-                .multilineTextAlignment(.leading)
-
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(RSMSColors.primaryText)
+            
             Spacer()
+            
+            Text(value)
+                .font(.system(size: 16))
+                .foregroundColor(valueColor)
+                .multilineTextAlignment(.trailing)
+                .lineLimit(multiline ? 3 : 1)
         }
-        .padding(.horizontal, RSMSSpacing.lg)
-        .frame(minHeight: 48)
     }
 }
 
@@ -322,7 +275,7 @@ private struct ManagerProfileDetailRow: View {
 struct EditManagerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var manager: DisplayManager
-
+    
     @State private var firstName: String
     @State private var lastName: String
     @State private var phone: String
@@ -333,12 +286,30 @@ struct EditManagerSheet: View {
     @State private var photoPickerItem: PhotosPickerItem? = nil
     @State private var selectedImageData: Data?
     @State private var isSaving = false
-
+    @State private var stores: [Store] = []
+    @State private var showErrorAlert = false
+    @State private var errorMessage = ""
+    
+    private var pickerStoreNames: [String] {
+        var names = stores.filter { $0.managerID == nil || $0.name == storeName }.map { $0.name }
+        if !storeName.isEmpty && !names.contains(storeName) {
+            names.insert(storeName, at: 0)
+        }
+        return names
+    }
+    
+    private var pickerCountries: [String] {
+        var list = countries
+        if !selectedCountry.isEmpty && !list.contains(selectedCountry) {
+            list.append(selectedCountry)
+        }
+        return list
+    }
+    
     private let countries = ["United States", "United Kingdom", "Canada", "Australia", "India", "Germany", "France", "Japan", "United Arab Emirates", "Singapore"]
+    var onSave: ((DisplayManager, UIImage?) async -> String?)? = nil
 
-    var onSave: ((DisplayManager) async -> Void)? = nil
-
-    init(manager: Binding<DisplayManager>, onSave: ((DisplayManager) async -> Void)? = nil) {
+    init(manager: Binding<DisplayManager>, onSave: ((DisplayManager, UIImage?) async -> String?)? = nil) {
         _manager = manager
         let m = manager.wrappedValue
         let parts = m.name.components(separatedBy: " ")
@@ -351,29 +322,24 @@ struct EditManagerSheet: View {
         _selectedCountry = State(initialValue: m.country.isEmpty ? "United States" : m.country)
         self.onSave = onSave
     }
-
+    
     private var isFormValid: Bool {
         !firstName.trimmingCharacters(in: .whitespaces).isEmpty
     }
-
+    
     var body: some View {
         NavigationStack {
             Form {
                 // ── Photo Picker (img2 style) ──────────────────────────
                 Section {
                     VStack(spacing: RSMSSpacing.sm) {
-                        PhotosPicker(selection: $photoPickerItem, matching: .images) {
+                                                PhotosPicker(selection: $photoPickerItem, matching: .images) {
                             ZStack {
                                 Circle()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [Color(hex: "3B3060"), Color(hex: "2A2048")],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
+                                    .fill(RSMSColors.burgundy.opacity(0.15))
                                     .frame(width: 110, height: 110)
-
+                                    .shadow(color: RSMSColors.burgundy.opacity(0.15), radius: 10, x: 0, y: 4)
+                                
                                 if let data = selectedImageData, let uiImage = UIImage(data: data) {
                                     Image(uiImage: uiImage)
                                         .resizable()
@@ -396,12 +362,12 @@ struct EditManagerSheet: View {
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: 52, height: 52)
-                                        .foregroundColor(.white)
+                                        .foregroundColor(RSMSColors.burgundy)
                                 }
                             }
                         }
                         .buttonStyle(.plain)
-
+                        
                         // Pill-shaped Add Photo button
                         PhotosPicker(selection: $photoPickerItem, matching: .images) {
                             Text(selectedImageData == nil ? "Add Photo" : "Change Photo")
@@ -425,7 +391,7 @@ struct EditManagerSheet: View {
                         }
                     }
                 }
-
+                
                 // ── Manager Details (single grouped pill) ─────────────
                 Section("Manager Details") {
                     TextField("First Name", text: $firstName)
@@ -434,7 +400,7 @@ struct EditManagerSheet: View {
                         .autocorrectionDisabled()
                     HStack {
                         Image(systemName: "phone.fill")
-                            .foregroundColor(RSMSColors.success)
+                            .foregroundColor(RSMSColors.burgundy)
                             .frame(width: 20)
                         TextField("Phone", text: $phone)
                             .keyboardType(.phonePad)
@@ -448,24 +414,31 @@ struct EditManagerSheet: View {
                             .autocapitalization(.none)
                     }
                 }
-
+                
                 // ── Store Details ──────────────────────────────────────
                 Section("Store Details") {
-                    HStack {
-                        Image(systemName: "building.2.fill")
-                            .foregroundColor(RSMSColors.warning)
-                            .frame(width: 20)
-                        TextField("Store Name", text: $storeName)
-                            .autocorrectionDisabled()
+                    Picker(selection: $storeName) {
+                        ForEach(pickerStoreNames, id: \.self) { name in
+                            Text(name).tag(name)
+                        }
+                    } label: {
+                        HStack {
+                            Image(systemName: "building.2.fill")
+                                .foregroundColor(RSMSColors.burgundy)
+                                .frame(width: 20)
+                            Text("Store Name")
+                        }
                     }
-                    HStack {
-                        Image(systemName: "mappin.circle.fill")
-                            .foregroundColor(RSMSColors.error)
+                    .tint(RSMSColors.burgundy)
+                    HStack(alignment: .top) {
+                        Image(systemName: "location.fill")
+                            .foregroundColor(RSMSColors.burgundy)
                             .frame(width: 20)
-                        TextField("Store Address", text: $storeAddress)
+                            .padding(.top, 8)
+                        TextField("Store Address", text: $storeAddress, axis: .vertical)
                     }
                     Picker("Country", selection: $selectedCountry) {
-                        ForEach(countries, id: \.self) { country in
+                        ForEach(pickerCountries, id: \.self) { country in
                             Text(country).tag(country)
                         }
                     }
@@ -496,9 +469,15 @@ struct EditManagerSheet: View {
                                 manager.storeName = storeName
                                 manager.address   = storeAddress
                                 manager.country   = selectedCountry
-                                await onSave?(manager)
-                                isSaving = false
-                                dismiss()
+                                let newImage = selectedImageData != nil ? UIImage(data: selectedImageData!) : nil
+                                if let errorMsg = await onSave?(manager, newImage) {
+                                    isSaving = false
+                                    errorMessage = errorMsg
+                                    showErrorAlert = true
+                                } else {
+                                    isSaving = false
+                                    dismiss()
+                                }
                             }
                         } label: {
                             Image(systemName: "checkmark")
@@ -509,6 +488,29 @@ struct EditManagerSheet: View {
                     }
                 }
             }
+            .task {
+                do {
+                    self.stores = try await StoreRepository().fetchStores()
+                } catch {
+                    print("Failed to fetch stores: \(error)")
+                }
+            }
+            .onChange(of: storeName) { _, newStoreName in
+                if let matchedStore = stores.first(where: { $0.name == newStoreName }) {
+                    if let addr = matchedStore.address {
+                        self.storeAddress = addr
+                    }
+                    if let cntry = matchedStore.country, !cntry.isEmpty {
+                        self.selectedCountry = cntry
+                    }
+                }
+            }
+            .alert("Error Updating Manager", isPresented: $showErrorAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(errorMessage)
+            }
         }
     }
 }
+

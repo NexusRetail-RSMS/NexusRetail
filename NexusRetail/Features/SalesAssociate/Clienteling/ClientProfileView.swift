@@ -1,20 +1,14 @@
-//
-//  ClientDetailView.swift
-//  NexusRetail
-//
-//  Detail page for a single clienteling record.
-//
-
 import SwiftUI
 import Supabase
 
-struct ClientDetailView: View {
+struct ClientProfileView: View {
     let client: AssociateClient
     @Environment(SessionStore.self) private var sessionStore
     
     @State private var selectedTab = 0
     @State private var forYouProducts: [POSProduct] = []
     @State private var trendingProducts: [POSProduct] = []
+    
     @State private var isLoading = true
     
     private struct TopProductsRPCParams: Encodable {
@@ -27,81 +21,24 @@ struct ClientDetailView: View {
         let id: UUID
         let units: Int
     }
-
+    
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 20) {
-                // Hero card with avatar, name, phone, email
-                HStack(spacing: 16) {
-                    Circle()
-                        .fill(RSMSColors.burgundy)
-                        .frame(width: 68, height: 68)
-                        .overlay {
-                            Text(client.initials)
-                                .font(.system(size: 22, weight: .bold, design: .rounded))
-                                .foregroundStyle(.white)
-                        }
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(client.name)
-                            .font(.system(size: 24, weight: .bold, design: .rounded))
-                            .foregroundStyle(RSMSColors.primaryText)
-                        
-                        Text(client.phone)
-                            .font(RSMSFonts.body)
-                            .foregroundStyle(RSMSColors.secondaryText)
-                            
-                        Text(client.email)
-                            .font(RSMSFonts.body)
-                            .foregroundStyle(RSMSColors.secondaryText)
-                    }
-                    Spacer()
-                }
-                .padding(20)
-                .luxuryCard()
-
-                // Unified Card for Style Preferences and Purchase Pattern
-                VStack(alignment: .leading, spacing: 16) {
-                    HStack(alignment: .top, spacing: 14) {
-                        Image(systemName: "sparkles")
-                            .foregroundStyle(RSMSColors.burgundy)
-                            .frame(width: 42, height: 42)
-                            .background(RSMSColors.burgundy.opacity(0.08))
-                            .clipShape(Circle())
-                        
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Client Preferences")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundStyle(RSMSColors.primaryText)
-                            Text(client.preferences)
-                                .font(RSMSFonts.subheadline)
-                                .foregroundStyle(RSMSColors.secondaryText)
-                            
-                            Divider().padding(.vertical, 8)
-                            
-                            Text("Purchase Pattern")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(RSMSColors.primaryText)
-                            Text(client.purchasePattern)
-                                .font(RSMSFonts.subheadline)
-                                .foregroundStyle(RSMSColors.secondaryText)
-                        }
-                    }
-                }
-                .padding(18)
-                .luxuryCard()
+        ScrollView {
+            VStack(spacing: 24) {
+                // Profile Header
+                profileHeader
                 
-                // ML Recommendations Tabs
+                // Tabs
                 Picker("Recommendations", selection: $selectedTab) {
                     Text("For You").tag(0)
                     Text("Trending").tag(1)
                 }
                 .pickerStyle(.segmented)
-                .padding(.top, 8)
+                .padding(.horizontal, 20)
                 
+                // Content
                 if isLoading {
                     ProgressView()
-                        .frame(maxWidth: .infinity)
                         .padding(.top, 40)
                 } else {
                     if selectedTab == 0 {
@@ -111,13 +48,40 @@ struct ClientDetailView: View {
                     }
                 }
             }
-            .screenPadding()
+            .padding(.bottom, 40)
         }
-        .background(RSMSColors.background.ignoresSafeArea())
-        .navigationTitle("Client Card")
+        .navigationTitle(client.name)
         .navigationBarTitleDisplayMode(.inline)
+        .background(RSMSColors.background.ignoresSafeArea())
         .task {
             await loadRecommendations()
+        }
+    }
+    
+    private var profileHeader: some View {
+        VStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(RSMSColors.burgundy.opacity(0.1))
+                    .frame(width: 80, height: 80)
+                Text(String(client.name.prefix(1)))
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .foregroundStyle(RSMSColors.burgundy)
+            }
+            .padding(.top, 24)
+            
+            VStack(spacing: 4) {
+                Text(client.phone)
+                    .font(.system(size: 15))
+                    .foregroundStyle(RSMSColors.secondaryText)
+                
+                Text(client.preferences)
+                    .font(.system(size: 14))
+                    .foregroundStyle(RSMSColors.darkBrown)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+                    .padding(.top, 8)
+            }
         }
     }
     
@@ -127,6 +91,7 @@ struct ClientDetailView: View {
                 ProductCardView(product: product)
             }
         }
+        .padding(.horizontal, 20)
     }
     
     private func loadRecommendations() async {
@@ -152,14 +117,18 @@ struct ClientDetailView: View {
             }
         }
         
+        // Try to show products directly matching preferences
         if !matchingProducts.isEmpty {
             forYouProducts = Array(matchingProducts.shuffled().prefix(6))
+            
+            // If we have fewer than 6 matches, use the ML model to fill the rest
             if forYouProducts.count < 6, let seed = matchingProducts.randomElement() {
                 let additionalRecs = RecommendationService.shared.getRecommendedProducts(
                     for: seed,
                     from: allProducts,
                     count: 6 - forYouProducts.count
                 )
+                // Append only unique products
                 for rec in additionalRecs {
                     if !forYouProducts.contains(where: { $0.id == rec.id }) {
                         forYouProducts.append(rec)
@@ -167,10 +136,12 @@ struct ClientDetailView: View {
                 }
             }
         } else {
+            // Fallback: seed the ML model with a random product if no preferences match
             if let seed = allProducts.randomElement() {
                 forYouProducts = RecommendationService.shared.getRecommendedProducts(for: seed, from: allProducts, count: 6)
             }
         }
+        
         if forYouProducts.isEmpty {
             forYouProducts = Array(allProducts.shuffled().prefix(6))
         }
@@ -186,6 +157,7 @@ struct ClientDetailView: View {
             trendingProducts = topProductsResp.compactMap { top in
                 allProducts.first(where: { $0.id == top.id })
             }
+            
             if trendingProducts.isEmpty {
                 trendingProducts = Array(allProducts.prefix(6))
             }
@@ -201,6 +173,7 @@ fileprivate struct ProductCardView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            // Image
             Color.white
                 .aspectRatio(0.8, contentMode: .fit)
                 .overlay {
@@ -222,6 +195,7 @@ fileprivate struct ProductCardView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 4)
             
+            // Details
             VStack(alignment: .leading, spacing: 4) {
                 Text(product.name)
                     .font(.system(size: 14, weight: .semibold))

@@ -71,13 +71,6 @@ struct ClientelingView: View {
 
             Spacer()
 
-            Text(client.tier)
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(RSMSColors.burgundy)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(RSMSColors.burgundy.opacity(0.08))
-                .clipShape(Capsule())
         }
         .padding(.vertical, 6)
     }
