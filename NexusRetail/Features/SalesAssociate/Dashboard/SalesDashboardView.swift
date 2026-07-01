@@ -33,7 +33,6 @@ struct SalesDashboardView: View {
                         headerSection
                         kpiSection
                         revenueChartSection
-                        quickActionsSection
                         recentActivitySection
                         Spacer(minLength: 80)
                     }
@@ -149,41 +148,6 @@ struct SalesDashboardView: View {
         .background(RSMSColors.cardBackground)
         .cornerRadius(RSMSRadius.large)
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
-    }
-
-    // MARK: - Quick Actions (single burgundy button)
-    private var quickActionsSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Quick Actions")
-                .font(.system(size: 16, weight: .bold, design: .rounded))
-                .foregroundColor(RSMSColors.darkBrown)
-                .padding(.horizontal, 4)
-
-            NavigationLink(value: POSFlowDestination.newSale) {
-                HStack(spacing: 12) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.2)).frame(width: 44, height: 44)
-                        Image(systemName: "bag.fill").font(.system(size: 18, weight: .bold)).foregroundColor(.white)
-                    }
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("New Sale").font(.system(size: 16, weight: .bold, design: .rounded)).foregroundColor(.white)
-                        Text("Start a new point of sale checkout session").font(.system(size: 12)).foregroundColor(.white.opacity(0.8))
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right").font(.system(size: 14, weight: .bold)).foregroundColor(.white.opacity(0.8))
-                }
-                .padding(.horizontal, 18)
-                .padding(.vertical, 16)
-                .background(LinearGradient(
-                    colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ))
-                .clipShape(RoundedRectangle(cornerRadius: 18))
-                .shadow(color: RSMSColors.darkBurgundy.opacity(0.18), radius: 10, x: 0, y: 5)
-            }
-            .buttonStyle(.plain)
-        }
     }
 
     // MARK: - Floating QR Button

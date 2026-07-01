@@ -24,6 +24,8 @@ struct SalesTabView: View {
                 AppointmentsView(clients: clientelingVM.clients)
             }
             .tabItem { Label("Appointments", systemImage: "calendar.badge.clock") }
+            InventoryCatalogView()
+                .tabItem { Label("Catalog", systemImage: "shippingbox.fill") }
         }
         .tint(RSMSColors.burgundy)
     }
