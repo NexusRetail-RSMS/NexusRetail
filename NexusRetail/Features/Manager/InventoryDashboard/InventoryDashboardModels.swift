@@ -121,7 +121,8 @@ struct ProductInfo: Codable {
     let description: String?
     
     enum CodingKeys: String, CodingKey {
-        case name, category, description
+        case name = "item_name"
+        case category, description
         case skuCode = "sku_code"
         case imageUrl = "image_url"
         case priceBand = "price_band"
