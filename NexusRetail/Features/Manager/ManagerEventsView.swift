@@ -2,10 +2,7 @@ import SwiftUI
 
 struct ManagerEventsView: View {
     @State private var isShowingCreateForm = false
-    @State private var upcomingEvents: [UpcomingEvent] = [
-        UpcomingEvent(title: "Grand Opening", date: "24 May 2025", time: "10:00 AM", location: "Main Store, Downtown", imageColor: RSMSColors.darkBurgundy, icon: "sparkles"),
-        UpcomingEvent(title: "New Product Launch", date: "15 Jun 2025", time: "11:00 AM", location: "Main Store, Downtown", imageColor: RSMSColors.burgundy, icon: "shippingbox.fill")
-    ]
+    @State private var viewModel = EventsViewModel()
     
     var body: some View {
         ZStack {
@@ -137,8 +134,13 @@ struct ManagerEventsView: View {
                     }
                     
                     VStack(spacing: 16) {
-                        ForEach(upcomingEvents) { event in
-                            UpcomingEventRow(event: event)
+                        if viewModel.isLoading && viewModel.upcomingEvents.isEmpty {
+                            ProgressView()
+                                .padding()
+                        } else {
+                            ForEach(viewModel.upcomingEvents) { event in
+                                UpcomingEventRow(event: event)
+                            }
                         }
                     }
                 }
@@ -151,8 +153,10 @@ struct ManagerEventsView: View {
                 .background(.ultraThinMaterial)
         }
         .sheet(isPresented: $isShowingCreateForm) {
-            CreateEventSheet { newEvent in
-                upcomingEvents.append(newEvent)
+            CreateEventSheet { title, date in
+                Task {
+                    await viewModel.addEvent(title: title, date: date)
+                }
             }
         }
         }
@@ -190,7 +194,7 @@ struct CreateEventSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var title = ""
     @State private var date = Date()
-    var onAdd: (UpcomingEvent) -> Void
+    var onAdd: (String, Date) -> Void
     var body: some View {
         NavigationStack {
             Form {
@@ -209,21 +213,7 @@ struct CreateEventSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Create") {
-                        let formatter = DateFormatter()
-                        formatter.dateFormat = "dd MMM yyyy"
-                        let dateString = formatter.string(from: date)
-                        formatter.dateFormat = "hh:mm a"
-                        let timeString = formatter.string(from: date)
-                        
-                        let newEvent = UpcomingEvent(
-                            title: title,
-                            date: dateString,
-                            time: timeString,
-                            location: "Current Store",
-                            imageColor: RSMSColors.burgundy,
-                            icon: "shippingbox.fill"
-                        )
-                        onAdd(newEvent)
+                        onAdd(title, date)
                         dismiss()
                     }
                     .fontWeight(.bold)
@@ -274,7 +264,7 @@ struct EventActionCard: View {
 }
 
 struct UpcomingEvent: Identifiable {
-    let id = UUID()
+    let id: UUID
     let title: String
     let date: String
     let time: String
