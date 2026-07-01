@@ -53,10 +53,10 @@ struct InventoryDashboardView: View {
         }
         .sheet(isPresented: $viewModel.showRestockSheet) {
             if let item = viewModel.restockItem {
-                RequestStockSheet(item: item, storeID: sessionStore.currentUser?.storeID) { skuID, qty, urgency in
+                RequestStockSheet(item: item, storeID: sessionStore.currentUser?.storeID) { itemID, qty, urgency in
                     if let storeID = sessionStore.currentUser?.storeID {
                         Task {
-                            _ = await viewModel.requestRestock(skuID: skuID, quantity: qty, urgency: urgency, storeID: storeID)
+                            _ = await viewModel.requestRestock(itemID: itemID, quantity: qty, urgency: urgency, storeID: storeID)
                         }
                     }
                 }

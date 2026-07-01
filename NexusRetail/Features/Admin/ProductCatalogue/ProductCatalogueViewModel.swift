@@ -147,27 +147,7 @@ final class ProductCatalogueViewModel: ObservableObject {
             
             self.allProducts = mapped
             
-            struct SkuRow: Codable {
-                let id: UUID
-                let item_id: Int64?
-            }
-            
-            var skuToItemIdMap: [UUID: Int64] = [:]
-            do {
-                let skuRows: [SkuRow] = try await SupabaseManager.shared.client
-                    .from("sku")
-                    .select("id, item_id")
-                    .execute()
-                    .value
-                for row in skuRows {
-                    if let itemId = row.item_id {
-                        skuToItemIdMap[row.id] = itemId
-                    }
-                }
-            } catch {
-                print("ProductCatalogueViewModel: Non-fatal error fetching from sku table: \(error)")
-            }
-            
+
             struct TopProductsRPCParams: Encodable {
                 let p_period: String
                 let p_limit: Int
@@ -175,11 +155,11 @@ final class ProductCatalogueViewModel: ObservableObject {
             }
             
             struct MinimalTopProduct: Decodable {
-                let id: UUID
+                let id: Int64
                 let units: Int
                 
                 enum CodingKeys: String, CodingKey {
-                    case id = "sku_id"
+                    case id
                     case units
                 }
             }
@@ -191,12 +171,7 @@ final class ProductCatalogueViewModel: ObservableObject {
                 .value
             
             self.trendingProducts = topProductsResp.compactMap { top in
-                let targetId: UUID
-                if let itemId = skuToItemIdMap[top.id] {
-                    targetId = UUID(uuidString: String(format: "00000000-0000-0000-0000-%012d", itemId)) ?? top.id
-                } else {
-                    targetId = top.id
-                }
+                let targetId = UUID(uuidString: String(format: "00000000-0000-0000-0000-%012d", top.id)) ?? UUID()
                 
                 guard let match = mapped.first(where: { $0.id == targetId }) else { return nil }
                 return TrendingProduct(

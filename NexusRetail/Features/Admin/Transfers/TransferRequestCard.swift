@@ -11,7 +11,7 @@ struct TransferRequestCard: View {
     @State private var showingPurchaseOrderSheet = false
     
     var body: some View {
-        let product = viewModel.product(for: request.skuId)
+        let product = viewModel.product(for: request.itemId)
         
         VStack(alignment: .leading, spacing: 0) {
             // Header: Manager & Store + Badges

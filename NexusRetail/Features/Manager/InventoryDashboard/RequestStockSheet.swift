@@ -12,7 +12,7 @@ struct RequestStockSheet: View {
     @Environment(\.dismiss) private var dismiss
     let item: InventoryItemRow
     let storeID: UUID?
-    let onSubmit: (UUID, Int, UrgencyLevel) -> Void
+    let onSubmit: (Int64, Int, UrgencyLevel) -> Void
     
     @State private var quantity: Int = 10
     @State private var urgency: UrgencyLevel = .medium
@@ -104,7 +104,7 @@ struct RequestStockSheet: View {
                     // Submit button
                     Button {
                         isSubmitting = true
-                        onSubmit(item.skuId, quantity, urgency)
+                        onSubmit(item.itemId, quantity, urgency)
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                             isSubmitting = false
                             dismiss()

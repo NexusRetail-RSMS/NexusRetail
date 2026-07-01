@@ -44,17 +44,17 @@ class AdminTransfersViewModel {
             // 2. Fetch warehouse inventory
             let inventoryItems: [InventoryItemRow] = try await SupabaseManager.shared.client
                 .from("inventory_item")
-                .select("*, sku(*)")
+                .select("*, products(*)")
                 .eq("store_id", value: warehouse.id)
                 .execute()
                 .value
             
             self.products = inventoryItems.map { item in
                 AdminTransferProduct(
-                    id: item.skuId, // Using SKU id as product ID for easy lookup
-                    name: item.sku.name,
-                    sku: item.sku.skuCode ?? "—",
-                    category: item.sku.category ?? "Uncategorized",
+                    id: item.itemId, // Using SKU id as product ID for easy lookup
+                    name: item.products.name,
+                    sku: item.products.skuCode ?? "—",
+                    category: item.products.category ?? "Uncategorized",
                     warehouseQuantity: item.onHand,
                     reorderLevel: 20, // Default reorder level
                     lastUpdated: Date()
@@ -64,7 +64,7 @@ class AdminTransfersViewModel {
             // 3. Fetch all transfer requests
             let fetchedRequests: [AdminStockRequest] = try await SupabaseManager.shared.client
                 .from("transfer_request")
-                .select("*, sku(*), store!requesting_store_id(*, manager:app_user!store_manager_fk(*))")
+                .select("*, products(*), store!requesting_store_id(*, manager:app_user!store_manager_fk(*))")
                 .order("created_at", ascending: false)
                 .execute()
                 .value
@@ -88,10 +88,10 @@ class AdminTransfersViewModel {
     
     func approveRequest(_ request: AdminStockRequest) {
         guard let index = requests.firstIndex(where: { $0.id == request.id }),
-              let productIndex = products.firstIndex(where: { $0.id == request.skuId }) else { return }
+              let productIndex = products.firstIndex(where: { $0.id == request.itemId }) else { return }
         
         if products[productIndex].warehouseQuantity >= request.quantity {
-            let warehouseId = self.warehouseStoreID
+            guard let warehouseId = self.warehouseStoreID else { return }
             
             Task {
                 do {
@@ -102,8 +102,63 @@ class AdminTransfersViewModel {
                         .eq("id", value: request.id)
                         .execute()
                     
-                    // Note: In a real app we would decrement the warehouse inventory here
-                    // using a Postgres RPC. For now, we update local state.
+                    struct UpdateQty: Encodable { let on_hand: Int }
+                    struct SimpleInventoryItem: Decodable {
+                        let id: UUID
+                        let on_hand: Int
+                    }
+                    
+                    // 1. Fetch and update warehouse item
+                    let warehouseItems: [SimpleInventoryItem] = try await SupabaseManager.shared.client
+                        .from("inventory_item")
+                        .select()
+                        .eq("store_id", value: warehouseId)
+                        .eq("item_id", value: Int(request.itemId))
+                        .execute()
+                        .value
+                    
+                    if let warehouseItem = warehouseItems.first {
+                        let newQty = warehouseItem.on_hand - request.quantity
+                        try await SupabaseManager.shared.client
+                            .from("inventory_item")
+                            .update(UpdateQty(on_hand: newQty))
+                            .eq("id", value: warehouseItem.id)
+                            .execute()
+                    }
+                    
+                    // 2. Fetch and update/insert destination store item
+                    let destItems: [SimpleInventoryItem] = try await SupabaseManager.shared.client
+                        .from("inventory_item")
+                        .select()
+                        .eq("store_id", value: request.requestingStoreId)
+                        .eq("item_id", value: Int(request.itemId))
+                        .execute()
+                        .value
+                    
+                    if let destItem = destItems.first {
+                        let newQty = destItem.on_hand + request.quantity
+                        try await SupabaseManager.shared.client
+                            .from("inventory_item")
+                            .update(UpdateQty(on_hand: newQty))
+                            .eq("id", value: destItem.id)
+                            .execute()
+                    } else {
+                        struct InsertItem: Encodable {
+                            let item_id: Int64
+                            let store_id: UUID
+                            let on_hand: Int
+                            let reorder_threshold: Int
+                        }
+                        try await SupabaseManager.shared.client
+                            .from("inventory_item")
+                            .insert(InsertItem(
+                                item_id: request.itemId,
+                                store_id: request.requestingStoreId,
+                                on_hand: request.quantity,
+                                reorder_threshold: 10
+                            ))
+                            .execute()
+                    }
                     
                     await MainActor.run {
                         // Deduct stock locally
@@ -117,7 +172,7 @@ class AdminTransfersViewModel {
                         let newDelivery = AdminDelivery(
                             id: "DEL-\(Int.random(in: 1000...9999))",
                             transferRequestID: request.id.uuidString,
-                            productID: request.skuId,
+                            productID: request.itemId,
                             quantity: request.quantity,
                             destinationStoreID: request.requestingStoreId,
                             destinationStoreName: request.storeName,
@@ -177,7 +232,7 @@ class AdminTransfersViewModel {
             
             // Auto-check pending requests that were blocked
             for (reqIndex, request) in requests.enumerated() {
-                if request.status == .pending && request.skuId == product.id {
+                if request.status == .pending && request.itemId == product.id {
                     if products[productIndex].warehouseQuantity >= request.quantity {
                         // requests[reqIndex].status = .pending
                     }
@@ -200,7 +255,7 @@ class AdminTransfersViewModel {
         
         // Auto-check pending requests that were blocked
         for (reqIndex, request) in requests.enumerated() {
-            if request.status == .pending && request.skuId == order.productID {
+            if request.status == .pending && request.itemId == order.productID {
                 if products[productIndex].warehouseQuantity >= request.quantity {
                     // Make it ready to approve
                     // requests[reqIndex].status = .pending
@@ -261,7 +316,7 @@ class AdminTransfersViewModel {
         }
     }
     
-    func product(for id: UUID) -> AdminTransferProduct? {
+    func product(for id: Int64) -> AdminTransferProduct? {
         products.first(where: { $0.id == id })
     }
     

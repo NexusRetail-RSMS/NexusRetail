@@ -435,7 +435,7 @@ struct ProductDetailView: View {
                 return
             }
             
-            let success = await viewModel.saveLocalPrice(skuID: item.skuId, storeID: validStoreID, price: price)
+            let success = await viewModel.saveLocalPrice(itemID: item.itemId, storeID: validStoreID, price: price)
             await MainActor.run {
                 isSavingPrice = false
                 priceSaved = success
@@ -473,7 +473,7 @@ struct ProductDetailView: View {
                 return
             }
             
-            let errorStr = await viewModel.requestRestock(skuID: item.skuId, quantity: restockQty, urgency: restockUrgency, storeID: validStoreID)
+            let errorStr = await viewModel.requestRestock(itemID: item.itemId, quantity: restockQty, urgency: restockUrgency, storeID: validStoreID)
             await MainActor.run {
                 isRequestingRestock = false
                 restockError = errorStr

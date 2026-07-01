@@ -58,7 +58,7 @@ struct AdminTransferStore: Identifiable, Codable {
 }
 
 struct AdminTransferProduct: Identifiable, Codable, Equatable {
-    let id: UUID
+    let id: Int64
     let name: String
     let sku: String
     let category: String
@@ -110,28 +110,28 @@ struct AdminRequestStore: Codable {
 
 struct AdminStockRequest: Identifiable, Codable {
     let id: UUID
-    let skuId: UUID
+    let itemId: Int64
     let requestingStoreId: UUID
     let sourceStoreId: UUID?
     let quantity: Int
     let urgency: UrgencyLevel
     var status: TransferStatus
     let createdAt: Date
-    let sku: SKUInfo
+    let products: ProductInfo
     let store: AdminRequestStore?
     
     enum CodingKeys: String, CodingKey {
         case id
-        case skuId = "sku_id"
+        case itemId = "item_id"
         case requestingStoreId = "requesting_store_id"
         case sourceStoreId = "source_store_id"
         case quantity, urgency, status
         case createdAt = "created_at"
-        case sku
+        case products
         case store
     }
     
-    var productName: String { sku.name }
+    var productName: String { products.name }
     var storeName: String { store?.name ?? "Unknown Store" }
     var managerName: String { store?.manager?.name ?? "No Manager" }
 }
@@ -152,7 +152,7 @@ enum PurchaseOrderStatus: String, Codable, CaseIterable {
 
 struct AdminPurchaseOrder: Identifiable, Codable {
     let id: String
-    let productID: UUID
+    let productID: Int64
     let supplierName: String
     let quantity: Int
     let createdDate: Date
@@ -183,7 +183,7 @@ enum DeliveryStatus: String, Codable, CaseIterable {
 struct AdminDelivery: Identifiable, Codable {
     let id: String
     let transferRequestID: String
-    let productID: UUID
+    let productID: Int64
     let quantity: Int
     let destinationStoreID: UUID
     let destinationStoreName: String

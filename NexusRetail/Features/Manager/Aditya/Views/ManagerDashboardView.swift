@@ -45,6 +45,12 @@ struct ManagerDashboardView: View {
         }
         .background(RSMSColors.background.ignoresSafeArea())
         .navigationBarHidden(true)
+        .task {
+            await viewModel.fetchData(storeID: sessionStore.currentUser?.storeID)
+        }
+        .onChange(of: viewModel.topProductsTimeRange) { _, _ in
+            Task { await viewModel.fetchData(storeID: sessionStore.currentUser?.storeID) }
+        }
         .sheet(isPresented: $isProfilePresented) {
             AdminProfileSheet()
         }

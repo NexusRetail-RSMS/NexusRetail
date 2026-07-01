@@ -62,7 +62,7 @@ struct AdminManagerProfileView: View {
                             .padding(.horizontal)
                     } else {
                         ForEach(recentRequests) { request in
-                            let product = viewModel.product(for: request.skuId)
+                            let product = viewModel.product(for: request.itemId)
                             ManagerRequestRow(request: request, productName: product?.name ?? "Unknown")
                         }
                     }

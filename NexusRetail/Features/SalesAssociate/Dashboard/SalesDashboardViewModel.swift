@@ -237,7 +237,7 @@ final class SalesDashboardViewModel {
 
             let converted: [StoreOrder] = fetched.map { dOrder in
                 let lineItems = dOrder.orderLineItems?.map { dli in
-                    OrderLineItem(id: dli.id, orderID: nil, quantity: dli.quantity, appliedPrice: 0, sku: nil)
+                    OrderLineItem(id: dli.id, orderID: nil, quantity: dli.quantity, appliedPrice: 0, products: nil)
                 }
                 return StoreOrder(
                     id: dOrder.id,

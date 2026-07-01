@@ -88,28 +88,34 @@ struct OrderLineItem: Codable, Identifiable {
     let orderID: UUID?
     let quantity: Int
     let appliedPrice: Double
-    let sku: NestedSKU?
+    let products: NestedProduct?
     
     enum CodingKeys: String, CodingKey {
         case id
         case orderID = "order_id"
         case quantity
         case appliedPrice = "applied_price"
-        case sku
+        case products
     }
     
-    init(id: UUID?, orderID: UUID?, quantity: Int, appliedPrice: Double, sku: NestedSKU?) {
+    init(id: UUID?, orderID: UUID?, quantity: Int, appliedPrice: Double, products: NestedProduct?) {
         self.id = id
         self.orderID = orderID
         self.quantity = quantity
         self.appliedPrice = appliedPrice
-        self.sku = sku
+        self.products = products
     }
 }
 
-struct NestedSKU: Codable, Identifiable {
-    let id: UUID?
-    let name: String
+struct NestedProduct: Codable {
+    let itemId: Int64?
+    let itemName: String
     let category: String
+    
+    enum CodingKeys: String, CodingKey {
+        case itemId = "item_id"
+        case itemName = "item_name"
+        case category
+    }
 }
 

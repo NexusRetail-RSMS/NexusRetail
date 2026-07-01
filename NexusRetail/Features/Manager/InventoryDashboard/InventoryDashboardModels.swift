@@ -132,23 +132,24 @@ enum UrgencyLevel: String, Codable, CaseIterable {
 // MARK: - Codable DTOs
 
 /// Nested SKU info returned by the Supabase join
-struct SKUInfo: Codable {
+struct ProductInfo: Codable {
     let name: String
     let category: String?
     let skuCode: String?
     let imageUrl: String?
     let description: String?
+    let priceBand: [PriceBandInfo]?
+    let storePrice: [StorePriceInfo]?
     
     enum CodingKeys: String, CodingKey {
-        case name, category, description
+        case name = "item_name"
+        case category
         case skuCode = "sku_code"
         case imageUrl = "image_url"
+        case description
         case priceBand = "price_band"
         case storePrice = "store_price"
     }
-    
-    let priceBand: [PriceBandInfo]?
-    let storePrice: [StorePriceInfo]?
 }
 
 /// Nested price band info
@@ -174,31 +175,31 @@ struct StorePriceInfo: Codable {
 /// An inventory item row from Supabase with joined SKU + price info
 struct InventoryItemRow: Codable, Identifiable {
     let id: UUID
-    let skuId: UUID
+    let itemId: Int64
     let storeId: UUID
     let onHand: Int
     let reorderThreshold: Int
-    let sku: SKUInfo
+    let products: ProductInfo
     
     enum CodingKeys: String, CodingKey {
         case id
-        case skuId = "sku_id"
+        case itemId = "item_id"
         case storeId = "store_id"
         case onHand = "on_hand"
         case reorderThreshold = "reorder_threshold"
-        case sku
+        case products
     }
     
     // MARK: Computed Helpers
     
-    var name: String { sku.name }
-    var category: String { sku.category ?? "Uncategorized" }
-    var skuCode: String { sku.skuCode ?? "—" }
-    var imageUrl: String? { sku.imageUrl }
+    var name: String { products.name }
+    var category: String { products.category ?? "Uncategorized" }
+    var skuCode: String { products.skuCode ?? "—" }
+    var imageUrl: String? { products.imageUrl }
     
-    var basePrice: Double { sku.priceBand?.first?.basePrice ?? 0 }
-    var floorPrice: Double { sku.priceBand?.first?.floorPrice ?? 0 }
-    var localPrice: Double { sku.storePrice?.first?.localPrice ?? basePrice }
+    var basePrice: Double { products.priceBand?.first?.basePrice ?? 0 }
+    var floorPrice: Double { products.priceBand?.first?.floorPrice ?? 0 }
+    var localPrice: Double { products.storePrice?.first?.localPrice ?? basePrice }
     
     /// Stock health status
     var stockStatus: StockStatus {
@@ -236,27 +237,27 @@ struct InventoryItemRow: Codable, Identifiable {
 /// A transfer request row from Supabase with joined SKU info
 struct TransferRequestRow: Codable, Identifiable {
     let id: UUID
-    let skuId: UUID
+    let itemId: Int64
     let requestingStoreId: UUID
     let sourceStoreId: UUID?
     let quantity: Int
     let urgency: UrgencyLevel
     let status: TransferStatus
     let createdAt: Date
-    let sku: SKUInfo
+    let products: ProductInfo
     
     enum CodingKeys: String, CodingKey {
         case id
-        case skuId = "sku_id"
+        case itemId = "item_id"
         case requestingStoreId = "requesting_store_id"
         case sourceStoreId = "source_store_id"
         case quantity, urgency, status
         case createdAt = "created_at"
-        case sku
+        case products
     }
     
-    var productName: String { sku.name }
-    var skuCode: String { sku.skuCode ?? "—" }
+    var productName: String { products.name }
+    var skuCode: String { products.skuCode ?? "—" }
     
     var formattedDate: String {
         let formatter = DateFormatter()
@@ -268,14 +269,14 @@ struct TransferRequestRow: Codable, Identifiable {
 
 /// Insert payload for creating a new transfer request
 struct TransferRequestInsert: Codable {
-    let skuId: UUID
+    let itemId: Int64
     let requestingStoreId: UUID
     let quantity: Int
     let urgency: UrgencyLevel
     let status: TransferStatus
     
     enum CodingKeys: String, CodingKey {
-        case skuId = "sku_id"
+        case itemId = "item_id"
         case requestingStoreId = "requesting_store_id"
         case quantity, urgency, status
     }
@@ -283,12 +284,12 @@ struct TransferRequestInsert: Codable {
 
 /// Insert/upsert payload for store_price
 struct StorePriceUpsert: Codable {
-    let skuId: UUID
+    let itemId: Int64
     let storeId: UUID
     let localPrice: Double
     
     enum CodingKeys: String, CodingKey {
-        case skuId = "sku_id"
+        case itemId = "item_id"
         case storeId = "store_id"
         case localPrice = "local_price"
     }
@@ -333,30 +334,30 @@ func formatIndianCurrency(_ value: Double) -> String {
 
 extension InventoryItemRow {
     static let mockItems: [InventoryItemRow] = [
-        InventoryItemRow(id: UUID(), skuId: UUID(), storeId: UUID(), onHand: 13, reorderThreshold: 5,
-                         sku: SKUInfo(name: "Imperial Ring #23", category: "Jewelry", skuCode: "JEW-4909", imageUrl: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400", description: nil, priceBand: [PriceBandInfo(basePrice: 192722.46, floorPrice: 163814.09)], storePrice: nil)),
-        InventoryItemRow(id: UUID(), skuId: UUID(), storeId: UUID(), onHand: 9, reorderThreshold: 5,
-                         sku: SKUInfo(name: "Heritage Wallet #24", category: "Accessories", skuCode: "ACC-5403", imageUrl: "https://images.unsplash.com/photo-1601333144130-8c1f12356224?w=400", description: nil, priceBand: [PriceBandInfo(basePrice: 45000, floorPrice: 38000)], storePrice: nil)),
-        InventoryItemRow(id: UUID(), skuId: UUID(), storeId: UUID(), onHand: 2, reorderThreshold: 5,
-                         sku: SKUInfo(name: "Celeste Watch #9", category: "Watches", skuCode: "WAT-2254", imageUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400", description: nil, priceBand: [PriceBandInfo(basePrice: 350000, floorPrice: 280000)], storePrice: nil)),
-        InventoryItemRow(id: UUID(), skuId: UUID(), storeId: UUID(), onHand: 0, reorderThreshold: 3,
-                         sku: SKUInfo(name: "Noir Leather Bag", category: "Leather Goods", skuCode: "LEA-7385", imageUrl: "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=400", description: nil, priceBand: [PriceBandInfo(basePrice: 125000, floorPrice: 100000)], storePrice: nil)),
-        InventoryItemRow(id: UUID(), skuId: UUID(), storeId: UUID(), onHand: 25, reorderThreshold: 10,
-                         sku: SKUInfo(name: "Silk Scarf Royale", category: "Accessories", skuCode: "ACC-1122", imageUrl: "https://images.unsplash.com/photo-1601333144130-8c1f12356224?w=400", description: nil, priceBand: [PriceBandInfo(basePrice: 18000, floorPrice: 14000)], storePrice: nil)),
-        InventoryItemRow(id: UUID(), skuId: UUID(), storeId: UUID(), onHand: 4, reorderThreshold: 8,
-                         sku: SKUInfo(name: "Crystal Earrings Duo", category: "Jewelry", skuCode: "JEW-3310", imageUrl: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400", description: nil, priceBand: [PriceBandInfo(basePrice: 78000, floorPrice: 62000)], storePrice: nil)),
-        InventoryItemRow(id: UUID(), skuId: UUID(), storeId: UUID(), onHand: 30, reorderThreshold: 5,
-                         sku: SKUInfo(name: "Oxford Dress Shoes", category: "Shoes", skuCode: "SHO-0044", imageUrl: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400", description: nil, priceBand: [PriceBandInfo(basePrice: 28000, floorPrice: 22000)], storePrice: nil))
+        InventoryItemRow(id: UUID(), itemId: 1001, storeId: UUID(), onHand: 13, reorderThreshold: 5,
+                         products: ProductInfo(name: "Imperial Ring #23", category: "Jewelry", skuCode: "JEW-4909", imageUrl: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400", description: nil, priceBand: [PriceBandInfo(basePrice: 192722.46, floorPrice: 163814.09)], storePrice: nil)),
+        InventoryItemRow(id: UUID(), itemId: 1002, storeId: UUID(), onHand: 9, reorderThreshold: 5,
+                         products: ProductInfo(name: "Heritage Wallet #24", category: "Accessories", skuCode: "ACC-5403", imageUrl: "https://images.unsplash.com/photo-1601333144130-8c1f12356224?w=400", description: nil, priceBand: [PriceBandInfo(basePrice: 45000, floorPrice: 38000)], storePrice: nil)),
+        InventoryItemRow(id: UUID(), itemId: 1003, storeId: UUID(), onHand: 2, reorderThreshold: 5,
+                         products: ProductInfo(name: "Celeste Watch #9", category: "Watches", skuCode: "WAT-2254", imageUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400", description: nil, priceBand: [PriceBandInfo(basePrice: 350000, floorPrice: 280000)], storePrice: nil)),
+        InventoryItemRow(id: UUID(), itemId: 1004, storeId: UUID(), onHand: 0, reorderThreshold: 3,
+                         products: ProductInfo(name: "Noir Leather Bag", category: "Leather Goods", skuCode: "LEA-7385", imageUrl: "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=400", description: nil, priceBand: [PriceBandInfo(basePrice: 125000, floorPrice: 100000)], storePrice: nil)),
+        InventoryItemRow(id: UUID(), itemId: 1005, storeId: UUID(), onHand: 25, reorderThreshold: 10,
+                         products: ProductInfo(name: "Silk Scarf Royale", category: "Accessories", skuCode: "ACC-1122", imageUrl: "https://images.unsplash.com/photo-1601333144130-8c1f12356224?w=400", description: nil, priceBand: [PriceBandInfo(basePrice: 18000, floorPrice: 14000)], storePrice: nil)),
+        InventoryItemRow(id: UUID(), itemId: 1006, storeId: UUID(), onHand: 4, reorderThreshold: 8,
+                         products: ProductInfo(name: "Crystal Earrings Duo", category: "Jewelry", skuCode: "JEW-3310", imageUrl: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400", description: nil, priceBand: [PriceBandInfo(basePrice: 78000, floorPrice: 62000)], storePrice: nil)),
+        InventoryItemRow(id: UUID(), itemId: 1007, storeId: UUID(), onHand: 30, reorderThreshold: 5,
+                         products: ProductInfo(name: "Oxford Dress Shoes", category: "Shoes", skuCode: "SHO-0044", imageUrl: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400", description: nil, priceBand: [PriceBandInfo(basePrice: 28000, floorPrice: 22000)], storePrice: nil))
     ]
 }
 
 extension TransferRequestRow {
     static let mockRequests: [TransferRequestRow] = [
-        TransferRequestRow(id: UUID(), skuId: UUID(), requestingStoreId: UUID(), sourceStoreId: nil, quantity: 10, urgency: .high, status: .pending, createdAt: Date().addingTimeInterval(-86400),
-                           sku: SKUInfo(name: "Celeste Watch #9", category: "Watches", skuCode: "WAT-2254", imageUrl: nil, description: nil, priceBand: nil, storePrice: nil)),
-        TransferRequestRow(id: UUID(), skuId: UUID(), requestingStoreId: UUID(), sourceStoreId: nil, quantity: 5, urgency: .medium, status: .approved, createdAt: Date().addingTimeInterval(-172800),
-                           sku: SKUInfo(name: "Noir Leather Bag", category: "Leather Goods", skuCode: "LEA-7385", imageUrl: nil, description: nil, priceBand: nil, storePrice: nil)),
-        TransferRequestRow(id: UUID(), skuId: UUID(), requestingStoreId: UUID(), sourceStoreId: UUID(), quantity: 20, urgency: .low, status: .dispatched, createdAt: Date().addingTimeInterval(-345600),
-                           sku: SKUInfo(name: "Crystal Earrings Duo", category: "Jewelry", skuCode: "JEW-3310", imageUrl: nil, description: nil, priceBand: nil, storePrice: nil))
+        TransferRequestRow(id: UUID(), itemId: 1003, requestingStoreId: UUID(), sourceStoreId: nil, quantity: 10, urgency: .high, status: .pending, createdAt: Date().addingTimeInterval(-86400),
+                           products: ProductInfo(name: "Celeste Watch #9", category: "Watches", skuCode: "WAT-2254", imageUrl: nil, description: nil, priceBand: nil, storePrice: nil)),
+        TransferRequestRow(id: UUID(), itemId: 1004, requestingStoreId: UUID(), sourceStoreId: nil, quantity: 5, urgency: .medium, status: .approved, createdAt: Date().addingTimeInterval(-172800),
+                           products: ProductInfo(name: "Noir Leather Bag", category: "Leather Goods", skuCode: "LEA-7385", imageUrl: nil, description: nil, priceBand: nil, storePrice: nil)),
+        TransferRequestRow(id: UUID(), itemId: 1006, requestingStoreId: UUID(), sourceStoreId: UUID(), quantity: 20, urgency: .low, status: .dispatched, createdAt: Date().addingTimeInterval(-345600),
+                           products: ProductInfo(name: "Crystal Earrings Duo", category: "Jewelry", skuCode: "JEW-3310", imageUrl: nil, description: nil, priceBand: nil, storePrice: nil))
     ]
 }

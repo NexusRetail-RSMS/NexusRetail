@@ -27,7 +27,7 @@ class StoreAnalyticsViewModel {
         do {
             let fetchedOrders: [StoreOrder] = try await SupabaseManager.shared.client
                 .from("orders")
-                .select("id, client_id, store_id, associate_id, total, created_at, order_line_item(id, order_id, quantity, applied_price, sku(id, name, category))")
+                .select("id, client_id, store_id, associate_id, total, created_at, order_line_item(id, order_id, quantity, applied_price, products(item_id, item_name, category))")
                 .eq("store_id", value: store.id)
                 .execute()
                 .value
@@ -112,7 +112,7 @@ class StoreAnalyticsViewModel {
         
         for order in filteredOrders {
             for item in order.orderLineItems ?? [] {
-                let cat = item.sku?.category ?? "Uncategorized"
+                let cat = item.products?.category ?? "Uncategorized"
                 categoryUnits[cat, default: 0] += item.quantity
                 categoryRevenue[cat, default: 0.0] += (Double(item.quantity) * item.appliedPrice)
             }
@@ -120,7 +120,7 @@ class StoreAnalyticsViewModel {
         
         let products = categoryUnits.keys.map { cat -> DashboardTopProduct in
             DashboardTopProduct(
-                skuId: cat,
+                id: Int64(abs(cat.hashValue)),
                 name: cat,
                 category: cat,
                 units: categoryUnits[cat] ?? 0,

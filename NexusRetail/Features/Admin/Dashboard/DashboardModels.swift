@@ -42,15 +42,14 @@ struct CountryRevenue: Decodable, Identifiable {
 
 /// Top products data point from RPC
 struct DashboardTopProduct: Decodable, Identifiable {
-    var id: String { skuId }
-    let skuId: String
+    let id: Int64
     let name: String
     let category: String
     let units: Int
     let revenue: Double
     
     enum CodingKeys: String, CodingKey {
-        case skuId = "sku_id"
+        case id
         case name
         case category
         case units
