@@ -234,7 +234,7 @@ struct NewManagerSheet: View {
             .alert("Manager Created", isPresented: $showSuccessAlert) {
                 Button("OK") { dismiss() }
             } message: {
-                Text("The new manager has been successfully created. A temporary password was emailed to them.")
+                Text("The password credentials have been sent to their email.")
             }
             .alert("Error Creating Manager", isPresented: $showErrorAlert) {
                 Button("OK", role: .cancel) { }

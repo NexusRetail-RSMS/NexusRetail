@@ -147,20 +147,16 @@ struct AdminProfileSheet: View {
 
                 if isEditing {
                     // MARK: - EDIT MODE PLATTER (like img2)
-                    Section("Manager Details") {
+                    Section("Admin Details") {
                         TextField("First Name", text: $firstName)
                             .autocorrectionDisabled()
                         TextField("Last Name", text: $lastName)
                             .autocorrectionDisabled()
-                        Picker("Country", selection: $selectedCountry) {
-                            ForEach(countries, id: \.self) { country in
-                                Text(country).tag(country)
-                            }
-                        }
+                       
                         .tint(RSMSColors.burgundy)
                     }
 
-                    Section("Contact") {
+                    Section("Contact Details") {
                         TextField("Email", text: $email)
                             .keyboardType(.emailAddress)
                             .textContentType(.emailAddress)
@@ -169,7 +165,13 @@ struct AdminProfileSheet: View {
                         TextField("Phone", text: $phone)
                             .keyboardType(.phonePad)
 
-                        TextField("Store Location / Address", text: $address)
+                        TextField("Address", text: $address)
+                        
+                        Picker("Country", selection: $selectedCountry) {
+                            ForEach(countries, id: \.self) { country in
+                                Text(country).tag(country)
+                            }
+                        }
                     }
                 } else {
                     // MARK: - VIEW MODE
@@ -191,7 +193,7 @@ struct AdminProfileSheet: View {
 
                     // MARK: - Pill 2: Address · Country
                     Section {
-                        infoRow(icon: "mappin.and.ellipse",
+                        infoRow(icon: "location.fill",
                                 label: "Address",
                                 value: sessionStore.currentUser?.address ?? "—",
                                 multiline: true)
@@ -252,7 +254,7 @@ struct AdminProfileSheet: View {
                         Button { dismiss() } label: {
                             Image(systemName: "xmark")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(RSMSColors.burgundy)
                         }
                     }
                 }

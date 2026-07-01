@@ -128,11 +128,10 @@ struct AdminManagersView: View {
                                 isAddManagerPresented = true
                             } label: {
                                 Image(systemName: "plus")
-                                    .font(.system(size: 20, weight: .medium))
+                                    .font(.system(size: 20, weight: .semibold))
                                     .foregroundColor(RSMSColors.burgundy)
                                     .frame(width: 44, height: 44)
-                                    .background(RSMSColors.burgundy.opacity(0.1))
-                                    .clipShape(Circle())
+                                    .glassEffect(.regular.tint(RSMSColors.burgundy.opacity(0.1)).interactive(), in: Circle())
                             }
                             .accessibilityLabel("Add new manager")
                         }

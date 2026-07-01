@@ -27,12 +27,7 @@ struct ManagerTabView: View {
             
             // 2. Events
             NavigationStack {
-                ManagerPlaceholderView(
-                    title: "Store Events",
-                    message: "Track and organize upcoming promotional events and product launches.",
-                    icon: "calendar"
-                )
-                .modifier(ManagerToolbarModifier(title: "Events"))
+                EventsView()
             }
             .tabItem {
                 Label("Events", systemImage: "sparkles")
@@ -40,12 +35,7 @@ struct ManagerTabView: View {
             
             // 3. Employees
             NavigationStack {
-                ManagerPlaceholderView(
-                    title: "Employees",
-                    message: "Monitor staff check-ins, tasks, and sales metrics.",
-                    icon: "person.2.fill"
-                )
-                .modifier(ManagerToolbarModifier(title: "Employees"))
+                StaffView()
             }
             .tabItem {
                 Label("Employees", systemImage: "person.2")
