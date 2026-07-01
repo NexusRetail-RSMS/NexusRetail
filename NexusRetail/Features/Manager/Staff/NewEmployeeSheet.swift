@@ -10,7 +10,7 @@ import PhotosUI
 
 struct NewEmployeeSheet: View {
     @Environment(\.dismiss) private var dismiss
-    var onCreate: ((DisplayEmployee, String) -> Void)? = nil
+    var onCreate: ((DisplayEmployee, String) async -> String?)? = nil
 
     @State private var firstName = ""
     @State private var lastName = ""
@@ -201,7 +201,13 @@ struct NewEmployeeSheet: View {
         try? await Task.sleep(nanoseconds: 300_000_000)
         
         if let onCreate = onCreate {
-            onCreate(newEmp, password)
+            let error = await onCreate(newEmp, password)
+            if let error = error {
+                errorMessage = error
+                showErrorAlert = true
+                isSaving = false
+                return
+            }
         }
         
         isSaving = false

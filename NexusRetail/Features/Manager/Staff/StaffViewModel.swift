@@ -88,38 +88,44 @@ class StaffViewModel {
         }
     }
     
-    func addEmployee(_ employee: DisplayEmployee, password: String = "") {
-        withAnimation {
-            self.employees.insert(employee, at: 0)
-        }
-        saveToCache()
+    func addEmployee(_ employee: DisplayEmployee, password: String) async -> String? {
+        let roleVal = employee.role == "After Sales Associate" ? "after_sales" : "sales_associate"
         
-        Task {
-            let roleVal = employee.role == "After Sales Associate" ? "after_sales" : "sales_associate"
-            struct NewUserDTO: Encodable {
-                let id: UUID
-                let name: String
-                let email: String
-                let role: String
-                let phone: String
-                let is_active: Bool
+        do {
+            struct Params: Encodable {
+                let staff_email: String
+                let staff_password: String
+                let staff_name: String
+                let staff_phone: String
+                let staff_role: String
             }
-            let dto = NewUserDTO(
-                id: employee.id,
-                name: employee.name,
-                email: employee.email,
-                role: roleVal,
-                phone: employee.phone,
-                is_active: true
+            
+            let params = Params(
+                staff_email: employee.email,
+                staff_password: password,
+                staff_name: employee.name,
+                staff_phone: employee.phone,
+                staff_role: roleVal
             )
-            try? await SupabaseManager.shared.client
-                .from("app_user")
-                .insert(dto)
+            
+            try await SupabaseManager.shared.client
+                .rpc("create_staff", params: params)
                 .execute()
             
             if !password.isEmpty {
                 _ = await sendEmployeeEmail(to: employee.email, password: password, name: employee.name, role: employee.role)
             }
+            
+            await loadStaff() // Reload to get the new staff member and true ID
+            return nil
+            
+        } catch {
+            print("Error creating staff: \(error)")
+            let errorMsg = error.localizedDescription
+            if errorMsg.contains("already exists") {
+                return "This email is already associated with another account."
+            }
+            return errorMsg
         }
     }
     

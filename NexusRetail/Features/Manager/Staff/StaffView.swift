@@ -135,12 +135,15 @@ struct StaffView: View {
         }
         .sheet(isPresented: $isAddEmployeePresented) {
             NewEmployeeSheet(onCreate: { newEmployee, password in
-                viewModel.addEmployee(newEmployee, password: password)
-                if newEmployee.role == "After Sales Associate" {
-                    selectedRoleFilter = .afterSales
-                } else {
-                    selectedRoleFilter = .sales
+                let error = await viewModel.addEmployee(newEmployee, password: password)
+                if error == nil {
+                    if newEmployee.role == "After Sales Associate" {
+                        selectedRoleFilter = .afterSales
+                    } else {
+                        selectedRoleFilter = .sales
+                    }
                 }
+                return error
             })
         }
         .sheet(item: $editingEmployee) { emp in
