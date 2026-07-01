@@ -27,12 +27,7 @@ struct ManagerTabView: View {
             
             // 2. Events
             NavigationStack {
-                ManagerPlaceholderView(
-                    title: "Store Events",
-                    message: "Track and organize upcoming promotional events and product launches.",
-                    icon: "calendar"
-                )
-                .modifier(ManagerToolbarModifier(title: "Events"))
+                ManagerEventsView()
             }
             .tabItem {
                 Label("Events", systemImage: "sparkles")
