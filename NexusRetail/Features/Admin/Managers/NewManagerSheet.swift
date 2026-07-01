@@ -9,7 +9,7 @@ import PhotosUI
 struct NewManagerSheet: View {
     @Environment(\.dismiss) private var dismiss
 
-    var onCreate: ((String, String, String, String, String, String, String, UIImage?) async -> Bool)? = nil
+    var onCreate: ((String, String, String, String, String, String, String, UIImage?) async -> String?)? = nil
 
     @State private var firstName = ""
     @State private var lastName = ""
@@ -21,6 +21,8 @@ struct NewManagerSheet: View {
 
     @State private var isSaving = false
     @State private var showSuccessAlert = false
+    @State private var showErrorAlert = false
+    @State private var errorMessage = ""
 
     @State private var selectedCountry = "United States"
     private let countries = ["United States", "United Kingdom", "Canada", "Australia", "India", "Germany", "France", "Japan", "United Arab Emirates", "Singapore"]
@@ -30,7 +32,7 @@ struct NewManagerSheet: View {
     @State private var stores: [Store] = []
     
     private var pickerStoreNames: [String] {
-        var names = stores.map { $0.name }
+        var names = stores.filter { $0.managerID == nil }.map { $0.name }
         if !storeName.isEmpty && !names.contains(storeName) {
             names.insert(storeName, at: 0)
         }
@@ -171,7 +173,7 @@ struct NewManagerSheet: View {
                                 let managerName = fullName.isEmpty ? "New Manager" : fullName
 
                                 if let onCreate = onCreate {
-                                    let success = await onCreate(
+                                    if let errorMsg = await onCreate(
                                         email,
                                         password,
                                         managerName,
@@ -180,12 +182,13 @@ struct NewManagerSheet: View {
                                         storeAddress,
                                         selectedCountry,
                                         selectedImage
-                                    )
-                                    if success {
+                                    ) {
                                         isSaving = false
-                                        showSuccessAlert = true
+                                        errorMessage = errorMsg
+                                        showErrorAlert = true
                                     } else {
                                         isSaving = false
+                                        showSuccessAlert = true
                                     }
                                 } else {
                                     dismiss()
@@ -229,11 +232,14 @@ struct NewManagerSheet: View {
                 }
             }
             .alert("Manager Created", isPresented: $showSuccessAlert) {
-                Button("OK") {
-                    dismiss()
-                }
+                Button("OK") { dismiss() }
             } message: {
-                Text("The manager account has been created. The username and password have been sent to the manager's registered email.")
+                Text("The new manager has been successfully created. A temporary password was emailed to them.")
+            }
+            .alert("Error Creating Manager", isPresented: $showErrorAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(errorMessage)
             }
         }
     }

@@ -166,7 +166,7 @@ struct AdminManagersView: View {
                                             return await viewModel.resetPassword(for: manager.id, email: manager.email, newPassword: newPassword)
                                         },
                                         onUpdate: { updatedManager, newImage in
-                                            _ = await viewModel.updateManager(updatedManager, newImage: newImage)
+                                            return await viewModel.updateManager(updatedManager, newImage: newImage)
                                         }
                                     )
                                 }
@@ -287,7 +287,7 @@ struct AdminManagersView: View {
                                         return await viewModel.resetPassword(for: manager.id, email: manager.email, newPassword: newPassword)
                                     },
                                     onUpdate: { updatedManager, newImage in
-                                        _ = await viewModel.updateManager(updatedManager, newImage: newImage)
+                                        return await viewModel.updateManager(updatedManager, newImage: newImage)
                                     }
                                 )
                             }
@@ -323,14 +323,14 @@ struct AdminManagersView: View {
                         }
                     ),
                     onSave: { updatedManager, newImage in
-                        _ = await viewModel.updateManager(updatedManager, newImage: newImage)
+                        return await viewModel.updateManager(updatedManager, newImage: newImage)
                     }
                 )
             } else {
                 EditManagerSheet(
                     manager: .constant(mgr),
                     onSave: { updatedManager, newImage in
-                        _ = await viewModel.updateManager(updatedManager, newImage: newImage)
+                        return await viewModel.updateManager(updatedManager, newImage: newImage)
                     }
                 )
             }
@@ -376,7 +376,7 @@ struct TopPerformanceCard: View {
     var onEdit: (() -> Void)? = nil
     var onDelete: (() -> Void)? = nil
     var onResetPassword: ((String) async -> Bool)? = nil
-    var onUpdate: ((DisplayManager, UIImage?) async -> Void)? = nil
+    var onUpdate: ((DisplayManager, UIImage?) async -> String?)? = nil
 
     private var rankColor: Color {
         switch rank {
@@ -514,7 +514,7 @@ struct ManagerListCard: View {
     var onEdit: (() -> Void)? = nil
     var onDelete: (() -> Void)? = nil
     var onResetPassword: ((String) async -> Bool)? = nil
-    var onUpdate: ((DisplayManager, UIImage?) async -> Void)? = nil
+    var onUpdate: ((DisplayManager, UIImage?) async -> String?)? = nil
 
     var body: some View {
         NavigationLink(destination: ManagerDetailView(manager: manager, onResetPassword: onResetPassword, onDelete: onDelete, onUpdate: onUpdate)) {

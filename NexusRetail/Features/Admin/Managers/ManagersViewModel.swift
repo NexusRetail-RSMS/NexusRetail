@@ -65,7 +65,7 @@ class ManagersViewModel {
         isLoading = false
     }
 
-    func createManager(email: String, password: String, name: String, phone: String, storeName: String, address: String, country: String, image: UIImage?) async -> Bool {
+    func createManager(email: String, password: String, name: String, phone: String, storeName: String, address: String, country: String, image: UIImage?) async -> String? {
         isLoading = true
         errorMessage = nil
         do {
@@ -101,36 +101,56 @@ class ManagersViewModel {
                 .rpc("create_manager", params: params)
                 .execute()
 
+            // Fetch the newly created manager's ID to assign the store
+            struct IDResponse: Decodable { let id: UUID }
+            let idResponse: [IDResponse] = try await SupabaseManager.shared.client
+                .from("app_user")
+                .select("id")
+                .eq("email", value: email)
+                .execute()
+                .value
+            
+            if let newUserId = idResponse.first?.id {
+                if !storeName.isEmpty && storeName != "Not Assigned" && storeName != "Unassigned" {
+                    struct StoreManagerUpdate: Encodable { let manager_id: UUID? }
+                    try? await SupabaseManager.shared.client
+                        .from("store")
+                        .update(StoreManagerUpdate(manager_id: newUserId))
+                        .eq("name", value: storeName)
+                        .execute()
+                }
+            }
+
             // Dispatch a raw email with the generated password via Resend
             await sendResendEmail(to: email, password: password)
 
             await loadManagers()
-            return true
+            return nil
         } catch {
             print("Error creating manager: \(error)")
             self.errorMessage = error.localizedDescription
             isLoading = false
-            return false
+            return error.localizedDescription
         }
     }
 
-    func updateManager(_ manager: DisplayManager, newImage: UIImage? = nil) async -> Bool {
+    func updateManager(_ manager: DisplayManager, newImage: UIImage? = nil) async -> String? {
         isLoading = true
         errorMessage = nil
         do {
             let finalAddress = manager.address.isEmpty ? manager.country : (manager.address.hasSuffix(manager.country) ? manager.address : "\(manager.address), \(manager.country)")
 
-            var updateData: [String: AnyJSON] = [
-                "name": .string(manager.name),
-                "phone": .string(manager.phone),
-                "email": .string(manager.email),
-                "address": .string(finalAddress)
+            var updateData: [String: String?] = [
+                "name": manager.name,
+                "phone": manager.phone,
+                "email": manager.email,
+                "address": finalAddress
             ]
             
             if let img = newImage {
                 do {
                     let uploadedUrl = try await uploadImage(img)
-                    updateData["image_url"] = .string(uploadedUrl)
+                    updateData["image_url"] = uploadedUrl
                 } catch {
                     print("Image upload failed during update: \(error)")
                 }
@@ -142,14 +162,32 @@ class ManagersViewModel {
                 .eq("id", value: manager.id)
                 .execute()
 
+            // Update store assignment
+            struct StoreManagerUpdate: Encodable { let manager_id: UUID? }
+            // 1. Clear old store if any
+            try? await SupabaseManager.shared.client
+                .from("store")
+                .update(StoreManagerUpdate(manager_id: nil))
+                .eq("manager_id", value: manager.id)
+                .execute()
+            
+            // 2. Assign new store
+            if !manager.storeName.isEmpty && manager.storeName != "Not Assigned" && manager.storeName != "Unassigned" {
+                try? await SupabaseManager.shared.client
+                    .from("store")
+                    .update(StoreManagerUpdate(manager_id: manager.id))
+                    .eq("name", value: manager.storeName)
+                    .execute()
+            }
+
             // Refresh local list so changes appear immediately
             await loadManagers()
-            return true
+            return nil
         } catch {
             print("Error updating manager: \(error)")
             self.errorMessage = error.localizedDescription
             isLoading = false
-            return false
+            return error.localizedDescription
         }
     }
 

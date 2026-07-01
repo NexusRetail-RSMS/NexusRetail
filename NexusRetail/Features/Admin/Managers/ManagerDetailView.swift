@@ -23,9 +23,9 @@ struct ManagerDetailView: View {
     
     var onResetPassword: ((String) async -> Bool)?
     var onDelete: (() -> Void)?
-    var onUpdate: ((DisplayManager, UIImage?) async -> Void)?
+    var onUpdate: ((DisplayManager, UIImage?) async -> String?)?
 
-    init(manager: DisplayManager, onResetPassword: ((String) async -> Bool)? = nil, onDelete: (() -> Void)? = nil, onUpdate: ((DisplayManager, UIImage?) async -> Void)? = nil) {
+    init(manager: DisplayManager, onResetPassword: ((String) async -> Bool)? = nil, onDelete: (() -> Void)? = nil, onUpdate: ((DisplayManager, UIImage?) async -> String?)? = nil) {
         _manager = State(initialValue: manager)
         self.onResetPassword = onResetPassword
         self.onDelete = onDelete
@@ -217,7 +217,10 @@ struct ManagerDetailView: View {
         }
         .sheet(isPresented: $isEditPresented) {
             EditManagerSheet(manager: $manager, onSave: { updatedManager, newImage in
-                await onUpdate?(updatedManager, newImage)
+                if let onUpdate = onUpdate {
+                    return await onUpdate(updatedManager, newImage)
+                }
+                return nil
             })
         }
         .alert("Credentials Reset", isPresented: $showResetSuccessAlert) {
@@ -284,9 +287,11 @@ struct EditManagerSheet: View {
     @State private var selectedImageData: Data?
     @State private var isSaving = false
     @State private var stores: [Store] = []
+    @State private var showErrorAlert = false
+    @State private var errorMessage = ""
     
     private var pickerStoreNames: [String] {
-        var names = stores.map { $0.name }
+        var names = stores.filter { $0.managerID == nil || $0.name == storeName }.map { $0.name }
         if !storeName.isEmpty && !names.contains(storeName) {
             names.insert(storeName, at: 0)
         }
@@ -302,9 +307,9 @@ struct EditManagerSheet: View {
     }
     
     private let countries = ["United States", "United Kingdom", "Canada", "Australia", "India", "Germany", "France", "Japan", "United Arab Emirates", "Singapore"]
-    var onSave: ((DisplayManager, UIImage?) async -> Void)? = nil
+    var onSave: ((DisplayManager, UIImage?) async -> String?)? = nil
 
-    init(manager: Binding<DisplayManager>, onSave: ((DisplayManager, UIImage?) async -> Void)? = nil) {
+    init(manager: Binding<DisplayManager>, onSave: ((DisplayManager, UIImage?) async -> String?)? = nil) {
         _manager = manager
         let m = manager.wrappedValue
         let parts = m.name.components(separatedBy: " ")
@@ -465,9 +470,14 @@ struct EditManagerSheet: View {
                                 manager.address   = storeAddress
                                 manager.country   = selectedCountry
                                 let newImage = selectedImageData != nil ? UIImage(data: selectedImageData!) : nil
-                                await onSave?(manager, newImage)
-                                isSaving = false
-                                dismiss()
+                                if let errorMsg = await onSave?(manager, newImage) {
+                                    isSaving = false
+                                    errorMessage = errorMsg
+                                    showErrorAlert = true
+                                } else {
+                                    isSaving = false
+                                    dismiss()
+                                }
                             }
                         } label: {
                             Image(systemName: "checkmark")
@@ -494,6 +504,11 @@ struct EditManagerSheet: View {
                         self.selectedCountry = cntry
                     }
                 }
+            }
+            .alert("Error Updating Manager", isPresented: $showErrorAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(errorMessage)
             }
         }
     }
