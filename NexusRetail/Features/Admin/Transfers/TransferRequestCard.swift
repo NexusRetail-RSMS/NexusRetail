@@ -171,7 +171,7 @@ struct TransferRequestCard: View {
                     .frame(height: 44)
                     .background(Color.nexusRed)
                     .foregroundColor(.white)
-                    .cornerRadius(10)
+                    .cornerRadius(20)
             }
 
             Button {
@@ -183,7 +183,7 @@ struct TransferRequestCard: View {
                     .frame(height: 44)
                     .background(Color.nexusRed.opacity(0.1))
                     .foregroundColor(Color.nexusRed)
-                    .cornerRadius(10)
+                    .cornerRadius(20)
             }
         }
     }
@@ -291,7 +291,7 @@ struct ScheduleSheet: View {
                         .frame(height: 50)
                         .background(Color.nexusRed)
                         .foregroundColor(.white)
-                        .cornerRadius(12)
+                        .cornerRadius(20)
                 }
 
                 Button {
@@ -303,7 +303,7 @@ struct ScheduleSheet: View {
                         .frame(height: 50)
                         .background(Color.nexusRed.opacity(0.1))
                         .foregroundColor(Color.nexusRed)
-                        .cornerRadius(12)
+                        .cornerRadius(20)
                 }
             }
             .padding(.horizontal, 24)
@@ -438,7 +438,7 @@ struct WaitingRequestCard: View {
                     .frame(height: 42)
                     .background(Color.nexusRed)
                     .foregroundColor(.white)
-                    .cornerRadius(10)
+                    .cornerRadius(20)
             }
             .padding(.top, 16)
         }
