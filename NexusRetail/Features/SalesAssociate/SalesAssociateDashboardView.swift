@@ -13,9 +13,9 @@ struct SalesAssociateDashboardView: View {
     @State private var contentAppeared = false
 
     @State private var clients: [AssociateClient] = [
-        AssociateClient(name: "Ananya Rao",   phone: "+91 98765 43210", preferences: "Minimal gold, silk sarees", tier: "Gold", purchasePattern: "Frequent", recommendedNext: "Silk Saree"),
-        AssociateClient(name: "Kabir Mehta",  phone: "+91 98111 22009", preferences: "Tailored jackets, navy tones", tier: "Platinum", purchasePattern: "Regular", recommendedNext: "Tailored Jacket"),
-        AssociateClient(name: "Mira Kapoor",  phone: "+91 90000 77123", preferences: "Statement earrings, emerald", tier: "Silver", purchasePattern: "Occasional", recommendedNext: "Emerald Earrings")
+        AssociateClient(name: "Ananya Rao",   phone: "+91 98765 43210", email: "ananya.rao@example.com", preferences: "Minimal gold, silk sarees", purchasePattern: "Frequent"),
+        AssociateClient(name: "Kabir Mehta",  phone: "+91 98111 22009", email: "kabir.mehta@example.com", preferences: "Tailored jackets, navy tones", purchasePattern: "Regular"),
+        AssociateClient(name: "Mira Kapoor",  phone: "+91 90000 77123", email: "mira.kapoor@example.com", preferences: "Statement earrings, emerald", purchasePattern: "Occasional")
     ]
 
     private var filteredClients: [AssociateClient] {
@@ -239,7 +239,7 @@ struct SalesAssociateDashboardView: View {
         let phone = clientPhone.trimmingCharacters(in: .whitespacesAndNewlines)
         let prefs = stylePreferences.trimmingCharacters(in: .whitespacesAndNewlines)
         withAnimation(.spring(response: 0.4, dampingFraction: 0.78)) {
-            clients.insert(AssociateClient(name: name, phone: phone, preferences: prefs.isEmpty ? "Preferences to be captured" : prefs, tier: "New", purchasePattern: "None", recommendedNext: "N/A"), at: 0)
+            clients.insert(AssociateClient(name: name, phone: phone, email: "new@example.com", preferences: prefs.isEmpty ? "Preferences to be captured" : prefs, purchasePattern: "None"), at: 0)
         }
         isNewClientPresented = false
         clientName = ""; clientPhone = ""; stylePreferences = ""; hasConsent = true
