@@ -174,37 +174,23 @@ struct StoreFormView: View {
                                         .font(.system(size: 12, weight: .semibold))
                                         .foregroundColor(RSMSColors.secondaryText.opacity(0.6))
                                 }
+                                .padding(.horizontal, RSMSSpacing.lg)
+                                .padding(.vertical, RSMSSpacing.md)
+                            }
+                            .buttonStyle(.plain)
 
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Manager")
-                                        .font(.system(size: 11.5, weight: .medium))
-                                        .foregroundColor(RSMSColors.secondaryText)
-                                    Text(selectedManager?.name ?? "None assigned")
-                                        .font(.system(size: 14.5, weight: .medium))
-                                        .foregroundColor(selectedManager == nil ? RSMSColors.secondaryText : RSMSColors.primaryText)
+                            if viewModel.availableManagers(excludingStoreID: editingStore?.id).isEmpty && selectedManagerID == nil {
+                                FormDivider()
+                                HStack(spacing: 8) {
+                                    Image(systemName: "info.circle.fill")
+                                        .font(.system(size: 12))
+                                    Text("All managers are currently assigned to stores")
+                                        .font(.system(size: 12))
                                 }
-
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .foregroundColor(RSMSColors.secondaryText.opacity(0.6))
+                                .foregroundColor(RSMSColors.secondaryText)
+                                .padding(.horizontal, RSMSSpacing.lg)
+                                .padding(.bottom, RSMSSpacing.md)
                             }
-                            .padding(.horizontal, RSMSSpacing.lg)
-                            .padding(.vertical, RSMSSpacing.md)
-                        }
-                        .buttonStyle(.plain)
-
-                        if viewModel.availableManagers(excludingStoreID: editingStore?.id).isEmpty && selectedManagerID == nil {
-                            FormDivider()
-                            HStack(spacing: 8) {
-                                Image(systemName: "info.circle.fill")
-                                    .font(.system(size: 12))
-                                Text("All managers are currently assigned to stores")
-                                    .font(.system(size: 12))
-                            }
-                            .foregroundColor(RSMSColors.secondaryText)
-                            .padding(.horizontal, RSMSSpacing.lg)
-                            .padding(.bottom, RSMSSpacing.md)
                         }
                     }
 
@@ -407,7 +393,8 @@ struct StoreFormView: View {
                         latitude: pickedCoordinate?.latitude,
                         longitude: pickedCoordinate?.longitude,
                         city: city,
-                        country: country
+                        country: country,
+                        imageData: selectedImageData
                     )
                     if success { dismiss() }
                 } else {
@@ -425,7 +412,8 @@ struct StoreFormView: View {
                         latitude: pickedCoordinate?.latitude,
                         longitude: pickedCoordinate?.longitude,
                         city: city,
-                        country: country
+                        country: country,
+                        imageData: selectedImageData
                     )
                     if success { dismiss() }
                 }
