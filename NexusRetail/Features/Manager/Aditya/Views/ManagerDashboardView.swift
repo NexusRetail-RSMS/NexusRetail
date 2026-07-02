@@ -45,10 +45,17 @@ struct ManagerDashboardView: View {
         }
         .background(RSMSColors.background.ignoresSafeArea())
         .navigationBarHidden(true)
+        .refreshable {
+            await viewModel.fetchData(storeID: sessionStore.currentUser?.storeID)
+        }
         .task {
             await viewModel.fetchData(storeID: sessionStore.currentUser?.storeID)
         }
         .onChange(of: viewModel.topProductsTimeRange) { _, _ in
+            Task { await viewModel.fetchData(storeID: sessionStore.currentUser?.storeID) }
+        }
+        .onAppear {
+            // Refresh data when view appears (e.g., after completing a sale)
             Task { await viewModel.fetchData(storeID: sessionStore.currentUser?.storeID) }
         }
         .sheet(isPresented: $isProfilePresented) {

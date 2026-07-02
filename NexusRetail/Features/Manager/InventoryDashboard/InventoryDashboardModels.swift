@@ -119,16 +119,17 @@ struct ProductInfo: Codable {
     let skuCode: String?
     let imageUrl: String?
     let description: String?
-    
+    let price: Double?       // products.price — the canonical retail price
+
     enum CodingKeys: String, CodingKey {
         case name = "item_name"
-        case category, description
+        case category, description, price
         case skuCode = "sku_code"
         case imageUrl = "image_url"
         case priceBand = "price_band"
         case storePrice = "store_price"
     }
-    
+
     let priceBand: [PriceBandInfo]?
     let storePrice: [StorePriceInfo]?
 }
@@ -177,9 +178,18 @@ struct InventoryItemRow: Codable, Identifiable {
     var category: String { products.category ?? "Uncategorized" }
     var skuCode: String { products.skuCode ?? "—" }
     var imageUrl: String? { products.imageUrl }
-    
-    var basePrice: Double { products.priceBand?.first?.basePrice ?? 0 }
-    var floorPrice: Double { products.priceBand?.first?.floorPrice ?? 0 }
+
+    // Use products.price as canonical base; fall back to price_band only if products.price is nil
+    var basePrice: Double {
+        products.price
+            ?? products.priceBand?.first?.basePrice
+            ?? 0
+    }
+    var floorPrice: Double {
+        products.priceBand?.first?.floorPrice
+            ?? (basePrice * 0.85)   // fallback: 85% of base if no floor set
+    }
+    // Store-specific override > canonical base
     var localPrice: Double { products.storePrice?.first?.localPrice ?? basePrice }
     
     /// Stock health status
@@ -314,29 +324,29 @@ func formatIndianCurrency(_ value: Double) -> String {
 extension InventoryItemRow {
     static let mockItems: [InventoryItemRow] = [
         InventoryItemRow(id: UUID(), itemId: Int64(), storeId: UUID(), onHand: 13, reorderThreshold: 5,
-                         products: ProductInfo(name: "Imperial Ring #23", category: "Jewelry", skuCode: "JEW-4909", imageUrl: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400", description: nil, priceBand: [PriceBandInfo(basePrice: 192722.46, floorPrice: 163814.09)], storePrice: nil)),
+                         products: ProductInfo(name: "Imperial Ring #23", category: "Jewelry", skuCode: "JEW-4909", imageUrl: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400", description: nil, price: 12500, priceBand: [PriceBandInfo(basePrice: 12500, floorPrice: 10625)], storePrice: nil)),
         InventoryItemRow(id: UUID(), itemId: Int64(), storeId: UUID(), onHand: 9, reorderThreshold: 5,
-                         products: ProductInfo(name: "Heritage Wallet #24", category: "Accessories", skuCode: "ACC-5403", imageUrl: "https://images.unsplash.com/photo-1601333144130-8c1f12356224?w=400", description: nil, priceBand: [PriceBandInfo(basePrice: 45000, floorPrice: 38000)], storePrice: nil)),
+                         products: ProductInfo(name: "Heritage Wallet #24", category: "Accessories", skuCode: "ACC-5403", imageUrl: "https://images.unsplash.com/photo-1601333144130-8c1f12356224?w=400", description: nil, price: 4500, priceBand: [PriceBandInfo(basePrice: 4500, floorPrice: 3825)], storePrice: nil)),
         InventoryItemRow(id: UUID(), itemId: Int64(), storeId: UUID(), onHand: 2, reorderThreshold: 5,
-                         products: ProductInfo(name: "Celeste Watch #9", category: "Watches", skuCode: "WAT-2254", imageUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400", description: nil, priceBand: [PriceBandInfo(basePrice: 350000, floorPrice: 280000)], storePrice: nil)),
+                         products: ProductInfo(name: "Celeste Watch #9", category: "Watches", skuCode: "WAT-2254", imageUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400", description: nil, price: 35000, priceBand: [PriceBandInfo(basePrice: 35000, floorPrice: 29750)], storePrice: nil)),
         InventoryItemRow(id: UUID(), itemId: Int64(), storeId: UUID(), onHand: 0, reorderThreshold: 3,
-                         products: ProductInfo(name: "Noir Leather Bag", category: "Leather Goods", skuCode: "LEA-7385", imageUrl: "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=400", description: nil, priceBand: [PriceBandInfo(basePrice: 125000, floorPrice: 100000)], storePrice: nil)),
+                         products: ProductInfo(name: "Noir Leather Bag", category: "Leather Goods", skuCode: "LEA-7385", imageUrl: "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=400", description: nil, price: 18500, priceBand: [PriceBandInfo(basePrice: 18500, floorPrice: 15725)], storePrice: nil)),
         InventoryItemRow(id: UUID(), itemId: Int64(), storeId: UUID(), onHand: 25, reorderThreshold: 10,
-                         products: ProductInfo(name: "Silk Scarf Royale", category: "Accessories", skuCode: "ACC-1122", imageUrl: "https://images.unsplash.com/photo-1601333144130-8c1f12356224?w=400", description: nil, priceBand: [PriceBandInfo(basePrice: 18000, floorPrice: 14000)], storePrice: nil)),
+                         products: ProductInfo(name: "Silk Scarf Royale", category: "Accessories", skuCode: "ACC-1122", imageUrl: "https://images.unsplash.com/photo-1601333144130-8c1f12356224?w=400", description: nil, price: 3200, priceBand: [PriceBandInfo(basePrice: 3200, floorPrice: 2720)], storePrice: nil)),
         InventoryItemRow(id: UUID(), itemId: Int64(), storeId: UUID(), onHand: 4, reorderThreshold: 8,
-                         products: ProductInfo(name: "Crystal Earrings Duo", category: "Jewelry", skuCode: "JEW-3310", imageUrl: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400", description: nil, priceBand: [PriceBandInfo(basePrice: 78000, floorPrice: 62000)], storePrice: nil)),
+                         products: ProductInfo(name: "Crystal Earrings Duo", category: "Jewelry", skuCode: "JEW-3310", imageUrl: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400", description: nil, price: 8500, priceBand: [PriceBandInfo(basePrice: 8500, floorPrice: 7225)], storePrice: nil)),
         InventoryItemRow(id: UUID(), itemId: Int64(), storeId: UUID(), onHand: 30, reorderThreshold: 5,
-                         products: ProductInfo(name: "Oxford Dress Shoes", category: "Shoes", skuCode: "SHO-0044", imageUrl: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400", description: nil, priceBand: [PriceBandInfo(basePrice: 28000, floorPrice: 22000)], storePrice: nil))
+                         products: ProductInfo(name: "Oxford Dress Shoes", category: "Shoes", skuCode: "SHO-0044", imageUrl: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400", description: nil, price: 7800, priceBand: [PriceBandInfo(basePrice: 7800, floorPrice: 6630)], storePrice: nil))
     ]
 }
 
 extension TransferRequestRow {
     static let mockRequests: [TransferRequestRow] = [
         TransferRequestRow(id: UUID(), itemId: Int64(), requestingStoreId: UUID(), sourceStoreId: nil, quantity: 10, status: .pending, createdAt: Date().addingTimeInterval(-86400),
-                           products: ProductInfo(name: "Celeste Watch #9", category: "Watches", skuCode: "WAT-2254", imageUrl: nil, description: nil, priceBand: nil, storePrice: nil)),
+                           products: ProductInfo(name: "Celeste Watch #9", category: "Watches", skuCode: "WAT-2254", imageUrl: nil, description: nil, price: 35000, priceBand: nil, storePrice: nil)),
         TransferRequestRow(id: UUID(), itemId: Int64(), requestingStoreId: UUID(), sourceStoreId: nil, quantity: 5, status: .approved, createdAt: Date().addingTimeInterval(-172800),
-                           products: ProductInfo(name: "Noir Leather Bag", category: "Leather Goods", skuCode: "LEA-7385", imageUrl: nil, description: nil, priceBand: nil, storePrice: nil)),
+                           products: ProductInfo(name: "Noir Leather Bag", category: "Leather Goods", skuCode: "LEA-7385", imageUrl: nil, description: nil, price: 18500, priceBand: nil, storePrice: nil)),
         TransferRequestRow(id: UUID(), itemId: Int64(), requestingStoreId: UUID(), sourceStoreId: UUID(), quantity: 20, status: .dispatched, createdAt: Date().addingTimeInterval(-345600),
-                           products: ProductInfo(name: "Crystal Earrings Duo", category: "Jewelry", skuCode: "JEW-3310", imageUrl: nil, description: nil, priceBand: nil, storePrice: nil))
+                           products: ProductInfo(name: "Crystal Earrings Duo", category: "Jewelry", skuCode: "JEW-3310", imageUrl: nil, description: nil, price: 8500, priceBand: nil, storePrice: nil))
     ]
 }

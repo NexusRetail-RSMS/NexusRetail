@@ -8,7 +8,7 @@ import Observation
 import Supabase
 
 struct StaffPerformancePoint: Identifiable, Equatable {
-    let id = UUID()
+    var id: String { name }
     let name: String
     let score: Int
 }
@@ -178,7 +178,14 @@ final class ManagerDashboardViewModel {
                 
                 // Top Products Chart
                 if let prods = topProds {
-                    self.topProductsData = prods.map { ProductChartPoint(category: $0.name, sales: Int($0.revenue)) }
+                    let grouped = Dictionary(grouping: prods) { $0.category }
+                    let categories = grouped.keys.sorted()
+                    self.topProductsData = categories.compactMap { cat in
+                        guard let items = grouped[cat] else { return nil }
+                        let totalSales = items.reduce(0) { $0 + Int($1.revenue) }
+                        return ProductChartPoint(category: cat, sales: totalSales)
+                    }.sorted { $0.sales > $1.sales }
+                    
                     self.topProductsMaxValue = self.topProductsData.map(\.sales).max() ?? 100
                 }
                 

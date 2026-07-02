@@ -25,7 +25,7 @@ enum SalesTimeRange: String, CaseIterable {
 
 /// A single bar in the revenue chart.
 struct RevenueChartPoint: Identifiable, Equatable {
-    let id = UUID()
+    var id: String { label }
     let label: String
     let index: Int
     let revenue: Double
@@ -37,7 +37,7 @@ struct RevenueChartPoint: Identifiable, Equatable {
 
 /// A single bar/slice in the product-sales chart.
 struct ProductChartPoint: Identifiable, Equatable {
-    let id = UUID()
+    var id: String { category }
     let category: String
     let sales: Int
 

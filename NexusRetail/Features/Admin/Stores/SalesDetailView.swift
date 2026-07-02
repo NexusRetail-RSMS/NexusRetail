@@ -16,7 +16,7 @@ import Supabase
 // MARK: - Granular Data Point
 
 struct SalesGranularPoint: Identifiable {
-    let id = UUID()
+    var id: String { label }
     let label: String
     let online: Double
     let offline: Double

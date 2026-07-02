@@ -101,7 +101,7 @@ class InventoryViewModel {
             // Fetch inventory items with joined SKU + price data
             let inventoryResponse: [InventoryItemRow] = try await SupabaseManager.shared.client
                 .from("inventory_item")
-                .select("*, products!inner(item_name, category, sku_code, image_url, description, price_band(base_price, floor_price), store_price(local_price))")
+                .select("*, products!inner(item_name, category, sku_code, image_url, description, price, price_band(base_price, floor_price), store_price(local_price))")
                 .eq("store_id", value: finalStoreID.uuidString)
                 .execute()
                 .value

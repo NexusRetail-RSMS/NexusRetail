@@ -120,18 +120,34 @@ final class AppointmentsViewModel {
             // 1. Try to find existing client by phone or email
             var finalClientId: UUID? = nil
             
-            let existingClients: [DBClient] = try await SupabaseManager.shared.client
-                .from("client")
-                .select("*")
-                .eq("phone", value: clientPhone)
-                .execute()
-                .value
+            let trimmedPhone = clientPhone.trimmingCharacters(in: .whitespacesAndNewlines)
+            let trimmedEmail = clientEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            if !trimmedPhone.isEmpty {
+                let existingClients: [DBClient] = try await SupabaseManager.shared.client
+                    .from("client")
+                    .select("*")
+                    .eq("phone", value: trimmedPhone)
+                    .execute()
+                    .value
+                finalClientId = existingClients.first?.id
+            } else if !trimmedEmail.isEmpty {
+                let existingClients: [DBClient] = try await SupabaseManager.shared.client
+                    .from("client")
+                    .select("*")
+                    .eq("email", value: trimmedEmail)
+                    .execute()
+                    .value
+                finalClientId = existingClients.first?.id
+            }
                 
-            if let first = existingClients.first {
-                finalClientId = first.id
-            } else {
+            if finalClientId == nil {
                 // Insert new client
-                let newClient = SupabaseClientInsert(name: clientName, phone: clientPhone, email: clientEmail)
+                let newClient = SupabaseClientInsert(
+                    name: clientName,
+                    phone: trimmedPhone.isEmpty ? nil : trimmedPhone,
+                    email: trimmedEmail.isEmpty ? nil : trimmedEmail
+                )
                 let insertedClient: [DBClient] = try await SupabaseManager.shared.client
                     .from("client")
                     .insert(newClient)
@@ -164,7 +180,8 @@ final class AppointmentsViewModel {
             return true
             
         } catch {
-            print("Error saving appointment: \(error)")
+            print("Error saving appointment: \(error.localizedDescription)")
+            print("Detailed error: \(String(describing: error))")
             return false
         }
     }

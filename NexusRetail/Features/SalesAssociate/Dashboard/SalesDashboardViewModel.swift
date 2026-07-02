@@ -24,6 +24,7 @@ final class SalesDashboardViewModel {
     // MARK: - Filtered orders for selected period
     var filteredDbOrders: [StoreOrder] {
         let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         let now       = Date()
         let calendar  = Calendar.current
 
@@ -88,6 +89,7 @@ final class SalesDashboardViewModel {
     // MARK: - Revenue Chart Data
     var chartDataPoints: [StoreRevenueChartPoint] {
         let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         let calendar  = Calendar.current
         let now       = Date()
 
@@ -139,7 +141,8 @@ final class SalesDashboardViewModel {
 
     var chartMaxValue: Double {
         let maxVal = chartDataPoints.map(\.revenue).max() ?? 100000.0
-        return ceil(maxVal / 20000.0) * 20000.0
+        let calculated = ceil(maxVal / 20000.0) * 20000.0
+        return max(20000.0, calculated)
     }
 
     // MARK: - Helpers

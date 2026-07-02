@@ -2,10 +2,16 @@ import SwiftUI
 import Charts
 
 struct SalesDataPoint: Identifiable {
-    let id = UUID()
+    var id: String { month }
     let month: String
     let onlineSales: Double
     let offlineSales: Double
+}
+
+struct StoreAnalyticsCategorySales: Identifiable {
+    var id: String { category }
+    let category: String
+    let percentage: Double
 }
 
 struct VisitorSource: Identifiable {

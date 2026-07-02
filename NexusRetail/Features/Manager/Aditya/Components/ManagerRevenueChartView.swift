@@ -19,74 +19,87 @@ struct ManagerRevenueChartView: View {
         VStack(alignment: .leading, spacing: RSMSSpacing.lg) {
             
             // Chart
-            Chart(data) { point in
-                BarMark(
-                    x: .value("Period", point.label),
-                    y: .value("Revenue", point.revenue)
-                )
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [RSMSColors.darkBurgundy, RSMSColors.burgundy],
-                        startPoint: .bottom,
-                        endPoint: .top
+            if data.isEmpty {
+                VStack(spacing: 8) {
+                    Image(systemName: "chart.bar.xaxis")
+                        .font(.system(size: 24))
+                        .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                    Text("No revenue data available")
+                        .font(.system(size: 12))
+                        .foregroundColor(RSMSColors.secondaryText)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .frame(height: 220)
+            } else {
+                Chart(data) { point in
+                    BarMark(
+                        x: .value("Period", point.label),
+                        y: .value("Revenue", point.revenue)
                     )
-                )
-                .cornerRadius(4)
-                .opacity(selectedPointLabel == nil || selectedPointLabel == point.label ? 1.0 : 0.4)
-                .annotation(position: .top, spacing: 0) {
-                    if selectedPointLabel == point.label {
-                        VStack(spacing: 4) {
-                            Text(point.label)
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(RSMSColors.secondaryText)
-                            
-                            // Format number to remove trailing zero if it's a whole number
-                            Text("₹\(String(format: point.revenue.truncatingRemainder(dividingBy: 1) == 0 ? "%.0f" : "%.1f", point.revenue))L")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(RSMSColors.darkBurgundy)
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                        .background(Color.white)
-                        .cornerRadius(12)
-                        .shadow(color: Color.black.opacity(0.12), radius: 10, y: 4)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(RSMSColors.divider, lineWidth: 1)
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [RSMSColors.darkBurgundy, RSMSColors.burgundy],
+                            startPoint: .bottom,
+                            endPoint: .top
                         )
-                        .offset(y: -10)
-                        // Make sure the tooltip stays above other bars
-                        .zIndex(1)
-                    }
-                }
-            }
-            .chartXSelection(value: $selectedPointLabel)
-            .chartYScale(domain: 0...maxValue)
-            .chartYAxis {
-                AxisMarks(position: .leading, values: .automatic(desiredCount: 4)) { value in
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [4]))
-                        .foregroundStyle(RSMSColors.divider)
-                    AxisValueLabel {
-                        if let v = value.as(Double.self) {
-                            Text("\(Int(v))L")
-                                .font(.system(size: 10))
-                                .foregroundColor(RSMSColors.secondaryText)
+                    )
+                    .cornerRadius(4)
+                    .opacity(selectedPointLabel == nil || selectedPointLabel == point.label ? 1.0 : 0.4)
+                    .annotation(position: .top, spacing: 0) {
+                        if selectedPointLabel == point.label {
+                            VStack(spacing: 4) {
+                                Text(point.label)
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(RSMSColors.secondaryText)
+                                
+                                // Format number to remove trailing zero if it's a whole number
+                                Text("₹\(String(format: point.revenue.truncatingRemainder(dividingBy: 1) == 0 ? "%.0f" : "%.1f", point.revenue))L")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(RSMSColors.darkBurgundy)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                            .background(Color.white)
+                            .cornerRadius(12)
+                            .shadow(color: Color.black.opacity(0.12), radius: 10, y: 4)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(RSMSColors.divider, lineWidth: 1)
+                            )
+                            .offset(y: -10)
+                            // Make sure the tooltip stays above other bars
+                            .zIndex(1)
                         }
                     }
                 }
-            }
-            .chartXAxis {
-                AxisMarks { value in
-                    AxisValueLabel {
-                        if let label = value.as(String.self) {
-                            Text(label)
-                                .font(.system(size: 10, weight: .medium))
-                                .foregroundColor(RSMSColors.secondaryText)
+                .chartXSelection(value: $selectedPointLabel)
+                .chartYScale(domain: 0...maxValue)
+                .chartYAxis {
+                    AxisMarks(position: .leading, values: .automatic(desiredCount: 4)) { value in
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [4]))
+                            .foregroundStyle(RSMSColors.divider)
+                        AxisValueLabel {
+                            if let v = value.as(Double.self) {
+                                Text("\(Int(v))L")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(RSMSColors.secondaryText)
+                            }
                         }
                     }
                 }
+                .chartXAxis {
+                    AxisMarks { value in
+                        AxisValueLabel {
+                            if let label = value.as(String.self) {
+                                Text(label)
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundColor(RSMSColors.secondaryText)
+                            }
+                        }
+                    }
+                }
+                .frame(height: 220)
             }
-            .frame(height: 220)
             
             // Bottom Summary
             HStack(spacing: RSMSSpacing.md) {

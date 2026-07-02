@@ -20,6 +20,9 @@ class SellViewModel {
     // Selected client name (nil means skipped/anonymous)
     var selectedClient: String? = nil
     
+    // Selected client UUID for DB linkage
+    var selectedClientId: UUID? = nil
+    
     // Chosen payment method
     var selectedPaymentMethod: POSPaymentMethod = .razorpay
     
@@ -32,34 +35,46 @@ class SellViewModel {
     var receiptSharedPhone: String = ""
     var isReceiptShared: Bool = false
     
+    // Last completed order ID (from DB after processCheckout)
+    var lastOrderId: UUID? = nil
+    
     var totalAmount: Double {
+        // Sum price for each cart item — duplicates are intentional (qty × price)
         cartItems.reduce(0) { $0 + $1.price }
     }
+
+    var subtotalAmount: Double { totalAmount }
     
-    var subtotalAmount: Double {
-        totalAmount
+    // Returns how many of this product are currently in the cart
+    func quantityInCart(productId: UUID) -> Int {
+        cartItems.filter { $0.id == productId }.count
     }
-    
+
+    // Returns true if we can add one more of this product (stock allows it)
+    func canAddMore(_ product: POSProduct) -> Bool {
+        // Get the live stock from the repository
+        let currentStock = POSProductRepository.shared.products
+            .first(where: { $0.id == product.id })?.stock ?? product.stock
+        return quantityInCart(productId: product.id) < currentStock
+    }
+
     func addToCart(product: POSProduct, isAlternative: Bool = false) {
+        // Guard: never exceed available stock (using live stock from repository)
+        guard canAddMore(product) else { return }
         cartItems.append(product)
-        let log = CartActionLog(productName: product.name, action: .added, isAlternative: isAlternative)
-        actionLogs.append(log)
+        actionLogs.append(CartActionLog(productName: product.name, action: .added, isAlternative: isAlternative))
     }
-    
+
     func removeFromCart(product: POSProduct) {
         if let index = cartItems.firstIndex(where: { $0.id == product.id }) {
             cartItems.remove(at: index)
-            let log = CartActionLog(productName: product.name, action: .removed, isAlternative: false)
-            actionLogs.append(log)
+            actionLogs.append(CartActionLog(productName: product.name, action: .removed, isAlternative: false))
         }
     }
     
-    // Dynamic completed orders log
-    var completedOrders: [MockPOSOrder] = [
-        MockPOSOrder(id: "#421", client: "Ananya Rao", amount: 3299, status: "Completed", time: "11:30 AM", date: "Today"),
-        MockPOSOrder(id: "#420", client: "Kabir Mehta", amount: 2199, status: "Pending Payment", time: "10:15 AM", date: "Today"),
-        MockPOSOrder(id: "#419", client: "Mira Kapoor", amount: 1999, status: "Alternative Suggested", time: "Yesterday", date: "Yesterday")
-    ]
+    // Completed orders from DB
+    var completedOrders: [DBOrder] = []
+    var isLoadingOrders: Bool = false
     
     struct CheckoutParams: Encodable {
         let p_store_id: UUID
@@ -113,45 +128,96 @@ class SellViewModel {
             p_total: totalAmount
         )
         
-        _ = try await SupabaseManager.shared.client
+        let orderIdResponse: UUID = try await SupabaseManager.shared.client
             .rpc("process_pos_checkout", params: params)
             .execute()
+            .value
+        self.lastOrderId = orderIdResponse
     }
     
-    func recordCompletedSale() {
-        let orderNumber = "#\(completedOrders.count + 420 + 2)"
-        let clientName = selectedClient ?? "Anonymous"
-        let newOrder = MockPOSOrder(
-            id: orderNumber,
-            client: clientName,
-            amount: totalAmount,
-            status: isAlternativeSuggested ? "Alternative Suggested" : "Completed",
-            time: "Just Now",
-            date: "Today"
-        )
-        completedOrders.insert(newOrder, at: 0)
+    func fetchRecentOrders(storeID: UUID?) async {
+        guard let storeID = storeID else { return }
+        isLoadingOrders = true
+        defer { isLoadingOrders = false }
+
+        struct OrderRow: Decodable, Identifiable {
+            let id: UUID
+            let total: Double
+            let status: String
+            let created_at: String
+            let associate_id: UUID?
+            let client_id: UUID?
+        }
+
+        do {
+            let rows: [OrderRow] = try await SupabaseManager.shared.client
+                .from("orders")
+                .select("id, total, status, created_at, associate_id, client_id")
+                .eq("store_id", value: storeID)
+                .eq("status", value: "completed")
+                .order("created_at", ascending: false)
+                .limit(20)
+                .execute()
+                .value
+
+            self.completedOrders = rows.map { row in
+                DBOrder(
+                    id: "ORD-\(row.id.uuidString.prefix(8).uppercased())",
+                    amount: row.total,
+                    status: "Completed",
+                    createdAt: row.created_at
+                )
+            }
+        } catch {
+            print("SellViewModel: Error fetching orders: \(error)")
+        }
     }
-    
+
     func resetFlow() {
         cartItems = []
         actionLogs = []
         selectedClient = nil
+        selectedClientId = nil
         selectedPaymentMethod = .razorpay
         originalUnavailableProduct = nil
         isAlternativeSuggested = false
         receiptSharedEmail = ""
         receiptSharedPhone = ""
         isReceiptShared = false
+        // Note: lastOrderId is intentionally NOT reset here — ReceiptView still needs it
     }
 }
 
-struct MockPOSOrder: Identifiable, Hashable {
+struct DBOrder: Identifiable, Hashable {
     let id: String
-    let client: String
     let amount: Double
     let status: String
-    let time: String
-    let date: String
+    let createdAt: String
+
+    var formattedTime: String {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = f.date(from: createdAt) {
+            let df = DateFormatter()
+            df.dateStyle = .none
+            df.timeStyle = .short
+            return df.string(from: date)
+        }
+        return ""
+    }
+
+    var formattedDate: String {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = f.date(from: createdAt) {
+            if Calendar.current.isDateInToday(date) { return "Today" }
+            let df = DateFormatter()
+            df.dateStyle = .medium
+            df.timeStyle = .none
+            return df.string(from: date)
+        }
+        return ""
+    }
 }
 
 struct CartActionLog: Identifiable, Hashable {

@@ -40,21 +40,36 @@ class POSProductRepository {
     
     func fetchProducts(storeID: UUID?) async -> [POSProduct] {
         do {
+            // Fetch products with joined store_price to get store-specific pricing
             struct ProductResponse: Codable {
                 let item_id: Int64
                 let item_name: String
                 let category: String
-                let price: Double
+                let price: Double  // canonical base price
                 let pexels_page: String?
                 let image_url: String?
                 let sku_code: String?
+                let store_price: [StorePriceInfo]?
             }
             
-            let response: [ProductResponse] = try await SupabaseManager.shared.client
+            struct StorePriceInfo: Codable {
+                let local_price: Double
+            }
+            
+            let selectQuery = storeID != nil 
+                ? "item_id, item_name, category, price, pexels_page, image_url, sku_code, store_price!left(local_price)"
+                : "item_id, item_name, category, price, pexels_page, image_url, sku_code"
+            
+            var query = SupabaseManager.shared.client
                 .from("products")
-                .select("item_id, item_name, category, price, pexels_page, image_url, sku_code")
-                .execute()
-                .value
+                .select(selectQuery)
+            
+            // Filter store_price by store_id if provided
+            if let storeID = storeID {
+                query = query.eq("store_price.store_id", value: storeID)
+            }
+            
+            let response: [ProductResponse] = try await query.execute().value
             
             print("POSProductRepository: Loaded \(response.count) products from products table")
             
@@ -74,82 +89,58 @@ class POSProductRepository {
                 // Extract image from pexels_page or fallback to image_url
                 let pexelsImageUrl = extractPexelsImageUrl(from: product.pexels_page ?? "") ?? product.image_url
                 
+                // Use store-specific local_price if available, otherwise use canonical price
+                let finalPrice = product.store_price?.first?.local_price ?? product.price
+                
                 mapped.append(POSProduct(
                     id: uuid,
                     itemId: product.item_id,
                     name: product.item_name,
                     sku: product.sku_code ?? "SKU-\(product.item_id)",
                     category: product.category,
-                    price: product.price,
+                    price: finalPrice,  // Use store-specific or canonical price
                     stock: 50, // default fallback stock
                     size: size,
                     imageUrl: pexelsImageUrl
                 ))
             }
             
-            struct SkuRow: Codable {
-                let id: UUID
-                let item_id: Int64?
-            }
-            
-            var skuToItemIdMap: [UUID: Int64] = [:]
-            do {
-                let skuRows: [SkuRow] = try await SupabaseManager.shared.client
-                    .from("sku")
-                    .select("id, item_id")
-                    .execute()
-                    .value
-                for row in skuRows {
-                    if let itemId = row.item_id {
-                        skuToItemIdMap[row.id] = itemId
-                    }
-                }
-            } catch {
-                print("POSProductRepository: Non-fatal error fetching from sku table: \(error)")
-            }
-            
-            // Fetch inventory stock from inventory_item table
-            var inventoryStock: [UUID: Int] = [:]
-            
+            // Fetch inventory stock directly by item_id
             struct InventoryItemResponse: Codable {
-                let sku_id: UUID
+                let item_id: Int64
                 let on_hand: Int
             }
-            
+
+            var inventoryStock: [Int64: Int] = [:]
             do {
                 let invItems: [InventoryItemResponse]
-                
                 if let storeID = storeID {
                     invItems = try await SupabaseManager.shared.client
                         .from("inventory_item")
-                        .select("sku_id, on_hand")
+                        .select("item_id, on_hand")
                         .eq("store_id", value: storeID)
                         .execute()
                         .value
                 } else {
                     invItems = try await SupabaseManager.shared.client
                         .from("inventory_item")
-                        .select("sku_id, on_hand")
+                        .select("item_id, on_hand")
                         .execute()
                         .value
                 }
-                
                 for item in invItems {
-                    if let itemId = skuToItemIdMap[item.sku_id] {
-                        let deterministicId = UUID(uuidString: String(format: "00000000-0000-0000-0000-%012d", itemId)) ?? item.sku_id
-                        inventoryStock[deterministicId, default: 0] += item.on_hand
-                    } else {
-                        inventoryStock[item.sku_id, default: 0] += item.on_hand
-                    }
+                    inventoryStock[item.item_id, default: 0] += item.on_hand
                 }
             } catch {
                 print("POSProductRepository: Non-fatal error querying inventory_item: \(error)")
             }
-            
-            // Apply actual inventory stock
+
+            // Apply actual inventory stock using item_id directly
             for i in 0..<mapped.count {
-                if let invStock = inventoryStock[mapped[i].id] {
+                if let invStock = inventoryStock[mapped[i].itemId] {
                     mapped[i].stock = invStock
+                } else {
+                    mapped[i].stock = 0 // Not in this store's inventory = 0
                 }
             }
             
@@ -168,5 +159,10 @@ class POSProductRepository {
         if let index = products.firstIndex(where: { $0.id == productId }) {
             products[index].stock = max(0, products[index].stock - 1)
         }
+    }
+
+    func refreshStockForStore(storeID: UUID?) async {
+        // Re-fetch products with updated stock from DB
+        _ = await fetchProducts(storeID: storeID)
     }
 }

@@ -6,6 +6,7 @@ struct StoreListView: View {
     @State private var isShowingCreateForm = false
     @State private var searchText = ""
     @Namespace private var heroNamespace
+    @Environment(AdminNavigationStore.self) private var navStore
     private var filteredStores: [Store] {
         if searchText.isEmpty {
             return viewModel.stores

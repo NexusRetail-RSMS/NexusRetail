@@ -118,6 +118,10 @@ struct AdminDashboardView: View {
             .refreshable {
                 await viewModel.load()
             }
+            .onAppear {
+                // Refresh when view appears (e.g., after navigation from other screens)
+                Task { await viewModel.load() }
+            }
         }
         .toolbar(.hidden, for: .navigationBar)
         .task {
