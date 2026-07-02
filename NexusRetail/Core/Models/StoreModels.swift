@@ -21,6 +21,11 @@ struct Store: Codable, Identifiable, Hashable {
     let managerID: UUID?
     let isWarehouse: Bool?
     let status: StoreStatus?
+    let latitude: Double?
+    let longitude: Double?
+    let city: String?
+    let country: String?
+    let imageURL: String?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -33,6 +38,11 @@ struct Store: Codable, Identifiable, Hashable {
         case managerID = "manager_id"
         case isWarehouse = "is_warehouse"
         case status
+        case latitude
+        case longitude
+        case city
+        case country
+        case imageURL = "image_url"
     }
     
     var readableLocale: String {
@@ -63,6 +73,16 @@ struct StoreOrder: Codable, Identifiable {
         case createdAt = "created_at"
         case orderLineItems = "order_line_item"
     }
+    
+    init(id: UUID, clientID: UUID?, storeID: UUID?, associateID: UUID?, total: Double, createdAt: String, orderLineItems: [OrderLineItem]?) {
+        self.id = id
+        self.clientID = clientID
+        self.storeID = storeID
+        self.associateID = associateID
+        self.total = total
+        self.createdAt = createdAt
+        self.orderLineItems = orderLineItems
+    }
 }
 
 struct OrderLineItem: Codable, Identifiable {
@@ -70,20 +90,33 @@ struct OrderLineItem: Codable, Identifiable {
     let orderID: UUID?
     let quantity: Int
     let appliedPrice: Double
-    let sku: NestedSKU?
+    let products: NestedProduct?
     
     enum CodingKeys: String, CodingKey {
         case id
         case orderID = "order_id"
         case quantity
         case appliedPrice = "applied_price"
-        case sku
+        case products
+    }
+    
+    init(id: UUID?, orderID: UUID?, quantity: Int, appliedPrice: Double, products: NestedProduct?) {
+        self.id = id
+        self.orderID = orderID
+        self.quantity = quantity
+        self.appliedPrice = appliedPrice
+        self.products = products
     }
 }
 
-struct NestedSKU: Codable, Identifiable {
-    let id: UUID?
-    let name: String
+struct NestedProduct: Codable {
+    let itemId: Int64?
+    let itemName: String
     let category: String
+    
+    enum CodingKeys: String, CodingKey {
+        case itemId = "item_id"
+        case itemName = "item_name"
+        case category
+    }
 }
-

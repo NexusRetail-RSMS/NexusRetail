@@ -2,112 +2,152 @@
 //  RequestStockSheet.swift
 //  NexusRetail
 //
+//  Sheet for requesting stock replenishment.
+//  Accepts an InventoryItemRow and lets the manager set quantity.
+//
 
 import SwiftUI
 
 struct RequestStockSheet: View {
     @Environment(\.dismiss) private var dismiss
-    let lowStockItems: [InventoryItem]
-    let onSubmit: ([InventoryItem]) -> Void
-    
-    @State private var selectedItems: Set<UUID> = []
+    let item: InventoryItemRow
+    let storeID: UUID?
+    let onSubmit: (Int64, Int) -> Void
+
+    @State private var quantity: Int = 10
     @State private var isSubmitting = false
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
                 RSMSColors.background
                     .ignoresSafeArea()
-                
-                if lowStockItems.isEmpty {
-                    VStack(spacing: 16) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 60))
-                            .foregroundColor(RSMSColors.success)
-                        Text("No items are currently low on stock.")
-                            .font(RSMSFonts.headline)
-                            .foregroundColor(RSMSColors.primaryText)
-                    }
-                } else {
-                    List {
-                        Section(header: Text("Select items to request from Admin")
-                            .font(RSMSFonts.caption)
-                            .foregroundColor(RSMSColors.secondaryText)) {
-                            ForEach(lowStockItems) { item in
-                                Button {
-                                    if selectedItems.contains(item.id) {
-                                        selectedItems.remove(item.id)
-                                    } else {
-                                        selectedItems.insert(item.id)
-                                    }
-                                } label: {
-                                    HStack {
-                                        Image(systemName: selectedItems.contains(item.id) ? "checkmark.circle.fill" : "circle")
-                                            .foregroundColor(selectedItems.contains(item.id) ? RSMSColors.burgundy : RSMSColors.secondaryText)
-                                            .font(.system(size: 20))
-                                        
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text(item.name)
-                                                .font(RSMSFonts.headline)
-                                                .foregroundColor(RSMSColors.primaryText)
-                                            Text(item.sku)
-                                                .font(RSMSFonts.caption)
-                                                .foregroundColor(RSMSColors.secondaryText)
-                                        }
-                                        
-                                        Spacer()
-                                        
-                                        VStack(alignment: .trailing, spacing: 4) {
-                                            Text("\(item.currentStock) in stock")
-                                                .font(RSMSFonts.subheadline)
-                                                .foregroundColor(RSMSColors.error)
-                                                .fontWeight(.bold)
-                                            Text("Min: \(item.minimumRequired)")
-                                                .font(RSMSFonts.caption)
-                                                .foregroundColor(RSMSColors.secondaryText)
-                                        }
-                                    }
-                                    .padding(.vertical, 4)
+
+                VStack(spacing: RSMSSpacing.xl) {
+                    // Product info
+                    HStack(spacing: 14) {
+                        AsyncImage(url: URL(string: item.imageUrl ?? "")) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                            default:
+                                ZStack {
+                                    Color.gray.opacity(0.08)
+                                    Image(systemName: "shippingbox")
+                                        .foregroundColor(RSMSColors.secondaryText.opacity(0.4))
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
+                        .frame(width: 56, height: 56)
+                        .cornerRadius(10)
+                        .clipped()
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(item.name)
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(RSMSColors.primaryText)
+                            Text("\(item.skuCode) · \(item.category)")
+                                .font(.system(size: 13))
+                                .foregroundColor(RSMSColors.secondaryText)
+
+                            HStack(spacing: 6) {
+                                Text("\(item.onHand) in stock")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundColor(item.stockStatus.color)
+                                Text("· Min: \(item.reorderThreshold)")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(RSMSColors.secondaryText)
+                            }
+                        }
+
+                        Spacer()
                     }
-                    .listStyle(.insetGrouped)
-                    .scrollContentBackground(.hidden)
+                    .padding(16)
+                    .background(Color.white)
+                    .cornerRadius(RSMSRadius.medium)
+
+                    // Quantity
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Quantity to Request")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(RSMSColors.primaryText)
+
+                        HStack(spacing: 16) {
+                            Button {
+                                if quantity > 1 { quantity -= 1 }
+                            } label: {
+                                Image(systemName: "minus")
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundColor(RSMSColors.burgundy)
+                                    .frame(width: 44, height: 44)
+                                    .background(RSMSColors.burgundy.opacity(0.08))
+                                    .cornerRadius(10)
+                            }
+
+                            Text("\(quantity)")
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(RSMSColors.primaryText)
+                                .frame(minWidth: 60)
+                                .multilineTextAlignment(.center)
+
+                            Button {
+                                if quantity < 999 { quantity += 1 }
+                            } label: {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundColor(RSMSColors.burgundy)
+                                    .frame(width: 44, height: 44)
+                                    .background(RSMSColors.burgundy.opacity(0.08))
+                                    .cornerRadius(10)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(12)
+                        .background(Color.white)
+                        .cornerRadius(RSMSRadius.medium)
+                    }
+
+                    Spacer()
+
+                    // Submit button
+                    Button {
+                        isSubmitting = true
+                        onSubmit(item.itemId, quantity)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            isSubmitting = false
+                            dismiss()
+                        }
+                    } label: {
+                        HStack {
+                            if isSubmitting {
+                                ProgressView()
+                                    .tint(.white)
+                            }
+                            Text(isSubmitting ? "Sending\u{2026}" : "Submit Request")
+                                .font(.system(size: 16, weight: .bold))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(RSMSColors.burgundy)
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                    }
+                    .disabled(isSubmitting)
                 }
+                .padding(RSMSSpacing.lg)
             }
             .navigationTitle("Request Stock")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "xmark")
+                            .foregroundColor(RSMSColors.primaryText)
                     }
-                    .foregroundColor(RSMSColors.burgundy)
-                }
-                
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(isSubmitting ? "Sending..." : "Send Request") {
-                        submitRequest()
-                    }
-                    .fontWeight(.bold)
-                    .foregroundColor(selectedItems.isEmpty || isSubmitting ? RSMSColors.disabled : RSMSColors.burgundy)
-                    .disabled(selectedItems.isEmpty || isSubmitting)
                 }
             }
-        }
-    }
-    
-    private func submitRequest() {
-        isSubmitting = true
-        
-        // Simulate network delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            let requestedItems = lowStockItems.filter { selectedItems.contains($0.id) }
-            onSubmit(requestedItems)
-            isSubmitting = false
-            dismiss()
         }
     }
 }

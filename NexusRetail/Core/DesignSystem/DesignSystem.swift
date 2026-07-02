@@ -71,19 +71,15 @@ struct KPICardView: View {
     
     var body: some View {
         HStack(spacing: RSMSSpacing.sm) {
-            // Double-circle icon on the left
+            // Single-color icon on the left
             ZStack {
                 Circle()
-                    .fill(color.opacity(0.08))
-                    .frame(width: 56, height: 56)
-                
-                Circle()
                     .fill(color.opacity(0.18))
-                    .frame(width: 40, height: 40)
+                    .frame(width: 48, height: 48)
                 
                 Image(systemName: icon)
                     .foregroundColor(color)
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 20, weight: .semibold))
             }
             
             // Value + label on the right
@@ -97,14 +93,14 @@ struct KPICardView: View {
                 Text(title)
                     .font(.system(size: 13))
                     .foregroundColor(RSMSColors.secondaryText)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             
             Spacer(minLength: 0)
         }
         .padding(.horizontal, RSMSSpacing.md)
-        .padding(.vertical, 18) // Make card bigger vertically
+        .frame(height: 94) // Fixed height to ensure all cards match
         .background(color.opacity(0.04))
         .cornerRadius(RSMSRadius.medium)
         .overlay(
@@ -132,5 +128,110 @@ public struct HeaderCurve: Shape {
         )
         path.closeSubpath()
         return path
+    }
+}
+
+/// A reusable search bar styled after the iOS system search bar.
+/// Rounded pill with a magnifying glass on the left and a mic icon
+/// on the right (collapses to xmark when text is present).
+struct NexusSearchBar: View {
+    @Binding var text: String
+    var placeholder: String = "Search"
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(RSMSColors.secondaryText)
+
+            TextField(placeholder, text: $text)
+                .font(.system(size: 17))
+                .foregroundStyle(RSMSColors.primaryText)
+                .focused($isFocused)
+                .submitLabel(.search)
+
+            Spacer(minLength: 0)
+
+            if text.isEmpty {
+                Image(systemName: "mic.fill")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(RSMSColors.secondaryText)
+                    .transition(.opacity.combined(with: .scale))
+            } else {
+                Button {
+                    text = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 17))
+                        .foregroundStyle(RSMSColors.secondaryText)
+                }
+                .transition(.opacity.combined(with: .scale))
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(.ultraThinMaterial)
+        )
+        .animation(.easeInOut(duration: 0.18), value: text.isEmpty)
+        .onTapGesture { isFocused = true }
+    }
+}
+
+/// A drop-in replacement for AsyncImage that caches images in memory/disk
+/// to prevent reloading the same image repeatedly.
+public struct CachedAsyncImage<Content: View, Placeholder: View>: View {
+    let url: URL?
+    let content: (Image) -> Content
+    let placeholder: () -> Placeholder
+
+    @State private var image: Image?
+
+    public init(url: URL?, @ViewBuilder content: @escaping (Image) -> Content, @ViewBuilder placeholder: @escaping () -> Placeholder) {
+        self.url = url
+        self.content = content
+        self.placeholder = placeholder
+    }
+
+    public var body: some View {
+        if let image = image {
+            content(image)
+        } else {
+            placeholder()
+                .task(id: url) {
+                    await loadImage()
+                }
+        }
+    }
+
+    private func loadImage() async {
+        guard let url = url else { return }
+        
+        let request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad)
+        
+        if let cachedResponse = URLCache.shared.cachedResponse(for: request),
+           let uiImage = UIImage(data: cachedResponse.data) {
+            self.image = Image(uiImage: uiImage)
+            return
+        }
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200,
+               let uiImage = UIImage(data: data) {
+                let cachedData = CachedURLResponse(response: response, data: data)
+                URLCache.shared.storeCachedResponse(cachedData, for: request)
+                self.image = Image(uiImage: uiImage)
+            }
+        } catch {
+            let nsError = error as NSError
+            if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled {
+                // Ignore cancellation errors
+            } else {
+                print("Failed to load image: \(error)")
+            }
+        }
     }
 }

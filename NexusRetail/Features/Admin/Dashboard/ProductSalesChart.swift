@@ -33,30 +33,19 @@ struct ProductSalesChart: View {
 
             // Chart
             if data.isEmpty {
-                ZStack {
-                    Chart {
-                        SectorMark(
-                            angle: .value("Placeholder", 1),
-                            innerRadius: .ratio(0.65),
-                            angularInset: 2
-                        )
-                        .foregroundStyle(RSMSColors.burgundy.opacity(0.1))
-                        .cornerRadius(4)
-                    }
-                    .chartLegend(.hidden)
-                    .frame(height: 200)
-                    
-                    VStack(spacing: 2) {
-                        Image(systemName: "bag")
-                            .font(.system(size: 22))
-                            .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
-                        Text("No product data")
-                            .font(.system(size: 10))
-                            .foregroundColor(RSMSColors.secondaryText)
-                    }
+                // Empty state - just show text, no chart to avoid rendering issues
+                VStack(spacing: 8) {
+                    Image(systemName: "bag")
+                        .font(.system(size: 32))
+                        .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                    Text("No product data")
+                        .font(.system(size: 14))
+                        .foregroundColor(RSMSColors.secondaryText)
                 }
+                .frame(height: 200)
                 .padding(.top, RSMSSpacing.sm)
-            } else {
+            } else if data.allSatisfy({ $0.sales > 0 }) {
+                // Only render chart if all values are positive (Charts library requirement)
                 ZStack {
                     Chart(data) { point in
                         SectorMark(
@@ -69,11 +58,18 @@ struct ProductSalesChart: View {
                     }
                     .chartForegroundStyleScale([
                         "Couture": RSMSColors.burgundy,
+                        "Perfume": Color(hex: "F4A261"),
+                        "Perfumes": Color(hex: "F4A261"),
+                        "Fragrances": Color(hex: "F4A261"),
                         "Fragrance": Color(hex: "F4A261"),
+                        "Jewellery": Color(hex: "E9C46A"),
                         "Jewelry": Color(hex: "E9C46A"),
                         "Leather": Color(hex: "2A9D8F"),
+                        "Leather Goods": Color(hex: "2A9D8F"),
                         "Watches": Color(hex: "264653"),
-                        "Accessories": Color(hex: "8A2BE2")
+                        "Accessories": Color(hex: "8A2BE2"),
+                        "Bags": Color(hex: "2A9D8F"),
+                        "Clothes": RSMSColors.burgundy
                     ])
                     .chartLegend(.hidden)
                     .frame(height: 200)
@@ -87,6 +83,18 @@ struct ProductSalesChart: View {
                             .foregroundColor(RSMSColors.primaryText)
                     }
                 }
+                .padding(.top, RSMSSpacing.sm)
+            } else {
+                // Data has zero or negative values - show error state
+                VStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 32))
+                        .foregroundColor(Color(hex: "FF9500"))
+                    Text("Invalid data")
+                        .font(.system(size: 14))
+                        .foregroundColor(RSMSColors.secondaryText)
+                }
+                .frame(height: 200)
                 .padding(.top, RSMSSpacing.sm)
             }
 
@@ -117,7 +125,8 @@ struct ProductSalesChart: View {
     private func shortLabel(_ category: String) -> String {
         switch category {
         case "Leather Goods": return "Leather"
-        case "Fragrances":    return "Fragrance"
+        case "Perfumes":      return "Perfume"
+        case "Jewellery":     return "Jewellery"
         default:              return category
         }
     }
@@ -125,11 +134,13 @@ struct ProductSalesChart: View {
     private func colorFor(category: String) -> Color {
         switch category {
         case "Couture": return RSMSColors.burgundy
-        case "Fragrance": return Color(hex: "F4A261")
-        case "Jewelry": return Color(hex: "E9C46A")
-        case "Leather": return Color(hex: "2A9D8F")
+        case "Perfume", "Perfumes", "Fragrances", "Fragrance": return Color(hex: "F4A261")
+        case "Jewellery", "Jewelry": return Color(hex: "E9C46A")
+        case "Leather", "Leather Goods": return Color(hex: "2A9D8F")
         case "Watches": return Color(hex: "264653")
         case "Accessories": return Color(hex: "8A2BE2")
+        case "Bags": return Color(hex: "2A9D8F")
+        case "Clothes": return RSMSColors.burgundy
         default: return RSMSColors.chartBar
         }
     }

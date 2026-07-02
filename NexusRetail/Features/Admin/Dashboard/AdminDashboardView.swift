@@ -30,7 +30,9 @@ struct AdminDashboardView: View {
             id: UUID(uuidString: "00000000-0000-0000-0000-000000000000") ?? UUID(),
             name: viewModel.displayCountry == "All Global" ? "Global Sales" : "\(viewModel.displayCountry) Sales",
             address: nil, locale: "en_US", currencyCode: "USD", timezone: nil,
-            phone: nil, managerID: nil, isWarehouse: false, status: .active
+            phone: nil, managerID: nil, isWarehouse: false, status: .active,
+            latitude: nil, longitude: nil, city: nil, country: nil,
+            imageURL: nil
         )
     }
 
@@ -105,7 +107,7 @@ struct AdminDashboardView: View {
                             .onTapGesture { isShowingProductsDetail = true }
 
                             // MARK: - Top Locations
-                            TopLocationsChartView(revenueByCountry: viewModel.byCountry)
+                            TopLocationsChartView(revenueByCountry: viewModel.byCountry, selectedCountry: viewModel.selectedCountry)
                         }
                         .padding(.horizontal, RSMSSpacing.lg)
                         .padding(.top, RSMSSpacing.xxl)
@@ -115,6 +117,10 @@ struct AdminDashboardView: View {
             }
             .refreshable {
                 await viewModel.load()
+            }
+            .onAppear {
+                // Refresh when view appears (e.g., after navigation from other screens)
+                Task { await viewModel.load() }
             }
         }
         .toolbar(.hidden, for: .navigationBar)

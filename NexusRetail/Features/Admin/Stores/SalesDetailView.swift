@@ -16,7 +16,7 @@ import Supabase
 // MARK: - Granular Data Point
 
 struct SalesGranularPoint: Identifiable {
-    let id = UUID()
+    var id: String { label }
     let label: String
     let online: Double
     let offline: Double
@@ -27,7 +27,9 @@ struct SalesGranularPoint: Identifiable {
 
 struct SalesDetailView: View {
     let store: Store
-    @State private var selectedRange: StoreChartTimeRange = .weekly(Date())
+    // Default to yearly so there's always data visible on open.
+    // Weekly default caused "no data" because current week may have no orders.
+    @State private var selectedRange: StoreChartTimeRange = .yearly(Date())
     @Environment(\.dismiss) private var dismiss
 
     @State private var dataPoints: [SalesPeriodResult] = []
@@ -68,21 +70,6 @@ struct SalesDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
 
-            // Back button + title
-            HStack {
-                Button { dismiss() } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(RSMSColors.burgundy)
-                        .frame(width: 36, height: 36)
-                        .background(RSMSColors.burgundy.opacity(0.1))
-                        .clipShape(Circle())
-                }
-                Spacer()
-            }
-            .padding(.horizontal, RSMSSpacing.lg)
-            .padding(.top, RSMSSpacing.md)
-
             HStack {
                 Text("Sales Report")
                     .font(.system(size: 28, weight: .bold))
@@ -96,7 +83,6 @@ struct SalesDetailView: View {
                     Button("Yearly") { selectedRange = .yearly(Date()) }
                 } label: {
                     HStack(spacing: 4) {
-                        Image(systemName: "calendar")
                         Text(selectedRange.isWeekly ? "Weekly" : (selectedRange.isMonthly ? "Monthly" : "Yearly"))
                         Image(systemName: "chevron.down")
                             .font(.system(size: 12))
@@ -106,7 +92,7 @@ struct SalesDetailView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .background(Color.gray.opacity(0.1))
-                    .cornerRadius(8)
+                    .clipShape(Capsule())
                 }
             }
             .padding(.horizontal, RSMSSpacing.lg)
@@ -309,7 +295,21 @@ struct SalesDetailView: View {
         }
         }
         .background(RSMSColors.background.ignoresSafeArea())
-        .navigationBarHidden(true)
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.visible, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    dismiss()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 16, weight: .semibold))
+                    }
+                    .foregroundColor(RSMSColors.burgundy)
+                }
+            }
+        }
         .task(id: selectedRange) {
             await fetchData()
         }

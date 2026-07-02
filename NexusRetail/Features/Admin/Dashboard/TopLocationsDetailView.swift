@@ -48,7 +48,6 @@ struct TopLocationsDetailView: View {
             
             ScrollView {
                 VStack(spacing: RSMSSpacing.xl) {
-                    
 
                     // Map Area
                     ZStack {
