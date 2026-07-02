@@ -161,6 +161,20 @@ struct StoreFormView: View {
                                             .foregroundColor(RSMSColors.burgundy)
                                     }
 
+                    if editingStore != nil {
+                        FormSectionCard(title: "Manager") {
+                            Button {
+                                isShowingManagerPicker = true
+                            } label: {
+                                HStack(spacing: RSMSSpacing.md) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(RSMSColors.burgundy.opacity(0.12))
+                                            .frame(width: 38, height: 38)
+                                        Image(systemName: selectedManager == nil ? "person.badge.plus" : "person.fill")
+                                            .font(.system(size: 15))
+                                            .foregroundColor(RSMSColors.burgundy)
+                                    }
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text("Manager")
                                             .font(.system(size: 11.5, weight: .medium))
