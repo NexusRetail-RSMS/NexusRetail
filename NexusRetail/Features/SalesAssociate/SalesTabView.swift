@@ -1,16 +1,6 @@
-//
-//  SalesTabView.swift
-//  NexusRetail
-//
-//  Root tab container for the Sales Associate role.
-//  Each tab delegates entirely to its own View + ViewModel.
-//
-
 import SwiftUI
 
 struct SalesTabView: View {
-    @State private var clientelingVM = ClientelingViewModel()
-    
     init() {
         let appearance = UITabBarAppearance()
         appearance.configureWithDefaultBackground()
@@ -33,35 +23,36 @@ struct SalesTabView: View {
         UITabBar.appearance().standardAppearance = appearance
         UITabBar.appearance().scrollEdgeAppearance = appearance
     }
-
+    
     var body: some View {
         TabView {
             SalesDashboardView()
-                .tabItem { Label("Dashboard", systemImage: "square.grid.2x2.fill") }
-            
-            NavigationStack {
-                ClientelingView()
-            }
-            .tabItem { Label("Clients", systemImage: "person.2.fill") }
+                .tabItem {
+                    Label("Dashboard", systemImage: "square.grid.2x2")
+                }
             
             NavigationStack {
                 SalesAssociateDashboardView()
             }
-            .tabItem { Label("Legacy Clients", systemImage: "person.3.fill") }
+            .tabItem {
+                Label("Clients", systemImage: "person.3.fill")
+            }
+            
+            NavigationStack {
+                AppointmentsView()
+            }
+            .tabItem {
+                Label("Appointments", systemImage: "calendar")
+            }
             
             BOPISView()
                 .tabItem { Label("BOPIS", systemImage: "bag.fill") }
-            
-            NavigationStack {
-                AppointmentsView(clients: clientelingVM.clients)
-            }
-            .tabItem { Label("Appointments", systemImage: "calendar.badge.clock") }
         }
         .tint(RSMSColors.burgundy)
     }
 }
 
 #Preview {
-    SalesTabView()
-        .environment(SessionStore())
+    SalesTabView().environment(SessionStore())
 }
+

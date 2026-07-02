@@ -26,8 +26,9 @@ struct StoreFormView: View {
     @State private var selectedManagerID: UUID? = nil
     @State private var isActive: Bool = true
     
-    @State private var includeRazorpay: Bool = false
-    @State private var includeCard: Bool = false
+    @State private var razorpayConfig = PaymentTerminalConfig(isEnabled: false, status: .notConfigured, environment: .test, credential1: nil, credential2: nil, updatedAt: nil)
+    @State private var stripeConfig = PaymentTerminalConfig(isEnabled: false, status: .notConfigured, environment: .test, credential1: nil, credential2: nil, updatedAt: nil)
+    @State private var providerToConfigure: PaymentProvider? = nil
     
     let currencies = ["INR", "USD", "EUR", "AED", "GBP"]
     let locales = ["en_IN", "en_US", "en_GB", "fr_FR", "ar_AE"]
@@ -167,9 +168,20 @@ struct StoreFormView: View {
                     }
                 }
                 
-                Section("Payment Terminals") {
-                    Toggle("Razorpay", isOn: $includeRazorpay)
-                    Toggle("Card Terminal", isOn: $includeCard)
+                Section(header: Text("Payment Gateways"), footer: Text("Configure payment gateways for your store so you can start accepting payments.")) {
+                    LocalProviderCard(config: $razorpayConfig, provider: .razorpay) {
+                        providerToConfigure = .razorpay
+                    }
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+                    .padding(.vertical, 4)
+                    
+                    LocalProviderCard(config: $stripeConfig, provider: .card) {
+                        providerToConfigure = .card
+                    }
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+                    .padding(.vertical, 4)
                 }
                 
                 if let errorMessage = viewModel.errorMessage {
@@ -223,14 +235,14 @@ struct StoreFormView: View {
                                     timezone: timezone,
                                     managerID: selectedManagerID,
                                     status: isActive ? .active : .archived,
-                                    includeRazorpay: includeRazorpay,
-                                    includeCard: includeCard,
+                                    razorpayConfig: razorpayConfig,
+                                    stripeConfig: stripeConfig,
                                     latitude: pickedCoordinate?.latitude,
                                     longitude: pickedCoordinate?.longitude,
                                     city: city,
                                     country: country
                                 )
-                                if success { dismiss() }
+                                if success != nil { dismiss() }
                             }
                         }
                     }
@@ -246,6 +258,13 @@ struct StoreFormView: View {
                         .padding()
                         .background(Color(uiColor: .systemBackground))
                         .cornerRadius(8)
+                }
+            }
+            .sheet(item: $providerToConfigure) { provider in
+                if provider == .razorpay {
+                    LocalPaymentConfigView(config: $razorpayConfig, provider: .razorpay)
+                } else {
+                    LocalPaymentConfigView(config: $stripeConfig, provider: .card)
                 }
             }
         }
@@ -278,5 +297,88 @@ struct StoreFormView: View {
                 }
             }
         }
+    }
+}
+
+struct LocalProviderCard: View {
+    @Binding var config: PaymentTerminalConfig
+    let provider: PaymentProvider
+    let onTapConfigure: () -> Void
+    
+    var body: some View {
+        Button {
+            // Only allow config if enabled
+            if config.isEnabled {
+                onTapConfigure()
+            } else {
+                config.isEnabled = true
+                onTapConfigure()
+            }
+        } label: {
+            VStack(spacing: 0) {
+                // Top Row: Icon + Info + Toggle
+                HStack(spacing: RSMSSpacing.md) {
+                    // Provider icon in a burgundy circle
+                    ZStack {
+                        Circle()
+                            .fill(RSMSColors.burgundy.opacity(0.12))
+                            .frame(width: 48, height: 48)
+
+                        Image(systemName: provider.iconName)
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundColor(RSMSColors.burgundy)
+                    }
+
+                    // Name + subtitle
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(provider.displayName)
+                            .font(RSMSFonts.headline)
+                            .foregroundColor(RSMSColors.primaryText)
+
+                        Text(provider.subtitle)
+                            .font(RSMSFonts.caption)
+                            .foregroundColor(RSMSColors.secondaryText)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                    }
+
+                    Spacer()
+
+                    // Toggle
+                    Toggle("", isOn: $config.isEnabled)
+                        .labelsHidden()
+                        .tint(RSMSColors.burgundy)
+                }
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, RSMSSpacing.lg)
+                .padding(.bottom, RSMSSpacing.md)
+
+                // Divider
+                Rectangle()
+                    .fill(RSMSColors.divider)
+                    .frame(height: 1)
+                    .padding(.horizontal, RSMSSpacing.lg)
+
+                // Bottom Row: Status pill + Chevron
+                HStack {
+                    StatusPill.forPaymentStatus(config.status)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(RSMSColors.secondaryText)
+                        .padding(.leading, RSMSSpacing.sm)
+                }
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.vertical, RSMSSpacing.md)
+            }
+            .background(RSMSColors.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.large))
+            .overlay(
+                RoundedRectangle(cornerRadius: RSMSRadius.large)
+                    .stroke(RSMSColors.cardBorder, lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
+        }
+        .buttonStyle(.plain)
     }
 }

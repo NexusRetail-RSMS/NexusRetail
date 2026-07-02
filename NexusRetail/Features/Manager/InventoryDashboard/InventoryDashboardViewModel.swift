@@ -90,7 +90,7 @@ class InventoryViewModel {
         }
         
         guard let finalStoreID = targetStoreID else {
-            await loadMockData()
+            isLoading = false
             return
         }
         
@@ -123,22 +123,15 @@ class InventoryViewModel {
                 self.requests = requestsResponse
                 self.isLoading = false
             }
+        } catch is CancellationError {
+            // Task was cancelled, ignore.
+            return
         } catch {
             print("Inventory fetch error: \(error)")
-            // Fallback to mock data
-            await loadMockData()
             await MainActor.run {
-                self.errorMessage = "Using offline data. Pull to refresh."
+                self.errorMessage = error.localizedDescription
                 self.isLoading = false
             }
-        }
-    }
-    
-    private func loadMockData() async {
-        await MainActor.run {
-            self.items = InventoryItemRow.mockItems
-            self.requests = TransferRequestRow.mockRequests
-            self.isLoading = false
         }
     }
     

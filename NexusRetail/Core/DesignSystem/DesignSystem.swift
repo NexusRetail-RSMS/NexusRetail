@@ -93,7 +93,8 @@ struct KPICardView: View {
                 Text(title)
                     .font(.system(size: 13))
                     .foregroundColor(RSMSColors.secondaryText)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
                     .minimumScaleFactor(0.8)
             }
             

@@ -1,118 +1,213 @@
-//
-//  AppointmentsView.swift
-//  NexusRetail
-//
-//  Appointments tab — shows upcoming appointments and a "Book" CTA.
-//  Driven by AppointmentsViewModel.
-//
-
 import SwiftUI
 
 struct AppointmentsView: View {
-    @State private var viewModel = AppointmentsViewModel()
-    @State private var isBookingPresented = false
-    @State private var isMorePresented    = false
+    @State private var appointments: [AssociateAppointment] = [
+        AssociateAppointment(
+            clientName: "Sarah Johnson",
+            clientEmail: "sarah.johnson@example.com",
+            clientPhone: "+91 98765 43210",
+            date: Calendar.current.date(bySettingHour: 10, minute: 30, second: 0, of: .now) ?? .now,
+            mode: .inStore,
+            status: .confirmed,
+            productOrNote: "Louis Vuitton Neverfull PM"
+        ),
+        AssociateAppointment(
+            clientName: "Marcus Chen",
+            clientEmail: "marcus.chen@example.com",
+            clientPhone: "+91 91234 56789",
+            date: Calendar.current.date(bySettingHour: 14, minute: 0, second: 0, of: .now) ?? .now,
+            mode: .inStore,
+            status: .pending,
+            productOrNote: "Cartier Tank Must Watch"
+        ),
+        AssociateAppointment(
+            clientName: "Isabella Rossi",
+            clientEmail: "isabella.rossi@example.com",
+            clientPhone: "+91 99887 76655",
+            date: Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.date(bySettingHour: 11, minute: 15, second: 0, of: .now) ?? .now) ?? .now,
+            mode: .inStore,
+            status: .confirmed,
+            productOrNote: "Hermès Birkin 30 Consultation"
+        ),
+        AssociateAppointment(
+            clientName: "Kabir Mehta",
+            clientEmail: "kabir.mehta@example.com",
+            clientPhone: "+91 90909 80808",
+            date: Calendar.current.date(byAdding: .day, value: 3, to: Calendar.current.date(bySettingHour: 14, minute: 15, second: 0, of: .now) ?? .now) ?? .now,
+            mode: .video,
+            status: .confirmed,
+            productOrNote: "Rolex Datejust Styling Call"
+        ),
+        AssociateAppointment(
+            clientName: "Rhea Sethi",
+            clientEmail: "rhea.sethi@example.com",
+            clientPhone: "+91 95005 60607",
+            date: Calendar.current.date(byAdding: .day, value: 5, to: Calendar.current.date(bySettingHour: 12, minute: 30, second: 0, of: .now) ?? .now) ?? .now,
+            mode: .video,
+            status: .pending,
+            productOrNote: "Chanel Classic Flap Sourcing"
+        )
+    ]
 
-    // Clienteling VM is passed in so we can read the client list for the booking picker.
-    let clients: [AssociateClient]
+    @State private var showingNewAppointment = false
+
+    enum FilterMode: String, CaseIterable, Identifiable {
+        case inStore = "In Store"
+        case video = "Video"
+        var id: String { rawValue }
+    }
+    @State private var selectedFilter: FilterMode = .inStore
+
+    // MARK: - Filtering / Grouping
+
+    private var filtered: [AssociateAppointment] {
+        appointments
+            .filter { appt in
+                appt.date >= Calendar.current.startOfDay(for: .now) &&
+                ((selectedFilter == .inStore && appt.mode == .inStore) ||
+                 (selectedFilter == .video && appt.mode == .video))
+            }
+            .sorted { $0.date < $1.date }
+    }
+
+    private var todayAppointments: [AssociateAppointment] {
+        filtered.filter { Calendar.current.isDateInToday($0.date) }
+    }
+
+    private var tomorrowAppointments: [AssociateAppointment] {
+        filtered.filter { Calendar.current.isDateInTomorrow($0.date) }
+    }
+
+    private var upcomingAppointments: [AssociateAppointment] {
+        filtered.filter {
+            !Calendar.current.isDateInToday($0.date) && !Calendar.current.isDateInTomorrow($0.date)
+        }
+    }
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 22) {
-
-                // Custom Header
-                HStack {
-                    Text("Appointments")
-                        .font(.system(size: 34, weight: .bold))
-
-                    Spacer()
-                }
-
-                bookAppointmentButton
-
-                upcomingAppointmentsCard
-            }
-            .screenPadding()
-        }
-        .background(RSMSColors.background.ignoresSafeArea())
-        .toolbar(.hidden, for: .navigationBar)
-        .sheet(isPresented: $isBookingPresented) {
-            BookAppointmentSheet(clients: clients, viewModel: viewModel)
-        }
-        .sheet(isPresented: $isMorePresented) {
-            MoreAppointmentsSheet(appointments: viewModel.laterAppointments)
-        }
-    }
-
-    // MARK: - Hero CTA
-    private var bookAppointmentButton: some View {
-        Button {
-            isBookingPresented = true
-        } label: {
-            HStack(spacing: 16) {
-                Image(systemName: "calendar.badge.plus")
-                    .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 54, height: 54)
-                    .background(.white.opacity(0.18))
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Book Appointment")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
-                    Text("Video or in-store consultation")
-                        .font(RSMSFonts.subheadline)
-                        .foregroundStyle(.white.opacity(0.74))
-                }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .foregroundStyle(.white.opacity(0.55))
-            }
-            .padding(18)
-            .background(
-                LinearGradient(
-                    colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-        }
-        .buttonStyle(.plain)
-    }
-
-    // MARK: - Upcoming Card
-    private var upcomingAppointmentsCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Upcoming Appointments")
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
-                    .foregroundStyle(RSMSColors.primaryText)
-                Spacer()
-                if !viewModel.laterAppointments.isEmpty {
-                    Button("View More") {
-                        isMorePresented = true
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 22) {
+                    HStack(alignment: .center) {
+                        Text("Appointments")
+                            .font(.largeTitle.weight(.bold))
+                        
+                        Spacer()
+                        
+                        Button {
+                            showingNewAppointment = true
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.system(size: 20, weight: .medium))
+                                .foregroundColor(RSMSColors.burgundy)
+                                .frame(width: 44, height: 44)
+                                .background(RSMSColors.burgundy.opacity(0.1))
+                                .clipShape(Circle())
+                        }
+                        .accessibilityLabel("New Appointment")
                     }
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(RSMSColors.burgundy)
-                }
-            }
+                    .padding(.top, 4)
 
-            VStack(spacing: 0) {
-                if viewModel.twoDayAppointments.isEmpty {
-                    emptyStateRow(title: "No appointments in the next 2 days", icon: "calendar")
-                } else {
-                    ForEach(Array(viewModel.twoDayAppointments.enumerated()), id: \.element.id) { index, appt in
-                        appointmentRow(appt)
-                        if index < viewModel.twoDayAppointments.count - 1 {
-                            Divider().padding(.leading, 72)
+                    Picker("Filter", selection: $selectedFilter) {
+                        ForEach(FilterMode.allCases) { filter in
+                            Text(filter.rawValue).tag(filter)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.bottom, 4)
+
+                    if filtered.isEmpty {
+                        ContentUnavailableView(
+                            "No Appointments",
+                            systemImage: "calendar.badge.exclamationmark",
+                            description: Text("No upcoming appointments scheduled.")
+                        )
+                        .padding(.top, 40)
+                    } else {
+                        if !todayAppointments.isEmpty {
+                            sectionBlock(title: "Today", items: todayAppointments)
+                        }
+                        if !tomorrowAppointments.isEmpty {
+                            sectionBlock(title: "Tomorrow", items: tomorrowAppointments)
+                        }
+                        if !upcomingAppointments.isEmpty {
+                            sectionBlock(title: "Upcoming", items: upcomingAppointments)
                         }
                     }
                 }
+                .padding(.horizontal, 18)
+                .padding(.top, 8)
+                .padding(.bottom, 24)
+            }
+            .background(RSMSColors.background.ignoresSafeArea())
+            .navigationBarHidden(true)
+            .sheet(isPresented: $showingNewAppointment) {
+                NewAppointmentView { newAppt in
+                    appointments.append(newAppt)
+                }
             }
         }
-        .padding(20)
-        .luxuryCard()
+        .tint(RSMSColors.burgundy)
     }
+
+    // MARK: - Section
+
+    private func sectionBlock(title: String, items: [AssociateAppointment]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title.uppercased())
+                .font(.system(size: 12, weight: .semibold))
+                .kerning(0.6)
+                .foregroundStyle(.black)
+                .padding(.leading, 4)
+
+            VStack(spacing: 14) {
+                ForEach(items) { appt in
+                    appointmentCard(appt)
+                }
+            }
+        }
+    }
+
+    // MARK: - Card
+
+    private func appointmentCard(_ appt: AssociateAppointment) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Label(appt.time, systemImage: "clock")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(RSMSColors.darkBrown)
+                Spacer()
+                statusBadge(appt.status)
+            }
+
+            Text(appt.clientName)
+                .font(.system(size: 19, weight: .bold))
+                .foregroundStyle(RSMSColors.darkBrown)
+
+            Text(appt.productOrNote)
+                .font(.system(size: 14))
+                .foregroundStyle(RSMSColors.secondaryText)
+
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(RSMSColors.cardBackground)
+                .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 3)
+        )
+    }
+
+    private func statusBadge(_ status: AppointmentStatus) -> some View {
+        Label(status.title, systemImage: status.icon)
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(status.color)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(status.color.opacity(0.14))
+            .clipShape(Capsule())
+    }
+}
+
+#Preview {
+    AppointmentsView()
 }
