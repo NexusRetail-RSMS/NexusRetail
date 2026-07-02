@@ -120,4 +120,3 @@ struct NestedProduct: Codable {
         case category
     }
 }
-
