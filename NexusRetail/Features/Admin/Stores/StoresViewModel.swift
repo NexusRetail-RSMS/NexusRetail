@@ -52,7 +52,7 @@ class StoresViewModel {
     }
     
     /// Creates a new store and re-fetches the list.
-    func create(name: String, address: String, phone: String, locale: String, currencyCode: String, timezone: String, managerID: UUID?, status: StoreStatus, includeRazorpay: Bool, includeCard: Bool, latitude: Double?, longitude: Double?, city: String?, country: String?) async -> Bool {
+    func create(name: String, address: String, phone: String, locale: String, currencyCode: String, timezone: String, managerID: UUID?, status: StoreStatus, includeRazorpay: Bool, includeCard: Bool, latitude: Double?, longitude: Double?, city: String?, country: String?, imageData: Data? = nil) async -> Bool {
         guard !name.isEmpty, !address.isEmpty else {
             errorMessage = "Name and Address are required."
             return false
@@ -66,6 +66,17 @@ class StoresViewModel {
 
         isLoading = true
         errorMessage = nil
+        
+        var uploadedImageURL: String? = nil
+        if let imageData {
+            do {
+                uploadedImageURL = try await ImageUploader.upload(data: imageData, bucket: "store-images", folder: "stores")
+            } catch {
+                self.errorMessage = "Failed to upload image: \(error.localizedDescription)"
+                isLoading = false
+                return false
+            }
+        }
         
         let newStoreId = UUID()
         let newStore = Store(
@@ -83,7 +94,7 @@ class StoresViewModel {
             longitude: longitude,
             city: (city?.isEmpty ?? true) ? nil : city,
             country: (country?.isEmpty ?? true) ? nil : country,
-            imageURL: nil
+            imageURL: uploadedImageURL
         )
         
         var terminals: [PaymentTerminal] = []
@@ -122,7 +133,7 @@ class StoresViewModel {
     }
     
     /// Updates an existing store.
-    func update(storeId: UUID, name: String, address: String, phone: String, locale: String, currencyCode: String, timezone: String, managerID: UUID?, status: StoreStatus, latitude: Double?, longitude: Double?, city: String?, country: String?) async -> Bool {
+    func update(storeId: UUID, name: String, address: String, phone: String, locale: String, currencyCode: String, timezone: String, managerID: UUID?, status: StoreStatus, latitude: Double?, longitude: Double?, city: String?, country: String?, imageData: Data? = nil) async -> Bool {
         guard !name.isEmpty else {
             errorMessage = "Name is required."
             return false
@@ -145,6 +156,17 @@ class StoresViewModel {
             return false
         }
         
+        var resolvedImageURL = existingStore.imageURL
+        if let imageData {
+            do {
+                resolvedImageURL = try await ImageUploader.upload(data: imageData, bucket: "store-images", folder: "stores")
+            } catch {
+                self.errorMessage = "Failed to upload image: \(error.localizedDescription)"
+                isLoading = false
+                return false
+            }
+        }
+        
         let updatedStore = Store(
             id: storeId,
             name: name,
@@ -160,7 +182,7 @@ class StoresViewModel {
             longitude: longitude,
             city: (city?.isEmpty ?? true) ? nil : city,
             country: (country?.isEmpty ?? true) ? nil : country,
-            imageURL: existingStore.imageURL
+            imageURL: resolvedImageURL
         )
         
         do {

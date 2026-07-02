@@ -35,6 +35,22 @@ class StaffViewModel {
     var errorMessage: String? = nil
     
     private let localCacheKey = "nexus_local_staff_cache_v2"
+    private let deletedIDsKey = "nexus_local_staff_deleted_ids_v1"
+
+    private var deletedIDs: Set<UUID> {
+        get {
+            guard let data = UserDefaults.standard.data(forKey: deletedIDsKey),
+                  let set = try? JSONDecoder().decode(Set<UUID>.self, from: data) else {
+                return []
+            }
+            return set
+        }
+        set {
+            if let data = try? JSONEncoder().encode(newValue) {
+                UserDefaults.standard.set(data, forKey: deletedIDsKey)
+            }
+        }
+    }
 
     init() {
         self.employees = loadFromCache()
@@ -68,11 +84,21 @@ class StaffViewModel {
             formatter.currencyCode = "USD"
             formatter.maximumFractionDigits = 0
             
-            self.employees = response.map { stat in
-                let isAfterSales = stat.role == "after_sales"
+            let deleted = self.deletedIDs
+            
+            let remoteEmployees = response.compactMap { stat -> DisplayEmployee? in
+                guard !deleted.contains(stat.id) else { return nil }
+                
+                let isAfterSales = stat.role == "after_sales" || stat.role?.lowercased().contains("after") == true
                 let roleStr = isAfterSales ? "After Sales Associate" : "Sales Associate"
                 let revVal = stat.revenue ?? 0
                 let revStr = formatter.string(from: NSNumber(value: revVal)) ?? "$\(revVal)"
+                
+                let existing = self.employees.first { emp in
+                    emp.id == stat.id || (!emp.email.isEmpty && emp.email == stat.email)
+                }
+                let finalImageUrl = stat.imageUrl ?? existing?.imageUrl
+                let finalImageData = existing?.imageData
                 
                 return DisplayEmployee(
                     id: stat.id,
@@ -80,11 +106,20 @@ class StaffViewModel {
                     role: roleStr,
                     productsSold: stat.productsSold ?? 0,
                     revenue: revStr,
-                    imageUrl: stat.imageUrl,
+                    imageUrl: finalImageUrl,
                     phone: stat.phone ?? "",
-                    email: stat.email ?? ""
+                    email: stat.email ?? "",
+                    imageData: finalImageData
                 )
             }
+            
+            let localOnly = self.employees.filter { localEmp in
+                !deleted.contains(localEmp.id) && !remoteEmployees.contains { rem in
+                    rem.id == localEmp.id || (!localEmp.email.isEmpty && rem.email.lowercased() == localEmp.email.lowercased())
+                }
+            }
+            
+            self.employees = remoteEmployees + localOnly
             saveToCache()
         } catch {
             print("Error loading staff: \(error)")
@@ -93,25 +128,68 @@ class StaffViewModel {
     }
     
     func deleteEmployee(id: UUID) async -> Bool {
-        self.employees.removeAll { $0.id == id }
-        saveToCache()
-        do {
-            try await SupabaseManager.shared.client
-                .from("app_user")
-                .delete()
-                .eq("id", value: id.uuidString)
-                .execute()
-            return true
-        } catch {
-            print("Error deleting employee: \(error)")
-            return false
+        await MainActor.run {
+            var currentDeleted = self.deletedIDs
+            currentDeleted.insert(id)
+            self.deletedIDs = currentDeleted
+            
+            self.employees.removeAll { $0.id == id }
+            self.saveToCache()
         }
+        
+        var deleted = false
+        do {
+            struct Params: Encodable { let staff_id: UUID }
+            try await SupabaseManager.shared.client
+                .rpc("delete_staff", params: Params(staff_id: id))
+                .execute()
+            deleted = true
+        } catch {
+            print("delete_staff RPC failed: \(error)")
+        }
+        
+        if !deleted {
+            do {
+                struct Params: Encodable { let manager_id: UUID }
+                try await SupabaseManager.shared.client
+                    .rpc("delete_manager", params: Params(manager_id: id))
+                    .execute()
+                deleted = true
+            } catch {
+                print("delete_manager RPC failed: \(error)")
+            }
+        }
+        
+        if !deleted {
+            do {
+                try await SupabaseManager.shared.client
+                    .from("app_user")
+                    .delete()
+                    .eq("id", value: id.uuidString)
+                    .execute()
+                deleted = true
+            } catch {
+                print("Direct app_user delete failed: \(error)")
+            }
+        }
+        
+        await loadStaff()
+        return deleted
     }
     
     func addEmployee(_ employee: DisplayEmployee, password: String) async -> String? {
         let roleVal = employee.role == "After Sales Associate" ? "after_sales" : "sales_associate"
         
         do {
+            var uploadedUrl: String? = nil
+            if let data = employee.imageData {
+                do {
+                    uploadedUrl = try await uploadStaffImage(data: data)
+                } catch {
+                    print("Image upload failed for new staff: \(error)")
+                }
+            }
+            
             struct Params: Encodable {
                 let staff_email: String
                 let staff_password: String
@@ -128,9 +206,58 @@ class StaffViewModel {
                 staff_role: roleVal
             )
             
-            try await SupabaseManager.shared.client
-                .rpc("create_staff", params: params)
-                .execute()
+            var rpcSucceeded = false
+            do {
+                try await SupabaseManager.shared.client
+                    .rpc("create_staff", params: params)
+                    .execute()
+                rpcSucceeded = true
+            } catch {
+                print("create_staff RPC failed: \(error). Attempting direct table insert fallback...")
+            }
+            
+            if !rpcSucceeded {
+                do {
+                    struct DirectStaffInsert: Encodable {
+                        let id: UUID
+                        let email: String
+                        let name: String
+                        let role: String
+                        let phone: String
+                        let image_url: String?
+                    }
+                    let insertRecord = DirectStaffInsert(
+                        id: employee.id,
+                        email: employee.email,
+                        name: employee.name,
+                        role: roleVal,
+                        phone: employee.phone,
+                        image_url: uploadedUrl
+                    )
+                    try await SupabaseManager.shared.client
+                        .from("app_user")
+                        .insert(insertRecord)
+                        .execute()
+                } catch let directError {
+                    print("Direct table insert fallback also failed: \(directError)")
+                }
+            }
+            
+            var tempEmp = employee
+            if let uploadedUrl = uploadedUrl {
+                tempEmp.imageUrl = uploadedUrl
+                try? await SupabaseManager.shared.client
+                    .from("app_user")
+                    .update(["image_url": uploadedUrl])
+                    .eq("email", value: employee.email)
+                    .execute()
+            }
+            if !self.employees.contains(where: { $0.email == tempEmp.email }) {
+                self.employees.append(tempEmp)
+            } else if let idx = self.employees.firstIndex(where: { $0.email == tempEmp.email }) {
+                self.employees[idx] = tempEmp
+            }
+            saveToCache()
             
             if !password.isEmpty {
                 _ = await sendEmployeeEmail(to: employee.email, password: password, name: employee.name, role: employee.role)
@@ -159,12 +286,66 @@ class StaffViewModel {
         
         Task {
             let roleVal = employee.role == "After Sales Associate" ? "after_sales" : "sales_associate"
+            var updateDict: [String: String] = [
+                "name": employee.name,
+                "email": employee.email,
+                "phone": employee.phone,
+                "role": roleVal
+            ]
+            
+            if let data = employee.imageData {
+                if let uploadedUrl = try? await uploadStaffImage(data: data) {
+                    updateDict["image_url"] = uploadedUrl
+                    await MainActor.run {
+                        if let idx = self.employees.firstIndex(where: { $0.id == employee.id }) {
+                            self.employees[idx].imageUrl = uploadedUrl
+                        }
+                        self.saveToCache()
+                    }
+                }
+            }
+            
             try? await SupabaseManager.shared.client
                 .from("app_user")
-                .update(["name": employee.name, "email": employee.email, "phone": employee.phone, "role": roleVal])
+                .update(updateDict)
                 .eq("id", value: employee.id.uuidString)
                 .execute()
         }
+    }
+    
+    private func uploadStaffImage(data: Data) async throws -> String {
+        guard let uiImage = UIImage(data: data) else {
+            throw URLError(.cannotDecodeContentData)
+        }
+        let targetSize = CGSize(width: 400, height: 400)
+        let size = uiImage.size
+        let widthRatio = targetSize.width / max(size.width, 1)
+        let heightRatio = targetSize.height / max(size.height, 1)
+        let newSize: CGSize
+        if widthRatio > heightRatio {
+            newSize = CGSize(width: size.width * heightRatio, height: size.height * heightRatio)
+        } else {
+            newSize = CGSize(width: size.width * widthRatio, height: size.height * widthRatio)
+        }
+        let rect = CGRect(origin: .zero, size: newSize)
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        uiImage.draw(in: rect)
+        let resizedImage = UIGraphicsGetImageFromCurrentImageContext() ?? uiImage
+        UIGraphicsEndImageContext()
+
+        guard let uploadData = resizedImage.jpegData(compressionQuality: 0.6) else {
+            throw URLError(.badServerResponse)
+        }
+        let path = "profiles/\(UUID().uuidString).jpg"
+        let fileOptions = FileOptions(contentType: "image/jpeg")
+        try await SupabaseManager.shared.client.storage
+            .from("product-images")
+            .upload(path, data: uploadData, options: fileOptions)
+
+        let url = try SupabaseManager.shared.client.storage
+            .from("product-images")
+            .getPublicURL(path: path)
+        return url.absoluteString
     }
     
     // MARK: - Resend Email Integration

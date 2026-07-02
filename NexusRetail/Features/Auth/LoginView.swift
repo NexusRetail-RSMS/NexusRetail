@@ -14,7 +14,6 @@ struct LoginView: View {
     @State private var viewModel = LoginViewModel()
     @Environment(SessionStore.self) private var sessionStore
     @State private var showPassword = false
-    @Environment(\.dismiss) private var dismiss
     @State private var isPresented = false
 
     var body: some View {
@@ -30,7 +29,7 @@ struct LoginView: View {
                     .scaledToFill()
                     .frame(width: geometry.size.width + 240, height: geometry.size.height)
                     .offset(x: -180)
-                    .opacity(0.18)
+                    .opacity(0.35)
             }
             .ignoresSafeArea()
 
@@ -55,10 +54,9 @@ struct LoginView: View {
                     VStack(spacing: RSMSSpacing.lg) {
                         // MARK: - Titles & Subtitles
                         VStack(alignment: .leading, spacing: RSMSSpacing.xs) {
-                            Text("Welcome back!")
+                            Text("Welcome!")
                                 .blendMode(.darken)
-                                .font(RSMSFonts.largeTitle)
-                                .fontWeight(.heavy)
+                                .font(.system(size: 35, weight: .heavy))
                                 .foregroundColor(RSMSColors.primaryText)
                             
                             Text("Sign in to continue to your account")
@@ -86,11 +84,11 @@ struct LoginView: View {
                             }
                             .padding(.horizontal, RSMSSpacing.md)
                             .frame(height: 50)
-                            .background(RSMSColors.background)
+                            .background(Color.white.opacity(0.45))
                             .cornerRadius(24)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 24)
-                                    .stroke(RSMSColors.inputBorder, lineWidth: 1)
+                                    .stroke(Color.white.opacity(0.8), lineWidth: 1)
                             )
 
                             // Password Input
@@ -125,11 +123,11 @@ struct LoginView: View {
                             }
                             .padding(.horizontal, RSMSSpacing.md)
                             .frame(height: 50)
-                            .background(RSMSColors.background)
+                            .background(Color.white.opacity(0.45))
                             .cornerRadius(24)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 24)
-                                    .stroke(RSMSColors.inputBorder, lineWidth: 1)
+                                    .stroke(Color.white.opacity(0.8), lineWidth: 1)
                             )
                             
                             // Forgot Password Link
@@ -147,57 +145,55 @@ struct LoginView: View {
                         // Error Message (if any)
                         errorLabel
 
-                        // MARK: - Sign In Button (styled in burgundy background to match mockup!)
+                        // MARK: - Sign In Button
                         signInButton
-                        
-                        // MARK: - Apple Sign-in Section
-                        appleSignInSection
-                        
-                        // MARK: - Bottom Security Badge
-                        securityBadge
                     }
                     .padding(.horizontal, RSMSSpacing.lg)
                     .padding(.bottom, 24)
                 }
                 .frame(maxWidth: 480)
-                .frame(maxHeight: 500)
-                .background(RSMSColors.cardBackground)
-                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 32, bottomLeadingRadius: 54, bottomTrailingRadius: 54, topTrailingRadius: 32))
-                .shadow(color: Color.black.opacity(0.06), radius: 16, x: 0, y: 4)
+                .frame(maxHeight: 420)
+                .background(
+                    ZStack {
+                        // iOS Material Frosted Glass
+                        Rectangle()
+                            .fill(.ultraThinMaterial)
+                            .opacity(0.88)
+                        
+                        // Liquid Glass Luminous Sheen
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.65),
+                                Color.white.opacity(0.30),
+                                Color.white.opacity(0.45)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    }
+                )
+                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 36, bottomLeadingRadius: 54, bottomTrailingRadius: 54, topTrailingRadius: 36))
+                .overlay(
+                    // Liquid Glass Specular Highlight / Rim Light
+                    UnevenRoundedRectangle(topLeadingRadius: 36, bottomLeadingRadius: 54, bottomTrailingRadius: 54, topTrailingRadius: 36)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.95),
+                                    Color.white.opacity(0.4),
+                                    Color.white.opacity(0.15),
+                                    Color.white.opacity(0.65)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.5
+                        )
+                )
+                .shadow(color: Color.black.opacity(0.12), radius: 24, x: 0, y: 12)
                 .padding(.horizontal, 7)
                 .padding(.bottom, 7)
             }
-            
-            // MARK: - Background Watermark Image Overlay (renders on top of the sheet with lower opacity so the sheet looks more opaque)
-            GeometryReader { geometry in
-                Image("ChatGPT Image Jun 25, 2026, 11_07_16 AM")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: geometry.size.width + 240, height: geometry.size.height)
-                    .offset(x: -180)
-                    .opacity(0.08)
-            }
-            .ignoresSafeArea()
-            .allowsHitTesting(false)
-            
-            // MARK: - Custom Back Button (overlaid at top-left, respecting safe area)
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(RSMSColors.burgundy)
-                    .frame(width: 44, height: 44)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Circle())
-                    .overlay(
-                        Circle()
-                            .stroke(Color.white.opacity(0.3), lineWidth: 1.5)
-                    )
-                    .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
-            }
-            .padding(.leading, RSMSSpacing.lg)
-            .padding(.top, RSMSSpacing.md)
         }
         .ignoresSafeArea(edges: .bottom)
         .navigationBarBackButtonHidden(true)
@@ -213,7 +209,7 @@ struct LoginView: View {
         VStack(spacing: RSMSSpacing.xs) {
             ZStack {
                 Image(systemName: "bag.fill")
-                    .font(.system(size: 48))
+                    .font(.system(size: 58))
                     .foregroundColor(RSMSColors.burgundy)
                 
                 Image(systemName: "chart.bar.fill")
@@ -223,7 +219,7 @@ struct LoginView: View {
             }
             
             Text("NexusRetail")
-                .font(.system(size: 32, weight: .black))
+                .font(.system(size: 42, weight: .black))
                 .foregroundColor(RSMSColors.primaryText)
                 .tracking(0.5)
         }
@@ -270,59 +266,6 @@ struct LoginView: View {
         .disabled(!viewModel.isLoginButtonEnabled)
         .accessibilityLabel("Sign in")
         .accessibilityValue(viewModel.isLoading ? "Authenticating" : "")
-    }
-
-    // MARK: - Apple Sign-in View
-    private var appleSignInSection: some View {
-        VStack(spacing: RSMSSpacing.md) {
-            HStack(spacing: RSMSSpacing.md) {
-                Rectangle()
-                    .fill(RSMSColors.divider)
-                    .frame(height: 1)
-                
-                Text("or continue with")
-                    .font(RSMSFonts.caption)
-                    .foregroundColor(RSMSColors.secondaryText)
-                
-                Rectangle()
-                    .fill(RSMSColors.divider)
-                    .frame(height: 1)
-            }
-            .padding(.vertical, RSMSSpacing.xs)
-            
-            Button(action: {}) {
-                HStack(spacing: RSMSSpacing.sm) {
-                    Image(systemName: "apple.logo")
-                        .font(.headline)
-                    Text("Continue with Apple")
-                        .font(RSMSFonts.headline)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(Color.white)
-                .foregroundColor(.black)
-                .cornerRadius(24)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 24)
-                        .stroke(Color.black, lineWidth: 1)
-                )
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    // MARK: - Bottom Security Badge
-    private var securityBadge: some View {
-        VStack(spacing: 6) {
-            Image(systemName: "shield")
-                .foregroundColor(Color(hex: "C5A880"))
-                .font(.system(size: 18))
-            
-            Text("Secure  •  Reliable  •  Efficient")
-                .font(RSMSFonts.caption)
-                .foregroundColor(RSMSColors.secondaryText)
-        }
-        .padding(.top, RSMSSpacing.md)
     }
 }
 

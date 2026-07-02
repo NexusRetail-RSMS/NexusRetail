@@ -6,7 +6,7 @@
 import SwiftUI
 
 /// Role-based router (RBAC). Reads the signed-in user's role from SessionStore and
-/// mounts only that role's tab view, or the Auth flow (RoleSelectionView) when there is no active session.
+/// mounts only that role's tab view, or the Auth flow (LoginView) when there is no active session.
 struct RootView: View {
     @Environment(SessionStore.self) private var sessionStore
 
@@ -25,7 +25,7 @@ struct RootView: View {
                 }
             } else {
                 NavigationStack {
-                    RoleSelectionView()
+                    LoginView()
                 }
             }
         }
