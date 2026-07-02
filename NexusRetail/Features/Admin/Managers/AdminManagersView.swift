@@ -178,6 +178,9 @@ struct AdminManagersView: View {
                                         },
                                         onResetPassword: { newPassword in
                                             return await viewModel.resetPassword(for: manager.id, email: manager.email, newPassword: newPassword)
+                                        },
+                                        onSave: { updated in
+                                            return await viewModel.updateManager(id: updated.id, name: updated.name, phone: updated.phone, address: updated.address, imageUrl: updated.imageUrl, email: updated.email)
                                         }
                                     )
                                 }
@@ -295,6 +298,9 @@ struct AdminManagersView: View {
                                     },
                                     onResetPassword: { newPassword in
                                         return await viewModel.resetPassword(for: manager.id, email: manager.email, newPassword: newPassword)
+                                    },
+                                    onSave: { updated in
+                                        return await viewModel.updateManager(id: updated.id, name: updated.name, phone: updated.phone, address: updated.address, imageUrl: updated.imageUrl, email: updated.email)
                                     }
                                 )
                             }
@@ -313,13 +319,15 @@ struct AdminManagersView: View {
         }
         .sheet(item: $editingManager) { mgr in
             if let idx = viewModel.managers.firstIndex(where: { $0.id == mgr.id }) {
-                EditManagerSheet(manager: Binding(
-                    get: { viewModel.managers[idx] },
-                    set: { newMgr in
-                        viewModel.managers[idx] = newMgr
-                        // We would call a viewModel.updateManager(newMgr) here
+                EditManagerSheet(
+                    manager: Binding(
+                        get: { viewModel.managers[idx] },
+                        set: { viewModel.managers[idx] = $0 }
+                    ),
+                    onSave: { updated in
+                        return await viewModel.updateManager(id: updated.id, name: updated.name, phone: updated.phone, address: updated.address, imageUrl: updated.imageUrl, email: updated.email)
                     }
-                ))
+                )
             } else {
                 EditManagerSheet(manager: .constant(mgr))
             }
@@ -365,6 +373,7 @@ struct TopPerformanceCard: View {
     var onEdit: (() -> Void)? = nil
     var onDelete: (() -> Void)? = nil
     var onResetPassword: ((String) async -> Bool)? = nil
+    var onSave: ((DisplayManager) async -> Bool)? = nil
 
     private var rankColor: Color {
         switch rank {
@@ -375,7 +384,12 @@ struct TopPerformanceCard: View {
     }
 
     var body: some View {
-        NavigationLink(destination: ManagerDetailView(manager: manager, onResetPassword: onResetPassword, onDelete: onDelete)) {
+        NavigationLink(destination: ManagerDetailView(
+            manager: manager,
+            onResetPassword: onResetPassword,
+            onDelete: onDelete,
+            onSave: onSave
+        )) {
             ZStack(alignment: .topLeading) {
                 // Card background
                 RoundedRectangle(cornerRadius: RSMSRadius.extraLarge)
@@ -521,9 +535,15 @@ struct ManagerListCard: View {
     var onEdit: (() -> Void)? = nil
     var onDelete: (() -> Void)? = nil
     var onResetPassword: ((String) async -> Bool)? = nil
+    var onSave: ((DisplayManager) async -> Bool)? = nil
 
     var body: some View {
-        NavigationLink(destination: ManagerDetailView(manager: manager, onResetPassword: onResetPassword, onDelete: onDelete)) {
+        NavigationLink(destination: ManagerDetailView(
+            manager: manager,
+            onResetPassword: onResetPassword,
+            onDelete: onDelete,
+            onSave: onSave
+        )) {
             HStack(spacing: RSMSSpacing.md) {
                 // Avatar
                 ZStack {

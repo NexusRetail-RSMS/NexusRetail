@@ -142,4 +142,33 @@ class ManagersViewModel {
             print("Network error sending Resend email: \(error)")
         }
     }
+    
+    func updateManager(id: UUID, name: String, phone: String, address: String, imageUrl: String?, email: String) async -> Bool {
+        isLoading = true
+        errorMessage = nil
+        do {
+            struct Params: Encodable {
+                let manager_id: UUID
+                let manager_name: String
+                let manager_phone: String
+                let manager_address: String
+                let manager_image_url: String
+                let manager_email: String
+            }
+
+            let params = Params(manager_id: id, manager_name: name, manager_phone: phone, manager_address: address, manager_image_url: imageUrl ?? "", manager_email: email)
+
+            try await SupabaseManager.shared.client
+                .rpc("update_manager", params: params)
+                .execute()
+
+            await loadManagers()
+            return true
+        } catch {
+            print("Error updating manager: \(error)")
+            self.errorMessage = error.localizedDescription
+            isLoading = false
+            return false
+        }
+    }
 }

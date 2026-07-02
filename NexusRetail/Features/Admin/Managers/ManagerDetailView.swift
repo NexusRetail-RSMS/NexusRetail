@@ -11,7 +11,6 @@ import PhotosUI
 struct ManagerDetailView: View {
     @Environment(\.dismiss) private var dismiss
 
-    // We keep a local copy so edits reflect immediately
     @State private var manager: DisplayManager
     @State private var isEditPresented = false
     
@@ -22,11 +21,13 @@ struct ManagerDetailView: View {
 
     var onResetPassword: ((String) async -> Bool)?
     var onDelete: (() -> Void)?
+    var onSave: ((DisplayManager) async -> Bool)?
 
-    init(manager: DisplayManager, onResetPassword: ((String) async -> Bool)? = nil, onDelete: (() -> Void)? = nil) {
+    init(manager: DisplayManager, onResetPassword: ((String) async -> Bool)? = nil, onDelete: (() -> Void)? = nil, onSave: ((DisplayManager) async -> Bool)? = nil) {
         _manager = State(initialValue: manager)
         self.onResetPassword = onResetPassword
         self.onDelete = onDelete
+        self.onSave = onSave
     }
 
     var body: some View {
@@ -272,7 +273,7 @@ struct ManagerDetailView: View {
             }
         }
         .sheet(isPresented: $isEditPresented) {
-            EditManagerSheet(manager: $manager)
+            EditManagerSheet(manager: $manager, onSave: onSave)
         }
         .alert("Reset Password", isPresented: $showResetAlert) {
             TextField("New Password", text: $newPassword)
@@ -367,6 +368,7 @@ private struct ManagerProfileDetailRow: View {
 struct EditManagerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var manager: DisplayManager
+    var onSave: ((DisplayManager) async -> Bool)? = nil
 
     @State private var firstName: String
     @State private var lastName: String
@@ -375,9 +377,11 @@ struct EditManagerSheet: View {
     @State private var address: String
     @State private var photoPickerItem: PhotosPickerItem? = nil
     @State private var selectedImageData: Data?
+    @State private var isSaving = false
 
-    init(manager: Binding<DisplayManager>) {
+    init(manager: Binding<DisplayManager>, onSave: ((DisplayManager) async -> Bool)? = nil) {
         _manager = manager
+        self.onSave = onSave
         let m = manager.wrappedValue
         let parts = m.name.components(separatedBy: " ")
         _firstName = State(initialValue: parts.first ?? "")
@@ -385,8 +389,6 @@ struct EditManagerSheet: View {
         _phone     = State(initialValue: m.phone)
         _email     = State(initialValue: m.email)
         _address   = State(initialValue: m.address)
-        // Note: imageUrl is a string, if we allow changing photos we'd need to upload it.
-        // For now, we leave image picking handled differently or removed.
     }
 
     private var isFormValid: Bool {
@@ -488,27 +490,45 @@ struct EditManagerSheet: View {
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        Task {
-                            let fullName = "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces)
-                            manager.name    = fullName.isEmpty ? manager.name : fullName
-                            manager.phone   = phone
-                            manager.email   = email
-                            manager.address = address
+                    if isSaving {
+                        ProgressView()
+                    } else {
+                        Button {
+                            Task {
+                                isSaving = true
+                                let fullName = "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces)
 
-                            if let selectedImageData {
-                            if let uploadedURL = try? await ImageUploader.upload(data: selectedImageData, bucket: "store-images", folder: "managers") {
-                                manager.imageUrl = uploadedURL
+                                var resolvedImageUrl = manager.imageUrl
+                                if let selectedImageData {
+                                    resolvedImageUrl = try? await ImageUploader.upload(data: selectedImageData, bucket: "store-images", folder: "managers")
                                 }
+
+                                var updated = manager
+                                updated.name = fullName.isEmpty ? manager.name : fullName
+                                updated.phone = phone
+                                updated.email = email
+                                updated.address = address
+                                updated.imageUrl = resolvedImageUrl
+
+                                if let onSave {
+                                    let success = await onSave(updated)
+                                    if success {
+                                        manager = updated
+                                        dismiss()
+                                    }
+                                } else {
+                                    manager = updated
+                                    dismiss()
+                                }
+                                isSaving = false
                             }
-                            dismiss()
+                        } label: {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(isFormValid ? RSMSColors.burgundy : RSMSColors.disabled)
                         }
-                    } label: {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(isFormValid ? RSMSColors.burgundy : RSMSColors.disabled)
+                        .disabled(!isFormValid)
                     }
-                    .disabled(!isFormValid)
                 }
             }
         }
