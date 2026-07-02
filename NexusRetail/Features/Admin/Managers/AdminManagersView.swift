@@ -22,6 +22,55 @@ struct DisplayManager: Identifiable, Hashable {
     // Stats
     var productsSold: Int = 0
     var createdAt: Date = Date()
+    
+    init(id: UUID, name: String, storeName: String, country: String, performanceScore: Int, revenue: String, imageUrl: String? = nil, phone: String = "", email: String = "", address: String = "", productsSold: Int = 0, createdAt: Date = Date()) {
+        self.id = id
+        self.name = name
+        self.storeName = storeName
+        self.country = country
+        self.performanceScore = performanceScore
+        self.revenue = revenue
+        self.imageUrl = imageUrl
+        self.phone = phone
+        self.email = email
+        self.address = address
+        self.productsSold = productsSold
+        self.createdAt = createdAt
+    }
+
+    init(rpc: ManagerStatsRPC) {
+        self.id = rpc.id
+        self.name = rpc.name ?? "Unknown"
+        self.storeName = rpc.storeName ?? "Unassigned"
+        self.country = rpc.country ?? "Unknown"
+        self.performanceScore = rpc.performanceScore ?? 0
+        self.imageUrl = rpc.imageUrl
+        self.phone = rpc.phone ?? ""
+        self.email = rpc.email ?? ""
+        self.address = rpc.storeName ?? ""
+        self.productsSold = rpc.productsSold ?? 0
+        
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "USD"
+        formatter.maximumFractionDigits = 0
+        self.revenue = formatter.string(from: NSNumber(value: rpc.revenue ?? 0)) ?? "$0"
+
+        var parsedDate = Date()
+        if let dateStr = rpc.createdAt {
+            let iso1 = ISO8601DateFormatter()
+            iso1.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let date = iso1.date(from: dateStr) {
+                parsedDate = date
+            } else {
+                let iso2 = ISO8601DateFormatter()
+                if let date = iso2.date(from: dateStr) {
+                    parsedDate = date
+                }
+            }
+        }
+        self.createdAt = parsedDate
+    }
 }
 
 // Removed ManagersStore
@@ -81,9 +130,10 @@ enum PerformanceSortOrder: String, CaseIterable {
 struct AdminManagersView: View {
     @Binding var isAddManagerPresented: Bool
     @Binding var searchText: String
+    @Environment(AdminNavigationStore.self) private var navStore
     @State private var viewModel = ManagersViewModel()
     @State private var topPerformerPage = 0
-    @State private var scrolledID: UUID?
+    @State private var scrolledID: Int?
     @State private var selectedCountryFilter = "All"
     @State private var selectedPerformanceSort: PerformanceSortOrder = .none
     @State private var editingManager: DisplayManager? = nil
@@ -142,11 +192,10 @@ struct AdminManagersView: View {
                                 isAddManagerPresented = true
                             } label: {
                                 Image(systemName: "plus")
-                                    .font(.system(size: 20, weight: .medium))
+                                    .font(.system(size: 20, weight: .semibold))
                                     .foregroundColor(RSMSColors.burgundy)
                                     .frame(width: 44, height: 44)
-                                    .background(RSMSColors.burgundy.opacity(0.1))
-                                    .clipShape(Circle())
+                                    .glassEffect(.regular.tint(RSMSColors.burgundy.opacity(0.1)).interactive(), in: Circle())
                             }
                             .accessibilityLabel("Add new manager")
                         }
@@ -165,8 +214,8 @@ struct AdminManagersView: View {
 
                         let topManagers = Array(viewModel.managers.prefix(topCount).enumerated())
                         ScrollView(.horizontal, showsIndicators: false) {
-                            LazyHStack(spacing: RSMSSpacing.md) {
-                                ForEach(topManagers, id: \.element.id) { index, manager in
+                            HStack(spacing: RSMSSpacing.md) {
+                                ForEach(topManagers, id: \.offset) { index, manager in
                                     TopPerformanceCard(
                                         manager: manager,
                                         rank: index + 1,
@@ -179,8 +228,8 @@ struct AdminManagersView: View {
                                         onResetPassword: { newPassword in
                                             return await viewModel.resetPassword(for: manager.id, email: manager.email, newPassword: newPassword)
                                         },
-                                        onSave: { updated in
-                                            return await viewModel.updateManager(id: updated.id, name: updated.name, phone: updated.phone, address: updated.address, imageUrl: updated.imageUrl, email: updated.email)
+                                        onUpdate: { updatedManager, newImage in
+                                            return await viewModel.updateManager(updatedManager, newImage: newImage)
                                         }
                                     )
                                 }
@@ -188,11 +237,12 @@ struct AdminManagersView: View {
                             .scrollTargetLayout()
                             .padding(.horizontal, RSMSSpacing.lg)
                         }
+                        .frame(height: 175)
                         .scrollTargetBehavior(.viewAligned)
                         .scrollPosition(id: $scrolledID)
-                        .onChange(of: scrolledID) { _, newID in
-                            if let newID = newID, let idx = topManagers.firstIndex(where: { $0.element.id == newID }) {
-                                topPerformerPage = idx
+                        .onChange(of: scrolledID) { _, newIndex in
+                            if let newIndex = newIndex {
+                                topPerformerPage = newIndex
                             }
                         }
 
@@ -222,7 +272,7 @@ struct AdminManagersView: View {
                             Picker(selection: $selectedCountryFilter) {
                                 Text("All Countries").tag("All")
                                 ForEach(allCountries, id: \.self) { country in
-                                    Text("\(country) \(flagEmoji(for: country))").tag(country)
+                                    Text(country).tag(country)
                                 }
                             } label: {
                                 Label("Country", systemImage: "globe")
@@ -286,7 +336,7 @@ struct AdminManagersView: View {
                         .padding(.top, 40)
                         .padding(.horizontal, RSMSSpacing.xxxl)
                     } else {
-                        LazyVStack(spacing: RSMSSpacing.md) {
+                        VStack(spacing: RSMSSpacing.md) {
                             ForEach(filteredManagers) { manager in
                                 ManagerListCard(
                                     manager: manager,
@@ -299,8 +349,8 @@ struct AdminManagersView: View {
                                     onResetPassword: { newPassword in
                                         return await viewModel.resetPassword(for: manager.id, email: manager.email, newPassword: newPassword)
                                     },
-                                    onSave: { updated in
-                                        return await viewModel.updateManager(id: updated.id, name: updated.name, phone: updated.phone, address: updated.address, imageUrl: updated.imageUrl, email: updated.email)
+                                    onUpdate: { updatedManager, newImage in
+                                        return await viewModel.updateManager(updatedManager, newImage: newImage)
                                     }
                                 )
                             }
@@ -311,10 +361,50 @@ struct AdminManagersView: View {
                 }
                 .padding(.top, RSMSSpacing.sm)
             }
+            .safeAreaInset(edge: .top) {
+                VStack(spacing: RSMSSpacing.md) {
+                    HStack {
+                        Text("Managers")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(RSMSColors.primaryText)
+
+                        Spacer()
+
+                        Button {
+                            isAddManagerPresented = true
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.system(size: 20, weight: .medium))
+                                .foregroundColor(RSMSColors.burgundy)
+                                .frame(width: 44, height: 44)
+                                .background(RSMSColors.burgundy.opacity(0.1))
+                                .clipShape(Circle())
+                        }
+                        .accessibilityLabel("Add new manager")
+                    }
+
+                    NexusSearchBar(text: $searchText, placeholder: "Search managers, stores…")
+                }
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, 16)
+                .padding(.bottom, 8)
+                .background(.ultraThinMaterial)
+            }
         }
+        .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $isAddManagerPresented) {
-            NewManagerSheet(onCreate: { email, password, name, phone, store, imageUrl in
-                return await viewModel.createManager(email: email, password: password, name: name, phone: phone, address: store, imageUrl: imageUrl)
+            NewManagerSheet(onCreate: { email, password, name, phone, storeName, address, country, image in
+                return await viewModel.createManager(
+                    email: email,
+                    password: password,
+                    name: name,
+                    phone: phone,
+                    storeName: storeName,
+                    address: address,
+                    country: country,
+                    image: image
+                )
             })
         }
         .sheet(item: $editingManager) { mgr in
@@ -322,14 +412,21 @@ struct AdminManagersView: View {
                 EditManagerSheet(
                     manager: Binding(
                         get: { viewModel.managers[idx] },
-                        set: { viewModel.managers[idx] = $0 }
+                        set: { newMgr in
+                            viewModel.managers[idx] = newMgr
+                        }
                     ),
-                    onSave: { updated in
-                        return await viewModel.updateManager(id: updated.id, name: updated.name, phone: updated.phone, address: updated.address, imageUrl: updated.imageUrl, email: updated.email)
+                    onSave: { updatedManager, newImage in
+                        return await viewModel.updateManager(updatedManager, newImage: newImage)
                     }
                 )
             } else {
-                EditManagerSheet(manager: .constant(mgr))
+                EditManagerSheet(
+                    manager: .constant(mgr),
+                    onSave: { updatedManager, newImage in
+                        return await viewModel.updateManager(updatedManager, newImage: newImage)
+                    }
+                )
             }
         }
         .onChange(of: selectedPerformanceSort) { _, newVal in
@@ -340,6 +437,13 @@ struct AdminManagersView: View {
         }
         .task {
             await viewModel.loadManagers()
+        }
+        .onChange(of: navStore.selectedTab) { _, newTab in
+            if newTab == .managers {
+                Task {
+                    await viewModel.loadManagers()
+                }
+            }
         }
         .refreshable {
             await viewModel.loadManagers()
@@ -373,7 +477,7 @@ struct TopPerformanceCard: View {
     var onEdit: (() -> Void)? = nil
     var onDelete: (() -> Void)? = nil
     var onResetPassword: ((String) async -> Bool)? = nil
-    var onSave: ((DisplayManager) async -> Bool)? = nil
+    var onUpdate: ((DisplayManager, UIImage?) async -> String?)? = nil
 
     private var rankColor: Color {
         switch rank {
@@ -384,89 +488,78 @@ struct TopPerformanceCard: View {
     }
 
     var body: some View {
-        NavigationLink(destination: ManagerDetailView(
-            manager: manager,
-            onResetPassword: onResetPassword,
-            onDelete: onDelete,
-            onSave: onSave
-        )) {
+        NavigationLink(destination: ManagerDetailView(manager: manager, onResetPassword: onResetPassword, onDelete: onDelete, onUpdate: onUpdate)) {
             ZStack(alignment: .topLeading) {
-                // Card background
+                // Rank-colored gradient card background
                 RoundedRectangle(cornerRadius: RSMSRadius.extraLarge)
-                    .fill(RSMSColors.cardBackground)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                rankColor.opacity(0.18),
+                                rankColor.opacity(0.04),
+                                RSMSColors.cardBackground
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .overlay(
                         RoundedRectangle(cornerRadius: RSMSRadius.extraLarge)
-                            .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                            .stroke(rankColor.opacity(0.25), lineWidth: 1)
                     )
-                    .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
+                    .shadow(color: rankColor.opacity(0.12), radius: 10, x: 0, y: 4)
 
                 VStack(spacing: 0) {
-                    // Top Row: Performance Score badge
-                    HStack {
-                        Spacer()
-                        Text("\(manager.performanceScore)%")
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
-                            .foregroundColor(performanceColor(for: manager.performanceScore))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(performanceColor(for: manager.performanceScore).opacity(0.12))
-                            .cornerRadius(RSMSRadius.small)
-                    }
-
                     // Middle: Avatar + Name + Store
                     HStack(alignment: .center, spacing: RSMSSpacing.md) {
                         // Avatar
                         ZStack {
                             Circle()
                                 .fill(RSMSColors.burgundy.opacity(0.1))
-                                .frame(width: 55, height: 55)
+                                .frame(width: 75, height: 75)
                             if let urlString = manager.imageUrl, let url = URL(string: urlString) {
                                 AsyncImage(url: url) { image in
                                     image
                                         .resizable()
                                         .scaledToFill()
-                                        .frame(width: 55, height: 55)
+                                        .frame(width: 75, height: 75)
                                         .clipShape(Circle())
                                 } placeholder: {
                                     ProgressView()
-                                        .frame(width: 55, height: 55)
+                                        .frame(width: 75, height: 75)
                                 }
                             } else {
                                 Image(systemName: "person.fill")
                                     .foregroundColor(RSMSColors.burgundy)
-                                    .font(.system(size: 22))
+                                    .font(.system(size: 24))
                             }
                         }
 
                         VStack(alignment: .leading, spacing: 3) {
-                            Text(manager.name)
-                                .font(.system(size: 19, weight: .bold, design: .rounded))
+                            Text(manager.name.components(separatedBy: " ").first ?? manager.name)
+                                .font(.system(size: 22, weight: .bold, design: .rounded))
                                 .foregroundColor(RSMSColors.primaryText)
                                 .lineLimit(1)
 
                             Text(manager.storeName)
-                                .font(.system(size: 14, weight: .medium))
+                                .font(.system(size: 16, weight: .medium))
                                 .foregroundColor(RSMSColors.secondaryText)
+                                .lineLimit(1)
+                                
+                            Text(manager.country)
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(RSMSColors.secondaryText.opacity(0.8))
                                 .lineLimit(1)
                         }
 
                         Spacer()
                     }
-                    .padding(.top, RSMSSpacing.md)
+                    .padding(.top, RSMSSpacing.sm)
 
                     Spacer(minLength: RSMSSpacing.sm)
 
-                    // Bottom Row: Country & Revenue
+                    // Bottom Row: Revenue
                     HStack(alignment: .bottom) {
-                        HStack(spacing: 5) {
-                            Text(flagEmoji(for: manager.country))
-                                .font(.system(size: 18))
-                            Text(manager.country)
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(RSMSColors.secondaryText)
-                                .lineLimit(1)
-                        }
-
                         Spacer()
 
                         VStack(alignment: .trailing, spacing: 2) {
@@ -480,21 +573,8 @@ struct TopPerformanceCard: View {
                     }
                 }
                 .padding(16)
-
-                // Bookmark badge centered horizontally with profile avatar (center at x: 43.5)
-                ZStack {
-                    BookmarkShape()
-                        .fill(rankColor)
-                        .frame(width: 28, height: 36)
-                        .shadow(color: rankColor.opacity(0.3), radius: 3, x: 0, y: 2)
-                    Text("\(rank)")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(.white)
-                        .offset(y: -2)
-                }
-                .offset(x: 29.5, y: 0)
             }
-            .frame(width: 320, height: 190)
+            .frame(width: 300, height: 170)
         }
         .buttonStyle(.plain)
         .contextMenu {
@@ -535,15 +615,10 @@ struct ManagerListCard: View {
     var onEdit: (() -> Void)? = nil
     var onDelete: (() -> Void)? = nil
     var onResetPassword: ((String) async -> Bool)? = nil
-    var onSave: ((DisplayManager) async -> Bool)? = nil
+    var onUpdate: ((DisplayManager, UIImage?) async -> String?)? = nil
 
     var body: some View {
-        NavigationLink(destination: ManagerDetailView(
-            manager: manager,
-            onResetPassword: onResetPassword,
-            onDelete: onDelete,
-            onSave: onSave
-        )) {
+        NavigationLink(destination: ManagerDetailView(manager: manager, onResetPassword: onResetPassword, onDelete: onDelete, onUpdate: onUpdate)) {
             HStack(spacing: RSMSSpacing.md) {
                 // Avatar
                 ZStack {
@@ -570,31 +645,15 @@ struct ManagerListCard: View {
 
                 // Text info
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(manager.storeName)
+                    Text(manager.name)
                         .font(.system(size: 16, weight: .bold, design: .rounded))
                         .foregroundColor(RSMSColors.primaryText)
-                    Text(manager.name)
+                    Text("\(manager.storeName), \(manager.country)")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(RSMSColors.secondaryText)
-                    HStack(spacing: 4) {
-                        Text(flagEmoji(for: manager.country))
-                            .font(.system(size: 16))
-                        Text(manager.country)
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(RSMSColors.secondaryText)
-                    }
                 }
 
                 Spacer()
-
-                // Performance badge
-                Text("\(manager.performanceScore)%")
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .foregroundColor(performanceColor(for: manager.performanceScore))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(performanceColor(for: manager.performanceScore).opacity(0.12))
-                    .cornerRadius(RSMSRadius.small)
 
                 // Chevron
                 Image(systemName: "chevron.right")
@@ -643,41 +702,4 @@ struct ManagerListCard: View {
     }
 }
 
-extension DisplayManager {
-    init(rpc: ManagerStatsRPC) {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        formatter.maximumFractionDigits = 0
-        let revString = formatter.string(from: NSNumber(value: rpc.revenue ?? 0)) ?? "$0"
 
-        var parsedDate = Date()
-        if let dateStr = rpc.createdAt {
-            let iso1 = ISO8601DateFormatter()
-            iso1.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-            if let date = iso1.date(from: dateStr) {
-                parsedDate = date
-            } else {
-                let iso2 = ISO8601DateFormatter()
-                if let date = iso2.date(from: dateStr) {
-                    parsedDate = date
-                }
-            }
-        }
-
-        self.init(
-            id: rpc.id,
-            name: rpc.name ?? "Unknown",
-            storeName: rpc.storeName ?? "Unassigned",
-            country: rpc.country ?? "Unassigned",
-            performanceScore: rpc.performanceScore ?? 0,
-            revenue: revString,
-            imageUrl: rpc.imageUrl,
-            phone: rpc.phone ?? "",
-            email: rpc.email ?? "",
-            address: rpc.address ?? "",
-            productsSold: rpc.productsSold ?? 0,
-            createdAt: parsedDate
-        )
-    }
-}

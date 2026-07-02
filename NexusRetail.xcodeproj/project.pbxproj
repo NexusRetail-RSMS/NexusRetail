@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		327BE9D92FEB91EC00A9318C /* Config.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 327BE9D82FEB91EC00A9318C /* Config.xcconfig */; };
-		32F53F562FF2652A0044ECFB /* ItemRecommendation.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = 32F53F552FF2652A0044ECFB /* ItemRecommendation.mlmodel */; };
 		C7B5B7912FEB0A8100E6CF91 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = C7B5B7902FEB0A8100E6CF91 /* Auth */; };
 		C7B5B7932FEB0A8100E6CF91 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = C7B5B7922FEB0A8100E6CF91 /* Functions */; };
 		C7B5B7952FEB0A8100E6CF91 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = C7B5B7942FEB0A8100E6CF91 /* PostgREST */; };
@@ -19,7 +18,6 @@
 
 /* Begin PBXFileReference section */
 		327BE9D82FEB91EC00A9318C /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
-		32F53F552FF2652A0044ECFB /* ItemRecommendation.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = ItemRecommendation.mlmodel; sourceTree = "<group>"; };
 		C7B5B6A92FEA47B800E6CF91 /* NexusRetail.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NexusRetail.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -68,7 +66,6 @@
 				C7B5B6AA2FEA47B800E6CF91 /* Products */,
 				C7B5B78F2FEB0A7800E6CF91 /* Frameworks */,
 				327BE9D82FEB91EC00A9318C /* Config.xcconfig */,
-				32F53F552FF2652A0044ECFB /* ItemRecommendation.mlmodel */,
 			);
 			sourceTree = "<group>";
 		};
@@ -171,7 +168,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				32F53F562FF2652A0044ECFB /* ItemRecommendation.mlmodel in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -302,13 +298,12 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = ACD86548Y3;
+				DEVELOPMENT_TEAM = 6S9257K3UN;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = NexusRetail/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Nexus Retail requires camera access to scan product barcodes and QR codes for checkout and inventory management.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -324,8 +319,8 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = team5.NexusRetailrrty456;
-				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = team5.rsms.nexusretailtte5664;
+				PRODUCT_BUNDLE_IDENTIFIER = team5.NexusRetail;
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = team5.rsms.nexusretail;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -349,13 +344,12 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = ACD86548Y3;
+				DEVELOPMENT_TEAM = 6S9257K3UN;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = NexusRetail/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Nexus Retail requires camera access to scan product barcodes and QR codes for checkout and inventory management.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -371,8 +365,8 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = team5.NexusRetailrrty456;
-				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = team5.rsms.nexusretailtte5664;
+				PRODUCT_BUNDLE_IDENTIFIER = team5.NexusRetail;
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = team5.rsms.nexusretail;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;

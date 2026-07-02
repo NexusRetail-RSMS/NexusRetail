@@ -73,7 +73,8 @@ struct RevenueBarChart: View {
                         .font(RSMSFonts.subheadline)
                         .foregroundColor(RSMSColors.secondaryText)
                 }
-            } else {
+            } else if maxValue > 0 {
+                // Only render chart if we have valid positive data
                 Chart(data) { point in
                     BarMark(
                         x: .value("Period", point.label),
@@ -113,6 +114,17 @@ struct RevenueBarChart: View {
                             }
                         }
                     }
+                }
+                .frame(height: 200)
+            } else {
+                // Invalid max value
+                VStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 32))
+                        .foregroundColor(Color(hex: "FF9500"))
+                    Text("Invalid revenue data")
+                        .font(.system(size: 14))
+                        .foregroundColor(RSMSColors.secondaryText)
                 }
                 .frame(height: 200)
             }

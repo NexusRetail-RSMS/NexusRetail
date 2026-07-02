@@ -10,8 +10,53 @@ class ManagersViewModel {
     func loadManagers() async {
         isLoading = true
         errorMessage = nil
+
         do {
-            self.managers = try await StoreRepository().fetchManagers()
+            let stats: [ManagerStatsRPC] = try await SupabaseManager.shared.client
+                .rpc("get_manager_stats")
+                .execute()
+                .value
+            
+            // Map RPC model to DisplayManager
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .currency
+            formatter.currencyCode = "USD"
+            formatter.maximumFractionDigits = 0
+
+            self.managers = stats.map { stat in
+                let revString = formatter.string(from: NSNumber(value: stat.revenue ?? 0)) ?? "$0"
+                
+                // Parse date
+                var parsedDate = Date()
+                if let dateStr = stat.createdAt {
+                    let isoFormatter = ISO8601DateFormatter()
+                    isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                    if let date = isoFormatter.date(from: dateStr) {
+                        parsedDate = date
+                    } else {
+                        let isoFormatter2 = ISO8601DateFormatter()
+                        if let date = isoFormatter2.date(from: dateStr) {
+                            parsedDate = date
+                        }
+                    }
+                }
+                
+                return DisplayManager(
+                    id: stat.id,
+                    name: stat.name ?? "Unknown",
+                    storeName: stat.storeName ?? "Unassigned",
+                    country: stat.country ?? "Unassigned",
+                    performanceScore: stat.performanceScore ?? 0,
+                    revenue: revString,
+                    imageUrl: stat.imageUrl,
+                    phone: stat.phone ?? "",
+                    email: stat.email ?? "",
+                    address: stat.address ?? "",
+                    productsSold: stat.productsSold ?? 0,
+                    createdAt: parsedDate
+                )
+            }
+            // Sort by performance score descending
             self.managers.sort { $0.performanceScore > $1.performanceScore }
         } catch {
             print("Error loading managers: \(error)")
@@ -20,10 +65,18 @@ class ManagersViewModel {
         isLoading = false
     }
 
-    func createManager(email: String, password: String, name: String, phone: String, address: String, imageUrl: String?) async -> Bool {
+    func createManager(email: String, password: String, name: String, phone: String, storeName: String, address: String, country: String, image: UIImage?) async -> String? {
         isLoading = true
         errorMessage = nil
         do {
+            var uploadedUrl = ""
+            if let img = image {
+                do {
+                    uploadedUrl = try await uploadImage(img)
+                } catch {
+                    print("Image upload failed: \(error)")
+                }
+            }
             struct Params: Encodable {
                 let manager_email: String
                 let manager_password: String
@@ -32,23 +85,109 @@ class ManagersViewModel {
                 let manager_address: String
                 let manager_image_url: String
             }
-            
-            let params = Params(manager_email: email, manager_password: password, manager_name: name, manager_phone: phone, manager_address: address, manager_image_url: imageUrl ?? "")
-            
+
+            let finalAddress = address.isEmpty ? country : "\(address), \(country)"
+
+            let params = Params(
+                manager_email: email,
+                manager_password: password,
+                manager_name: name,
+                manager_phone: phone,
+                manager_address: finalAddress,
+                manager_image_url: uploadedUrl
+            )
+
             try await SupabaseManager.shared.client
                 .rpc("create_manager", params: params)
                 .execute()
+
+            // Fetch the newly created manager's ID to assign the store
+            struct IDResponse: Decodable { let id: UUID }
+            let idResponse: [IDResponse] = try await SupabaseManager.shared.client
+                .from("app_user")
+                .select("id")
+                .eq("email", value: email)
+                .execute()
+                .value
             
+            if let newUserId = idResponse.first?.id {
+                if !storeName.isEmpty && storeName != "Not Assigned" && storeName != "Unassigned" {
+                    struct StoreManagerUpdate: Encodable { let manager_id: UUID? }
+                    try? await SupabaseManager.shared.client
+                        .from("store")
+                        .update(StoreManagerUpdate(manager_id: newUserId))
+                        .eq("name", value: storeName)
+                        .execute()
+                }
+            }
+
             // Dispatch a raw email with the generated password via Resend
             await sendResendEmail(to: email, password: password)
-            
+
             await loadManagers()
-            return true
+            return nil
         } catch {
             print("Error creating manager: \(error)")
             self.errorMessage = error.localizedDescription
             isLoading = false
-            return false
+            return error.localizedDescription
+        }
+    }
+
+    func updateManager(_ manager: DisplayManager, newImage: UIImage? = nil) async -> String? {
+        isLoading = true
+        errorMessage = nil
+        do {
+            let finalAddress = manager.address.isEmpty ? manager.country : (manager.address.hasSuffix(manager.country) ? manager.address : "\(manager.address), \(manager.country)")
+
+            var updateData: [String: String?] = [
+                "name": manager.name,
+                "phone": manager.phone,
+                "email": manager.email,
+                "address": finalAddress
+            ]
+            
+            if let img = newImage {
+                do {
+                    let uploadedUrl = try await uploadImage(img)
+                    updateData["image_url"] = uploadedUrl
+                } catch {
+                    print("Image upload failed during update: \(error)")
+                }
+            }
+            
+            try await SupabaseManager.shared.client
+                .from("app_user")
+                .update(updateData)
+                .eq("id", value: manager.id)
+                .execute()
+
+            // Update store assignment
+            struct StoreManagerUpdate: Encodable { let manager_id: UUID? }
+            // 1. Clear old store if any
+            try? await SupabaseManager.shared.client
+                .from("store")
+                .update(StoreManagerUpdate(manager_id: nil))
+                .eq("manager_id", value: manager.id)
+                .execute()
+            
+            // 2. Assign new store
+            if !manager.storeName.isEmpty && manager.storeName != "Not Assigned" && manager.storeName != "Unassigned" {
+                try? await SupabaseManager.shared.client
+                    .from("store")
+                    .update(StoreManagerUpdate(manager_id: manager.id))
+                    .eq("name", value: manager.storeName)
+                    .execute()
+            }
+
+            // Refresh local list so changes appear immediately
+            await loadManagers()
+            return nil
+        } catch {
+            print("Error updating manager: \(error)")
+            self.errorMessage = error.localizedDescription
+            isLoading = false
+            return error.localizedDescription
         }
     }
 
@@ -143,32 +282,36 @@ class ManagersViewModel {
         }
     }
     
-    func updateManager(id: UUID, name: String, phone: String, address: String, imageUrl: String?, email: String) async -> Bool {
-        isLoading = true
-        errorMessage = nil
-        do {
-            struct Params: Encodable {
-                let manager_id: UUID
-                let manager_name: String
-                let manager_phone: String
-                let manager_address: String
-                let manager_image_url: String
-                let manager_email: String
-            }
-
-            let params = Params(manager_id: id, manager_name: name, manager_phone: phone, manager_address: address, manager_image_url: imageUrl ?? "", manager_email: email)
-
-            try await SupabaseManager.shared.client
-                .rpc("update_manager", params: params)
-                .execute()
-
-            await loadManagers()
-            return true
-        } catch {
-            print("Error updating manager: \(error)")
-            self.errorMessage = error.localizedDescription
-            isLoading = false
-            return false
+    private func uploadImage(_ image: UIImage) async throws -> String {
+        // Resize image to max 400x400 to prevent timeouts
+        let targetSize = CGSize(width: 400, height: 400)
+        let size = image.size
+        let widthRatio  = targetSize.width  / size.width
+        let heightRatio = targetSize.height / size.height
+        let newSize: CGSize
+        if(widthRatio > heightRatio) {
+            newSize = CGSize(width: size.width * heightRatio, height: size.height * heightRatio)
+        } else {
+            newSize = CGSize(width: size.width * widthRatio,  height: size.height * widthRatio)
         }
+        let rect = CGRect(origin: .zero, size: newSize)
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        image.draw(in: rect)
+        let resizedImage = UIGraphicsGetImageFromCurrentImageContext() ?? image
+        UIGraphicsEndImageContext()
+
+        guard let data = resizedImage.jpegData(compressionQuality: 0.5) else {
+            throw URLError(.badServerResponse)
+        }
+        let path = "profiles/\(UUID().uuidString).jpg"
+        let fileOptions = FileOptions(contentType: "image/jpeg")
+        try await SupabaseManager.shared.client.storage
+            .from("product-images")
+            .upload(path, data: data, options: fileOptions)
+
+        let url = try SupabaseManager.shared.client.storage
+            .from("product-images")
+            .getPublicURL(path: path)
+        return url.absoluteString
     }
 }

@@ -105,7 +105,7 @@ struct PaymentFlowView: View {
                     .foregroundColor(RSMSColors.secondaryText)
                     .kerning(1.5)
                 
-                Text("$\(String(format: "%.2f", viewModel.totalAmount))")
+                Text("₹\(String(format: "%.0f", viewModel.totalAmount))")
                     .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundColor(RSMSColors.burgundy)
                 
@@ -161,7 +161,7 @@ struct PaymentFlowView: View {
                 Button {
                     processRazorpayPayment()
                 } label: {
-                    Text("Pay $\(String(format: "%.2f", viewModel.totalAmount))")
+                    Text("Pay ₹\(String(format: "%.0f", viewModel.totalAmount))")
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -232,7 +232,7 @@ struct PaymentFlowView: View {
                             .font(.system(size: 12))
                             .foregroundColor(.white.opacity(0.8))
                         
-                        Text("$\(String(format: "%.2f", viewModel.totalAmount))")
+                        Text("₹\(String(format: "%.0f", viewModel.totalAmount))")
                             .font(.system(size: 24, weight: .bold))
                             .foregroundColor(RSMSColors.burgundy)
                     } else if paymentState == .processing {
@@ -331,7 +331,11 @@ struct PaymentFlowView: View {
         Task {
             do {
                 try await viewModel.processCheckout(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
-                viewModel.recordCompletedSale()
+                
+                // Refresh product stock after checkout
+                await POSProductRepository.shared.refreshStockForStore(storeID: sessionStore.currentUser?.storeID)
+                
+                await viewModel.fetchRecentOrders(storeID: sessionStore.currentUser?.storeID)
                 
                 await MainActor.run {
                     withAnimation {
@@ -363,7 +367,11 @@ struct PaymentFlowView: View {
         Task {
             do {
                 try await viewModel.processCheckout(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
-                viewModel.recordCompletedSale()
+                
+                // Refresh product stock after checkout
+                await POSProductRepository.shared.refreshStockForStore(storeID: sessionStore.currentUser?.storeID)
+                
+                await viewModel.fetchRecentOrders(storeID: sessionStore.currentUser?.storeID)
                 
                 await MainActor.run {
                     withAnimation {

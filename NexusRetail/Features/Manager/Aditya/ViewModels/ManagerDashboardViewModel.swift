@@ -5,66 +5,220 @@
 
 import SwiftUI
 import Observation
+import Supabase
+
+struct StaffPerformancePoint: Identifiable, Equatable {
+    var id: String { name }
+    let name: String
+    let score: Int
+}
+
+struct OrderSumResult: Decodable {
+    let total: Double
+}
+
+struct ManagerNullableUUID: Encodable {
+    let value: UUID?
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        if let value = value {
+            try container.encode(value)
+        } else {
+            try container.encodeNil()
+        }
+    }
+}
+
+struct ManagerSalesParams: Encodable {
+    let p_store_id: ManagerNullableUUID
+    let p_period: String
+}
+
+struct ManagerTopProductsParams: Encodable {
+    let p_store_id: ManagerNullableUUID
+    let p_period: String
+    let p_limit: Int
+}
 
 @Observable
 final class ManagerDashboardViewModel {
     
     // MARK: - Properties
     
-    var timeRange: ManagerSalesTimeRange = .weekly
+    // Toggles for the main dashboard charts
+    var topProductsTimeRange: SalesTimeRange = .monthly
+    var staffTimeRange: SalesTimeRange = .monthly
     
-    // MARK: - Mock Data
+    var isLoading: Bool = false
+    var errorMessage: String? = nil
     
-    let managerName = "Alex"
-    let storeName = "Jewellery Store, Indiranagar"
+    // MARK: - Live Data
     
-    let todayRevenue = "₹1,25,000"
-    let revenueTrend = "+12.4%"
+    var managerName = "Manager"
+    var storeName = "Loading..."
     
-    let transactions = "42"
-    let averageTicket = "₹2,976"
-    let returns = "2"
+    // KPIs
+    var todayRevenue = "₹0"
+    var pendingRequests = "0"
+    var lowStockItems = "0"
+    var todayReturns = "0" // Mocked to 0 for now
     
-    let productsInStock = "3,450"
-    let productsInStockTrend = "+12"
+    // Detail Chart Data (Revenue History)
+    var sixMonthTotal: String = "₹0"
+    var peakMonth: String = "N/A"
     
-    let lowStockItems = "18"
-    let lowStockTrend = "+3"
+    var revenueChartData: [ManagerRevenueChartPoint] = []
+    var revenueMaxValue: Double = 1.0
     
-    var sixMonthTotal: String {
-        timeRange == .weekly ? "₹12.2L" : "₹84.5L"
-    }
+    var topProductsData: [ProductChartPoint] = []
+    var topProductsMaxValue: Int = 100
     
-    var peakMonth: String {
-        timeRange == .weekly ? "Sat" : "Jun"
-    }
+    var staffPerformanceData: [StaffPerformancePoint] = []
     
-    // Chart Data
-    var revenueChartData: [ManagerRevenueChartPoint] {
-        switch timeRange {
-        case .weekly:
-            return [
-                ManagerRevenueChartPoint(label: "Mon", revenue: 1.2),
-                ManagerRevenueChartPoint(label: "Tue", revenue: 1.5),
-                ManagerRevenueChartPoint(label: "Wed", revenue: 1.1),
-                ManagerRevenueChartPoint(label: "Thu", revenue: 1.8),
-                ManagerRevenueChartPoint(label: "Fri", revenue: 2.1),
-                ManagerRevenueChartPoint(label: "Sat", revenue: 2.5),
-                ManagerRevenueChartPoint(label: "Sun", revenue: 2.0)
-            ]
-        case .monthly:
-            return [
-                ManagerRevenueChartPoint(label: "Jan", revenue: 12.5),
-                ManagerRevenueChartPoint(label: "Feb", revenue: 14.0),
-                ManagerRevenueChartPoint(label: "Mar", revenue: 11.2),
-                ManagerRevenueChartPoint(label: "Apr", revenue: 15.6),
-                ManagerRevenueChartPoint(label: "May", revenue: 13.4),
-                ManagerRevenueChartPoint(label: "Jun", revenue: 16.8)
-            ]
+    // MARK: - API Calls
+    
+    func fetchData(storeID: UUID?) async {
+        guard let storeID = storeID else { return }
+        
+        await MainActor.run { isLoading = true }
+        
+        do {
+            async let storeTask: Store = SupabaseManager.shared.client
+                .from("store")
+                .select()
+                .eq("id", value: storeID.uuidString)
+                .single()
+                .execute()
+                .value
+            
+            let today = Date()
+            let calendar = Calendar.current
+            let startOfDay = calendar.startOfDay(for: today)
+            
+            // 1. Fetch Today's Orders for Revenue
+            async let ordersTask: [OrderSumResult] = SupabaseManager.shared.client
+                .from("orders")
+                .select("total")
+                .eq("store_id", value: storeID.uuidString)
+                .gte("created_at", value: ISO8601DateFormatter().string(from: startOfDay))
+                .execute()
+                .value
+            
+            // 2. Fetch Pending Transfer Requests
+            struct PartialTransfer: Codable { let id: UUID }
+            async let requestsTask: [PartialTransfer] = SupabaseManager.shared.client
+                .from("transfer_request")
+                .select("id")
+                .eq("requesting_store_id", value: storeID.uuidString)
+                .eq("status", value: "pending")
+                .execute()
+                .value
+            
+            // 3. Fetch Low Stock Items count
+            struct PartialInventory: Codable {
+                let onHand: Int
+                let reorderThreshold: Int
+                enum CodingKeys: String, CodingKey {
+                    case onHand = "on_hand"
+                    case reorderThreshold = "reorder_threshold"
+                }
+            }
+            async let inventoryTask: [PartialInventory] = SupabaseManager.shared.client
+                .from("inventory_item")
+                .select("on_hand, reorder_threshold")
+                .eq("store_id", value: storeID.uuidString)
+                .execute()
+                .value
+                
+            // Wait for basic info
+            let store = try? await storeTask
+            let orders = try? await ordersTask
+            let requests = try? await requestsTask
+            let inventory = try? await inventoryTask
+            
+            // 4. Fetch Charts (Top Products & Revenue)
+            let periodPrefix = topProductsTimeRange == .monthly ? "M" : "Y"
+            let params = ManagerSalesParams(
+                p_store_id: ManagerNullableUUID(value: storeID),
+                p_period: "\(periodPrefix):\(ISO8601DateFormatter().string(from: Date()))"
+            )
+            
+            let topParams = ManagerTopProductsParams(
+                p_store_id: ManagerNullableUUID(value: storeID),
+                p_period: "\(periodPrefix):\(ISO8601DateFormatter().string(from: Date()))",
+                p_limit: 5
+            )
+            
+            async let salesChartTask: [SalesPeriodResult] = SupabaseManager.shared.client
+                .rpc("store_sales_by_period", params: params)
+                .execute()
+                .value
+                
+            async let topProductsTask: [DashboardTopProduct] = SupabaseManager.shared.client
+                .rpc("store_top_products_by_period", params: topParams)
+                .execute()
+                .value
+                
+            let salesChart = try? await salesChartTask
+            let topProds = try? await topProductsTask
+            
+            await MainActor.run {
+                if let store = store {
+                    self.storeName = store.name
+                }
+                
+                let todayTotal = (orders ?? []).reduce(0) { $0 + $1.total }
+                self.todayRevenue = formatIndianCurrency(todayTotal)
+                
+                self.pendingRequests = "\(requests?.count ?? 0)"
+                
+                let lowStock = (inventory ?? []).filter { $0.onHand <= $0.reorderThreshold }.count
+                self.lowStockItems = "\(lowStock)"
+                
+                // Top Products Chart
+                if let prods = topProds {
+                    let grouped = Dictionary(grouping: prods) { $0.category }
+                    let categories = grouped.keys.sorted()
+                    self.topProductsData = categories.compactMap { cat in
+                        guard let items = grouped[cat] else { return nil }
+                        let totalSales = items.reduce(0) { $0 + Int($1.revenue) }
+                        return ProductChartPoint(category: cat, sales: totalSales)
+                    }.sorted { $0.sales > $1.sales }
+                    
+                    self.topProductsMaxValue = self.topProductsData.map(\.sales).max() ?? 100
+                }
+                
+                // Revenue Chart
+                if let chart = salesChart {
+                    self.revenueChartData = chart.map { ManagerRevenueChartPoint(label: $0.label, revenue: ($0.online + $0.offline) / 100000.0) } // Assuming Laks
+                    self.revenueMaxValue = self.revenueChartData.map(\.revenue).max() ?? 1.0
+                    
+                    let totalLaks = self.revenueChartData.reduce(0) { $0 + $1.revenue }
+                    self.sixMonthTotal = String(format: "₹%.2fL", totalLaks)
+                    
+                    if let peak = self.revenueChartData.max(by: { $0.revenue < $1.revenue }) {
+                        self.peakMonth = peak.label
+                    }
+                }
+                
+                // Mock staff performance for now since we don't have an RPC for it
+                self.staffPerformanceData = [
+                    StaffPerformancePoint(name: "Aman", score: 92),
+                    StaffPerformancePoint(name: "Priya", score: 85),
+                    StaffPerformancePoint(name: "Rahul", score: 80),
+                    StaffPerformancePoint(name: "Sneha", score: 75)
+                ]
+                
+                self.isLoading = false
+            }
+            
+        } catch {
+            print("Manager Dashboard fetch error: \(error)")
+            await MainActor.run {
+                self.errorMessage = error.localizedDescription
+                self.isLoading = false
+            }
         }
-    }
-    
-    var revenueMaxValue: Double {
-        timeRange == .weekly ? 3.0 : 20.0
     }
 }

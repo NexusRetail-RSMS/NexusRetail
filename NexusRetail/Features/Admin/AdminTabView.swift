@@ -49,6 +49,7 @@ struct AdminTabView: View {
             .tabItem {
                 Label("Transfers", systemImage: "arrow.left.arrow.right")
             }
+            .badge(transfersVM.activeRequestsCount)
             .tag(AdminTab.transfers)
 
             // 5. Managers
@@ -73,7 +74,6 @@ private struct ManagersTabRoot: View {
 
     var body: some View {
         AdminManagersView(isAddManagerPresented: $isAddManagerPresented, searchText: $searchText)
-            .toolbar(.hidden, for: .navigationBar)
     }
 }
 
@@ -106,9 +106,22 @@ struct AdminToolbarModifier: ViewModifier {
                                 .fill(RSMSColors.burgundy)
                                 .frame(width: 32, height: 32)
                             
-                            Text(initials(for: sessionStore.currentUser?.name))
-                                .font(.caption.bold())
-                                .foregroundColor(.white)
+                            if let urlString = sessionStore.currentUser?.imageUrl, let url = URL(string: urlString) {
+                                CachedAsyncImage(url: url) { image in
+                                    image
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 32, height: 32)
+                                        .clipShape(Circle())
+                                } placeholder: {
+                                    ProgressView()
+                                        .frame(width: 32, height: 32)
+                                }
+                            } else {
+                                Text(initials(for: sessionStore.currentUser?.name))
+                                    .font(.caption.bold())
+                                    .foregroundColor(.white)
+                            }
                         }
                     }
                     .accessibilityLabel("Profile")

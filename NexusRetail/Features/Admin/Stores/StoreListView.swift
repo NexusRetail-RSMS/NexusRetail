@@ -6,7 +6,7 @@ struct StoreListView: View {
     @State private var isShowingCreateForm = false
     @State private var searchText = ""
     @Namespace private var heroNamespace
-
+    @Environment(AdminNavigationStore.self) private var navStore
     private var filteredStores: [Store] {
         if searchText.isEmpty {
             return viewModel.stores
@@ -23,6 +23,22 @@ struct StoreListView: View {
         managersViewModel.managers.first(where: { $0.id == store.managerID })
     }
     
+    private var emptyStateSection: some View {
+        VStack(spacing: RSMSSpacing.md) {
+            Image(systemName: "building.2.crop.circle")
+                .font(.system(size: 64))
+                .foregroundColor(RSMSColors.burgundy)
+            Text("No Stores Found")
+                .font(RSMSFonts.title)
+                .fontWeight(.bold)
+                .foregroundColor(RSMSColors.primaryText)
+            Text("Tap + to add your first store.")
+                .font(RSMSFonts.subheadline)
+                .foregroundColor(RSMSColors.secondaryText)
+        }
+        .frame(maxWidth: .infinity, minHeight: 300)
+    }
+    
     var body: some View {
         ZStack {
             RSMSColors.background
@@ -30,8 +46,6 @@ struct StoreListView: View {
 
             ScrollView {
                 VStack(spacing: 0) {
-                    headerSection
-
                     if viewModel.isLoading && viewModel.stores.isEmpty {
                         VStack(spacing: 14) {
                             ProgressView()
@@ -77,7 +91,7 @@ struct StoreListView: View {
                         }
                         .padding()
                         .frame(maxWidth: .infinity, minHeight: 300)
-                    } else if viewModel.stores.isEmpty {
+                    } else if filteredStores.isEmpty {
                         VStack(spacing: 18) {
                             ZStack {
                                 Circle()
@@ -115,9 +129,14 @@ struct StoreListView: View {
                             }
                         }
                         .padding(.horizontal, RSMSSpacing.lg)
-                        .padding(.bottom, RSMSSpacing.md)
+                        .padding(.top, RSMSSpacing.md)
+                        .padding(.bottom, RSMSSpacing.xxl)
                     }
                 }
+            }
+            .safeAreaInset(edge: .top) {
+                headerSection
+                    .background(.ultraThinMaterial)
             }
             .refreshable {
                 await viewModel.load()
@@ -128,8 +147,13 @@ struct StoreListView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .task {
-            if viewModel.stores.isEmpty {
-                await viewModel.load()
+            await viewModel.load()
+        }
+        .onChange(of: navStore.selectedTab) { _, newTab in
+            if newTab == .stores {
+                Task {
+                    await viewModel.load()
+                }
             }
         }
         .sheet(isPresented: $isShowingCreateForm) {

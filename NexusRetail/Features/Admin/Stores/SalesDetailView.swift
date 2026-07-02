@@ -16,7 +16,7 @@ import Supabase
 // MARK: - Granular Data Point
 
 struct SalesGranularPoint: Identifiable {
-    let id = UUID()
+    var id: String { label }
     let label: String
     let online: Double
     let offline: Double
@@ -27,7 +27,9 @@ struct SalesGranularPoint: Identifiable {
 
 struct SalesDetailView: View {
     let store: Store
-    @State private var selectedRange: StoreChartTimeRange = .weekly(Date())
+    // Default to yearly so there's always data visible on open.
+    // Weekly default caused "no data" because current week may have no orders.
+    @State private var selectedRange: StoreChartTimeRange = .yearly(Date())
     @Environment(\.dismiss) private var dismiss
 
     @State private var dataPoints: [SalesPeriodResult] = []

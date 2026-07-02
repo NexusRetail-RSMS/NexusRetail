@@ -73,3 +73,7 @@ Temporary Items
 # Secrets and Configs
 Config.xcconfig
 *.xcconfig
+
+# Local environment variables
+.env.local
+.env*.local

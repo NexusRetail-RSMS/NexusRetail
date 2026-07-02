@@ -1,2 +1,217 @@
-// Staff metrics + delete logic.
+//
+//  StaffViewModel.swift
+//  NexusRetail
+//
 
+import SwiftUI
+import Supabase
+
+struct StaffStatsRPC: Decodable {
+    let id: UUID
+    let name: String?
+    let email: String?
+    let role: String?
+    let phone: String?
+    let imageUrl: String?
+    let productsSold: Int?
+    let revenue: Double?
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case email
+        case role
+        case phone
+        case imageUrl = "image_url"
+        case productsSold = "products_sold"
+        case revenue
+    }
+}
+
+@Observable
+class StaffViewModel {
+    var employees: [DisplayEmployee] = []
+    var isLoading = false
+    var errorMessage: String? = nil
+    
+    private let localCacheKey = "nexus_local_staff_cache_v2"
+
+    init() {
+        self.employees = loadFromCache()
+    }
+
+    private func saveToCache() {
+        if let data = try? JSONEncoder().encode(employees) {
+            UserDefaults.standard.set(data, forKey: localCacheKey)
+        }
+    }
+
+    private func loadFromCache() -> [DisplayEmployee] {
+        guard let data = UserDefaults.standard.data(forKey: localCacheKey),
+              let decoded = try? JSONDecoder().decode([DisplayEmployee].self, from: data) else {
+            return []
+        }
+        return decoded
+    }
+
+    func loadStaff() async {
+        isLoading = true
+        errorMessage = nil
+        do {
+            let response: [StaffStatsRPC] = try await SupabaseManager.shared.client
+                .rpc("get_staff_stats")
+                .execute()
+                .value
+            
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .currency
+            formatter.currencyCode = "USD"
+            formatter.maximumFractionDigits = 0
+            
+            self.employees = response.map { stat in
+                let isAfterSales = stat.role == "after_sales"
+                let roleStr = isAfterSales ? "After Sales Associate" : "Sales Associate"
+                let revVal = stat.revenue ?? 0
+                let revStr = formatter.string(from: NSNumber(value: revVal)) ?? "$\(revVal)"
+                
+                return DisplayEmployee(
+                    id: stat.id,
+                    name: stat.name ?? "Staff Member",
+                    role: roleStr,
+                    productsSold: stat.productsSold ?? 0,
+                    revenue: revStr,
+                    imageUrl: stat.imageUrl,
+                    phone: stat.phone ?? "",
+                    email: stat.email ?? ""
+                )
+            }
+            saveToCache()
+        } catch {
+            print("Error loading staff: \(error)")
+        }
+        isLoading = false
+    }
+    
+    func deleteEmployee(id: UUID) async -> Bool {
+        self.employees.removeAll { $0.id == id }
+        saveToCache()
+        do {
+            try await SupabaseManager.shared.client
+                .from("app_user")
+                .delete()
+                .eq("id", value: id.uuidString)
+                .execute()
+            return true
+        } catch {
+            print("Error deleting employee: \(error)")
+            return false
+        }
+    }
+    
+    func addEmployee(_ employee: DisplayEmployee, password: String) async -> String? {
+        let roleVal = employee.role == "After Sales Associate" ? "after_sales" : "sales_associate"
+        
+        do {
+            struct Params: Encodable {
+                let staff_email: String
+                let staff_password: String
+                let staff_name: String
+                let staff_phone: String
+                let staff_role: String
+            }
+            
+            let params = Params(
+                staff_email: employee.email,
+                staff_password: password,
+                staff_name: employee.name,
+                staff_phone: employee.phone,
+                staff_role: roleVal
+            )
+            
+            try await SupabaseManager.shared.client
+                .rpc("create_staff", params: params)
+                .execute()
+            
+            if !password.isEmpty {
+                _ = await sendEmployeeEmail(to: employee.email, password: password, name: employee.name, role: employee.role)
+            }
+            
+            await loadStaff() // Reload to get the new staff member and true ID
+            return nil
+            
+        } catch {
+            print("Error creating staff: \(error)")
+            let errorMsg = error.localizedDescription
+            if errorMsg.contains("already exists") {
+                return "This email is already associated with another account."
+            }
+            return errorMsg
+        }
+    }
+    
+    func updateEmployee(_ employee: DisplayEmployee) {
+        if let idx = self.employees.firstIndex(where: { $0.id == employee.id }) {
+            withAnimation {
+                self.employees[idx] = employee
+            }
+        }
+        saveToCache()
+        
+        Task {
+            let roleVal = employee.role == "After Sales Associate" ? "after_sales" : "sales_associate"
+            try? await SupabaseManager.shared.client
+                .from("app_user")
+                .update(["name": employee.name, "email": employee.email, "phone": employee.phone, "role": roleVal])
+                .eq("id", value: employee.id.uuidString)
+                .execute()
+        }
+    }
+    
+    // MARK: - Resend Email Integration
+    
+    private func sendEmployeeEmail(to email: String, password: String, name: String, role: String) async -> Bool {
+        let resendApiKey = "re_3ot8yx3s_BDYPp6FcxJXDcFsSXU6bGW7t"
+        
+        guard let url = URL(string: "https://api.resend.com/emails") else { return false }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(resendApiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let htmlBody = """
+        <h2>Welcome to Nexus Retail!</h2>
+        <p>Dear \(name),</p>
+        <p>An employee account has been created for you as a <b>\(role)</b>.</p>
+        <p>Here are your login credentials:</p>
+        <ul>
+            <li><b>Username (Email ID):</b> \(email)</li>
+            <li><b>Password:</b> \(password)</li>
+        </ul>
+        <p><i>Please log in and change your password as soon as possible for security purposes.</i></p>
+        <p>Warm regards,<br>Nexus Retail Management</p>
+        """
+        
+        let payload: [String: Any] = [
+            "from": "Nexus Admin <admin@updates.nexusretail.tech>",
+            "to": [email],
+            "subject": "Your Employee Account Details – Nexus Retail",
+            "html": htmlBody
+        ]
+        
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: payload)
+            let (data, response) = try await URLSession.shared.data(for: request)
+            if let httpRes = response as? HTTPURLResponse, httpRes.statusCode >= 300 {
+                print("Failed to send employee email. Status: \(httpRes.statusCode)")
+                print(String(data: data, encoding: .utf8) ?? "")
+                return false
+            } else {
+                print("Successfully dispatched employee email via Resend to \(email)!")
+                return true
+            }
+        } catch {
+            print("Network error sending employee email: \(error)")
+            return false
+        }
+    }
+}

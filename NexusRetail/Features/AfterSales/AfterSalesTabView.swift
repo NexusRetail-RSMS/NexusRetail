@@ -101,9 +101,22 @@ struct AfterSalesToolbarModifier: ViewModifier {
                                 .fill(RSMSColors.burgundy)
                                 .frame(width: 32, height: 32)
                             
-                            Text(initials(for: sessionStore.currentUser?.name))
-                                .font(.caption.bold())
-                                .foregroundColor(.white)
+                            if let urlString = sessionStore.currentUser?.imageUrl, let url = URL(string: urlString) {
+                                CachedAsyncImage(url: url) { image in
+                                    image
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 32, height: 32)
+                                        .clipShape(Circle())
+                                } placeholder: {
+                                    ProgressView()
+                                        .frame(width: 32, height: 32)
+                                }
+                            } else {
+                                Text(initials(for: sessionStore.currentUser?.name))
+                                    .font(.caption.bold())
+                                    .foregroundColor(.white)
+                            }
                         }
                     }
                     .accessibilityLabel("Profile")
@@ -111,7 +124,7 @@ struct AfterSalesToolbarModifier: ViewModifier {
                 }
             }
             .sheet(isPresented: $isProfilePresented) {
-                AfterSalesProfileSheet()
+                AdminProfileSheet()
             }
     }
     
