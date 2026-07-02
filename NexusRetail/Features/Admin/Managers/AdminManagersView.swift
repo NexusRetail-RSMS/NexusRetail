@@ -179,32 +179,6 @@ struct AdminManagersView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: RSMSSpacing.xl) {
-                    VStack(spacing: RSMSSpacing.md) {
-                        HStack {
-                            Text("Managers")
-                                .font(.largeTitle)
-                                .fontWeight(.bold)
-                                .foregroundColor(RSMSColors.primaryText)
-
-                            Spacer()
-
-                            Button {
-                                isAddManagerPresented = true
-                            } label: {
-                                Image(systemName: "plus")
-                                    .font(.system(size: 20, weight: .semibold))
-                                    .foregroundColor(RSMSColors.burgundy)
-                                    .frame(width: 44, height: 44)
-                                    .glassEffect(.regular.tint(RSMSColors.burgundy.opacity(0.1)).interactive(), in: Circle())
-                            }
-                            .accessibilityLabel("Add new manager")
-                        }
-
-                        NexusSearchBar(text: $searchText, placeholder: "Search managers, stores…")
-                    }
-                    .padding(.horizontal, RSMSSpacing.lg)
-                    .padding(.top, 16)
-
                     // MARK: Top Performers
                     VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
                         Text("Top Performers")
@@ -702,4 +676,10 @@ struct ManagerListCard: View {
     }
 }
 
-
+#Preview {
+    AdminManagersView(
+        isAddManagerPresented: .constant(false),
+        searchText: .constant("")
+    )
+    .environment(AdminNavigationStore())
+}

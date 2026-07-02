@@ -5,14 +5,18 @@
 
 import SwiftUI
 
-/// Role-based router (RBAC). Reads the signed-in user's role from SessionStore and
-/// mounts only that role's tab view, or the Auth flow (RoleSelectionView) when there is no active session.
 struct RootView: View {
     @Environment(SessionStore.self) private var sessionStore
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+    @State private var isRestoring = true
 
     var body: some View {
         Group {
-            if let role = sessionStore.currentRole {
+            if isRestoring {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(RSMSColors.background.ignoresSafeArea())
+            } else if let role = sessionStore.currentRole {
                 switch role {
                 case .admin:
                     AdminTabView()
@@ -23,12 +27,18 @@ struct RootView: View {
                 case .afterSales:
                     AfterSalesTabView()
                 }
+            } else if !hasSeenOnboarding {
+                OnboardingView()
             } else {
                 NavigationStack {
-                    RoleSelectionView()
+                    LoginView()
                 }
             }
         }
         .animation(.easeInOut, value: sessionStore.currentRole)
+        .task {
+            await sessionStore.restore()
+            isRestoring = false
+        }
     }
 }
