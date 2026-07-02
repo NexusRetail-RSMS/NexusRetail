@@ -23,8 +23,6 @@ struct AfterSalesDashboardView: View {
                         serviceTrendChartSection
                         serviceStatusDonutSection
                         urgentCasesSection
-                        quickActionsSection
-                        recentActivitySection
                         Spacer(minLength: 80)
                     }
                     .padding(.horizontal, RSMSSpacing.lg)
@@ -249,82 +247,4 @@ struct AfterSalesDashboardView: View {
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
     }
     
-    // MARK: - Quick Actions
-    private var quickActionsSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Quick Actions")
-                .font(.system(size: 16, weight: .bold, design: .rounded))
-                .foregroundColor(RSMSColors.darkBrown)
-                .padding(.horizontal, 4)
-            
-            let columns = [GridItem(.flexible()), GridItem(.flexible())]
-            
-            LazyVGrid(columns: columns, spacing: 12) {
-                quickActionButton(title: "Verify Warranty", icon: "checkmark.shield", color: RSMSColors.burgundy)
-                quickActionButton(title: "Update Repair Status", icon: "wrench.and.screwdriver", color: Color(hex: "2A9D8F"))
-                quickActionButton(title: "Approve Return", icon: "arrow.uturn.backward.circle", color: RSMSColors.error)
-                quickActionButton(title: "Notify Customer", icon: "bell", color: RSMSColors.warning)
-            }
-        }
-    }
-    
-    private func quickActionButton(title: String, icon: String, color: Color) -> some View {
-        Button { } label: {
-            HStack(spacing: 10) {
-                Image(systemName: icon)
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.white)
-                Text(title)
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                    .minimumScaleFactor(0.8)
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .background(color)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .shadow(color: color.opacity(0.3), radius: 6, x: 0, y: 3)
-        }
-        .buttonStyle(.plain)
-    }
-    
-    // MARK: - Recent Activity
-    private var recentActivitySection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Recent Activities")
-                .font(.system(size: 16, weight: .bold, design: .rounded))
-                .foregroundColor(RSMSColors.darkBrown)
-                .padding(.horizontal, 4)
-            
-            VStack(spacing: 12) {
-                ForEach(vm.recentActivities) { activity in
-                    activityRow(activity)
-                }
-            }
-        }
-    }
-    
-    private func activityRow(_ activity: ServiceActivity) -> some View {
-        HStack(spacing: 14) {
-            ZStack {
-                Circle().fill(activity.iconColor.opacity(0.1)).frame(width: 40, height: 40)
-                Image(systemName: activity.statusIcon)
-                    .font(.system(size: 15))
-                    .foregroundColor(activity.iconColor)
-            }
-            VStack(alignment: .leading, spacing: 4) {
-                Text(activity.statusText).font(.system(size: 14, weight: .bold, design: .rounded)).foregroundColor(RSMSColors.primaryText)
-                Text("\(activity.customerName) • \(activity.serviceId)").font(.system(size: 12)).foregroundColor(RSMSColors.secondaryText)
-            }
-            Spacer()
-            Text(activity.time).font(.system(size: 11)).foregroundColor(RSMSColors.secondaryText.opacity(0.8))
-        }
-        .padding(12)
-        .background(RSMSColors.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(RSMSColors.cardBorder, lineWidth: 1))
-    }
 }
