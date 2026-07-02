@@ -292,7 +292,7 @@ struct EditManagerSheet: View {
     
     private var pickerStoreNames: [String] {
         var names = stores.filter { $0.managerID == nil || $0.name == storeName }.map { $0.name }
-        if !storeName.isEmpty && !names.contains(storeName) {
+        if !storeName.isEmpty && storeName != "None" && storeName != "Unassigned" && storeName != "Not Assigned" && !names.contains(storeName) {
             names.insert(storeName, at: 0)
         }
         return names
@@ -317,9 +317,10 @@ struct EditManagerSheet: View {
         _lastName        = State(initialValue: parts.dropFirst().joined(separator: " "))
         _phone           = State(initialValue: m.phone)
         _email           = State(initialValue: m.email)
-        _storeName       = State(initialValue: m.storeName)
-        _storeAddress    = State(initialValue: m.address)
-        _selectedCountry = State(initialValue: m.country.isEmpty ? "United States" : m.country)
+        let initialStore = (m.storeName == "Unassigned" || m.storeName == "Not Assigned" || m.storeName.isEmpty) ? "None" : m.storeName
+        _storeName       = State(initialValue: initialStore)
+        _storeAddress    = State(initialValue: (initialStore == "None") ? "" : m.address)
+        _selectedCountry = State(initialValue: (initialStore == "None") ? "" : m.country)
         self.onSave = onSave
     }
     
@@ -418,6 +419,7 @@ struct EditManagerSheet: View {
                 // ── Store Details ──────────────────────────────────────
                 Section("Store Details") {
                     Picker(selection: $storeName) {
+                        Text("None").tag("None")
                         ForEach(pickerStoreNames, id: \.self) { name in
                             Text(name).tag(name)
                         }
@@ -436,13 +438,17 @@ struct EditManagerSheet: View {
                             .frame(width: 20)
                             .padding(.top, 8)
                         TextField("Store Address", text: $storeAddress, axis: .vertical)
+                            .disabled(true)
+                            .foregroundColor(RSMSColors.secondaryText)
                     }
-                    Picker("Country", selection: $selectedCountry) {
-                        ForEach(pickerCountries, id: \.self) { country in
-                            Text(country).tag(country)
-                        }
+                    HStack {
+                        Image(systemName: "globe")
+                            .foregroundColor(RSMSColors.burgundy)
+                            .frame(width: 20)
+                        TextField("Country", text: $selectedCountry)
+                            .disabled(true)
+                            .foregroundColor(RSMSColors.secondaryText)
                     }
-                    .tint(RSMSColors.burgundy)
                 }
             }
             .navigationTitle("Edit Manager")
@@ -466,7 +472,7 @@ struct EditManagerSheet: View {
                                 manager.name      = fullName.isEmpty ? manager.name : fullName
                                 manager.phone     = phone
                                 manager.email     = email
-                                manager.storeName = storeName
+                                manager.storeName = (storeName == "None") ? "Unassigned" : storeName
                                 manager.address   = storeAddress
                                 manager.country   = selectedCountry
                                 let newImage = selectedImageData != nil ? UIImage(data: selectedImageData!) : nil
@@ -491,18 +497,26 @@ struct EditManagerSheet: View {
             .task {
                 do {
                     self.stores = try await StoreRepository().fetchStores()
+                    if storeName != "None" && storeName != "Unassigned" && storeName != "Not Assigned" && !storeName.isEmpty {
+                        if let matchedStore = stores.first(where: { $0.name == storeName }) {
+                            self.storeAddress = matchedStore.address ?? ""
+                            self.selectedCountry = matchedStore.country ?? ""
+                        }
+                    } else {
+                        self.storeAddress = ""
+                        self.selectedCountry = ""
+                    }
                 } catch {
                     print("Failed to fetch stores: \(error)")
                 }
             }
             .onChange(of: storeName) { _, newStoreName in
-                if let matchedStore = stores.first(where: { $0.name == newStoreName }) {
-                    if let addr = matchedStore.address {
-                        self.storeAddress = addr
-                    }
-                    if let cntry = matchedStore.country, !cntry.isEmpty {
-                        self.selectedCountry = cntry
-                    }
+                if newStoreName == "None" || newStoreName.isEmpty || newStoreName == "Unassigned" || newStoreName == "Not Assigned" {
+                    self.storeAddress = ""
+                    self.selectedCountry = ""
+                } else if let matchedStore = stores.first(where: { $0.name == newStoreName }) {
+                    self.storeAddress = matchedStore.address ?? ""
+                    self.selectedCountry = matchedStore.country ?? ""
                 }
             }
             .alert("Error Updating Manager", isPresented: $showErrorAlert) {

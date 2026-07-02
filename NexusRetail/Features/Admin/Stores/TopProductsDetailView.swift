@@ -25,7 +25,8 @@ struct TopProduct: Identifiable {
 
 struct TopProductsDetailView: View {
     let store: Store
-    @State private var selectedRange: StoreChartTimeRange = .weekly(Date())
+    // Default to yearly so there's always data visible on open.
+    @State private var selectedRange: StoreChartTimeRange = .yearly(Date())
     @Environment(\.dismiss) private var dismiss
 
     // Colors for the donut slices

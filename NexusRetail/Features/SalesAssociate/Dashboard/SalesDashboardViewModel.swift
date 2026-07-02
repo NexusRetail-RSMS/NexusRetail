@@ -24,6 +24,7 @@ final class SalesDashboardViewModel {
     // MARK: - Filtered orders for selected period
     var filteredDbOrders: [StoreOrder] {
         let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         let now       = Date()
         let calendar  = Calendar.current
 
@@ -56,13 +57,6 @@ final class SalesDashboardViewModel {
     // MARK: - KPI Strings (with mock fallbacks)
     var salesAmountString: String {
         let total = filteredDbOrders.reduce(0.0) { $0 + $1.total }
-        if total == 0.0 {
-            switch selectedPeriod {
-            case .today: return "₹24,350.00"
-            case .week:  return "₹1,82,400.00"
-            case .month: return "₹7,40,200.00"
-            }
-        }
         let fmt = NumberFormatter()
         fmt.numberStyle   = .currency
         fmt.currencySymbol = "₹"
@@ -79,46 +73,23 @@ final class SalesDashboardViewModel {
     }
 
     var ordersCompletedCount: Int {
-        let count = filteredDbOrders.count
-        if count == 0 {
-            switch selectedPeriod {
-            case .today: return 18
-            case .week:  return 112
-            case .month: return 482
-            }
-        }
-        return count
+        return filteredDbOrders.count
     }
 
     var itemsSoldCount: Int {
-        let count = filteredDbOrders.reduce(0) { sum, order in
+        return filteredDbOrders.reduce(0) { sum, order in
             sum + (order.orderLineItems?.reduce(0) { $0 + $1.quantity } ?? 0)
         }
-        if count == 0 {
-            switch selectedPeriod {
-            case .today: return 42
-            case .week:  return 284
-            case .month: return 1195
-            }
-        }
-        return count
     }
 
     var returnsCount: Int {
-        let dbReturns = ordersCompletedCount % 4
-        if dbOrders.isEmpty {
-            switch selectedPeriod {
-            case .today: return 1
-            case .week:  return 4
-            case .month: return 18
-            }
-        }
-        return dbReturns
+        return ordersCompletedCount % 4
     }
 
     // MARK: - Revenue Chart Data
     var chartDataPoints: [StoreRevenueChartPoint] {
         let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         let calendar  = Calendar.current
         let now       = Date()
 
@@ -143,11 +114,6 @@ final class SalesDashboardViewModel {
                 StoreRevenueChartPoint(label: names[idx], revenue: weeklyMap[wd] ?? 0.0)
             }
 
-            if points.allSatisfy({ $0.revenue == 0.0 }) {
-                let mock = [45000.0, 62000.0, 78000.0, 39000.0, 85000.0, 110000.0, 95000.0]
-                points = names.enumerated().map { StoreRevenueChartPoint(label: $1, revenue: mock[$0]) }
-            }
-
         } else {
             let monthFmt = DateFormatter()
             monthFmt.dateFormat = "MMM"
@@ -168,11 +134,6 @@ final class SalesDashboardViewModel {
                 }
             }
             points = labels.map { StoreRevenueChartPoint(label: $0, revenue: map[$0] ?? 0.0) }
-
-            if points.allSatisfy({ $0.revenue == 0.0 }) {
-                let mock = [380000.0, 490000.0, 420000.0, 580000.0, 740200.0, 690000.0]
-                points = labels.enumerated().map { StoreRevenueChartPoint(label: $1, revenue: mock[$0]) }
-            }
         }
 
         return points
@@ -180,7 +141,8 @@ final class SalesDashboardViewModel {
 
     var chartMaxValue: Double {
         let maxVal = chartDataPoints.map(\.revenue).max() ?? 100000.0
-        return ceil(maxVal / 20000.0) * 20000.0
+        let calculated = ceil(maxVal / 20000.0) * 20000.0
+        return max(20000.0, calculated)
     }
 
     // MARK: - Helpers
@@ -237,7 +199,7 @@ final class SalesDashboardViewModel {
 
             let converted: [StoreOrder] = fetched.map { dOrder in
                 let lineItems = dOrder.orderLineItems?.map { dli in
-                    OrderLineItem(id: dli.id, orderID: nil, quantity: dli.quantity, appliedPrice: 0, sku: nil)
+                    OrderLineItem(id: dli.id, orderID: nil, quantity: dli.quantity, appliedPrice: 0, products: nil)
                 }
                 return StoreOrder(
                     id: dOrder.id,

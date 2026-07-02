@@ -231,7 +231,7 @@ struct ProductSearchView: View {
                         .font(.system(size: 12))
                         .foregroundColor(RSMSColors.secondaryText)
                     
-                    Text("$\(String(format: "%.2f", product.price))")
+                    Text("₹\(String(format: "%.0f", product.price))")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(RSMSColors.burgundy)
                 }
@@ -309,7 +309,7 @@ struct ProductSearchView: View {
                         .font(.system(size: 13))
                         .foregroundColor(RSMSColors.secondaryText)
                     
-                    Text("$\(String(format: "%.2f", product.price))")
+                    Text("₹\(String(format: "%.0f", product.price))")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(RSMSColors.burgundy)
                     
@@ -403,7 +403,7 @@ struct ProductSearchView: View {
                     .font(.system(size: 14, weight: .bold, design: .rounded))
                     .foregroundColor(RSMSColors.primaryText)
                 
-                Text("Price: $\(String(format: "%.2f", alt.price))  •  Size: \(alt.size)")
+                Text("Price: ₹\(String(format: "%.0f", alt.price))  •  Size: \(alt.size)")
                     .font(.system(size: 11))
                     .foregroundColor(RSMSColors.secondaryText)
             }

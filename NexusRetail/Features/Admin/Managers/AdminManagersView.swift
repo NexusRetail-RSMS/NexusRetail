@@ -22,13 +22,76 @@ struct DisplayManager: Identifiable, Hashable {
     // Stats
     var productsSold: Int = 0
     var createdAt: Date = Date()
+    
+    init(id: UUID, name: String, storeName: String, country: String, performanceScore: Int, revenue: String, imageUrl: String? = nil, phone: String = "", email: String = "", address: String = "", productsSold: Int = 0, createdAt: Date = Date()) {
+        self.id = id
+        self.name = name
+        self.storeName = storeName
+        self.country = country
+        self.performanceScore = performanceScore
+        self.revenue = revenue
+        self.imageUrl = imageUrl
+        self.phone = phone
+        self.email = email
+        self.address = address
+        self.productsSold = productsSold
+        self.createdAt = createdAt
+    }
+
+    init(rpc: ManagerStatsRPC) {
+        self.id = rpc.id
+        self.name = rpc.name ?? "Unknown"
+        self.storeName = rpc.storeName ?? "Unassigned"
+        self.country = rpc.country ?? "Unknown"
+        self.performanceScore = rpc.performanceScore ?? 0
+        self.imageUrl = rpc.imageUrl
+        self.phone = rpc.phone ?? ""
+        self.email = rpc.email ?? ""
+        self.address = rpc.storeName ?? ""
+        self.productsSold = rpc.productsSold ?? 0
+        
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "USD"
+        formatter.maximumFractionDigits = 0
+        self.revenue = formatter.string(from: NSNumber(value: rpc.revenue ?? 0)) ?? "$0"
+
+        var parsedDate = Date()
+        if let dateStr = rpc.createdAt {
+            let iso1 = ISO8601DateFormatter()
+            iso1.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let date = iso1.date(from: dateStr) {
+                parsedDate = date
+            } else {
+                let iso2 = ISO8601DateFormatter()
+                if let date = iso2.date(from: dateStr) {
+                    parsedDate = date
+                }
+            }
+        }
+        self.createdAt = parsedDate
+    }
 }
 
 // Removed ManagersStore
 
 // MARK: - Helpers
 
-
+func flagEmoji(for country: String) -> String {
+    let map: [String: String] = [
+        "United States":        "🇺🇸",
+        "United Kingdom":       "🇬🇧",
+        "Canada":               "🇨🇦",
+        "Australia":            "🇦🇺",
+        "Germany":              "🇩🇪",
+        "France":               "🇫🇷",
+        "Japan":                "🇯🇵",
+        "India":                "🇮🇳",
+        "Singapore":            "🇸🇬",
+        "United Arab Emirates": "🇦🇪",
+    ]
+    return map[country] ?? "🌍"
+}
 
 func performanceColor(for score: Int) -> Color {
     if score >= 90 { return RSMSColors.success }
@@ -67,6 +130,7 @@ enum PerformanceSortOrder: String, CaseIterable {
 struct AdminManagersView: View {
     @Binding var isAddManagerPresented: Bool
     @Binding var searchText: String
+    @Environment(AdminNavigationStore.self) private var navStore
     @State private var viewModel = ManagersViewModel()
     @State private var topPerformerPage = 0
     @State private var scrolledID: Int?
@@ -115,6 +179,32 @@ struct AdminManagersView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: RSMSSpacing.xl) {
+                    VStack(spacing: RSMSSpacing.md) {
+                        HStack {
+                            Text("Managers")
+                                .font(.largeTitle)
+                                .fontWeight(.bold)
+                                .foregroundColor(RSMSColors.primaryText)
+
+                            Spacer()
+
+                            Button {
+                                isAddManagerPresented = true
+                            } label: {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundColor(RSMSColors.burgundy)
+                                    .frame(width: 44, height: 44)
+                                    .glassEffect(.regular.tint(RSMSColors.burgundy.opacity(0.1)).interactive(), in: Circle())
+                            }
+                            .accessibilityLabel("Add new manager")
+                        }
+
+                        NexusSearchBar(text: $searchText, placeholder: "Search managers, stores…")
+                    }
+                    .padding(.horizontal, RSMSSpacing.lg)
+                    .padding(.top, 16)
+
                     // MARK: Top Performers
                     VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
                         Text("Top Performers")
@@ -347,6 +437,13 @@ struct AdminManagersView: View {
         }
         .task {
             await viewModel.loadManagers()
+        }
+        .onChange(of: navStore.selectedTab) { _, newTab in
+            if newTab == .managers {
+                Task {
+                    await viewModel.loadManagers()
+                }
+            }
         }
         .refreshable {
             await viewModel.loadManagers()
@@ -604,3 +701,5 @@ struct ManagerListCard: View {
         .tint(.black)
     }
 }
+
+

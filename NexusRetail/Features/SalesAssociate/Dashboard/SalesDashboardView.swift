@@ -59,8 +59,20 @@ struct SalesDashboardView: View {
             }
         }
         .environment(posViewModel)
+        .refreshable {
+            await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID)
+        }
         .task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID) }
-        .onAppear { Task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID) } }
+        .onAppear { 
+            // Refresh data when view appears (e.g., after completing a sale)
+            Task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID) } 
+        }
+        .onChange(of: navigationPath.count) { _, newCount in
+            // Refresh when returning to dashboard (path becomes empty)
+            if newCount == 0 {
+                Task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID) }
+            }
+        }
     }
 
     // MARK: - Header
@@ -237,16 +249,27 @@ struct SalesDashboardView: View {
             }
             .padding(.horizontal, 4)
 
-            VStack(spacing: 12) {
-                ForEach(Array(posViewModel.completedOrders.prefix(3))) { order in
-                    activityRow(
-                        orderId: order.id,
-                        client: order.client,
-                        amount: "₹\(Int(order.amount))",
-                        status: order.status,
-                        statusColor: vm.statusColor(for: order.status),
-                        time: order.time
-                    )
+            if vm.dbOrders.isEmpty {
+                Text("No recent orders")
+                    .font(.system(size: 13))
+                    .foregroundColor(RSMSColors.secondaryText)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 20)
+            } else {
+                VStack(spacing: 12) {
+                    ForEach(Array(vm.dbOrders.prefix(3))) { order in
+                        let orderId = "ORD-\(order.id.uuidString.prefix(8).uppercased())"
+                        let amount  = "₹\(Int(order.total))"
+                        let date    = String(order.createdAt.prefix(10))
+                        activityRow(
+                            orderId: orderId,
+                            client: "Customer",
+                            amount: amount,
+                            status: "Completed",
+                            statusColor: RSMSColors.success,
+                            time: date
+                        )
+                    }
                 }
             }
         }

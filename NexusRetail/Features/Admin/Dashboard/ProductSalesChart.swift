@@ -33,30 +33,19 @@ struct ProductSalesChart: View {
 
             // Chart
             if data.isEmpty {
-                ZStack {
-                    Chart {
-                        SectorMark(
-                            angle: .value("Placeholder", 1),
-                            innerRadius: .ratio(0.65),
-                            angularInset: 2
-                        )
-                        .foregroundStyle(RSMSColors.burgundy.opacity(0.1))
-                        .cornerRadius(4)
-                    }
-                    .chartLegend(.hidden)
-                    .frame(height: 200)
-                    
-                    VStack(spacing: 2) {
-                        Image(systemName: "bag")
-                            .font(.system(size: 22))
-                            .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
-                        Text("No product data")
-                            .font(.system(size: 10))
-                            .foregroundColor(RSMSColors.secondaryText)
-                    }
+                // Empty state - just show text, no chart to avoid rendering issues
+                VStack(spacing: 8) {
+                    Image(systemName: "bag")
+                        .font(.system(size: 32))
+                        .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                    Text("No product data")
+                        .font(.system(size: 14))
+                        .foregroundColor(RSMSColors.secondaryText)
                 }
+                .frame(height: 200)
                 .padding(.top, RSMSSpacing.sm)
-            } else {
+            } else if data.allSatisfy({ $0.sales > 0 }) {
+                // Only render chart if all values are positive (Charts library requirement)
                 ZStack {
                     Chart(data) { point in
                         SectorMark(
@@ -94,6 +83,18 @@ struct ProductSalesChart: View {
                             .foregroundColor(RSMSColors.primaryText)
                     }
                 }
+                .padding(.top, RSMSSpacing.sm)
+            } else {
+                // Data has zero or negative values - show error state
+                VStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 32))
+                        .foregroundColor(Color(hex: "FF9500"))
+                    Text("Invalid data")
+                        .font(.system(size: 14))
+                        .foregroundColor(RSMSColors.secondaryText)
+                }
+                .frame(height: 200)
                 .padding(.top, RSMSSpacing.sm)
             }
 

@@ -11,8 +11,28 @@ class StoreAnalyticsViewModel {
     var errorMessage: String?
     
     // MARK: - Selected Time Range
-    var timeRange: String = "This Year"
-    
+    // timeRange drives the segmented picker ("This Month" / "This Year" / "All Time")
+    var timeRange: String = "This Year" {
+        didSet {
+            // When the segmented picker changes, reset the calendar-based filter
+            // so both controls stay in sync
+            let cal = Calendar.current
+            let now = Date()
+            switch timeRange {
+            case "This Month":
+                calendarRange = .monthly(now)
+            case "All Time":
+                calendarRange = .yearly(now)
+            default: // "This Year"
+                calendarRange = .yearly(now)
+            }
+        }
+    }
+
+    // calendarRange drives the SwipeableCalendarView.
+    // When swiped it takes precedence over timeRange for filtering.
+    var calendarRange: StoreChartTimeRange = .yearly(Date())
+
     init(store: Store) {
         self.store = store
     }
@@ -27,7 +47,7 @@ class StoreAnalyticsViewModel {
         do {
             let fetchedOrders: [StoreOrder] = try await SupabaseManager.shared.client
                 .from("orders")
-                .select("id, client_id, store_id, associate_id, total, created_at, order_line_item(id, order_id, quantity, applied_price, sku(id, name, category))")
+                .select("id, client_id, store_id, associate_id, total, created_at, order_line_item(id, order_id, quantity, applied_price, products(item_id, item_name, category))")
                 .eq("store_id", value: store.id)
                 .execute()
                 .value
@@ -43,20 +63,49 @@ class StoreAnalyticsViewModel {
     }
     
     // MARK: - Filtering Logic
-    
+    // Priority: calendarRange (from swiping) overrides timeRange picker when
+    // the user has swiped away from the current period.
+
     private var filteredOrders: [StoreOrder] {
-        switch timeRange {
-        case "This Month":
-            let maxMonth = orders.map { String($0.createdAt.prefix(7)) }.max() ?? "2026-06"
-            return orders.filter { $0.createdAt.hasPrefix(maxMonth) }
-        case "This Year":
-            let maxYear = orders.map { String($0.createdAt.prefix(4)) }.max() ?? "2026"
-            return orders.filter { $0.createdAt.hasPrefix(maxYear) }
-        case "All Time":
-            return orders
-        default:
-            return orders
+        let cal = Calendar.current
+        let now = Date()
+
+        switch calendarRange {
+        case .weekly(let date):
+            // Filter to the ISO week containing `date`
+            let weekStart = cal.date(
+                from: cal.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+            ) ?? date
+            let weekEnd = cal.date(byAdding: .day, value: 7, to: weekStart) ?? date
+            return orders.filter {
+                guard let d = iso8601Date($0.createdAt) else { return false }
+                return d >= weekStart && d < weekEnd
+            }
+
+        case .monthly(let date):
+            // Filter to the calendar month containing `date`
+            let monthStr = String(format: "%04d-%02d",
+                                  cal.component(.year, from: date),
+                                  cal.component(.month, from: date))
+            return orders.filter { $0.createdAt.hasPrefix(monthStr) }
+
+        case .yearly(let date):
+            if timeRange == "All Time" {
+                return orders
+            }
+            // Filter to the calendar year containing `date`
+            let yearStr = String(format: "%04d", cal.component(.year, from: date))
+            return orders.filter { $0.createdAt.hasPrefix(yearStr) }
         }
+    }
+
+    // Parse ISO8601 date string from Supabase (e.g. "2026-06-28T10:30:00+00:00")
+    private func iso8601Date(_ str: String) -> Date? {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let d = f.date(from: str) { return d }
+        f.formatOptions = [.withInternetDateTime]
+        return f.date(from: str)
     }
     
     // MARK: - KPIs
@@ -112,7 +161,7 @@ class StoreAnalyticsViewModel {
         
         for order in filteredOrders {
             for item in order.orderLineItems ?? [] {
-                let cat = item.sku?.category ?? "Uncategorized"
+                let cat = item.products?.category ?? "Uncategorized"
                 categoryUnits[cat, default: 0] += item.quantity
                 categoryRevenue[cat, default: 0.0] += (Double(item.quantity) * item.appliedPrice)
             }
@@ -120,7 +169,7 @@ class StoreAnalyticsViewModel {
         
         let products = categoryUnits.keys.map { cat -> DashboardTopProduct in
             DashboardTopProduct(
-                skuId: cat,
+                id: Int64(abs(cat.hashValue)),
                 name: cat,
                 category: cat,
                 units: categoryUnits[cat] ?? 0,
