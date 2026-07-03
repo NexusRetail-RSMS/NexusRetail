@@ -203,6 +203,7 @@ final class SalesDashboardViewModel {
                 .from("orders")
                 .select("id, client_id, store_id, associate_id, total, created_at, order_type, status, client!client_id(name, phone), order_line_item(id, quantity)")
                 .eq("store_id", value: storeID)
+                .order("created_at", ascending: false)
                 .execute()
                 .value
 

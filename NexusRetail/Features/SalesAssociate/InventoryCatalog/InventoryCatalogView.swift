@@ -15,19 +15,8 @@ struct InventoryCatalogView: View {
     @State private var isLoading = false
     @State private var searchText = ""
 
-    @State private var selectedCategory: String? = nil
-
-    var categories: [String] {
-        let allCategories = Set(products.map { $0.category })
-        return Array(allCategories).sorted()
-    }
-
     var filteredProducts: [POSProduct] {
         var base = products
-        
-        if let category = selectedCategory {
-            base = base.filter { $0.category == category }
-        }
         
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         if !query.isEmpty {
@@ -47,11 +36,6 @@ struct InventoryCatalogView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: RSMSSpacing.lg) {
-
-                        searchBar
-                        
-                        filterScrollView
-
                         if isLoading {
                             HStack {
                                 Spacer()
@@ -75,81 +59,15 @@ struct InventoryCatalogView: View {
                     .padding(.bottom, RSMSSpacing.xxl)
                 }
             }
-            .navigationTitle("Inventory Catalog")
+            .navigationTitle("Search")
             .navigationBarTitleDisplayMode(.large)
+            .searchable(text: $searchText, prompt: "Search products by name, SKU, or category...")
             .task { await loadProducts() }
             .refreshable { await loadProducts() }
         }
     }
 
 
-
-    // MARK: - Search
-    private var searchBar: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "magnifyingglass")
-                .foregroundColor(RSMSColors.secondaryText)
-
-            TextField("Search by name, SKU, or category...", text: $searchText)
-                .textFieldStyle(.plain)
-                .autocorrectionDisabled()
-
-            if !searchText.isEmpty {
-                Button {
-                    searchText = ""
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(RSMSColors.secondaryText.opacity(0.6))
-                }
-            }
-        }
-        .padding(14)
-        .background(RSMSColors.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(0.02), radius: 4, x: 0, y: 2)
-    }
-
-    // MARK: - Filter Pills
-    private var filterScrollView: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
-                filterPill(title: "All", isSelected: selectedCategory == nil) {
-                    withAnimation { selectedCategory = nil }
-                }
-                ForEach(categories, id: \.self) { category in
-                    filterPill(title: category, isSelected: selectedCategory == category) {
-                        withAnimation {
-                            if selectedCategory == category {
-                                selectedCategory = nil
-                            } else {
-                                selectedCategory = category
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private func filterPill(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(isSelected ? RSMSColors.background : RSMSColors.primaryText)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(isSelected ? RSMSColors.primaryText : RSMSColors.cardBackground)
-                .clipShape(Capsule())
-                .overlay(
-                    Capsule()
-                        .stroke(isSelected ? Color.clear : RSMSColors.cardBorder, lineWidth: 1)
-                )
-        }
-    }
 
     // MARK: - Empty State
     private var emptyState: some View {

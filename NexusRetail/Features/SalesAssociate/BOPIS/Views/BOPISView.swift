@@ -14,6 +14,8 @@ struct BOPISView: View {
     @State private var showNotifiedAlert = false
     @State private var notifiedCustomerName = ""
     
+    var hideHeader: Bool = false
+    
     var body: some View {
         ZStack {
             RSMSColors.background.ignoresSafeArea()
