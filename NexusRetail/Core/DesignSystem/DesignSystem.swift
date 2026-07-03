@@ -174,7 +174,7 @@ struct NexusSearchBar: View {
         .padding(.vertical, 10)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color(.systemFill))
+                .fill(.ultraThinMaterial)
         )
         .animation(.easeInOut(duration: 0.18), value: text.isEmpty)
         .onTapGesture { isFocused = true }
@@ -201,7 +201,7 @@ public struct CachedAsyncImage<Content: View, Placeholder: View>: View {
             content(image)
         } else {
             placeholder()
-                .task {
+                .task(id: url) {
                     await loadImage()
                 }
         }
@@ -227,7 +227,12 @@ public struct CachedAsyncImage<Content: View, Placeholder: View>: View {
                 self.image = Image(uiImage: uiImage)
             }
         } catch {
-            print("Failed to load image: \(error)")
+            let nsError = error as NSError
+            if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled {
+                // Ignore cancellation errors
+            } else {
+                print("Failed to load image: \(error)")
+            }
         }
     }
 }

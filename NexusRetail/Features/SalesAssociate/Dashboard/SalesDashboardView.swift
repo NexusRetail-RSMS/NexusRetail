@@ -33,8 +33,6 @@ struct SalesDashboardView: View {
                         headerSection
                         kpiSection
                         revenueChartSection
-                        quickActionsSection
-                        recentActivitySection
                         Spacer(minLength: 80)
                     }
                     .padding(.horizontal, RSMSSpacing.lg)
@@ -55,12 +53,28 @@ struct SalesDashboardView: View {
                 case .payment:       PaymentFlowView(path: $navigationPath)
                 case .receipt:
                     ReceiptView(onComplete: { navigationPath = NavigationPath() })
+                case .bopis:
+                    BOPISView()
+                case .ordersHub:
+                    OrdersHubView(path: $navigationPath)
                 }
             }
         }
         .environment(posViewModel)
+        .refreshable {
+            await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID)
+        }
         .task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID) }
-        .onAppear { Task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID) } }
+        .onAppear { 
+            // Refresh data when view appears (e.g., after completing a sale)
+            Task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID) } 
+        }
+        .onChange(of: navigationPath.count) { _, newCount in
+            // Refresh when returning to dashboard (path becomes empty)
+            if newCount == 0 {
+                Task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID) }
+            }
+        }
     }
 
     // MARK: - Header
@@ -98,14 +112,44 @@ struct SalesDashboardView: View {
         .padding(.vertical, 4)
     }
 
-    // MARK: - KPI Cards
+    // MARK: - Top Actions & KPIs
     private var kpiSection: some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: RSMSSpacing.md) {
-            KPICardView(title: "Total Revenue",     value: vm.salesAmountString,         icon: "indianrupeesign.circle.fill", trend: nil, color: Color(hex: "2A9D8F"))
-            KPICardView(title: "Orders Completed",  value: "\(vm.ordersCompletedCount)",  icon: "bag.fill",                    trend: nil, color: RSMSColors.burgundy)
-            KPICardView(title: "Items Sold",        value: "\(vm.itemsSoldCount)",         icon: "shippingbox.fill",            trend: nil, color: Color(hex: "E76F51"))
-            KPICardView(title: "Returns",           value: "\(vm.returnsCount)",           icon: "arrow.uturn.backward.circle.fill", trend: nil, color: Color(hex: "D4A017"))
+        VStack(spacing: RSMSSpacing.md) {
+            startOrderCard
+
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: RSMSSpacing.md) {
+                KPICardView(title: "Orders Completed",  value: "\(vm.ordersCompletedCount)",  icon: "bag.fill",                    trend: nil, color: RSMSColors.burgundy)
+                KPICardView(title: "Items Sold",        value: "\(vm.itemsSoldCount)",         icon: "shippingbox.fill",            trend: nil, color: Color(hex: "E76F51"))
+            }
         }
+    }
+    
+    private var startOrderCard: some View {
+        NavigationLink(value: POSFlowDestination.ordersHub) {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.2)).frame(width: 44, height: 44)
+                    Image(systemName: "bag.fill").font(.system(size: 18, weight: .bold)).foregroundColor(.white)
+                }
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("View All Orders")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                }
+                Spacer()
+                Image(systemName: "chevron.right").font(.system(size: 14, weight: .bold)).foregroundColor(.white.opacity(0.8))
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 16)
+            .background(LinearGradient(
+                colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ))
+            .clipShape(RoundedRectangle(cornerRadius: 18))
+            .shadow(color: RSMSColors.darkBurgundy.opacity(0.18), radius: 10, x: 0, y: 5)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Revenue Chart
@@ -164,40 +208,7 @@ struct SalesDashboardView: View {
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
     }
 
-    // MARK: - Quick Actions (single burgundy button)
-    private var quickActionsSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Quick Actions")
-                .font(.system(size: 16, weight: .bold, design: .rounded))
-                .foregroundColor(RSMSColors.darkBrown)
-                .padding(.horizontal, 4)
-
-            NavigationLink(value: POSFlowDestination.newSale) {
-                HStack(spacing: 12) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.2)).frame(width: 44, height: 44)
-                        Image(systemName: "bag.fill").font(.system(size: 18, weight: .bold)).foregroundColor(.white)
-                    }
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("New Sale").font(.system(size: 16, weight: .bold, design: .rounded)).foregroundColor(.white)
-                        Text("Start a new point of sale checkout session").font(.system(size: 12)).foregroundColor(.white.opacity(0.8))
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right").font(.system(size: 14, weight: .bold)).foregroundColor(.white.opacity(0.8))
-                }
-                .padding(.horizontal, 18)
-                .padding(.vertical, 16)
-                .background(LinearGradient(
-                    colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ))
-                .clipShape(RoundedRectangle(cornerRadius: 18))
-                .shadow(color: RSMSColors.darkBurgundy.opacity(0.18), radius: 10, x: 0, y: 5)
-            }
-            .buttonStyle(.plain)
-        }
-    }
+    // (Quick Actions removed as it's now at the top)
 
     // MARK: - Floating QR Button
     private var floatingQRButton: some View {
@@ -222,61 +233,6 @@ struct SalesDashboardView: View {
         .accessibilityLabel("Scan QR Code")
     }
 
-    // MARK: - Recent Activity
-    private var recentActivitySection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text("Recent Activity")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.darkBrown)
-                Spacer()
-                NavigationLink(destination: RecentOrdersView()) {
-                    Text("View All").font(.system(size: 12, weight: .bold)).foregroundColor(RSMSColors.burgundy)
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, 4)
-
-            VStack(spacing: 12) {
-                ForEach(Array(posViewModel.completedOrders.prefix(3))) { order in
-                    activityRow(
-                        orderId: order.id,
-                        client: order.client,
-                        amount: "₹\(Int(order.amount))",
-                        status: order.status,
-                        statusColor: vm.statusColor(for: order.status),
-                        time: order.time
-                    )
-                }
-            }
-        }
-    }
-
-    private func activityRow(orderId: String, client: String, amount: String, status: String, statusColor: Color, time: String) -> some View {
-        HStack(spacing: 14) {
-            ZStack {
-                Circle().fill(RSMSColors.burgundy.opacity(0.06)).frame(width: 40, height: 40)
-                Image(systemName: "shippingbox.fill").font(.system(size: 15)).foregroundColor(RSMSColors.burgundy)
-            }
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Order \(orderId)").font(.system(size: 14, weight: .bold, design: .rounded)).foregroundColor(RSMSColors.primaryText)
-                Text(client).font(.system(size: 12)).foregroundColor(RSMSColors.secondaryText)
-            }
-            Spacer()
-            VStack(alignment: .trailing, spacing: 4) {
-                Text(amount).font(.system(size: 13, weight: .bold)).foregroundColor(RSMSColors.primaryText)
-                HStack(spacing: 4) {
-                    Text(status).font(.system(size: 9, weight: .bold)).foregroundColor(statusColor)
-                        .padding(.horizontal, 6).padding(.vertical, 3)
-                        .background(statusColor.opacity(0.08)).clipShape(Capsule())
-                    Text(time).font(.system(size: 10)).foregroundColor(RSMSColors.secondaryText.opacity(0.8))
-                }
-            }
-        }
-        .padding(12)
-        .background(RSMSColors.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(RSMSColors.cardBorder, lineWidth: 1))
-    }
+    // (Recent Activity section moved to startOrderCard)
 
 }

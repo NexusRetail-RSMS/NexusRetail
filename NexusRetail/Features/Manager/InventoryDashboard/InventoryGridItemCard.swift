@@ -9,6 +9,8 @@ struct InventoryGridItemCard: View {
     let item: InventoryItemRow
     let onRestock: () -> Void
     
+    @State private var showQR: Bool = false
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // Image and Restock Icon
@@ -77,6 +79,72 @@ struct InventoryGridItemCard: View {
         .background(Color.white)
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.05), radius: 6, y: 2)
+        .contextMenu {
+            Button(action: { showQR = true }) {
+                Label("Show QR Code", systemImage: "qrcode")
+            }
+        }
+        .sheet(isPresented: $showQR) {
+            InventoryQRCodeSheet(item: item)
+        }
+    }
+}
+
+struct InventoryQRCodeSheet: View {
+    let item: InventoryItemRow
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 30) {
+                Text("Scan to Add to Cart")
+                    .font(.title2.bold())
+                    .padding(.top)
+                
+                Image(uiImage: generateQRCode(from: "nexus://product/\(item.skuCode)"))
+                    .interpolation(.none)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 250, height: 250)
+                    .background(Color.white)
+                    .cornerRadius(12)
+                    .shadow(radius: 5)
+                
+                VStack(spacing: 8) {
+                    Text(item.name)
+                        .font(.headline)
+                    Text("SKU: \(item.skuCode)")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+            }
+            .padding()
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+    
+    private func generateQRCode(from string: String) -> UIImage {
+        let context = CIContext()
+        let filter = CIFilter.qrCodeGenerator()
+        filter.message = Data(string.utf8)
+        
+        if let outputImage = filter.outputImage {
+            let transform = CGAffineTransform(scaleX: 10, y: 10)
+            let scaledImage = outputImage.transformed(by: transform)
+            if let cgimg = context.createCGImage(scaledImage, from: scaledImage.extent) {
+                return UIImage(cgImage: cgimg)
+            }
+        }
+        return UIImage(systemName: "xmark.circle") ?? UIImage()
     }
 }
 

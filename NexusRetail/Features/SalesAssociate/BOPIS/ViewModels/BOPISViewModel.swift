@@ -5,6 +5,7 @@
 
 import Foundation
 import SwiftUI
+import Supabase
 
 @Observable
 class BOPISViewModel {
@@ -28,6 +29,65 @@ class BOPISViewModel {
         return result
     }
     
+    // MARK: - API Calls
+    func loadData(storeID: UUID?) async {
+        guard let storeID = storeID else { return }
+        
+        do {
+            let fetchedOrders: [StoreOrder] = try await SupabaseManager.shared.client
+                .from("orders")
+                .select("id, client_id, store_id, associate_id, total, created_at, order_type, status, client!client_id(name, phone), order_line_item(id, quantity, products(item_id, item_name))")
+                .eq("store_id", value: storeID)
+                .eq("order_type", value: "bopis")
+                .execute()
+                .value
+            
+            let bopisOrders = fetchedOrders.map { dOrder -> BOPISOrder in
+                
+                let orderItems = dOrder.orderLineItems?.map { lineItem in
+                    BOPISOrderItem(
+                        id: lineItem.id ?? UUID(),
+                        name: lineItem.products?.itemName ?? "Unknown Item",
+                        sku: "SKU-\(lineItem.products?.itemId ?? 0)",
+                        quantity: lineItem.quantity,
+                        price: 0, // Mocked for BOPISOrderItem if not available
+                        qrCode: "",
+                        imageUrl: nil
+                    )
+                } ?? []
+                
+                let totalItems = orderItems.reduce(0) { $0 + $1.quantity }
+                
+                let bStatus: BOPISOrderStatus
+                switch dOrder.status {
+                case "pending": bStatus = .pending
+                case "waitingForCustomer": bStatus = .waitingForCustomer
+                case "collected", "completed": bStatus = .collected
+                default: bStatus = .pending
+                }
+                
+                return BOPISOrder(
+                    id: dOrder.id,
+                    orderId: "ORD-\(dOrder.id.uuidString.prefix(8).uppercased())",
+                    customerName: dOrder.client?.name ?? "Guest",
+                    phoneNumber: dOrder.client?.phone ?? "No Phone",
+                    pickupTime: dOrder.createdAt.prefix(10).description,
+                    status: bStatus,
+                    items: orderItems,
+                    itemCount: totalItems,
+                    totalAmount: dOrder.total,
+                    verificationCode: nil
+                )
+            }
+            
+            await MainActor.run {
+                self.orders = bopisOrders.sorted { $0.pickupTime > $1.pickupTime }
+            }
+        } catch {
+            print("Failed to fetch BOPIS orders: \(error)")
+        }
+    }
+    
     // MARK: - State Transitions
     
     func packAndNotify(id: UUID) {
@@ -39,97 +99,42 @@ class BOPISViewModel {
                 .joined()
                 .uppercased()
             let randomCode = String(format: "%04d", Int.random(in: 1000...9999))
-            orders[index].verificationCode = "\(initials)-\(randomCode)"
+            let code = "\(initials)-\(randomCode)"
+            
+            orders[index].verificationCode = code
             orders[index].status = .waitingForCustomer
+            
+            // Execute Supabase update
+            Task {
+                do {
+                    try await SupabaseManager.shared.client
+                        .from("orders")
+                        .update(["status": "waitingForCustomer"])
+                        .eq("id", value: id)
+                        .execute()
+                } catch {
+                    print("Error updating status to waitingForCustomer: \(error)")
+                }
+            }
         }
     }
     
     func markCollected(id: UUID) {
         if let index = orders.firstIndex(where: { $0.id == id }) {
             orders[index].status = .collected
-        }
-    }
-    
-    // MARK: - Mock Data initialized with real DB items
-    func loadData(storeID: UUID?) async {
-        let products = await POSProductRepository.shared.fetchProducts(storeID: storeID)
-        
-        let p1 = products.indices.contains(0) ? products[0] : nil
-        let p2 = products.indices.contains(1) ? products[1] : nil
-        let p3 = products.indices.contains(2) ? products[2] : nil
-        let p4 = products.indices.contains(3) ? products[3] : nil
-        
-        let order1Items = [
-            BOPISOrderItem(id: UUID(), name: p1?.name ?? "Aurelia Croco Tote", sku: p1?.sku ?? "BAG-AUR-204", quantity: 1, price: p1?.price ?? 2450.00, qrCode: "nexus://product/\(p1?.sku ?? "BAG-AUR-204")", imageUrl: p1?.imageUrl),
-            BOPISOrderItem(id: UUID(), name: p2?.name ?? "Classic Leather Watches", sku: p2?.sku ?? "ACC-CLW-009", quantity: 1, price: p2?.price ?? 450.00, qrCode: "nexus://product/\(p2?.sku ?? "ACC-CLW-009")", imageUrl: p2?.imageUrl)
-        ]
-        
-        let order2Items = [
-            BOPISOrderItem(id: UUID(), name: p3?.name ?? "Véloute Silk Blouse", sku: p3?.sku ?? "APP-VEL-031", quantity: 1, price: p3?.price ?? 890.00, qrCode: "nexus://product/\(p3?.sku ?? "APP-VEL-031")", imageUrl: p3?.imageUrl)
-        ]
-        
-        let order3Items = [
-            BOPISOrderItem(id: UUID(), name: p4?.name ?? "Nocturne Velvet Fragrances", sku: p4?.sku ?? "BAG-NOC-055", quantity: 2, price: p4?.price ?? 640.00, qrCode: "nexus://product/\(p4?.sku ?? "BAG-NOC-055")", imageUrl: p4?.imageUrl),
-            BOPISOrderItem(id: UUID(), name: p1?.name ?? "Ivory Pearl Earrings", sku: p1?.sku ?? "JWL-IPE-201", quantity: 2, price: p1?.price ?? 580.00, qrCode: "nexus://product/\(p1?.sku ?? "JWL-IPE-201")", imageUrl: p1?.imageUrl)
-        ]
-        
-        let order4Items = [
-            BOPISOrderItem(id: UUID(), name: p2?.name ?? "Obsidian Chronograph", sku: p2?.sku ?? "WCH-OBS-099", quantity: 1, price: p2?.price ?? 24500.00, qrCode: "nexus://product/\(p2?.sku ?? "WCH-OBS-099")", imageUrl: p2?.imageUrl)
-        ]
-        
-        let fetchedOrders = [
-            BOPISOrder(
-                id: UUID(),
-                orderId: "ORD-99321",
-                customerName: "Eleanor Vance",
-                phoneNumber: "+1 (555) 123-4567",
-                pickupTime: "Today, 2:00 PM",
-                status: .pending,
-                items: order1Items,
-                itemCount: 2,
-                totalAmount: order1Items.reduce(0) { $0 + ($1.price * Double($1.quantity)) },
-                verificationCode: nil
-            ),
-            BOPISOrder(
-                id: UUID(),
-                orderId: "ORD-99344",
-                customerName: "James Holden",
-                phoneNumber: "+1 (555) 987-6543",
-                pickupTime: "Today, 3:30 PM",
-                status: .pending,
-                items: order2Items,
-                itemCount: 1,
-                totalAmount: order2Items.reduce(0) { $0 + ($1.price * Double($1.quantity)) },
-                verificationCode: nil
-            ),
-            BOPISOrder(
-                id: UUID(),
-                orderId: "ORD-99105",
-                customerName: "Sarah Connor",
-                phoneNumber: "+1 (555) 345-6789",
-                pickupTime: "Today, 1:15 PM",
-                status: .waitingForCustomer,
-                items: order3Items,
-                itemCount: 4,
-                totalAmount: order3Items.reduce(0) { $0 + ($1.price * Double($1.quantity)) },
-                verificationCode: "SC-9281"
-            ),
-            BOPISOrder(
-                id: UUID(),
-                orderId: "ORD-98899",
-                customerName: "Bruce Wayne",
-                phoneNumber: "+1 (555) 222-3333",
-                pickupTime: "Yesterday, 4:00 PM",
-                status: .waitingForCustomer,
-                items: order4Items,
-                itemCount: 1,
-                totalAmount: order4Items.reduce(0) { $0 + ($1.price * Double($1.quantity)) },
-                verificationCode: "BW-7742"
-            )
-        ]
-        
-        await MainActor.run {
-            self.orders = fetchedOrders
+            
+            // Execute Supabase update
+            Task {
+                do {
+                    try await SupabaseManager.shared.client
+                        .from("orders")
+                        .update(["status": "completed"])
+                        .eq("id", value: id)
+                        .execute()
+                } catch {
+                    print("Error updating status to completed: \(error)")
+                }
+            }
         }
     }
 }

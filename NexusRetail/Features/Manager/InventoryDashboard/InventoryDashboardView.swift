@@ -24,13 +24,6 @@ struct InventoryDashboardView: View {
             } else {
                 ScrollView {
                     VStack(spacing: RSMSSpacing.lg) {
-                        // MARK: - Header
-                        headerSection
-                            .padding(.top, RSMSSpacing.sm)
-                        
-                        // MARK: - Search
-                        searchBar
-                        
                         // MARK: - Filter/Category Chips
                         filterSection
                         
@@ -38,6 +31,15 @@ struct InventoryDashboardView: View {
                         inventoryList
                     }
                     .padding(.bottom, RSMSSpacing.xxxl)
+                }
+                .safeAreaInset(edge: .top) {
+                    VStack(spacing: RSMSSpacing.lg) {
+                        headerSection
+                            .padding(.top, RSMSSpacing.sm)
+                        searchBar
+                    }
+                    .padding(.bottom, RSMSSpacing.sm)
+                    .background(.ultraThinMaterial)
                 }
                 .background(RSMSColors.background.ignoresSafeArea())
                 .refreshable {
@@ -47,16 +49,14 @@ struct InventoryDashboardView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .task {
-            if viewModel.items.isEmpty {
-                await viewModel.load(storeID: sessionStore.currentUser?.storeID)
-            }
+            await viewModel.load(storeID: sessionStore.currentUser?.storeID)
         }
         .sheet(isPresented: $viewModel.showRestockSheet) {
             if let item = viewModel.restockItem {
-                RequestStockSheet(item: item, storeID: sessionStore.currentUser?.storeID) { skuID, qty, urgency in
+                RequestStockSheet(item: item, storeID: sessionStore.currentUser?.storeID) { itemId, qty in
                     if let storeID = sessionStore.currentUser?.storeID {
                         Task {
-                            _ = await viewModel.requestRestock(skuID: skuID, quantity: qty, urgency: urgency, storeID: storeID)
+                            _ = await viewModel.requestRestock(itemId: itemId, quantity: qty, storeID: storeID)
                         }
                     }
                 }
@@ -200,7 +200,7 @@ struct InventoryDashboardView: View {
     // MARK: - Inventory List
     
     private var inventoryList: some View {
-        Group {
+        LazyVGrid(columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)], spacing: 16) {
             if viewModel.filteredItems.isEmpty {
                 emptyState(
                     icon: "shippingbox",
@@ -208,15 +208,13 @@ struct InventoryDashboardView: View {
                     message: viewModel.searchText.isEmpty ? "No inventory items match the current filter." : "No results for \"\(viewModel.searchText)\"."
                 )
             } else {
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)], spacing: 16) {
-                    ForEach(viewModel.filteredItems) { item in
-                        NavigationLink(destination: ProductDetailView(item: item, viewModel: viewModel, storeID: sessionStore.currentUser?.storeID)) {
-                            InventoryGridItemCard(item: item) {
-                                viewModel.triggerRestock(for: item)
-                            }
+                ForEach(viewModel.filteredItems) { item in
+                    NavigationLink(destination: ProductDetailView(item: item, viewModel: viewModel, storeID: sessionStore.currentUser?.storeID)) {
+                        InventoryGridItemCard(item: item) {
+                            viewModel.triggerRestock(for: item)
                         }
-                        .buttonStyle(.plain)
                     }
+                    .buttonStyle(.plain)
                 }
             }
         }
@@ -313,18 +311,6 @@ struct ManagerTransferRequestCard: View {
                 Label("\(request.quantity) units", systemImage: "cube.box")
                     .font(.system(size: 12))
                     .foregroundColor(RSMSColors.secondaryText)
-                
-                Spacer()
-                
-                // Urgency
-                HStack(spacing: 4) {
-                    Circle()
-                        .fill(request.urgency.color)
-                        .frame(width: 6, height: 6)
-                    Text(request.urgency.displayName)
-                        .font(.system(size: 12))
-                        .foregroundColor(RSMSColors.secondaryText)
-                }
                 
                 Spacer()
                 

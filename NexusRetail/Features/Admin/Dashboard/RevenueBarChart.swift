@@ -11,6 +11,7 @@ import SwiftUI
 import Charts
 
 struct RevenueBarChart: View {
+    var title: String = "Store Revenue"
     let data: [RevenueChartPoint]
     let maxValue: Double
     @Binding var timeRange: SalesTimeRange
@@ -20,7 +21,7 @@ struct RevenueBarChart: View {
 
             // Row 1: Title + time-range toggle
             HStack {
-                Text("Store Revenue")
+                Text(title)
                     .font(RSMSFonts.headline)
                     .foregroundColor(RSMSColors.primaryText)
 
@@ -148,7 +149,7 @@ struct TimeRangeToggle: View {
             }
         }
         .pickerStyle(.segmented)
-        .fixedSize()
+        .frame(width: 160)
     }
 }
 

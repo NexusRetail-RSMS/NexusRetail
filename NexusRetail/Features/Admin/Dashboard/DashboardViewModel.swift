@@ -17,7 +17,7 @@ import Supabase
 // MARK: - Time Range
 
 enum SalesTimeRange: String, CaseIterable {
-    case quarterly = "Quarterly"
+    case weekly = "Weekly"
     case monthly = "Monthly"
 }
 
@@ -25,7 +25,7 @@ enum SalesTimeRange: String, CaseIterable {
 
 /// A single bar in the revenue chart.
 struct RevenueChartPoint: Identifiable, Equatable {
-    let id = UUID()
+    var id: String { label }
     let label: String
     let index: Int
     let revenue: Double
@@ -37,12 +37,14 @@ struct RevenueChartPoint: Identifiable, Equatable {
 
 /// A single bar/slice in the product-sales chart.
 struct ProductChartPoint: Identifiable, Equatable {
-    let id = UUID()
+    var id: String { name }
+    let name: String
     let category: String
     let sales: Int
+    var imageURL: URL? = nil
 
     static func == (lhs: ProductChartPoint, rhs: ProductChartPoint) -> Bool {
-        lhs.category == rhs.category && lhs.sales == rhs.sales
+        lhs.name == rhs.name && lhs.sales == rhs.sales
     }
 }
 
@@ -89,19 +91,7 @@ class DashboardViewModel {
     
     var formattedRevenue: String {
         guard let total = kpis?.totalRevenue else { return "₹0" }
-        if total >= 10000000 {
-            let crores = total / 10000000.0
-            return "₹\(String(format: "%.1f", crores))Cr"
-        } else if total >= 100000 {
-            let lakhs = total / 100000.0
-            return "₹\(String(format: "%.1f", lakhs))L"
-        } else {
-            let formatter = NumberFormatter()
-            formatter.numberStyle = .currency
-            formatter.currencySymbol = "₹"
-            formatter.maximumFractionDigits = 0
-            return formatter.string(from: NSNumber(value: total)) ?? "₹\(total)"
-        }
+        return formatIndianCurrency(total)
     }
     
     var activeStoresText: String {
@@ -109,38 +99,26 @@ class DashboardViewModel {
     }
     
     var pendingTransfersText: String {
-        "0"
+        "\(kpis?.pendingTransfers ?? 0)"
     }
     
     var lowStockText: String {
-        "0"
+        "\(kpis?.lowStockAlerts ?? 0)"
     }
     
     // MARK: - Chart Data Adapters
     
     var revenueChartData: [RevenueChartPoint] {
-        if revenueTimeRange == .quarterly {
-            // Group monthly data into quarters
-            var quarterlyMap: [String: Double] = [:]
-            
-            for point in monthly {
-                let parts = point.month.split(separator: "-")
-                if parts.count == 2, let monthNum = Int(parts[1]) {
-                    let year = parts[0]
-                    let quarter = "Q\((monthNum - 1) / 3 + 1)"
-                    let label = "\(year)-\(quarter)"
-                    quarterlyMap[label, default: 0] += point.revenue
-                }
-            }
-            
-            let sortedKeys = quarterlyMap.keys.sorted()
-            return sortedKeys.enumerated().map { index, key in
-                RevenueChartPoint(
-                    label: key,
+        if revenueTimeRange == .weekly {
+            return weekly.enumerated().map { index, point in
+                let parts = point.week.split(separator: "-")
+                let label = parts.count == 2 ? "W\(parts[1])" : point.week
+                return RevenueChartPoint(
+                    label: label,
                     index: index,
-                    revenue: quarterlyMap[key]! / 100000.0 // UI expects Lakhs
+                    revenue: point.revenue / 100000.0 // UI expects Lakhs
                 )
-            }.suffix(4) // Show last 4 quarters
+            }.suffix(8) // Show last 8 weeks
         } else {
             return monthly.enumerated().map { index, point in
                 let label: String
@@ -169,27 +147,11 @@ class DashboardViewModel {
     
     // MARK: - Product Sales Chart Data
     var productChartData: [ProductChartPoint] {
-        let isQuarterly = productTimeRange == .quarterly
-        let sourceData = topProductsMonthly
+        let sourceData = productTimeRange == .weekly ? topProductsWeekly : topProductsMonthly
         
-        // Group the top products by category and sum up their units
-        let grouped = Dictionary(grouping: sourceData) { $0.category }
-        let categories = grouped.keys.sorted()
-        
-        return categories.compactMap { cat in
-            guard let items = grouped[cat] else { return nil }
-            let baseTotal = items.reduce(0) { $0 + $1.units }
-            
-            let total: Int
-            if isQuarterly {
-                // Add some deterministic variance so the pie chart slices visibly change
-                let variance = (cat.count % 3 + 1) * 12
-                total = (baseTotal * 3) + variance
-            } else {
-                total = baseTotal
-            }
-            
-            return ProductChartPoint(category: cat, sales: total)
+        return sourceData.map { product in
+            let url = product.imageUrl.flatMap { URL(string: $0) }
+            return ProductChartPoint(name: product.name, category: product.category, sales: product.units, imageURL: url)
         }
         .sorted { $0.sales > $1.sales }
     }

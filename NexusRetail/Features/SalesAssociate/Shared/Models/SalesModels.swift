@@ -17,6 +17,8 @@ enum POSFlowDestination: Hashable {
     case checkout
     case payment
     case receipt
+    case bopis
+    case ordersHub
 }
 
 // MARK: - Chart / Period
@@ -44,7 +46,7 @@ enum RevenueFilter: String, CaseIterable, Identifiable {
 // MARK: - Dashboard chart data point
 
 struct StoreRevenueChartPoint: Identifiable {
-    let id   = UUID()
+    var id: String { label }
     let label: String
     let revenue: Double
 }
@@ -52,7 +54,7 @@ struct StoreRevenueChartPoint: Identifiable {
 // MARK: - Legacy sample data for old Dashboard tab (kept for backward compat)
 
 struct RevenuePoint: Identifiable {
-    let id    = UUID()
+    var id: String { label }
     let label: String
     let value: Double
 }

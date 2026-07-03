@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct AssociateAppointment: Identifiable {
-    let id = UUID()
+    var id: UUID = UUID()
     var clientName: String
     var clientEmail: String
     var clientPhone: String

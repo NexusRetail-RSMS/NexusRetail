@@ -11,7 +11,7 @@ struct AddProductView: View {
     @State private var stock = ""
     @State private var basePrice = ""
     @State private var floorPrice = ""
-    @State private var currency = "USD"
+    @State private var currency = "INR"
     @State private var launchDate = Date()
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var selectedImage: UIImage?
@@ -27,7 +27,7 @@ struct AddProductView: View {
         _stock = State(initialValue: product.map { String($0.stock) } ?? "")
         _basePrice = State(initialValue: product.map { String($0.price) } ?? "")
         _floorPrice = State(initialValue: "")
-        _currency = State(initialValue: "USD")
+        _currency = State(initialValue: "INR")
         _selectedImage = State(initialValue: product?.image)
     }
     
@@ -155,10 +155,9 @@ struct AddProductView: View {
                             .foregroundStyle(RSMSColors.darkBrown)
                     }
                     Picker("Currency", selection: $currency) {
-                        Text("USD").tag("USD")
+                        Text("INR").tag("INR")
                         Text("EUR").tag("EUR")
                         Text("GBP").tag("GBP")
-                        Text("INR").tag("INR")
                     }
                     .tint(RSMSColors.burgundy)
                 }
