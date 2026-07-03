@@ -9,10 +9,6 @@ struct TransferRequestCard: View {
     @Environment(AdminTransfersViewModel.self) private var viewModel
     @State private var showingScheduleSheet = false
 
-    private var managerImageURL: URL? {
-        request.store?.manager?.imageUrl.flatMap { URL(string: $0) }
-    }
-
     private var productImageURL: URL? {
         request.products.imageUrl.flatMap { URL(string: $0) }
     }
@@ -26,10 +22,7 @@ struct TransferRequestCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // MARK: Manager Section
-            HStack(spacing: 14) {
-                managerAvatar
-                managerInfo
-            }
+            managerInfo
 
             Divider()
                 .padding(.top, 14)
@@ -57,35 +50,6 @@ struct TransferRequestCard: View {
         )
         .sheet(isPresented: $showingScheduleSheet) {
             ScheduleSheet(request: request)
-        }
-    }
-
-    // MARK: - Manager Avatar
-
-    @ViewBuilder
-    private var managerAvatar: some View {
-        if let url = managerImageURL {
-            CachedAsyncImage(url: url) { image in
-                image
-                    .resizable()
-                    .scaledToFill()
-            } placeholder: {
-                Color.gray.opacity(0.15)
-            }
-            .frame(width: 52, height: 52)
-            .clipShape(Circle())
-            .overlay(Circle().stroke(Color.white, lineWidth: 2))
-            .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
-        } else {
-            ZStack {
-                Circle()
-                    .fill(RSMSColors.burgundy.opacity(0.08))
-                    .frame(width: 52, height: 52)
-
-                Text(String(request.managerName.prefix(1)).uppercased())
-                    .font(.system(size: 22, weight: .semibold))
-                    .foregroundColor(RSMSColors.burgundy)
-            }
         }
     }
 
@@ -117,12 +81,12 @@ struct TransferRequestCard: View {
             } placeholder: {
                 Color.gray.opacity(0.1)
             }
-            .frame(width: 64, height: 64)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .frame(width: 70, height: 70)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
         } else {
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 16)
                 .fill(RSMSColors.burgundy.opacity(0.05))
-                .frame(width: 64, height: 64)
+                .frame(width: 70, height: 70)
                 .overlay(
                     Image(systemName: "bag")
                         .font(.system(size: 24))
@@ -325,108 +289,53 @@ struct WaitingRequestCard: View {
 
     let timer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
-    var countdownText: String {
-        guard let autoApprove = request.autoApproveAt else { return "" }
-        let calendar = Calendar.current
-        let daysRemaining = calendar.dateComponents([.day], from: now, to: autoApprove).day ?? 0
-
-        if daysRemaining > 1 {
-            return "\(daysRemaining) days remaining"
-        } else if daysRemaining == 1 {
-            return "Tomorrow"
-        } else if daysRemaining == 0 {
-            return "Approves today"
-        } else {
-            return "Approved"
-        }
-    }
-
-    var countdownColor: Color {
-        guard let autoApprove = request.autoApproveAt else { return .secondary }
-        let calendar = Calendar.current
-        let daysRemaining = calendar.dateComponents([.day], from: now, to: autoApprove).day ?? 0
-
-        if daysRemaining <= 0 { return .green }
-        if daysRemaining <= 2 { return .orange }
-        return RSMSColors.burgundy
+    private var productImageURL: URL? {
+        request.products.imageUrl.flatMap { URL(string: $0) }
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Header: Store
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(request.storeName)
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(.primary)
+            // MARK: Manager Section
+            HStack(alignment: .top, spacing: 0) {
+                managerInfo
+                
+                Spacer(minLength: 12)
 
-                    Text("Scheduled")
-                        .font(.system(size: 13))
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-
-                // Countdown
+                // Auto Approve Badge
                 if let autoApprove = request.autoApproveAt {
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Text(countdownText)
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundColor(countdownColor)
-
+                    VStack(alignment: .center, spacing: 2) {
+                        Text("Auto Approves On")
+                            .font(.system(size: 10, weight: .semibold))
                         Text(autoApprove.formatted(date: .abbreviated, time: .omitted))
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary)
+                            .font(.system(size: 12, weight: .bold))
                     }
+                    .foregroundColor(RSMSColors.burgundy)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(RSMSColors.burgundy.opacity(0.1))
+                    .clipShape(Capsule())
                 }
             }
 
             Divider()
-                .padding(.top, 10)
-                .padding(.bottom, 12)
+                .padding(.top, 14)
+                .padding(.bottom, 14)
 
-            // Product Info
-            VStack(alignment: .leading, spacing: 2) {
-                Text(request.productName)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.primary)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-
-                Text("SKU: \(request.skuCode)")
-                    .font(.system(size: 14))
-                    .foregroundColor(.secondary)
+            // MARK: Product Section
+            HStack(spacing: 14) {
+                productImage
+                productInfo
             }
 
-            // Quantity & Schedule Dates
+            // MARK: Bottom Information
             HStack(spacing: 0) {
-                InfoColumn(title: "Requested", value: "\(request.quantity)", alignment: .leading)
-
+                InfoColumn(title: "Requested", value: "\(request.quantity)")
+                Spacer()
                 if let scheduledAt = request.scheduledAt {
-                    InfoColumn(
-                        title: "Scheduled On",
-                        value: scheduledAt.formatted(date: .abbreviated, time: .omitted),
-                        alignment: .trailing
-                    )
+                    InfoColumn(title: "Scheduled On", value: scheduledAt.formatted(date: .abbreviated, time: .omitted), alignment: .trailing)
                 }
             }
-            .padding(.top, 12)
-
-            if let autoApprove = request.autoApproveAt {
-                HStack(spacing: 0) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Auto Approves On")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.secondary)
-                        Text(autoApprove.formatted(date: .abbreviated, time: .omitted))
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(countdownColor)
-                    }
-
-                    Spacer()
-                }
-                .padding(.top, 8)
-            }
+            .padding(.top, 18)
 
             // Approve Early Button
             Button {
@@ -435,18 +344,18 @@ struct WaitingRequestCard: View {
                 Text("Approve Early")
                     .font(.system(size: 15, weight: .semibold))
                     .frame(maxWidth: .infinity)
-                    .frame(height: 42)
+                    .frame(height: 44)
                     .background(Color.nexusRed)
                     .foregroundColor(.white)
                     .cornerRadius(20)
             }
-            .padding(.top, 16)
+            .padding(.top, 20)
         }
-        .padding(16)
+        .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: 24)
                 .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 2)
+                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
         )
         .alert("Approve Early", isPresented: $showingApproveEarlyAlert) {
             Button("Cancel", role: .cancel) { }
@@ -461,6 +370,61 @@ struct WaitingRequestCard: View {
         .onReceive(timer) { date in
             now = date
             viewModel.checkAutoApprovals()
+        }
+    }
+
+    // MARK: - Subviews
+
+    private var managerInfo: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(request.managerName)
+                .font(.system(size: 17, weight: .bold))
+                .foregroundColor(RSMSColors.primaryText)
+                .lineLimit(1)
+
+            Text(request.storeName)
+                .font(.system(size: 14))
+                .foregroundColor(.secondary)
+                .lineLimit(1)
+        }
+    }
+
+    @ViewBuilder
+    private var productImage: some View {
+        if let url = productImageURL {
+            CachedAsyncImage(url: url) { image in
+                image
+                    .resizable()
+                    .scaledToFill()
+            } placeholder: {
+                Color.gray.opacity(0.1)
+            }
+            .frame(width: 70, height: 70)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+        } else {
+            RoundedRectangle(cornerRadius: 16)
+                .fill(RSMSColors.burgundy.opacity(0.05))
+                .frame(width: 70, height: 70)
+                .overlay(
+                    Image(systemName: "bag")
+                        .font(.system(size: 24))
+                        .foregroundColor(RSMSColors.burgundy.opacity(0.25))
+                )
+        }
+    }
+
+    private var productInfo: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(request.productName)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(RSMSColors.primaryText)
+                .lineLimit(1)
+                .truncationMode(.tail)
+
+            Text("SKU: \(request.skuCode)")
+                .font(.system(size: 13))
+                .foregroundColor(.secondary)
+                .lineLimit(1)
         }
     }
 }
@@ -479,17 +443,19 @@ struct ApprovedRequestCard: View {
         }
     }
 
+    private var productImageURL: URL? {
+        request.products.imageUrl.flatMap { URL(string: $0) }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Header Row: Store Name + Approved Badge
-            HStack(alignment: .center) {
-                Text(request.storeName)
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(RSMSColors.primaryText)
-                    .lineLimit(1)
-
+            // MARK: Manager Section
+            HStack(alignment: .top, spacing: 0) {
+                managerInfo
+                
                 Spacer(minLength: 12)
-
+                
+                // Status Badge
                 HStack(spacing: 4) {
                     Image(systemName: "checkmark")
                         .font(.system(size: 10, weight: .bold))
@@ -504,54 +470,86 @@ struct ApprovedRequestCard: View {
             }
 
             Divider()
-                .padding(.top, 12)
+                .padding(.top, 14)
                 .padding(.bottom, 14)
 
-            // Product Info
-            VStack(alignment: .leading, spacing: 3) {
-                Text(request.productName)
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.primary)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-
-                Text("SKU: \(request.skuCode)")
-                    .font(.system(size: 13))
-                    .foregroundColor(.secondary)
+            // MARK: Product Section
+            HStack(spacing: 14) {
+                productImage
+                productInfo
             }
 
-            // Bottom Row: Quantity + Approval Date
-            HStack(alignment: .bottom) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Requested")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.secondary)
-                    Text("\(request.quantity)")
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundColor(RSMSColors.primaryText)
-                }
-
+            // MARK: Bottom Information
+            HStack(spacing: 0) {
+                InfoColumn(title: "Requested", value: "\(request.quantity)")
                 Spacer()
-
                 if let approvedAt = request.approvedAt {
-                    VStack(alignment: .trailing, spacing: 3) {
-                        Text("Approved On")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.secondary)
-                        Text(approvedAt.formatted(date: .abbreviated, time: .omitted))
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(RSMSColors.primaryText)
-                    }
+                    InfoColumn(title: "Approved On", value: approvedAt.formatted(date: .abbreviated, time: .omitted), alignment: .trailing)
                 }
             }
-            .padding(.top, 14)
+            .padding(.top, 18)
         }
-        .padding(18)
+        .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 20)
+            RoundedRectangle(cornerRadius: 24)
                 .fill(Color.white)
                 .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
         )
+    }
+
+    // MARK: - Subviews
+
+    private var managerInfo: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(request.managerName)
+                .font(.system(size: 17, weight: .bold))
+                .foregroundColor(RSMSColors.primaryText)
+                .lineLimit(1)
+
+            Text(request.storeName)
+                .font(.system(size: 14))
+                .foregroundColor(.secondary)
+                .lineLimit(1)
+        }
+    }
+
+    @ViewBuilder
+    private var productImage: some View {
+        if let url = productImageURL {
+            CachedAsyncImage(url: url) { image in
+                image
+                    .resizable()
+                    .scaledToFill()
+            } placeholder: {
+                Color.gray.opacity(0.1)
+            }
+            .frame(width: 70, height: 70)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+        } else {
+            RoundedRectangle(cornerRadius: 16)
+                .fill(RSMSColors.burgundy.opacity(0.05))
+                .frame(width: 70, height: 70)
+                .overlay(
+                    Image(systemName: "bag")
+                        .font(.system(size: 24))
+                        .foregroundColor(RSMSColors.burgundy.opacity(0.25))
+                )
+        }
+    }
+
+    private var productInfo: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(request.productName)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(RSMSColors.primaryText)
+                .lineLimit(1)
+                .truncationMode(.tail)
+
+            Text("SKU: \(request.skuCode)")
+                .font(.system(size: 13))
+                .foregroundColor(.secondary)
+                .lineLimit(1)
+        }
     }
 }
 
