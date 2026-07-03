@@ -23,10 +23,13 @@ struct StoreFormView: View {
     @State private var isActive: Bool = true
     @State private var includeRazorpay: Bool = false
     @State private var includeCard: Bool = false
-    @State private var isShowingManagerPicker = false
     @State private var geocodeTask: Task<Void, Never>? = nil
     @State private var selectedPhotoItem: PhotosPickerItem? = nil
     @State private var selectedImageData: Data? = nil
+    @State private var showManagerWarning: Bool = false
+    @State private var razorpayKey: String = ""
+    @State private var razorpaySecret: String = ""
+    @State private var cardTerminalID: String = ""
     @FocusState private var focusedField: Field?
 
     private enum Field {
@@ -148,56 +151,46 @@ struct StoreFormView: View {
 
                     if editingStore != nil {
                         FormSectionCard(title: "Manager") {
-                            Button {
-                                isShowingManagerPicker = true
-                            } label: {
-                                HStack(spacing: RSMSSpacing.md) {
-                                    ZStack {
-                                        Circle()
-                                            .fill(RSMSColors.burgundy.opacity(0.12))
-                                            .frame(width: 38, height: 38)
-                                        Image(systemName: selectedManager == nil ? "person.badge.plus" : "person.fill")
-                                            .font(.system(size: 15))
-                                            .foregroundColor(RSMSColors.burgundy)
-                                    }
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text("Manager")
-                                            .font(.system(size: 11.5, weight: .medium))
-                                            .foregroundColor(RSMSColors.secondaryText)
-                                        Text(selectedManager?.name ?? "None assigned")
-                                            .font(.system(size: 14.5, weight: .medium))
-                                            .foregroundColor(selectedManager == nil ? RSMSColors.secondaryText : RSMSColors.primaryText)
-                                    }
-
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .font(.system(size: 12, weight: .semibold))
-                                        .foregroundColor(RSMSColors.secondaryText.opacity(0.6))
+                            HStack(spacing: RSMSSpacing.md) {
+                                ZStack {
+                                    Circle()
+                                        .fill(RSMSColors.burgundy.opacity(0.12))
+                                        .frame(width: 38, height: 38)
+                                    Image(systemName: selectedManager == nil ? "person.badge.plus" : "person.fill")
+                                        .font(.system(size: 15))
+                                        .foregroundColor(RSMSColors.burgundy)
                                 }
-                                .padding(.horizontal, RSMSSpacing.lg)
-                                .padding(.vertical, RSMSSpacing.md)
-                            }
-                            .buttonStyle(.plain)
-
-                            if viewModel.availableManagers(excludingStoreID: editingStore?.id).isEmpty && selectedManagerID == nil {
-                                FormDivider()
-                                HStack(spacing: 8) {
-                                    Image(systemName: "info.circle.fill")
-                                        .font(.system(size: 12))
-                                    Text("All managers are currently assigned to stores")
-                                        .font(.system(size: 12))
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Manager")
+                                        .font(.system(size: 11.5, weight: .medium))
+                                        .foregroundColor(RSMSColors.secondaryText)
+                                    Text(selectedManager?.name ?? "None assigned")
+                                        .font(.system(size: 14.5, weight: .medium))
+                                        .foregroundColor(selectedManager == nil ? RSMSColors.secondaryText : RSMSColors.primaryText)
                                 }
-                                .foregroundColor(RSMSColors.secondaryText)
-                                .padding(.horizontal, RSMSSpacing.lg)
-                                .padding(.bottom, RSMSSpacing.md)
+                                Spacer()
                             }
+                            .padding(.horizontal, RSMSSpacing.lg)
+                            .padding(.vertical, RSMSSpacing.md)
+
+
                         }
                     }
 
                     FormSectionCard(title: "Payment Terminals") {
                         PremiumToggleRow(icon: "creditcard.fill", title: "Razorpay", isOn: $includeRazorpay)
+                        if includeRazorpay {
+                            FormDivider()
+                            PremiumTextField(icon: "key.fill", placeholder: "Razorpay Key ID", text: $razorpayKey)
+                            FormDivider()
+                            PremiumTextField(icon: "lock.fill", placeholder: "Razorpay Key Secret", text: $razorpaySecret)
+                        }
                         FormDivider()
                         PremiumToggleRow(icon: "wave.3.right.circle.fill", title: "Card Terminal", isOn: $includeCard)
+                        if includeCard {
+                            FormDivider()
+                            PremiumTextField(icon: "terminal.fill", placeholder: "Terminal ID", text: $cardTerminalID)
+                        }
                     }
 
                     if let errorMessage = viewModel.errorMessage {
@@ -217,8 +210,6 @@ struct StoreFormView: View {
                                 .stroke(RSMSColors.error.opacity(0.2), lineWidth: 1)
                         )
                     }
-
-                    saveButton
                 }
                 .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.top, RSMSSpacing.lg)
@@ -232,10 +223,11 @@ struct StoreFormView: View {
                     Button("Cancel") { dismiss() }
                         .tint(RSMSColors.burgundy)
                 }
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("Done") { focusedField = nil }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Save") { save() }
+                        .bold()
                         .tint(RSMSColors.burgundy)
+                        .disabled(name.isEmpty || viewModel.isLoading)
                 }
             }
             .overlay {
@@ -256,17 +248,16 @@ struct StoreFormView: View {
                     )
                 }
             }
-            .sheet(isPresented: $isShowingManagerPicker) {
-                ManagerPickerSheet(
-                    managers: viewModel.availableManagers(excludingStoreID: editingStore?.id),
-                    selectedManagerID: $selectedManagerID
-                )
-            }
             .onChange(of: selectedPhotoItem) { _, newItem in
                 Task {
                     if let data = try? await newItem?.loadTransferable(type: Data.self) {
                         selectedImageData = data
                     }
+                }
+            }
+            .onChange(of: selectedManagerID) { _, newID in
+                if newID == nil {
+                    isActive = false
                 }
             }
         }
@@ -346,102 +337,80 @@ struct StoreFormView: View {
     private var statusCard: some View {
         FormSectionCard(title: "Store Status") {
             HStack(spacing: RSMSSpacing.md) {
-                ZStack {
-                    Circle()
-                        .fill((isActive ? RSMSColors.success : RSMSColors.secondaryText).opacity(0.12))
-                        .frame(width: 38, height: 38)
-                    Image(systemName: isActive ? "checkmark.circle.fill" : "pause.circle.fill")
-                        .font(.system(size: 16))
-                        .foregroundColor(isActive ? RSMSColors.success : RSMSColors.secondaryText)
-                }
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Store is Active")
                         .font(.system(size: 14.5, weight: .medium))
                         .foregroundColor(RSMSColors.primaryText)
-                    Text(isActive ? "Visible and operational" : "Archived and hidden")
-                        .font(.system(size: 11.5))
-                        .foregroundColor(RSMSColors.secondaryText)
                 }
                 Spacer()
-                Toggle("", isOn: $isActive)
+                Toggle("", isOn: Binding<Bool>(
+                    get: { isActive },
+                    set: { newValue in
+                        if newValue && selectedManagerID == nil {
+                            showManagerWarning = true
+                        } else {
+                            isActive = newValue
+                        }
+                    }
+                ))
                     .labelsHidden()
                     .tint(RSMSColors.burgundy)
             }
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.vertical, RSMSSpacing.md)
         }
+        .alert("Manager Not Assigned", isPresented: $showManagerWarning) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("A store must have a manager assigned before it can be marked as active.")
+        }
     }
 
-    private var saveButton: some View {
-        Button {
-            Task {
-                let fullAddress = [pinLocation, city, state, country]
-                    .filter { !$0.isEmpty }
-                    .joined(separator: ", ")
+    private func save() {
+        Task {
+            let fullAddress = [pinLocation, city, state, country]
+                .filter { !$0.isEmpty }
+                .joined(separator: ", ")
 
-                if let store = editingStore {
-                    let success = await viewModel.update(
-                        storeId: store.id,
-                        name: name,
-                        address: fullAddress,
-                        phone: phone,
-                        locale: locale,
-                        currencyCode: currencyCode,
-                        timezone: timezone,
-                        managerID: selectedManagerID,
-                        status: isActive ? .active : .archived,
-                        latitude: pickedCoordinate?.latitude,
-                        longitude: pickedCoordinate?.longitude,
-                        city: city,
-                        country: country,
-                        imageData: selectedImageData
-                    )
-                    if success { dismiss() }
-                } else {
-                    let success = await viewModel.create(
-                        name: name,
-                        address: fullAddress,
-                        phone: phone,
-                        locale: locale,
-                        currencyCode: currencyCode,
-                        timezone: timezone,
-                        managerID: selectedManagerID,
-                        status: isActive ? .active : .archived,
-                        includeRazorpay: includeRazorpay,
-                        includeCard: includeCard,
-                        latitude: pickedCoordinate?.latitude,
-                        longitude: pickedCoordinate?.longitude,
-                        city: city,
-                        country: country,
-                        imageData: selectedImageData
-                    )
-                    if success { dismiss() }
-                }
+            if let store = editingStore {
+                let success = await viewModel.update(
+                    storeId: store.id,
+                    name: name,
+                    address: fullAddress,
+                    phone: phone,
+                    locale: locale,
+                    currencyCode: currencyCode,
+                    timezone: timezone,
+                    managerID: selectedManagerID,
+                    status: isActive ? .active : .archived,
+                    latitude: pickedCoordinate?.latitude,
+                    longitude: pickedCoordinate?.longitude,
+                    city: city,
+                    country: country,
+                    imageData: selectedImageData
+                )
+                if success { dismiss() }
+            } else {
+                let success = await viewModel.create(
+                    name: name,
+                    address: fullAddress,
+                    phone: phone,
+                    locale: locale,
+                    currencyCode: currencyCode,
+                    timezone: timezone,
+                    managerID: selectedManagerID,
+                    status: isActive ? .active : .archived,
+                    includeRazorpay: includeRazorpay,
+                    includeCard: includeCard,
+                    latitude: pickedCoordinate?.latitude,
+                    longitude: pickedCoordinate?.longitude,
+                    city: city,
+                    country: country,
+                    imageData: selectedImageData
+                )
+                if success { dismiss() }
             }
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: editingStore != nil ? "checkmark.circle.fill" : "plus.circle.fill")
-                    .font(.system(size: 15, weight: .semibold))
-                Text(editingStore != nil ? "Update Store" : "Create Store")
-                    .font(.system(size: 15, weight: .semibold))
-            }
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 15)
-            .background(
-                LinearGradient(
-                    colors: [RSMSColors.burgundy, RSMSColors.burgundy.opacity(0.85)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
-                in: RoundedRectangle(cornerRadius: 16)
-            )
-            .shadow(color: RSMSColors.burgundy.opacity(0.30), radius: 14, x: 0, y: 8)
-            .opacity(name.isEmpty || viewModel.isLoading ? 0.5 : 1)
         }
-        .buttonStyle(PremiumPressStyle())
-        .disabled(viewModel.isLoading || name.isEmpty)
-        .padding(.top, RSMSSpacing.sm)
     }
 
     private func applyAutoLocalization() {
