@@ -101,6 +101,7 @@ final class ManagerDashboardViewModel {
                 .from("orders")
                 .select("total")
                 .eq("store_id", value: storeID.uuidString)
+                .eq("status", value: "completed")
                 .gte("created_at", value: ISO8601DateFormatter().string(from: startOfDay))
                 .execute()
                 .value

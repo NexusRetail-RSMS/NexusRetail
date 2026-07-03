@@ -7,7 +7,6 @@ import SwiftUI
 
 struct InventoryGridItemCard: View {
     let item: InventoryItemRow
-    let onRestock: () -> Void
     
     @State private var showQR: Bool = false
     
@@ -33,19 +32,6 @@ struct InventoryGridItemCard: View {
                     )
                     .clipShape(TopCorners(radius: 12))
                 
-                // Restock icon instead of heart
-                if item.isLowStock {
-                    Button(action: onRestock) {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.black)
-                            .padding(8)
-                            .background(Color.white.opacity(0.8))
-                            .clipShape(Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .padding(8)
-                }
             }
             
             // Info Section

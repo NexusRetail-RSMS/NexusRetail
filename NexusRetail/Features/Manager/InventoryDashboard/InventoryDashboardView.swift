@@ -13,40 +13,45 @@ struct InventoryDashboardView: View {
     @Environment(SessionStore.self) private var sessionStore
     
     var body: some View {
-        Group {
-            if viewModel.isLoading && viewModel.items.isEmpty {
-                ZStack {
-                    RSMSColors.background.ignoresSafeArea()
+        VStack(spacing: 0) {
+            // ── Pinned top area: header + search + chips ──
+            // Completely outside the ScrollView so chips NEVER
+            // overlap grid items and can never leak taps.
+            VStack(spacing: 0) {
+                headerSection
+                    .padding(.top, RSMSSpacing.sm)
+                    .padding(.bottom, RSMSSpacing.md)
+                searchBar
+                    .padding(.bottom, RSMSSpacing.md)
+                filterSection
+                    .padding(.bottom, RSMSSpacing.sm)
+            }
+            .background(.ultraThinMaterial)
+            
+            // ── Scrollable content: grid only ──
+            Group {
+                if viewModel.isLoading && viewModel.items.isEmpty {
+                    Spacer()
                     ProgressView("Loading inventory…")
                         .font(RSMSFonts.body)
                         .foregroundColor(RSMSColors.secondaryText)
-                }
-            } else {
-                ScrollView {
-                    VStack(spacing: RSMSSpacing.lg) {
-                        // MARK: - Filter/Category Chips
-                        filterSection
-                        
-                        // MARK: - Content
+                    Spacer()
+                } else {
+                    ScrollView {
                         inventoryList
+                            .padding(.top, RSMSSpacing.md)
+                            .padding(.bottom, RSMSSpacing.xxxl)
                     }
-                    .padding(.bottom, RSMSSpacing.xxxl)
-                }
-                .safeAreaInset(edge: .top) {
-                    VStack(spacing: RSMSSpacing.lg) {
-                        headerSection
-                            .padding(.top, RSMSSpacing.sm)
-                        searchBar
+                    .refreshable {
+                        await viewModel.load(storeID: sessionStore.currentUser?.storeID)
                     }
-                    .padding(.bottom, RSMSSpacing.sm)
-                    .background(.ultraThinMaterial)
-                }
-                .background(RSMSColors.background.ignoresSafeArea())
-                .refreshable {
-                    await viewModel.load(storeID: sessionStore.currentUser?.storeID)
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(RSMSColors.background)
         }
+        .ignoresSafeArea(edges: .top)
+        .background(RSMSColors.background.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .task {
             await viewModel.load(storeID: sessionStore.currentUser?.storeID)
@@ -60,7 +65,7 @@ struct InventoryDashboardView: View {
                         }
                     }
                 }
-                .presentationDetents([.medium])
+                .presentationDetents([.height(590)])
             }
         }
     }
@@ -79,117 +84,67 @@ struct InventoryDashboardView: View {
             NavigationLink(destination: ManagerPendingRequestsView(viewModel: viewModel)) {
                 ZStack {
                     Circle()
-                        .fill(Color.white)
+                        .fill(RSMSColors.burgundy)
                         .frame(width: 44, height: 44)
-                        .shadow(color: Color.black.opacity(0.08), radius: 8, y: 4)
                     
-                    Image(systemName: "tray.full.fill")
+                    Image(systemName: "shippingbox.and.arrow.backward")
                         .font(.title3)
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(RSMSColors.cream)
                 }
             }
             .accessibilityLabel("Stock Requests")
         }
         .padding(.horizontal, RSMSSpacing.lg)
+        .padding(.top, 50) // safe area top
     }
     
     // MARK: - Search Bar
     
     private var searchBar: some View {
         HStack(spacing: 12) {
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(RSMSColors.secondaryText)
-                TextField("Search by name or SKU…", text: $viewModel.searchText)
-                    .font(.system(size: 15))
-                    .foregroundColor(RSMSColors.primaryText)
-                
-                if !viewModel.searchText.isEmpty {
-                    Button {
-                        viewModel.searchText = ""
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(RSMSColors.secondaryText)
-                    }
-                }
-            }
-            .padding(12)
-            .background(Color.white)
-            .cornerRadius(RSMSRadius.medium)
-            .overlay(
-                RoundedRectangle(cornerRadius: RSMSRadius.medium)
-                    .stroke(RSMSColors.inputBorder, lineWidth: 1)
-            )
+            NexusSearchBar(text: $viewModel.searchText, placeholder: "Search by name or SKU…")
             
-            // Filter Menu (Sort + Low Stock Filter)
+            // Filter Menu
             Menu {
-                Section(header: Text("Filter")) {
+                ForEach(InventorySortOrder.allCases, id: \.self) { order in
                     Button {
-                        viewModel.selectedFilter = .allItems
+                        viewModel.sortOrder = order
                     } label: {
                         HStack {
-                            Text("All Items")
-                            if viewModel.selectedFilter == .allItems { Image(systemName: "checkmark") }
-                        }
-                    }
-                    
-                    Button {
-                        viewModel.selectedFilter = .lowStock
-                    } label: {
-                        HStack {
-                            Text("Low Stock")
-                            if viewModel.selectedFilter == .lowStock { Image(systemName: "checkmark") }
-                        }
-                    }
-                }
-                
-                Section(header: Text("Sort By")) {
-                    ForEach(InventorySortOrder.allCases, id: \.self) { order in
-                        Button {
-                            viewModel.sortOrder = order
-                        } label: {
-                            HStack {
-                                Text(order.rawValue)
-                                if viewModel.sortOrder == order {
-                                    Image(systemName: "checkmark")
-                                }
+                            Text(order.rawValue)
+                            if viewModel.sortOrder == order {
+                                Image(systemName: "checkmark")
                             }
                         }
                     }
                 }
             } label: {
-                Image(systemName: "slider.horizontal.3")
-                    .font(.system(size: 20))
-                    .foregroundColor(RSMSColors.burgundy)
-                    .frame(width: 44, height: 44)
-                    .background(Color.white)
-                    .cornerRadius(RSMSRadius.medium)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: RSMSRadius.medium)
-                            .stroke(RSMSColors.inputBorder, lineWidth: 1)
-                    )
+                ZStack {
+                        Circle()
+                            .fill(RSMSColors.burgundy.opacity(0.08))
+                            .frame(width: 48, height: 48)
+
+                        Image(systemName: "line.3.horizontal.decrease")
+                            .font(.system(size: 20, weight: .medium))
+                            .foregroundColor(RSMSColors.burgundy)
+                    }
             }
         }
         .padding(.horizontal, RSMSSpacing.lg)
     }
     
-    
-    
     // MARK: - Filter Section
     
     private var filterSection: some View {
-        // Category chips
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 CategoryChip(label: "All", isSelected: viewModel.selectedCategory == nil) {
-                    withAnimation { viewModel.selectedCategory = nil }
+                    viewModel.selectedCategory = nil
                 }
                 
                 ForEach(InventoryCategory.allCases, id: \.self) { cat in
                     CategoryChip(label: cat.rawValue, isSelected: viewModel.selectedCategory == cat) {
-                        withAnimation {
-                            viewModel.selectedCategory = viewModel.selectedCategory == cat ? nil : cat
-                        }
+                        viewModel.selectedCategory = viewModel.selectedCategory == cat ? nil : cat
                     }
                 }
             }
@@ -200,25 +155,29 @@ struct InventoryDashboardView: View {
     // MARK: - Inventory List
     
     private var inventoryList: some View {
-        LazyVGrid(columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)], spacing: 16) {
+        Group {
             if viewModel.filteredItems.isEmpty {
                 emptyState(
                     icon: "shippingbox",
                     title: "No items found",
                     message: viewModel.searchText.isEmpty ? "No inventory items match the current filter." : "No results for \"\(viewModel.searchText)\"."
                 )
+                .padding(.top, 40)
             } else {
-                ForEach(viewModel.filteredItems) { item in
-                    NavigationLink(destination: ProductDetailView(item: item, viewModel: viewModel, storeID: sessionStore.currentUser?.storeID)) {
-                        InventoryGridItemCard(item: item) {
-                            viewModel.triggerRestock(for: item)
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)], spacing: 16) {
+                    ForEach(viewModel.filteredItems) { item in
+                        Button {
+                            viewModel.restockItem = item
+                            viewModel.showRestockSheet = true
+                        } label: {
+                            InventoryGridItemCard(item: item)
                         }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
+                .padding(.horizontal, RSMSSpacing.lg)
             }
         }
-        .padding(.horizontal, RSMSSpacing.lg)
     }
     
     // MARK: - Empty State
@@ -248,24 +207,23 @@ struct CategoryChip: View {
     let action: () -> Void
     
     var body: some View {
-        Button(action: action) {
-            Text(label)
-                .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
-                .foregroundColor(isSelected ? .white : RSMSColors.primaryText)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 7)
-                .background(isSelected ? RSMSColors.burgundy : Color.white)
-                .cornerRadius(16)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(isSelected ? Color.clear : RSMSColors.inputBorder, lineWidth: 1)
-                )
-        }
-        .buttonStyle(.plain)
+        Text(label)
+            .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
+            .foregroundColor(isSelected ? .white : RSMSColors.primaryText)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 7)
+            .background(isSelected ? RSMSColors.burgundy : Color.white)
+            .clipShape(Capsule())
+            .overlay(
+                Capsule()
+                    .stroke(isSelected ? Color.clear : RSMSColors.inputBorder, lineWidth: 1)
+            )
+            .contentShape(Capsule())
+            .highPriorityGesture(
+                TapGesture().onEnded { action() }
+            )
     }
 }
-
-// Removed InventoryGridItemCard as it was extracted to a separate file
 
 // MARK: - Transfer Request Card
 
@@ -274,12 +232,13 @@ struct ManagerTransferRequestCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Product info row
-            HStack {
+            // Product info + status + units row
+            HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(request.productName)
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(RSMSColors.primaryText)
+                    
                     Text(request.skuCode)
                         .font(.system(size: 12))
                         .foregroundColor(RSMSColors.secondaryText)
@@ -287,37 +246,20 @@ struct ManagerTransferRequestCard: View {
                 
                 Spacer()
                 
-                // Status pill
-                Text(request.status.displayName)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(request.status.color)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(request.status.color.opacity(0.12))
-                    .cornerRadius(10)
-            }
-            
-            // Status pipeline
-            HStack(spacing: 4) {
-                ForEach(0..<5) { step in
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(step <= request.status.step ? request.status.color : Color.gray.opacity(0.15))
-                        .frame(height: 4)
+                VStack(alignment: .trailing, spacing: 6) {
+                    
+                    // Units
+                    Label("\(request.quantity) units", systemImage: "cube.box")
+                        .font(.system(size: 12))
+                        .foregroundColor(RSMSColors.secondaryText)
+                    
+                    
+                    Text(request.formattedDate)
+                        .font(.system(size: 12))
+                        .foregroundColor(RSMSColors.secondaryText)
                 }
             }
             
-            // Details row
-            HStack {
-                Label("\(request.quantity) units", systemImage: "cube.box")
-                    .font(.system(size: 12))
-                    .foregroundColor(RSMSColors.secondaryText)
-                
-                Spacer()
-                
-                Text(request.formattedDate)
-                    .font(.system(size: 12))
-                    .foregroundColor(RSMSColors.secondaryText)
-            }
         }
         .padding(14)
         .background(Color.white)

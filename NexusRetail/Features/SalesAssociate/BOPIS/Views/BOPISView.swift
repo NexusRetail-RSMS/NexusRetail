@@ -8,8 +8,6 @@ import SwiftUI
 struct BOPISView: View {
     @Environment(SessionStore.self) private var sessionStore
     @State private var viewModel = BOPISViewModel()
-    @State private var searchText = ""
-    @State private var selectedFilter: BOPISOrderStatus? = nil
     @State private var orderToPack: BOPISOrder?
     @State private var showNotifiedAlert = false
     @State private var notifiedCustomerName = ""
@@ -22,46 +20,16 @@ struct BOPISView: View {
             
             VStack(spacing: 0) {
                 // Header Area
-                HStack(spacing: RSMSSpacing.md) {
+                VStack(spacing: RSMSSpacing.md) {
                     SearchBarView(text: $viewModel.searchText, placeholder: "Search by order ID, customer or phone")
+                        .padding(.horizontal, RSMSSpacing.lg)
                     
-                    Menu {
-                        Button {
-                            viewModel.selectedFilter = nil
-                        } label: {
-                            if viewModel.selectedFilter == nil {
-                                Label("All", systemImage: "checkmark")
-                            } else {
-                                Text("All")
-                            }
-                        }
-                        
-                        ForEach([BOPISOrderStatus.pending, BOPISOrderStatus.waitingForCustomer], id: \.self) { status in
-                            Button {
-                                viewModel.selectedFilter = status
-                            } label: {
-                                if viewModel.selectedFilter == status {
-                                    Label(status.rawValue, systemImage: "checkmark")
-                                } else {
-                                    Text(status.rawValue)
-                                }
-                            }
-                        }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "line.3.horizontal.decrease")
-                            Text("Filter")
-                                .font(.system(size: 14, weight: .semibold))
-                        }
-                        .foregroundColor(RSMSColors.burgundy)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                        .background(Capsule().fill(RSMSColors.burgundy.opacity(0.05)))
-                    }
+                    FilterSegmentControl(selectedFilter: $viewModel.selectedFilter)
                 }
-                .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.top, RSMSSpacing.md)
-                .padding(.bottom, RSMSSpacing.lg)
+                .padding(.bottom, RSMSSpacing.sm)
+                .background(Color.white)
+                .shadow(color: Color.black.opacity(0.05), radius: 4, y: 2)
                 
                 // Main Content
                 if viewModel.filteredOrders.isEmpty {
@@ -147,7 +115,7 @@ struct BOPISView: View {
             
             Button(action: {
                 viewModel.searchText = ""
-                viewModel.selectedFilter = nil
+                viewModel.selectedFilter = .pending
             }) {
                 HStack(spacing: 8) {
                     Image(systemName: "arrow.counterclockwise")

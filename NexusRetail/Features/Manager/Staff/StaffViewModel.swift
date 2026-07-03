@@ -111,13 +111,7 @@ class StaffViewModel {
                 )
             }
             
-            let localOnly = self.employees.filter { localEmp in
-                !deleted.contains(localEmp.id) && !remoteEmployees.contains { rem in
-                    rem.id == localEmp.id || (!localEmp.email.isEmpty && rem.email.lowercased() == localEmp.email.lowercased())
-                }
-            }
-            
-            self.employees = remoteEmployees + localOnly
+            self.employees = remoteEmployees
             saveToCache()
         } catch {
             print("Error loading staff: \(error)")

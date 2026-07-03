@@ -19,9 +19,8 @@ class InventoryViewModel {
     
     // MARK: - UI State
     var searchText: String = ""
-    var selectedFilter: InventoryFilter = .allItems
     var selectedCategory: InventoryCategory? = nil
-    var sortOrder: InventorySortOrder = .stockLowToHigh
+    var sortOrder: InventorySortOrder = .all
     var isLoading: Bool = false
     var errorMessage: String? = nil
     
@@ -54,26 +53,19 @@ class InventoryViewModel {
             }
         }
         
-        // Filter by stock status
-        if selectedFilter == .lowStock {
-            result = result.filter { $0.isLowStock }
-        }
-        
         // Category
         if let cat = selectedCategory {
-            result = result.filter { $0.category == cat.rawValue }
+            result = result.filter { $0.category.lowercased() == cat.rawValue.lowercased() }
         }
         
         // Sort
         switch sortOrder {
+        case .all:
+            break
         case .stockLowToHigh:
             result.sort { $0.onHand < $1.onHand }
-        case .nameAZ:
-            result.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-        case .category:
-            result.sort { $0.category.localizedCaseInsensitiveCompare($1.category) == .orderedAscending }
-        case .valueHighToLow:
-            result.sort { $0.inventoryValue > $1.inventoryValue }
+        case .stockHighToLow:
+            result.sort { $0.onHand > $1.onHand }
         }
         
         return result

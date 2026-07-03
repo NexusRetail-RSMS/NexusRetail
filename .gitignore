@@ -77,3 +77,10 @@ Config.xcconfig
 # Local environment variables
 .env.local
 .env*.local
+
+# AI / IDE configs
+.claude/
+.mcp.json
+.agents
+
+skills-lock.json

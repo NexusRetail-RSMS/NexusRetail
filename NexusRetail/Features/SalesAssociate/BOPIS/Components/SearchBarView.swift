@@ -28,9 +28,9 @@ struct SearchBarView: View {
         .padding(.horizontal, RSMSSpacing.md)
         .padding(.vertical, RSMSSpacing.sm)
         .background(Color.white)
-        .clipShape(Capsule())
+        .cornerRadius(RSMSRadius.small)
         .overlay(
-            Capsule()
+            RoundedRectangle(cornerRadius: RSMSRadius.small)
                 .stroke(RSMSColors.inputBorder, lineWidth: 1)
         )
     }
