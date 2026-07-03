@@ -31,29 +31,50 @@ struct OrdersHubView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Orders Hub")
                                 .font(.system(size: 24, weight: .bold)).foregroundColor(RSMSColors.primaryText)
+                            Text("Manage and track all pickup orders")
+                                .font(.system(size: 14)).foregroundColor(RSMSColors.secondaryText)
                         }
                         Spacer()
                         
-                        if selectedFlow == .bopis {
-                            // Let's use a simple State-based navigation for history to avoid
-                            // needing the BOPISViewModel here, or just navigate to BOPISHistoryView with a dummy model.
-                            // Actually, BOPISHistoryView takes a BOPISViewModel. Since OrdersHubView doesn't have it,
-                            // we might need to rethink this, or just skip it for now and fix it if the user notices.
-                            // Let's just create a NavigationLink that works.
-                            // Since we don't have the viewModel, we can't easily do it here. 
-                            // Wait, I can just leave it out for a moment, or use POSFlowDestination if needed.
+                        // Profile Avatar
+                        ZStack {
+                            Circle()
+                                .fill(RSMSColors.burgundy)
+                                .frame(width: 40, height: 40)
+                            Text("NI")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white)
                         }
                     }
                     .padding(.horizontal, RSMSSpacing.lg)
                     .padding(.top, 60)
                     .padding(.bottom, 12)
                     
-                    Picker("Order Flow", selection: $selectedFlow) {
+                    // Custom segmented control
+                    HStack(spacing: 0) {
                         ForEach(OrderFlowType.allCases, id: \.self) { flow in
-                            Text(flow.rawValue).tag(flow)
+                            Button {
+                                withAnimation {
+                                    selectedFlow = flow
+                                }
+                            } label: {
+                                Text(flow.rawValue)
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(selectedFlow == flow ? .white : RSMSColors.primaryText)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(
+                                        ZStack {
+                                            if selectedFlow == flow {
+                                                Capsule().fill(RSMSColors.burgundy)
+                                            }
+                                        }
+                                    )
+                                    .contentShape(Capsule())
+                            }
                         }
                     }
-                    .pickerStyle(.segmented)
+                    .background(Capsule().fill(RSMSColors.burgundy.opacity(0.05)).overlay(Capsule().stroke(RSMSColors.burgundy.opacity(0.1), lineWidth: 1)))
                     .padding(.horizontal, RSMSSpacing.lg)
                     .padding(.bottom, RSMSSpacing.xxxl)
                 }
