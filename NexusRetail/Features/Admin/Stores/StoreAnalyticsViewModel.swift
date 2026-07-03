@@ -173,7 +173,8 @@ class StoreAnalyticsViewModel {
                 name: cat,
                 category: cat,
                 units: categoryUnits[cat] ?? 0,
-                revenue: categoryRevenue[cat] ?? 0.0
+                revenue: categoryRevenue[cat] ?? 0.0,
+                imageUrl: nil
             )
         }
         

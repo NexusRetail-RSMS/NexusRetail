@@ -47,6 +47,7 @@ struct DashboardTopProduct: Decodable, Identifiable {
     let category: String
     let units: Int
     let revenue: Double
+    let imageUrl: String?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -54,6 +55,7 @@ struct DashboardTopProduct: Decodable, Identifiable {
         case category
         case units
         case revenue
+        case imageUrl = "image_url"
     }
 }
 

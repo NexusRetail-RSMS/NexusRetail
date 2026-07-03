@@ -138,7 +138,7 @@ final class ManagerDashboardViewModel {
             let inventory = try? await inventoryTask
             
             // 4. Fetch Charts (Top Products & Revenue)
-            let periodPrefix = topProductsTimeRange == .monthly ? "M" : "Y"
+            let periodPrefix = topProductsTimeRange == .weekly ? "W" : "M"
             let params = ManagerSalesParams(
                 p_store_id: ManagerNullableUUID(value: storeID),
                 p_period: "\(periodPrefix):\(ISO8601DateFormatter().string(from: Date()))"
@@ -178,12 +178,9 @@ final class ManagerDashboardViewModel {
                 
                 // Top Products Chart
                 if let prods = topProds {
-                    let grouped = Dictionary(grouping: prods) { $0.category }
-                    let categories = grouped.keys.sorted()
-                    self.topProductsData = categories.compactMap { cat in
-                        guard let items = grouped[cat] else { return nil }
-                        let totalSales = items.reduce(0) { $0 + Int($1.revenue) }
-                        return ProductChartPoint(category: cat, sales: totalSales)
+                    self.topProductsData = prods.map { prod in
+                        let url = prod.imageUrl.flatMap { URL(string: $0) }
+                        return ProductChartPoint(name: prod.name, category: prod.category, sales: prod.units, imageURL: url)
                     }.sorted { $0.sales > $1.sales }
                     
                     self.topProductsMaxValue = self.topProductsData.map(\.sales).max() ?? 100

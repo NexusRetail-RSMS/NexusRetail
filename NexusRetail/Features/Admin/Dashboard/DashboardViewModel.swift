@@ -37,12 +37,14 @@ struct RevenueChartPoint: Identifiable, Equatable {
 
 /// A single bar/slice in the product-sales chart.
 struct ProductChartPoint: Identifiable, Equatable {
-    let id = UUID()
+    var id: String { name }
+    let name: String
     let category: String
     let sales: Int
+    var imageURL: URL? = nil
 
     static func == (lhs: ProductChartPoint, rhs: ProductChartPoint) -> Bool {
-        lhs.category == rhs.category && lhs.sales == rhs.sales
+        lhs.name == rhs.name && lhs.sales == rhs.sales
     }
 }
 
@@ -159,14 +161,9 @@ class DashboardViewModel {
     var productChartData: [ProductChartPoint] {
         let sourceData = productTimeRange == .weekly ? topProductsWeekly : topProductsMonthly
         
-        // Group the top products by category and sum up their units
-        let grouped = Dictionary(grouping: sourceData) { $0.category }
-        let categories = grouped.keys.sorted()
-        
-        return categories.compactMap { cat in
-            guard let items = grouped[cat] else { return nil }
-            let total = items.reduce(0) { $0 + $1.units }
-            return ProductChartPoint(category: cat, sales: total)
+        return sourceData.map { product in
+            let url = product.imageUrl.flatMap { URL(string: $0) }
+            return ProductChartPoint(name: product.name, category: product.category, sales: product.units, imageURL: url)
         }
         .sorted { $0.sales > $1.sales }
     }
