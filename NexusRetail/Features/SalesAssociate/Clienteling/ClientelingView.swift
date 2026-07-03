@@ -1,4 +1,5 @@
 import SwiftUI
+import Supabase
 
 struct ClientelingView: View {
     @Environment(SessionStore.self) private var sessionStore
@@ -23,13 +24,7 @@ struct ClientelingView: View {
     
     @State private var selectedFilter = "All Clients"
 
-    @State private var clients: [AssociateClient] = [
-        AssociateClient(name: "Ananya Rao",   phone: "+91 98765 43210", email: "ananya.rao@example.com", preferences: "Minimal gold, silk saree", purchasePattern: "VIP Client"),
-        AssociateClient(name: "Kabir Mehta",  phone: "+91 98111 22009", email: "kabir.mehta@example.com", preferences: "Tailored jackets, navy tone...", purchasePattern: "Regular Client"),
-        AssociateClient(name: "Mira Kapoor",  phone: "+91 90000 77123", email: "mira.kapoor@example.com", preferences: "Statement earrings, ethnic...", purchasePattern: "New Client"),
-        AssociateClient(name: "Rohit Verma",  phone: "+91 91234 56789", email: "rohit.verma@example.com", preferences: "Casual shirts, linen", purchasePattern: "Regular Client"),
-        AssociateClient(name: "Sneha Iyer",  phone: "+91 99876 54321", email: "sneha.iyer@example.com", preferences: "Festive wear, anarkali suit", purchasePattern: "VIP Client")
-    ]
+    @State private var clients: [AssociateClient] = []
 
     private var filteredClients: [AssociateClient] {
         let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -74,6 +69,7 @@ struct ClientelingView: View {
         .sheet(isPresented: $isNewClientPresented) { newClientSheet }
         .sheet(isPresented: $isProfilePresented) { AdminProfileSheet() }
         .sheet(isPresented: $isNewAppointmentPresented) { newAppointmentSheet }
+        .task { await loadClients() }
     }
 
     // MARK: - Header
@@ -363,13 +359,24 @@ struct ClientelingView: View {
         let phone = clientPhone.trimmingCharacters(in: .whitespacesAndNewlines)
         let prefs = stylePreferences.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.78)) {
-            if isEditingClient, let id = editingClientId, let index = clients.firstIndex(where: { $0.id == id }) {
-                clients[index].name = name
-                clients[index].phone = phone
-                clients[index].preferences = prefs.isEmpty ? "Preferences to be captured" : prefs
-            } else {
-                clients.insert(AssociateClient(name: name, phone: phone, email: "new@example.com", preferences: prefs.isEmpty ? "Preferences to be captured" : prefs, purchasePattern: "New Client"), at: 0)
+        let newClient = AssociateClient(name: name, phone: phone, email: "new@example.com", preferences: prefs.isEmpty ? "Preferences to be captured" : prefs, purchasePattern: "New Client")
+        
+        Task {
+            do {
+                struct InsertClient: Encodable {
+                    let name: String
+                    let phone: String
+                    let created_by: UUID?
+                }
+                
+                try await SupabaseManager.shared.client
+                    .from("client")
+                    .insert(InsertClient(name: name, phone: phone, created_by: sessionStore.currentUser?.id))
+                    .execute()
+                    
+                await loadClients()
+            } catch {
+                print("Error saving client: \\(error)")
             }
         }
         
@@ -461,6 +468,36 @@ struct ClientelingView: View {
             }
         }
         .presentationDetents([.fraction(0.9), .large])
-        .presentationDragIndicator(.visible)
+    }
+
+    private func loadClients() async {
+        do {
+            struct FetchClient: Decodable {
+                let id: UUID
+                let name: String
+                let phone: String
+                let email: String?
+            }
+            
+            let fetched: [FetchClient] = try await SupabaseManager.shared.client
+                .from("client")
+                .select("id, name, phone, email")
+                .execute()
+                .value
+                
+            await MainActor.run {
+                self.clients = fetched.map { c in
+                    AssociateClient(
+                        name: c.name,
+                        phone: c.phone,
+                        email: c.email ?? "",
+                        preferences: "Preferences to be captured",
+                        purchasePattern: "New Client"
+                    )
+                }
+            }
+        } catch {
+            print("Error fetching clients: \\(error)")
+        }
     }
 }
