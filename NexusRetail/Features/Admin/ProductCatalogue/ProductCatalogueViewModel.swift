@@ -16,6 +16,7 @@ struct TrendingProduct: Identifiable {
 
 struct CatalogueProduct: Identifiable {
     let id: UUID
+    var itemId: Int64
     var name: String
     var sku: String
     var category: String
@@ -48,6 +49,20 @@ struct AddProductParams: Encodable {
     let p_stock: Int
     let p_launch_date: String
     let p_image_url: String
+    let p_floor_price: Double?
+}
+
+struct UpdateProductParams: Encodable {
+    let p_item_id: Int64
+    let p_name: String
+    let p_category: String
+    let p_price: Double
+    let p_image_url: String?
+    let p_floor_price: Double?
+}
+
+struct DeleteProductParams: Encodable {
+    let p_item_id: Int64
 }
 
 // MARK: - ViewModel
@@ -126,17 +141,18 @@ final class ProductCatalogueViewModel: ObservableObject {
             displayFormatter.dateStyle = .medium
             let fallbackDate = displayFormatter.string(from: Date())
             
-            let mapped = response.map { product -> CatalogueProduct in
+            var mapped = response.map { product -> CatalogueProduct in
                 // Extract image from pexels_page or fallback to image_url
                 let pexelsImageUrl = extractPexelsImageUrl(from: product.pexels_page ?? "") ?? product.image_url
-                
+
                 return CatalogueProduct(
                     id: UUID(uuidString: String(format: "00000000-0000-0000-0000-%012d", product.item_id)) ?? UUID(),
+                    itemId: product.item_id,
                     name: product.item_name,
                     sku: "SKU-\(product.item_id)",
                     category: product.category,
                     price: product.price,
-                    stock: 50, // default fallback stock
+                    stock: 0, // replaced by real inventory below
                     date: fallbackDate,
                     imageName: nil,
                     imageUrl: pexelsImageUrl,
@@ -144,7 +160,27 @@ final class ProductCatalogueViewModel: ObservableObject {
                     qrCode: nil
                 )
             }
-            
+
+            // Load real stock: total on_hand per item across all stores.
+            struct InventoryStockRow: Decodable {
+                let item_id: Int64
+                let on_hand: Int
+            }
+            do {
+                let invRows: [InventoryStockRow] = try await SupabaseManager.shared.client
+                    .from("inventory_item")
+                    .select("item_id, on_hand")
+                    .execute()
+                    .value
+                var stockByItem: [Int64: Int] = [:]
+                for row in invRows { stockByItem[row.item_id, default: 0] += row.on_hand }
+                for i in mapped.indices {
+                    mapped[i].stock = stockByItem[mapped[i].itemId] ?? 0
+                }
+            } catch {
+                print("ProductCatalogueViewModel: Non-fatal error loading inventory: \(error)")
+            }
+
             self.allProducts = mapped
             
 
@@ -227,58 +263,96 @@ final class ProductCatalogueViewModel: ObservableObject {
         return "\(prefix)-\(randomNum)"
     }
     
+    /// Downscales an image to a sane max dimension and compresses it, so uploads
+    /// are ~100–300 KB instead of multi-MB full-res photos (which drop with
+    /// NSURLError -1005 "network connection was lost" on flaky links/simulator).
+    private func downscaledJPEG(_ image: UIImage, maxDimension: CGFloat = 1280, quality: CGFloat = 0.7) -> Data? {
+        let longSide = max(image.size.width, image.size.height)
+        let scale = longSide > maxDimension ? maxDimension / longSide : 1
+        let newSize = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1
+        let resized = UIGraphicsImageRenderer(size: newSize, format: format).image { _ in
+            image.draw(in: CGRect(origin: .zero, size: newSize))
+        }
+        return resized.jpegData(compressionQuality: quality)
+    }
+
     private func uploadImage(_ image: UIImage) async throws -> String {
-        guard let data = image.jpegData(compressionQuality: 0.8) else {
+        guard let data = downscaledJPEG(image) else {
             throw URLError(.badServerResponse)
         }
         let path = "products/\(UUID().uuidString).jpg"
-        let fileOptions = FileOptions(contentType: "image/jpeg")
-        try await SupabaseManager.shared.client.storage
-            .from("product-images")
-            .upload(path, data: data, options: fileOptions)
-        
-        let url = try SupabaseManager.shared.client.storage
-            .from("product-images")
-            .getPublicURL(path: path)
-        return url.absoluteString
+        let fileOptions = FileOptions(contentType: "image/jpeg", upsert: true)
+
+        // Retry transient network drops (-1005) a couple of times before giving up.
+        var lastError: Error?
+        for attempt in 1...3 {
+            do {
+                try await SupabaseManager.shared.client.storage
+                    .from("product-images")
+                    .upload(path, data: data, options: fileOptions)
+
+                let url = try SupabaseManager.shared.client.storage
+                    .from("product-images")
+                    .getPublicURL(path: path)
+                return url.absoluteString
+            } catch {
+                lastError = error
+                print("uploadImage: attempt \(attempt) failed: \(error.localizedDescription)")
+                if attempt < 3 {
+                    try? await Task.sleep(nanoseconds: 500_000_000) // 0.5s backoff
+                }
+            }
+        }
+        throw lastError ?? URLError(.unknown)
     }
 
-    func addProduct(name: String, sku: String, category: String, price: Double, stock: Int, launchDate: Date, image: UIImage?) {
+    /// Adds a product. Throws if the DB insert fails so the caller can surface it.
+    /// A failed *image* upload is non-fatal (falls back to a placeholder image).
+    func addProduct(name: String, sku: String, category: String, price: Double, stock: Int, launchDate: Date, floorPrice: Double? = nil, image: UIImage?) async throws {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         let dateStr = formatter.string(from: launchDate)
-        
-        Task {
-            var uploadedUrl = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800"
-            if let image = image {
-                do {
-                    uploadedUrl = try await uploadImage(image)
-                } catch {
-                    print("Failed to upload image: \(error)")
-                }
+
+        var uploadedUrl = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800"
+        if let image = image {
+            do {
+                uploadedUrl = try await uploadImage(image)
+            } catch {
+                print("Failed to upload image (using placeholder): \(error)")
             }
-            
-            let params = AddProductParams(
-                p_name: name,
-                p_category: category,
-                p_description: "Added from app",
-                p_price: price,
-                p_stock: stock,
-                p_launch_date: dateStr,
-                p_image_url: uploadedUrl
-            )
-            
+        }
+
+        let params = AddProductParams(
+            p_name: name,
+            p_category: category,
+            p_description: "Added from app",
+            p_price: price,
+            p_stock: stock,
+            p_launch_date: dateStr,
+            p_image_url: uploadedUrl,
+            p_floor_price: floorPrice
+        )
+
+        var lastError: Error?
+        for attempt in 1...3 {
             do {
                 try await SupabaseManager.shared.client
                     .rpc("add_catalogue_product", params: params)
                     .execute()
                 await fetchProducts()
+                return
             } catch {
-                print("Error adding product: \(error)")
+                lastError = error
+                print("addProduct attempt \(attempt) failed: \(error.localizedDescription)")
+                if attempt < 3 { try? await Task.sleep(nanoseconds: 500_000_000) }
             }
         }
+        throw lastError ?? URLError(.unknown)
     }
-    
+
     func updateProduct(
         _ product: CatalogueProduct,
         name: String,
@@ -286,25 +360,69 @@ final class ProductCatalogueViewModel: ObservableObject {
         category: String,
         price: Double,
         stock: Int,
+        floorPrice: Double? = nil,
         image: UIImage?
-    ) {
-        guard let index = allProducts.firstIndex(where: { $0.id == product.id }) else {
-            return
+    ) async throws {
+        // Optimistically reflect the edit locally for a responsive UI.
+        if let index = allProducts.firstIndex(where: { $0.id == product.id }) {
+            allProducts[index].name = name
+            allProducts[index].sku = sku
+            allProducts[index].category = category
+            allProducts[index].price = price
+            allProducts[index].image = image
         }
 
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
+        var uploadedUrl: String? = nil
+        if let image = image {
+            do {
+                uploadedUrl = try await uploadImage(image)
+            } catch {
+                print("Failed to upload image (keeping existing): \(error)")
+            }
+        }
 
-        allProducts[index].name = name
-        allProducts[index].sku = sku
-        allProducts[index].category = category
-        allProducts[index].price = price
-        allProducts[index].stock = stock
-        allProducts[index].image = image
+        let params = UpdateProductParams(
+            p_item_id: product.itemId,
+            p_name: name,
+            p_category: category,
+            p_price: price,
+            p_image_url: uploadedUrl,
+            p_floor_price: floorPrice
+        )
+
+        var lastError: Error?
+        for attempt in 1...3 {
+            do {
+                try await SupabaseManager.shared.client
+                    .rpc("update_catalogue_product", params: params)
+                    .execute()
+                await fetchProducts()
+                return
+            } catch {
+                lastError = error
+                print("updateProduct attempt \(attempt) failed: \(error.localizedDescription)")
+                if attempt < 3 { try? await Task.sleep(nanoseconds: 500_000_000) }
+            }
+        }
+        throw lastError ?? URLError(.unknown)
     }
-    
+
     func deleteProduct(_ product: CatalogueProduct) {
+        // Optimistic local removal; reconcile with the DB below.
         allProducts.removeAll { $0.id == product.id }
+
+        Task {
+            do {
+                try await SupabaseManager.shared.client
+                    .rpc("delete_catalogue_product", params: DeleteProductParams(p_item_id: product.itemId))
+                    .execute()
+                await fetchProducts()
+            } catch {
+                print("Error deleting product: \(error)")
+                // Re-sync so a failed delete reappears instead of vanishing silently.
+                await fetchProducts()
+            }
+        }
     }
 
     private func startAutoScroll() {
