@@ -11,33 +11,26 @@ import SwiftUI
 struct AfterSalesTabView: View {
     var body: some View {
         TabView {
-            // 1. Intake
+            // 1. Dashboard
+            AfterSalesDashboardView()
+                .tabItem {
+                    Label("Dashboard", systemImage: "square.grid.2x2")
+                }
+            
+            // 2. Service Requests
             NavigationStack {
                 AfterSalesPlaceholderView(
-                    title: "Item Intake",
-                    message: "Register customer returns or check items in for warranty repair.",
+                    title: "Service Requests",
+                    message: "Manage incoming service requests, returns, and exchanges.",
                     icon: "tray.and.arrow.down.fill"
                 )
-                .modifier(AfterSalesToolbarModifier(title: "Intake"))
+                .modifier(AfterSalesToolbarModifier(title: "Requests"))
             }
             .tabItem {
-                Label("Intake", systemImage: "tray.and.arrow.down.fill")
+                Label("Requests", systemImage: "tray.full.fill")
             }
             
-            // 2. Estimate
-            NavigationStack {
-                AfterSalesPlaceholderView(
-                    title: "Repair Estimates",
-                    message: "Generate repair cost estimates and send them for manager approval.",
-                    icon: "doc.text.magnifyingglass"
-                )
-                .modifier(AfterSalesToolbarModifier(title: "Estimates"))
-            }
-            .tabItem {
-                Label("Estimate", systemImage: "doc.text.magnifyingglass")
-            }
-            
-            // 3. Repair
+            // 3. Repairs
             NavigationStack {
                 AfterSalesPlaceholderView(
                     title: "Active Repairs",
@@ -47,33 +40,33 @@ struct AfterSalesTabView: View {
                 .modifier(AfterSalesToolbarModifier(title: "Repairs"))
             }
             .tabItem {
-                Label("Repair", systemImage: "wrench.and.screwdriver.fill")
+                Label("Repairs", systemImage: "wrench.and.screwdriver.fill")
             }
             
-            // 4. Return
+            // 4. Customers
             NavigationStack {
                 AfterSalesPlaceholderView(
-                    title: "Customer Handover",
-                    message: "Process item pick-ups and complete return handovers to customers.",
-                    icon: "arrow.uturn.backward.circle.fill"
+                    title: "Customers",
+                    message: "View customer profiles, warranty history, and past services.",
+                    icon: "person.2.fill"
                 )
-                .modifier(AfterSalesToolbarModifier(title: "Returns"))
+                .modifier(AfterSalesToolbarModifier(title: "Customers"))
             }
             .tabItem {
-                Label("Return", systemImage: "arrow.uturn.backward")
+                Label("Customers", systemImage: "person.2.fill")
             }
             
-            // 5. Workload
+            // 5. Profile
             NavigationStack {
                 AfterSalesPlaceholderView(
-                    title: "My Workload",
-                    message: "View assigned repairs, tasks, and daily service queue status.",
-                    icon: "clock.badge.checkmark.fill"
+                    title: "My Profile",
+                    message: "Manage your After-Sales Specialist profile and settings.",
+                    icon: "person.crop.circle.fill"
                 )
-                .modifier(AfterSalesToolbarModifier(title: "Workload"))
+                .modifier(AfterSalesToolbarModifier(title: "Profile"))
             }
             .tabItem {
-                Label("Workload", systemImage: "checklist")
+                Label("Profile", systemImage: "person.crop.circle")
             }
         }
         .tint(RSMSColors.burgundy)

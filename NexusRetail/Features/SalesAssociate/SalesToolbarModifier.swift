@@ -20,7 +20,7 @@ struct SalesToolbarModifier: ViewModifier {
                     }
                 }
             }
-            .sheet(isPresented: $isProfilePresented) { SalesProfileSheet() }
+            .sheet(isPresented: $isProfilePresented) { AdminProfileSheet() }
     }
 
     private func initials(for name: String?) -> String {

@@ -32,7 +32,7 @@ struct SalesTabView: View {
                 }
             
             NavigationStack {
-                SalesAssociateDashboardView()
+                ClientelingView()
             }
             .tabItem {
                 Label("Clients", systemImage: "person.3.fill")
@@ -41,9 +41,15 @@ struct SalesTabView: View {
             NavigationStack {
                 AppointmentsView()
             }
-            .tabItem {
-                Label("Appointments", systemImage: "calendar")
+            .tabItem { Label("Appointments", systemImage: "calendar.badge.clock") }
+            
+            InventoryCatalogView()
+                .tabItem { Label("Search", systemImage: "magnifyingglass") }
+            
+            NavigationStack {
+                BOPISView()
             }
+            .tabItem { Label("BOPIS", systemImage: "bag.fill") }
         }
         .tint(RSMSColors.burgundy)
     }

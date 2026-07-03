@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct ClientelingView: View {
+struct SalesAssociateDashboardView: View {
     @Environment(SessionStore.self) private var sessionStore
 
     @State private var searchText = ""
