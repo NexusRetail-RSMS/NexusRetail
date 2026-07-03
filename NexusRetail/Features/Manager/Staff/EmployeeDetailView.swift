@@ -26,17 +26,17 @@ struct EmployeeDetailView: View {
         let totalWeight = weights.reduce(0, +)
         let scale = (totalVal > 0 ? (totalVal / 1000.0) : 48.5) / (totalWeight / 3.0)
         
-        if revenueTimeRange == .quarterly {
+        if revenueTimeRange == .weekly {
             let q1 = (weights[0] + weights[1] + weights[2]) * scale
             let q2 = (weights[3] + weights[4] + weights[5]) * scale
             let q3 = (weights[6] + weights[7] + weights[8]) * scale
             let q4 = (weights[9] + weights[10] + weights[11]) * scale
             
             return [
-                RevenueChartPoint(label: "Q1", index: 0, revenue: q1),
-                RevenueChartPoint(label: "Q2", index: 1, revenue: q2),
-                RevenueChartPoint(label: "Q3", index: 2, revenue: q3),
-                RevenueChartPoint(label: "Q4", index: 3, revenue: q4)
+                RevenueChartPoint(label: "W1", index: 0, revenue: q1),
+                RevenueChartPoint(label: "W2", index: 1, revenue: q2),
+                RevenueChartPoint(label: "W3", index: 2, revenue: q3),
+                RevenueChartPoint(label: "W4", index: 3, revenue: q4)
             ]
         } else {
             let months = ["Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"]

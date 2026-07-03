@@ -18,13 +18,9 @@ class ManagersViewModel {
                 .value
             
             // Map RPC model to DisplayManager
-            let formatter = NumberFormatter()
-            formatter.numberStyle = .currency
-            formatter.currencyCode = "USD"
-            formatter.maximumFractionDigits = 0
 
             self.managers = stats.map { stat in
-                let revString = formatter.string(from: NSNumber(value: stat.revenue ?? 0)) ?? "$0"
+                let revString = formatIndianCurrency(stat.revenue ?? 0)
                 
                 // Parse date
                 var parsedDate = Date()

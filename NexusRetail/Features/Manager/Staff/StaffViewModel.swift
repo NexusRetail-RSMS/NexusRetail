@@ -15,6 +15,7 @@ struct StaffStatsRPC: Decodable {
     let imageUrl: String?
     let productsSold: Int?
     let revenue: Double?
+    let storeId: UUID?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -25,6 +26,7 @@ struct StaffStatsRPC: Decodable {
         case imageUrl = "image_url"
         case productsSold = "products_sold"
         case revenue
+        case storeId = "store_id"
     }
 }
 
@@ -79,11 +81,7 @@ class StaffViewModel {
                 .execute()
                 .value
             
-            let formatter = NumberFormatter()
-            formatter.numberStyle = .currency
-            formatter.currencyCode = "USD"
-            formatter.maximumFractionDigits = 0
-            
+
             let deleted = self.deletedIDs
             
             let remoteEmployees = response.compactMap { stat -> DisplayEmployee? in
@@ -92,7 +90,7 @@ class StaffViewModel {
                 let isAfterSales = stat.role == "after_sales" || stat.role?.lowercased().contains("after") == true
                 let roleStr = isAfterSales ? "After Sales Associate" : "Sales Associate"
                 let revVal = stat.revenue ?? 0
-                let revStr = formatter.string(from: NSNumber(value: revVal)) ?? "$\(revVal)"
+                let revStr = formatIndianCurrency(revVal)
                 
                 let existing = self.employees.first { emp in
                     emp.id == stat.id || (!emp.email.isEmpty && emp.email == stat.email)

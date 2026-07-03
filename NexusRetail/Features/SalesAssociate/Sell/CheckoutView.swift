@@ -40,12 +40,12 @@ struct CheckoutView: View {
                                             Text(item.product.name)
                                                 .font(.system(size: 14, weight: .medium))
                                                 .foregroundColor(RSMSColors.primaryText)
-                                            Text("Qty: \(item.count) × ₹\(formatINR(item.product.price))")
+                                            Text("Qty: \(item.count) × \(formatIndianCurrency(item.product.price))")
                                                 .font(.system(size: 11))
                                                 .foregroundColor(RSMSColors.secondaryText)
                                         }
                                         Spacer()
-                                        Text("₹\(formatINR(item.product.price * Double(item.count)))")
+                                        Text(formatIndianCurrency(item.product.price * Double(item.count)))
                                             .font(.system(size: 14, weight: .bold))
                                             .foregroundColor(RSMSColors.primaryText)
                                     }
@@ -123,7 +123,7 @@ struct CheckoutView: View {
                             path.append(POSFlowDestination.payment)
                         } label: {
                             HStack {
-                                Text("Pay ₹\(formatINR(viewModel.totalAmount))").font(.system(size: 16, weight: .bold))
+                                Text("Pay \(formatIndianCurrency(viewModel.totalAmount))").font(.system(size: 16, weight: .bold))
                                 Spacer()
                                 Image(systemName: "lock.fill")
                             }
@@ -213,11 +213,7 @@ struct CheckoutView: View {
         .buttonStyle(.plain)
     }
 
-    private func formatINR(_ value: Double) -> String {
-        let f = NumberFormatter()
-        f.numberStyle = .decimal; f.groupingSeparator = ","; f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: value)) ?? "\(Int(value))"
-    }
+
     
     private var groupedItems: [(product: POSProduct, count: Int)] {
         var counts: [UUID: Int] = [:]

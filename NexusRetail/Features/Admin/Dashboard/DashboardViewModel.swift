@@ -91,19 +91,7 @@ class DashboardViewModel {
     
     var formattedRevenue: String {
         guard let total = kpis?.totalRevenue else { return "₹0" }
-        if total >= 10000000 {
-            let crores = total / 10000000.0
-            return "₹\(String(format: "%.1f", crores))Cr"
-        } else if total >= 100000 {
-            let lakhs = total / 100000.0
-            return "₹\(String(format: "%.1f", lakhs))L"
-        } else {
-            let formatter = NumberFormatter()
-            formatter.numberStyle = .currency
-            formatter.currencySymbol = "₹"
-            formatter.maximumFractionDigits = 0
-            return formatter.string(from: NSNumber(value: total)) ?? "₹\(total)"
-        }
+        return formatIndianCurrency(total)
     }
     
     var activeStoresText: String {

@@ -163,6 +163,12 @@ final class ManagerDashboardViewModel {
             let salesChart = try? await salesChartTask
             let topProds = try? await topProductsTask
             
+            // Fetch real staff data
+            let staffStatsTask: [StaffStatsRPC] = try await SupabaseManager.shared.client
+                .rpc("get_staff_stats")
+                .execute()
+                .value
+            
             await MainActor.run {
                 if let store = store {
                     self.storeName = store.name
@@ -199,13 +205,27 @@ final class ManagerDashboardViewModel {
                     }
                 }
                 
-                // Mock staff performance for now since we don't have an RPC for it
-                self.staffPerformanceData = [
-                    StaffPerformancePoint(name: "Aman", score: 92),
-                    StaffPerformancePoint(name: "Priya", score: 85),
-                    StaffPerformancePoint(name: "Rahul", score: 80),
-                    StaffPerformancePoint(name: "Sneha", score: 75)
-                ]
+                // Calculate performance
+                let storeStaff = staffStatsTask.filter { $0.storeId == storeID }
+                
+                let maxRev = storeStaff.compactMap { $0.revenue }.max() ?? 1.0
+                let maxRevSafe = maxRev > 0 ? maxRev : 1.0
+                
+                let maxProducts = storeStaff.compactMap { $0.productsSold }.max() ?? 1
+                let maxProductsSafe = maxProducts > 0 ? Double(maxProducts) : 1.0
+                
+                self.staffPerformanceData = storeStaff.compactMap { stat in
+                    let rev = stat.revenue ?? 0.0
+                    let prods = Double(stat.productsSold ?? 0)
+                    
+                    // Performance Formula: 60% Revenue + 40% Products Sold
+                    let revScore = (rev / maxRevSafe) * 60.0
+                    let prodScore = (prods / maxProductsSafe) * 40.0
+                    let totalScore = Int(revScore + prodScore)
+                    
+                    guard totalScore > 0 else { return nil } // Skip staff with no data if desired, or keep them with 0. Let's keep them with their score.
+                    return StaffPerformancePoint(name: stat.name ?? "Unknown", score: totalScore)
+                }.sorted { $0.score > $1.score }.prefix(5).map { $0 }
                 
                 self.isLoading = false
             }
