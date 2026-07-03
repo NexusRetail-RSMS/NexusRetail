@@ -1,120 +1,175 @@
 import SwiftUI
-import Supabase
 
-struct AppEvent: Codable, Identifiable {
+// MARK: - Models (Mock for UI Dev)
+// TODO: Replace with real Supabase models later.
+
+enum EventType: String, CaseIterable, Codable {
+    case productLaunch = "Product Launch"
+    case promotion = "Promotion"
+    case seasonalSale = "Seasonal Sale"
+    case vipEvent = "VIP Event"
+    case workshop = "Workshop"
+    case storeAnniversary = "Store Anniversary"
+    case custom = "Custom"
+}
+
+enum EventStatus: String, Codable {
+    case upcoming = "Upcoming"
+    case today = "Today"
+    case completed = "Completed"
+}
+
+
+
+struct MockGuest: Identifiable, Codable {
     let id: UUID
-    let store_id: UUID?
-    let launch_sku_id: UUID?
     let name: String
-    let scheduled_at: Date
-    let venue: String?
-    let description: String?
+    let email: String
+    let phone: String
+    let avatarName: String
+}
+
+struct MockEvent: Identifiable, Codable {
+    let id: UUID
+    var title: String
+    var description: String
+    var eventType: EventType
+    var venue: String
+    var startDate: Date
+    var endDate: Date
+    var maximumGuests: Int
+    var bannerImageData: Data?
+    var bannerImageURL: String? // Prepared for backend
+    var guests: [MockGuest]
+    
+    var status: EventStatus {
+        let now = Date()
+        let calendar = Calendar.current
+        if calendar.isDateInToday(startDate) || (now >= startDate && now <= endDate) {
+            return .today
+        } else if now > endDate {
+            return .completed
+        } else {
+            return .upcoming
+        }
+    }
+    
+    var invitedCount: Int { guests.count }
 }
 
 @Observable
 class EventsViewModel {
-    var upcomingEvents: [UpcomingEvent] = []
-    var isLoading = false
-    var errorMessage: String? = nil
+    var events: [MockEvent] = []
+    var allCustomers: [MockGuest] = []
     
     init() {
-        Task {
-            await loadEvents()
-        }
+        generateMockData()
     }
     
-    func loadEvents() async {
-        isLoading = true
-        errorMessage = nil
-        do {
-            let response: [AppEvent] = try await SupabaseManager.shared.client
-                .from("event")
-                .select()
-                .order("scheduled_at", ascending: true)
-                .execute()
-                .value
-            
-            let formatter = DateFormatter()
-            self.upcomingEvents = response.map { event in
-                formatter.dateFormat = "dd MMM yyyy"
-                let dateString = formatter.string(from: event.scheduled_at)
-                formatter.dateFormat = "hh:mm a"
-                let timeString = formatter.string(from: event.scheduled_at)
-                
-                return UpcomingEvent(
-                    id: event.id,
-                    title: event.name,
-                    date: dateString,
-                    time: timeString,
-                    location: event.venue ?? "Current Store",
-                    imageColor: RSMSColors.burgundy,
-                    icon: "sparkles"
-                )
-            }
-        } catch {
-            print("Error loading events: \(error)")
-            self.errorMessage = "Failed to load events"
-        }
-        isLoading = false
-    }
+    // MARK: - Mock Data Generation
     
-    private func fetchCurrentUserStoreId() async -> UUID? {
-        do {
-            let user = try await SupabaseManager.shared.client.auth.session.user
-            struct UserProfile: Codable { let store_id: UUID? }
-            let profiles: [UserProfile] = try await SupabaseManager.shared.client
-                .from("app_user")
-                .select("store_id")
-                .eq("id", value: user.id)
-                .execute()
-                .value
-            return profiles.first?.store_id
-        } catch {
-            print("Failed to fetch user profile: \(error)")
-            return nil
-        }
-    }
-    
-    func addEvent(title: String, date: Date) async {
-        let newId = UUID()
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd MMM yyyy"
-        let dateString = formatter.string(from: date)
-        formatter.dateFormat = "hh:mm a"
-        let timeString = formatter.string(from: date)
+    private func generateMockData() {
+        // Generate Mock Customers
+        let names = ["Aarav Patel", "Riya Sharma", "Ishaan Singh", "Diya Kumar", "Aditya Gupta", "Neha Verma", "Arjun Reddy", "Pooja Desai", "Kabir Joshi", "Ananya Rao"]
         
-        let newUpcoming = UpcomingEvent(
-            id: newId,
-            title: title,
-            date: dateString,
-            time: timeString,
-            location: "Current Store",
-            imageColor: RSMSColors.burgundy,
-            icon: "shippingbox.fill"
+        allCustomers = names.enumerated().map { index, name in
+            MockGuest(
+                id: UUID(),
+                name: name,
+                email: "\(name.split(separator: " ").first!.lowercased())@example.com",
+                phone: "+91 98765 \(String(format: "%04d", 4321 + index))",
+                avatarName: name.prefix(1).uppercased()
+            )
+        }
+        
+        // Generate Mock Events
+        let now = Date()
+        
+        let event1 = MockEvent(
+            id: UUID(),
+            title: "Summer Jewellery Launch",
+            description: "Join us for the exclusive preview of our new summer jewellery collection. Refreshments will be served.",
+            eventType: .productLaunch,
+            venue: "NexusRetail Delhi, Main Hall",
+            startDate: Calendar.current.date(byAdding: .day, value: 5, to: now)!,
+            endDate: Calendar.current.date(byAdding: .day, value: 5, to: now)!.addingTimeInterval(3600 * 3),
+            maximumGuests: 100,
+            guests: Array(allCustomers.prefix(4))
         )
         
-        withAnimation {
-            self.upcomingEvents.append(newUpcoming)
-        }
+        let event2 = MockEvent(
+            id: UUID(),
+            title: "Luxury Watch Preview",
+            description: "An intimate gathering for our VIP customers to experience the latest luxury timepieces.",
+            eventType: .vipEvent,
+            venue: "NexusRetail Mumbai, VIP Lounge",
+            startDate: now.addingTimeInterval(3600 * 2), // Today
+            endDate: now.addingTimeInterval(3600 * 5),
+            maximumGuests: 50,
+            guests: Array(allCustomers.suffix(6))
+        )
         
-        do {
-            let storeId = await fetchCurrentUserStoreId()
-            
-            let appEvent = AppEvent(
-                id: newId,
-                store_id: storeId,
-                launch_sku_id: nil,
-                name: title,
-                scheduled_at: date,
-                venue: "Current Store",
-                description: nil
-            )
-            try await SupabaseManager.shared.client
-                .from("event")
-                .insert(appEvent)
-                .execute()
-        } catch {
-            print("Error saving event: \(error)")
+        let event3 = MockEvent(
+            id: UUID(),
+            title: "Festive Sale Setup",
+            description: "Preparation and early access for the grand festive sale.",
+            eventType: .seasonalSale,
+            venue: "NexusRetail Bangalore",
+            startDate: Calendar.current.date(byAdding: .day, value: -10, to: now)!,
+            endDate: Calendar.current.date(byAdding: .day, value: -9, to: now)!,
+            maximumGuests: 200,
+            guests: allCustomers
+        )
+        
+        events = [event1, event2, event3]
+    }
+    
+    // MARK: - Event Actions
+    
+    func createEvent(title: String, description: String, eventType: EventType, venue: String, startDate: Date, endDate: Date, maximumGuests: Int, bannerImageData: Data?) {
+        let newEvent = MockEvent(
+            id: UUID(),
+            title: title,
+            description: description,
+            eventType: eventType,
+            venue: venue,
+            startDate: startDate,
+            endDate: endDate,
+            maximumGuests: maximumGuests,
+            bannerImageData: bannerImageData,
+            guests: []
+        )
+        events.append(newEvent)
+    }
+    
+    func updateEvent(_ event: MockEvent) {
+        if let index = events.firstIndex(where: { $0.id == event.id }) {
+            events[index] = event
+        }
+    }
+    
+    func deleteEvent(id: UUID) {
+        events.removeAll { $0.id == id }
+    }
+    
+    // MARK: - Guest Actions
+    
+    func inviteGuests(to eventId: UUID, guestIds: Set<UUID>) {
+        guard let eventIndex = events.firstIndex(where: { $0.id == eventId }) else { return }
+        
+        let customersToInvite = allCustomers.filter { guestIds.contains($0.id) }
+        
+        // Add only guests that aren't already in the list
+        for customer in customersToInvite {
+            if !events[eventIndex].guests.contains(where: { $0.id == customer.id }) {
+                events[eventIndex].guests.append(customer)
+            }
+        }
+    }
+    
+    func removeGuest(eventId: UUID, guestId: UUID) {
+        if let eventIndex = events.firstIndex(where: { $0.id == eventId }) {
+            events[eventIndex].guests.removeAll { $0.id == guestId }
         }
     }
 }
