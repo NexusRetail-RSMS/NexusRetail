@@ -155,26 +155,29 @@ struct InventoryDashboardView: View {
     // MARK: - Inventory List
     
     private var inventoryList: some View {
-        LazyVGrid(columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)], spacing: 16) {
+        Group {
             if viewModel.filteredItems.isEmpty {
                 emptyState(
                     icon: "shippingbox",
                     title: "No items found",
                     message: viewModel.searchText.isEmpty ? "No inventory items match the current filter." : "No results for \"\(viewModel.searchText)\"."
                 )
+                .padding(.top, 40)
             } else {
-                ForEach(viewModel.filteredItems) { item in
-                    Button {
-                        viewModel.restockItem = item
-                        viewModel.showRestockSheet = true
-                    } label: {
-                        InventoryGridItemCard(item: item)
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)], spacing: 16) {
+                    ForEach(viewModel.filteredItems) { item in
+                        Button {
+                            viewModel.restockItem = item
+                            viewModel.showRestockSheet = true
+                        } label: {
+                            InventoryGridItemCard(item: item)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
+                .padding(.horizontal, RSMSSpacing.lg)
             }
         }
-        .padding(.horizontal, RSMSSpacing.lg)
     }
     
     // MARK: - Empty State

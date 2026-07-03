@@ -72,7 +72,7 @@ struct ClientelingView: View {
             }
         }
         .sheet(isPresented: $isNewClientPresented) { newClientSheet }
-        .sheet(isPresented: $isProfilePresented) { SalesProfileSheet() }
+        .sheet(isPresented: $isProfilePresented) { AdminProfileSheet() }
         .sheet(isPresented: $isNewAppointmentPresented) { newAppointmentSheet }
     }
 

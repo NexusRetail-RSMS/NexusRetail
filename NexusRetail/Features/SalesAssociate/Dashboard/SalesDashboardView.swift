@@ -18,6 +18,7 @@ struct SalesDashboardView: View {
 
     // UI state
     @State private var isProfilePresented = false
+    @Namespace private var namespace
 
     // ViewModel
     @State private var vm = SalesDashboardViewModel()
@@ -39,7 +40,12 @@ struct SalesDashboardView: View {
                     .padding(.top, 16)
                 }
 
-                floatingQRButton
+                if #available(iOS 18.0, *) {
+                    floatingQRButton
+                        .matchedTransitionSource(id: "scannerButton", in: namespace)
+                } else {
+                    floatingQRButton
+                }
             }
             .navigationBarHidden(true)
             .sheet(isPresented: $isProfilePresented) { AdminProfileSheet() }
@@ -47,7 +53,13 @@ struct SalesDashboardView: View {
                 switch dest {
                 case .newSale:       NewSaleView(path: $navigationPath)
                 case .searchProduct: ProductSearchView(path: $navigationPath)
-                case .barcodeScanner: BarcodeScannerView(path: $navigationPath)
+                case .barcodeScanner: 
+                    if #available(iOS 18.0, *) {
+                        BarcodeScannerView(path: $navigationPath)
+                            .navigationTransition(.zoom(sourceID: "scannerButton", in: namespace))
+                    } else {
+                        BarcodeScannerView(path: $navigationPath)
+                    }
                 case .cart:          CartView(path: $navigationPath)
                 case .checkout:      CheckoutView(path: $navigationPath)
                 case .payment:       PaymentFlowView(path: $navigationPath)
@@ -212,27 +224,37 @@ struct SalesDashboardView: View {
 
     // MARK: - Floating QR Button
     private var floatingQRButton: some View {
-        NavigationLink(value: POSFlowDestination.barcodeScanner) {
+        Button {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                navigationPath.append(POSFlowDestination.barcodeScanner)
+            }
+        } label: {
             ZStack {
-                Circle().fill(Color(
-                    red: 122/255,
-                    green: 22/255,
-                    blue: 34/255
-                )).frame(width: 100, height: 60)
-                    .shadow(color: Color(
-                        red: 122/255,
-                        green: 22/255,
-                        blue: 34/255
-                    ).opacity(0.5), radius: 10, x: 0, y: 5)
-                Image(systemName: "qrcode.viewfinder").font(.system(size: 28, weight: .bold)).foregroundColor(.white)
+                Circle()
+                    .fill(Color(red: 122/255, green: 22/255, blue: 34/255))
+                    .frame(width: 60, height: 60)
+                    .shadow(color: Color(red: 122/255, green: 22/255, blue: 34/255).opacity(0.5), radius: 8, x: 0, y: 4)
+                
+                Image(systemName: "qrcode.viewfinder")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
             }
         }
-        .buttonStyle(.plain)
-        .padding(.trailing, 24)
+        .buttonStyle(AnimatedFloatingButtonStyle())
+        .padding(.trailing, 20)
         .padding(.bottom, 24)
         .accessibilityLabel("Scan QR Code")
     }
 
     // (Recent Activity section moved to startOrderCard)
 
+}
+
+struct AnimatedFloatingButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.85 : 1.0)
+            .opacity(configuration.isPressed ? 0.9 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: configuration.isPressed)
+    }
 }

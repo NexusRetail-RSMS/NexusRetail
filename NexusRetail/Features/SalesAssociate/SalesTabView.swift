@@ -26,30 +26,30 @@ struct SalesTabView: View {
     
     var body: some View {
         TabView {
-            SalesDashboardView()
-                .tabItem {
-                    Label("Dashboard", systemImage: "square.grid.2x2")
+            Tab("Dashboard", systemImage: "square.grid.2x2") {
+                SalesDashboardView()
+            }
+            
+            Tab("Clients", systemImage: "person.3.fill") {
+                NavigationStack {
+                    ClientelingView()
                 }
-            
-            NavigationStack {
-                ClientelingView()
-            }
-            .tabItem {
-                Label("Clients", systemImage: "person.3.fill")
             }
             
-            NavigationStack {
-                AppointmentsView()
+            Tab("Appointments", systemImage: "calendar.badge.clock") {
+                NavigationStack {
+                    AppointmentsView()
+                }
             }
-            .tabItem { Label("Appointments", systemImage: "calendar.badge.clock") }
             
-            InventoryCatalogView()
-                .tabItem { Label("Search", systemImage: "magnifyingglass") }
-            
-            NavigationStack {
-                BOPISView()
+            Tab("Search", systemImage: "magnifyingglass", role: .search) {
+                InventoryCatalogView()
             }
-            .tabItem { Label("BOPIS", systemImage: "bag.fill") }
+            Tab("BOPIS", systemImage: "bag.fill") {
+                NavigationStack {
+                    BOPISView()
+                }
+            }
         }
         .tint(RSMSColors.burgundy)
     }

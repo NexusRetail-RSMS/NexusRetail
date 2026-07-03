@@ -16,15 +16,12 @@ struct BarcodeScannerView: View {
     @State private var addedToCartFeedback = false // brief "added" confirmation
     
     var body: some View {
-        ZStack {
+        ZStack(alignment: .top) {
             RSMSColors.background
                 .ignoresSafeArea()
             
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    // Custom Curved Header
-                    customHeaderSection
-                    
                     if scannedProduct == nil {
                         // Scanner view
                         scannerViewSection
@@ -33,8 +30,11 @@ struct BarcodeScannerView: View {
                         productDetailSection(product)
                     }
                 }
+                .padding(.top, 120)
             }
             .ignoresSafeArea(edges: .top)
+            
+            customHeaderSection
 
             // ── Toast: qty bumped ──────────────────────────────────────
             if addedToCartFeedback {
@@ -99,12 +99,12 @@ struct BarcodeScannerView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.2))
+                        .fill(RSMSColors.burgundy.opacity(0.1))
                         .frame(width: 44, height: 44)
 
                     Image(systemName: "chevron.left")
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(RSMSColors.primaryText)
                 }
             }
             .accessibilityLabel("Back")
@@ -112,28 +112,22 @@ struct BarcodeScannerView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(scannedProduct == nil ? "Scan Barcode" : scannedProduct!.name)
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(RSMSColors.primaryText)
                     .lineLimit(1)
                 
                 Text(scannedProduct == nil ? "Barcode Scanner" : scannedProduct!.sku)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.8))
+                    .foregroundColor(RSMSColors.secondaryText)
             }
             
             Spacer()
         }
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.top, 60)
-        .padding(.bottom, RSMSSpacing.xxxl)
+        .padding(.bottom, RSMSSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            LinearGradient(
-                colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
-        .clipShape(HeaderCurve())
+        .background(.regularMaterial)
+        .ignoresSafeArea(edges: .top)
     }
     
     private var scannerViewSection: some View {
