@@ -4,18 +4,46 @@ struct EventsView: View {
     @State private var viewModel = EventsViewModel()
     @State private var showingCreateEvent = false
     @State private var searchText = ""
+    @State private var selectedFilter: EventFilter = .all
     
     private var filteredEvents: [MockEvent] {
-        let sorted = viewModel.events.sorted { $0.startDate < $1.startDate }
-        if searchText.isEmpty {
-            return sorted
-        } else {
-            return sorted.filter { event in
+        // Sort all events by date and time (earliest first)
+        let sorted = viewModel.events.sorted { 
+            if $0.eventDate == $1.eventDate {
+                return $0.startTime < $1.startTime
+            }
+            return $0.eventDate < $1.eventDate 
+        }
+        
+        // Group by status in the required order: Today -> Upcoming -> Completed
+        let today = sorted.filter { $0.status == .today }
+        let upcoming = sorted.filter { $0.status == .upcoming }
+        let completed = sorted.filter { $0.status == .completed }
+        
+        var orderedEvents = today + upcoming + completed
+        
+        // Apply filter
+        if selectedFilter != .all {
+            orderedEvents = orderedEvents.filter {
+                switch selectedFilter {
+                case .all: return true
+                case .today: return $0.status == .today
+                case .upcoming: return $0.status == .upcoming
+                case .completed: return $0.status == .completed
+                }
+            }
+        }
+        
+        // Apply search
+        if !searchText.isEmpty {
+            orderedEvents = orderedEvents.filter { event in
                 event.title.localizedCaseInsensitiveContains(searchText) ||
                 event.eventType.rawValue.localizedCaseInsensitiveContains(searchText) ||
                 event.venue.localizedCaseInsensitiveContains(searchText)
             }
         }
+        
+        return orderedEvents
     }
     
     var body: some View {
@@ -113,6 +141,18 @@ struct EventsView: View {
                         .foregroundColor(.gray)
                 }
             }
+            
+            Menu {
+                Picker("Filter", selection: $selectedFilter) {
+                    ForEach(EventFilter.allCases, id: \.self) { filter in
+                        Text(filter.rawValue).tag(filter)
+                    }
+                }
+            } label: {
+                Image(systemName: "line.3.horizontal.decrease.circle.fill")
+                    .font(.system(size: 24))
+                    .foregroundColor(RSMSColors.burgundy)
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -196,13 +236,15 @@ struct EventCard: View {
     private var formattedDate: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "d MMM yyyy"
-        return formatter.string(from: event.startDate)
+        return formatter.string(from: event.eventDate)
     }
     
     private var formattedTime: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
-        return formatter.string(from: event.startDate)
+        let start = formatter.string(from: event.startTime)
+        let end = formatter.string(from: event.endTime)
+        return "\(start) – \(end)"
     }
     
     var body: some View {

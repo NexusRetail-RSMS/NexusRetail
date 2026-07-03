@@ -19,7 +19,12 @@ enum EventStatus: String, Codable {
     case completed = "Completed"
 }
 
-
+enum EventFilter: String, CaseIterable {
+    case all = "All Events"
+    case today = "Today"
+    case upcoming = "Upcoming"
+    case completed = "Completed"
+}
 
 struct MockGuest: Identifiable, Codable {
     let id: UUID
@@ -35,8 +40,9 @@ struct MockEvent: Identifiable, Codable {
     var description: String
     var eventType: EventType
     var venue: String
-    var startDate: Date
-    var endDate: Date
+    var eventDate: Date
+    var startTime: Date
+    var endTime: Date
     var maximumGuests: Int
     var bannerImageData: Data?
     var bannerImageURL: String? // Prepared for backend
@@ -45,9 +51,12 @@ struct MockEvent: Identifiable, Codable {
     var status: EventStatus {
         let now = Date()
         let calendar = Calendar.current
-        if calendar.isDateInToday(startDate) || (now >= startDate && now <= endDate) {
+        let today = calendar.startOfDay(for: now)
+        let eventDay = calendar.startOfDay(for: eventDate)
+        
+        if eventDay == today {
             return .today
-        } else if now > endDate {
+        } else if eventDay < today {
             return .completed
         } else {
             return .upcoming
@@ -91,8 +100,9 @@ class EventsViewModel {
             description: "Join us for the exclusive preview of our new summer jewellery collection. Refreshments will be served.",
             eventType: .productLaunch,
             venue: "NexusRetail Delhi, Main Hall",
-            startDate: Calendar.current.date(byAdding: .day, value: 5, to: now)!,
-            endDate: Calendar.current.date(byAdding: .day, value: 5, to: now)!.addingTimeInterval(3600 * 3),
+            eventDate: Calendar.current.date(byAdding: .day, value: 5, to: now)!,
+            startTime: Calendar.current.date(bySettingHour: 10, minute: 0, second: 0, of: now)!,
+            endTime: Calendar.current.date(bySettingHour: 13, minute: 0, second: 0, of: now)!,
             maximumGuests: 100,
             guests: Array(allCustomers.prefix(4))
         )
@@ -103,8 +113,9 @@ class EventsViewModel {
             description: "An intimate gathering for our VIP customers to experience the latest luxury timepieces.",
             eventType: .vipEvent,
             venue: "NexusRetail Mumbai, VIP Lounge",
-            startDate: now.addingTimeInterval(3600 * 2), // Today
-            endDate: now.addingTimeInterval(3600 * 5),
+            eventDate: now,
+            startTime: Calendar.current.date(bySettingHour: 18, minute: 0, second: 0, of: now)!,
+            endTime: Calendar.current.date(bySettingHour: 21, minute: 0, second: 0, of: now)!,
             maximumGuests: 50,
             guests: Array(allCustomers.suffix(6))
         )
@@ -115,8 +126,9 @@ class EventsViewModel {
             description: "Preparation and early access for the grand festive sale.",
             eventType: .seasonalSale,
             venue: "NexusRetail Bangalore",
-            startDate: Calendar.current.date(byAdding: .day, value: -10, to: now)!,
-            endDate: Calendar.current.date(byAdding: .day, value: -9, to: now)!,
+            eventDate: Calendar.current.date(byAdding: .day, value: -10, to: now)!,
+            startTime: Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: now)!,
+            endTime: Calendar.current.date(bySettingHour: 17, minute: 0, second: 0, of: now)!,
             maximumGuests: 200,
             guests: allCustomers
         )
@@ -126,15 +138,16 @@ class EventsViewModel {
     
     // MARK: - Event Actions
     
-    func createEvent(title: String, description: String, eventType: EventType, venue: String, startDate: Date, endDate: Date, maximumGuests: Int, bannerImageData: Data?) {
+    func createEvent(title: String, description: String, eventType: EventType, venue: String, eventDate: Date, startTime: Date, endTime: Date, maximumGuests: Int, bannerImageData: Data?) {
         let newEvent = MockEvent(
             id: UUID(),
             title: title,
             description: description,
             eventType: eventType,
             venue: venue,
-            startDate: startDate,
-            endDate: endDate,
+            eventDate: eventDate,
+            startTime: startTime,
+            endTime: endTime,
             maximumGuests: maximumGuests,
             bannerImageData: bannerImageData,
             guests: []

@@ -26,16 +26,16 @@ struct EventDetailsView: View {
         guard let event = event else { return "" }
         let formatter = DateFormatter()
         formatter.dateFormat = "EEEE, d MMM yyyy"
-        return formatter.string(from: event.startDate)
+        return formatter.string(from: event.eventDate)
     }
     
     private var formattedTime: String {
         guard let event = event else { return "" }
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
-        let start = formatter.string(from: event.startDate)
-        let end = formatter.string(from: event.endDate)
-        return "\(start) - \(end)"
+        let start = formatter.string(from: event.startTime)
+        let end = formatter.string(from: event.endTime)
+        return "\(start) – \(end)"
     }
     
     var body: some View {

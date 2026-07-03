@@ -12,8 +12,9 @@ struct CreateEventView: View {
     @State private var description = ""
     @State private var eventType = EventType.productLaunch
     @State private var venue = "NexusRetail Current Store"
-    @State private var startDate = Date()
-    @State private var endDate = Date().addingTimeInterval(3600 * 2)
+    @State private var eventDate = Date()
+    @State private var startTime = Date()
+    @State private var endTime = Date().addingTimeInterval(3600 * 2)
     @State private var maximumGuests = 50
     @State private var selectedPhotoItem: PhotosPickerItem? = nil
     @State private var bannerImageData: Data? = nil
@@ -80,8 +81,9 @@ struct CreateEventView: View {
                 
                 // Date & Time Section
                 Section(header: Text("Date & Time")) {
-                    DatePicker("Start", selection: $startDate)
-                    DatePicker("End", selection: $endDate, in: startDate...)
+                    DatePicker("Date", selection: $eventDate, displayedComponents: .date)
+                    DatePicker("Start Time", selection: $startTime, displayedComponents: .hourAndMinute)
+                    DatePicker("End Time", selection: $endTime, displayedComponents: .hourAndMinute)
                 }
                 
                 // Capacity Section
@@ -146,8 +148,9 @@ struct CreateEventView: View {
                     description = event.description
                     eventType = event.eventType
                     venue = event.venue
-                    startDate = event.startDate
-                    endDate = event.endDate
+                    eventDate = event.eventDate
+                    startTime = event.startTime
+                    endTime = event.endTime
                     maximumGuests = event.maximumGuests
                     bannerImageData = event.bannerImageData
                 }
@@ -169,8 +172,9 @@ struct CreateEventView: View {
             updatedEvent.description = description
             updatedEvent.eventType = eventType
             updatedEvent.venue = venue
-            updatedEvent.startDate = startDate
-            updatedEvent.endDate = endDate
+            updatedEvent.eventDate = eventDate
+            updatedEvent.startTime = startTime
+            updatedEvent.endTime = endTime
             updatedEvent.maximumGuests = maximumGuests
             if let imageData = bannerImageData {
                 updatedEvent.bannerImageData = imageData
@@ -183,8 +187,9 @@ struct CreateEventView: View {
                 description: description,
                 eventType: eventType,
                 venue: venue,
-                startDate: startDate,
-                endDate: endDate,
+                eventDate: eventDate,
+                startTime: startTime,
+                endTime: endTime,
                 maximumGuests: maximumGuests,
                 bannerImageData: bannerImageData
             )
