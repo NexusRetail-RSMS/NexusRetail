@@ -410,7 +410,6 @@ struct StoreFormView: View {
                 )
                 if success { dismiss() }
             }
-            }
         }
     }
 
