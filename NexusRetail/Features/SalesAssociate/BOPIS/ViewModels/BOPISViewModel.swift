@@ -10,24 +10,13 @@ import SwiftUI
 class BOPISViewModel {
     var orders: [BOPISOrder] = []
     var searchText: String = ""
-    var selectedFilter: BOPISOrderStatus? = nil // nil means "All"
+    var selectedFilter: BOPISOrderStatus = .pending
     
     init() {
     }
     
     var filteredOrders: [BOPISOrder] {
-        var result = orders
-        
-        // Exclude collected from default "All" view to keep it clean, unless explicitly searching?
-        // Let's just filter strictly based on selectedFilter.
-        if let filter = selectedFilter {
-            result = result.filter { $0.status == filter }
-        } else {
-            // For "All" we might want to exclude collected to keep active queue clean, but let's follow standard "All" definition.
-            // Requirement says "The order disappears from the active pickup list." when collected.
-            // So we will hide Collected from "All" by default.
-            result = result.filter { $0.status != .collected }
-        }
+        var result = orders.filter { $0.status == selectedFilter }
         
         if !searchText.isEmpty {
             result = result.filter { order in

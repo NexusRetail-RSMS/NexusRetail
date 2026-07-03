@@ -9,7 +9,6 @@ struct BOPISView: View {
     @Environment(SessionStore.self) private var sessionStore
     @State private var viewModel = BOPISViewModel()
     @State private var searchText = ""
-    @State private var selectedFilter: BOPISOrderStatus? = nil
     @State private var orderToPack: BOPISOrder?
     @State private var showNotifiedAlert = false
     @State private var notifiedCustomerName = ""
