@@ -50,11 +50,7 @@ struct DisplayManager: Identifiable, Hashable {
         self.address = rpc.storeName ?? ""
         self.productsSold = rpc.productsSold ?? 0
         
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        formatter.maximumFractionDigits = 0
-        self.revenue = formatter.string(from: NSNumber(value: rpc.revenue ?? 0)) ?? "$0"
+        self.revenue = formatIndianCurrency(rpc.revenue ?? 0)
 
         var parsedDate = Date()
         if let dateStr = rpc.createdAt {

@@ -57,11 +57,7 @@ final class SalesDashboardViewModel {
     // MARK: - KPI Strings (with mock fallbacks)
     var salesAmountString: String {
         let total = filteredDbOrders.reduce(0.0) { $0 + $1.total }
-        let fmt = NumberFormatter()
-        fmt.numberStyle   = .currency
-        fmt.currencySymbol = "₹"
-        fmt.maximumFractionDigits = 2
-        return fmt.string(from: NSNumber(value: total)) ?? "₹\(String(format: "%.2f", total))"
+        return formatIndianCurrency(total)
     }
 
     var salesTrendString: String {

@@ -303,21 +303,7 @@ struct InventorySummary {
 
 // MARK: - Currency Formatting Helper
 
-/// Formats a number into Indian ₹ with Lac / Cr suffixes
-func formatIndianCurrency(_ value: Double) -> String {
-    if value >= 1_00_00_000 {
-        let cr = value / 1_00_00_000
-        return String(format: "₹%.1fCr", cr)
-    } else if value >= 1_00_000 {
-        let lac = value / 1_00_000
-        return String(format: "₹%.1fL", lac)
-    } else if value >= 1_000 {
-        let k = value / 1_000
-        return String(format: "₹%.1fK", k)
-    } else {
-        return String(format: "₹%.0f", value)
-    }
-}
+
 
 // MARK: - Mock Data
 

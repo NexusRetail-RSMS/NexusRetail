@@ -393,8 +393,7 @@ struct StoreFormView: View {
                         latitude: pickedCoordinate?.latitude,
                         longitude: pickedCoordinate?.longitude,
                         city: city,
-                        country: country,
-                        imageData: selectedImageData
+                        country: country
                     )
                     if success { dismiss() }
                 } else {
@@ -412,8 +411,7 @@ struct StoreFormView: View {
                         latitude: pickedCoordinate?.latitude,
                         longitude: pickedCoordinate?.longitude,
                         city: city,
-                        country: country,
-                        imageData: selectedImageData
+                        country: country
                     )
                     if success { dismiss() }
                 }

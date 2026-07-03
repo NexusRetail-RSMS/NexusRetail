@@ -109,7 +109,7 @@ struct RecentOrdersView: View {
             Spacer()
 
             VStack(alignment: .trailing, spacing: 6) {
-                Text("₹\(formatINR(order.amount))")
+                Text(formatIndianCurrency(order.amount))
                     .font(.system(size: 14, weight: .bold)).foregroundColor(RSMSColors.primaryText)
                 statusPill(order.status)
             }
@@ -128,12 +128,5 @@ struct RecentOrdersView: View {
             .foregroundColor(color)
             .padding(.horizontal, 8).padding(.vertical, 4)
             .background(bg).clipShape(Capsule())
-    }
-
-    private func formatINR(_ value: Double) -> String {
-        let f = NumberFormatter()
-        f.numberStyle = .decimal; f.groupingSeparator = ","
-        f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: value)) ?? "\(Int(value))"
     }
 }
