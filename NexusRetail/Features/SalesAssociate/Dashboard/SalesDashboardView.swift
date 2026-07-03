@@ -191,8 +191,8 @@ struct SalesDashboardView: View {
                         Image(systemName: "bag.fill").font(.system(size: 18, weight: .bold)).foregroundColor(.white)
                     }
                     VStack(alignment: .leading, spacing: 3) {
-                        Text("New Sale").font(.system(size: 16, weight: .bold, design: .rounded)).foregroundColor(.white)
-                        Text("Start a new point of sale checkout session").font(.system(size: 12)).foregroundColor(.white.opacity(0.8))
+                        Text("Order").font(.system(size: 16, weight: .bold, design: .rounded)).foregroundColor(.white)
+                        Text("Start a new order or manage BOPIS").font(.system(size: 12)).foregroundColor(.white.opacity(0.8))
                     }
                     Spacer()
                     Image(systemName: "chevron.right").font(.system(size: 14, weight: .bold)).foregroundColor(.white.opacity(0.8))
@@ -261,12 +261,20 @@ struct SalesDashboardView: View {
                         let orderId = "ORD-\(order.id.uuidString.prefix(8).uppercased())"
                         let amount  = "₹\(Int(order.total))"
                         let date    = String(order.createdAt.prefix(10))
+                        // Map orderType from Supabase to proper string
+                        let isBopis = order.orderType == "bopis"
+                        let typeString = isBopis ? "BOPIS Order" : "In-Store Order"
+                        
+                        let displayStatus = (order.status ?? "pending").capitalized
+                        
                         activityRow(
                             orderId: orderId,
-                            client: "Customer",
+                            orderType: typeString,
+                            iconName: isBopis ? "bag.fill" : "storefront.fill",
+                            iconColor: isBopis ? .purple : .red,
                             amount: amount,
-                            status: "Completed",
-                            statusColor: RSMSColors.success,
+                            status: displayStatus,
+                            statusColor: vm.statusColor(for: displayStatus),
                             time: date
                         )
                     }
@@ -275,15 +283,15 @@ struct SalesDashboardView: View {
         }
     }
 
-    private func activityRow(orderId: String, client: String, amount: String, status: String, statusColor: Color, time: String) -> some View {
+    private func activityRow(orderId: String, orderType: String, iconName: String, iconColor: Color, amount: String, status: String, statusColor: Color, time: String) -> some View {
         HStack(spacing: 14) {
             ZStack {
-                Circle().fill(RSMSColors.burgundy.opacity(0.06)).frame(width: 40, height: 40)
-                Image(systemName: "shippingbox.fill").font(.system(size: 15)).foregroundColor(RSMSColors.burgundy)
+                Circle().fill(iconColor.opacity(0.1)).frame(width: 40, height: 40)
+                Image(systemName: iconName).font(.system(size: 15)).foregroundColor(iconColor)
             }
             VStack(alignment: .leading, spacing: 4) {
-                Text("Order \(orderId)").font(.system(size: 14, weight: .bold, design: .rounded)).foregroundColor(RSMSColors.primaryText)
-                Text(client).font(.system(size: 12)).foregroundColor(RSMSColors.secondaryText)
+                Text(orderType).font(.system(size: 14, weight: .bold, design: .rounded)).foregroundColor(RSMSColors.primaryText)
+                Text(orderId).font(.system(size: 12)).foregroundColor(RSMSColors.secondaryText)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 4) {

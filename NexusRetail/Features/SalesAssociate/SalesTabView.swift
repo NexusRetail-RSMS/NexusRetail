@@ -32,7 +32,7 @@ struct SalesTabView: View {
                 }
             
             NavigationStack {
-                SalesAssociateDashboardView()
+                ClientelingView()
             }
             .tabItem {
                 Label("Clients", systemImage: "person.3.fill")

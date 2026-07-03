@@ -1,84 +1,109 @@
 import SwiftUI
 
+enum OrderType: String, CaseIterable {
+    case instore = "In-Store"
+    case bopis = "BOPIS"
+}
+
 struct NewSaleView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SellViewModel.self) private var viewModel
     @Binding var path: NavigationPath
+    
+    @State private var selectedOrderType: OrderType = .instore
     
     var body: some View {
         ZStack {
             RSMSColors.background
                 .ignoresSafeArea()
             
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    // Custom Curved Header
-                    customHeaderSection
-                    
-                    VStack(alignment: .leading, spacing: 28) {
-                        Text("How would you like to add products?")
-                            .font(.system(size: 18, weight: .bold, design: .rounded))
-                            .foregroundColor(RSMSColors.darkBrown)
-                            .padding(.horizontal, 4)
-                        
-                        VStack(spacing: 16) {
-                            // Search Product Link
-                            Button {
-                                path.append(POSFlowDestination.searchProduct)
-                            } label: {
-                                actionRow(
-                                    title: "Search Product",
-                                    subtitle: "Search by name, SKU, or category",
-                                    icon: "magnifyingglass",
-                                    color: .purple
-                                )
-                            }
-                            .buttonStyle(.plain)
-                            
-                            // Scan Barcode Link
-                            Button {
-                                path.append(POSFlowDestination.barcodeScanner)
-                            } label: {
-                                actionRow(
-                                    title: "Scan Barcode",
-                                    subtitle: "Scan barcode instantly using camera",
-                                    icon: "barcode.viewfinder",
-                                    color: .orange
-                                )
-                            }
-                            .buttonStyle(.plain)
-                            
-                            // Recent Products
-                            Button {
-                                path.append(POSFlowDestination.searchProduct)
-                            } label: {
-                                actionRow(
-                                    title: "Recent Products",
-                                    subtitle: "Frequently sold items in your store",
-                                    icon: "clock.fill",
-                                    color: .blue
-                                )
-                            }
-                            .buttonStyle(.plain)
-                            
-                            // Favorites
-                            Button {
-                                path.append(POSFlowDestination.searchProduct)
-                            } label: {
-                                actionRow(
-                                    title: "Favorites",
-                                    subtitle: "Frequently purchased by regular clients",
-                                    icon: "star.fill",
-                                    color: .yellow
-                                )
-                            }
-                            .buttonStyle(.plain)
-                        }
+            VStack(spacing: 0) {
+                // Custom Curved Header
+                customHeaderSection
+                
+                // Segmented Control
+                Picker("Order Type", selection: $selectedOrderType) {
+                    ForEach(OrderType.allCases, id: \.self) { type in
+                        Text(type.rawValue).tag(type)
                     }
-                    .padding(.horizontal, RSMSSpacing.lg)
-                    .padding(.top, RSMSSpacing.xl)
-                    .padding(.bottom, RSMSSpacing.xxl)
                 }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, RSMSSpacing.lg)
+                .padding(.bottom, RSMSSpacing.md)
+                
+                if selectedOrderType == .instore {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 28) {
+                            Text("How would you like to add products?")
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .foregroundColor(RSMSColors.darkBrown)
+                                .padding(.horizontal, 4)
+                            
+                            VStack(spacing: 16) {
+                                // Search Product Link
+                                Button {
+                                    path.append(POSFlowDestination.searchProduct)
+                                } label: {
+                                    actionRow(
+                                        title: "Search Product",
+                                        subtitle: "Search by name, SKU, or category",
+                                        icon: "magnifyingglass",
+                                        color: .purple
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                                
+                                // Scan Barcode Link
+                                Button {
+                                    path.append(POSFlowDestination.barcodeScanner)
+                                } label: {
+                                    actionRow(
+                                        title: "Scan Barcode",
+                                        subtitle: "Scan barcode instantly using camera",
+                                        icon: "barcode.viewfinder",
+                                        color: .orange
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                                
+                                // Recent Products
+                                Button {
+                                    path.append(POSFlowDestination.searchProduct)
+                                } label: {
+                                    actionRow(
+                                        title: "Recent Products",
+                                        subtitle: "Frequently sold items in your store",
+                                        icon: "clock.fill",
+                                        color: .blue
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                                
+                                // Favorites
+                                Button {
+                                    path.append(POSFlowDestination.searchProduct)
+                                } label: {
+                                    actionRow(
+                                        title: "Favorites",
+                                        subtitle: "Frequently purchased by regular clients",
+                                        icon: "star.fill",
+                                        color: .yellow
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.horizontal, RSMSSpacing.lg)
+                        .padding(.top, RSMSSpacing.md)
+                        .padding(.bottom, RSMSSpacing.xxl)
+                    }
+                } else {
+                    // Show BOPISView
+                    BOPISView()
+                }
+                
+                Spacer(minLength: 0)
             }
             .ignoresSafeArea(edges: .top)
         }
@@ -106,11 +131,11 @@ struct NewSaleView: View {
             .accessibilityLabel("Back")
             
             VStack(alignment: .leading, spacing: 2) {
-                Text("New Sale")
+                Text("Order")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(.white)
                 
-                Text("Point of Sale Checkout")
+                Text("In-Store & BOPIS")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white.opacity(0.8))
             }

@@ -60,6 +60,9 @@ struct StoreOrder: Codable, Identifiable {
     let associateID: UUID?
     let total: Double
     let createdAt: String
+    let orderType: String?
+    let status: String?
+    let client: StoreOrderClient?
     
     // Nested relationship
     let orderLineItems: [OrderLineItem]?
@@ -71,18 +74,29 @@ struct StoreOrder: Codable, Identifiable {
         case associateID = "associate_id"
         case total
         case createdAt = "created_at"
+        case orderType = "order_type"
+        case status
+        case client
         case orderLineItems = "order_line_item"
     }
     
-    init(id: UUID, clientID: UUID?, storeID: UUID?, associateID: UUID?, total: Double, createdAt: String, orderLineItems: [OrderLineItem]?) {
+    init(id: UUID, clientID: UUID?, storeID: UUID?, associateID: UUID?, total: Double, createdAt: String, orderType: String?, status: String?, client: StoreOrderClient?, orderLineItems: [OrderLineItem]?) {
         self.id = id
         self.clientID = clientID
         self.storeID = storeID
         self.associateID = associateID
         self.total = total
         self.createdAt = createdAt
+        self.orderType = orderType
+        self.status = status
+        self.client = client
         self.orderLineItems = orderLineItems
     }
+}
+
+struct StoreOrderClient: Codable {
+    let name: String?
+    let phone: String?
 }
 
 struct OrderLineItem: Codable, Identifiable {
