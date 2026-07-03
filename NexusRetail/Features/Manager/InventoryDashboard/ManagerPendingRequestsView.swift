@@ -6,7 +6,6 @@
 import SwiftUI
 
 enum RequestFilterTab: String, CaseIterable {
-    case all = "All"
     case pending = "Pending"
     case approved = "Approved"
 }
@@ -14,12 +13,10 @@ enum RequestFilterTab: String, CaseIterable {
 struct ManagerPendingRequestsView: View {
     @Bindable var viewModel: InventoryViewModel
     @Environment(SessionStore.self) private var sessionStore
-    @State private var selectedTab: RequestFilterTab = .all
+    @State private var selectedTab: RequestFilterTab = .pending
     
     var filteredRequests: [TransferRequestRow] {
         switch selectedTab {
-        case .all:
-            return viewModel.requests
         case .pending:
             return viewModel.requests.filter { $0.status == .pending }
         case .approved:
@@ -79,18 +76,5 @@ struct ManagerPendingRequestsView: View {
         }
         .navigationTitle("Stock Requests")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    viewModel.showRestockSheet = true
-                    viewModel.restockItem = viewModel.items.first
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.body.weight(.semibold))
-                        .foregroundColor(RSMSColors.burgundy)
-                }
-                .accessibilityLabel("New Stock Request")
-            }
-        }
     }
 }
