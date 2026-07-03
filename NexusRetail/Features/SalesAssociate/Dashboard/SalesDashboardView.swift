@@ -33,7 +33,6 @@ struct SalesDashboardView: View {
                         headerSection
                         kpiSection
                         revenueChartSection
-                        quickActionsSection
                         recentActivitySection
                         Spacer(minLength: 80)
                     }

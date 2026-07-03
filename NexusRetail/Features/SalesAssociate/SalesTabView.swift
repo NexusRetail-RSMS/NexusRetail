@@ -39,11 +39,11 @@ struct SalesTabView: View {
             }
             
             NavigationStack {
-                AppointmentsView()
+                AppointmentsView(clients: clientelingVM.clients)
             }
-            .tabItem {
-                Label("Appointments", systemImage: "calendar")
-            }
+            .tabItem { Label("Appointments", systemImage: "calendar.badge.clock") }
+            InventoryCatalogView()
+                .tabItem { Label("Catalog", systemImage: "shippingbox.fill") }
         }
         .tint(RSMSColors.burgundy)
     }
