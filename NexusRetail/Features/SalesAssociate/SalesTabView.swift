@@ -45,11 +45,6 @@ struct SalesTabView: View {
             Tab("Search", systemImage: "magnifyingglass", role: .search) {
                 InventoryCatalogView()
             }
-            Tab("BOPIS", systemImage: "bag.fill") {
-                NavigationStack {
-                    BOPISView()
-                }
-            }
         }
         .tint(RSMSColors.burgundy)
     }
