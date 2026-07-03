@@ -341,10 +341,6 @@ final class ProductCatalogueViewModel: ObservableObject {
     }
 
     private func formatPrice(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencySymbol = "$"
-        formatter.maximumFractionDigits = 0
-        return formatter.string(from: NSNumber(value: value)) ?? "$\(Int(value))"
+        return formatIndianCurrency(value)
     }
 }

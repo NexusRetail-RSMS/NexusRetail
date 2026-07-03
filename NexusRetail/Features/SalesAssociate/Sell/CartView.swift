@@ -41,7 +41,7 @@ struct CartView: View {
                                     .font(.system(size: 15))
                                     .foregroundColor(RSMSColors.secondaryText)
                                 Spacer()
-                                Text("₹\(formatINR(viewModel.subtotalAmount))")
+                                Text(formatIndianCurrency(viewModel.subtotalAmount))
                                     .font(.system(size: 16, weight: .bold))
                                     .foregroundColor(RSMSColors.primaryText)
                             }
@@ -51,7 +51,7 @@ struct CartView: View {
                                     .font(.system(size: 16, weight: .bold))
                                     .foregroundColor(RSMSColors.darkBrown)
                                 Spacer()
-                                Text("₹\(formatINR(viewModel.totalAmount))")
+                                Text(formatIndianCurrency(viewModel.totalAmount))
                                     .font(.system(size: 20, weight: .bold))
                                     .foregroundColor(RSMSColors.burgundy)
                             }
@@ -162,7 +162,7 @@ struct CartView: View {
                     .foregroundColor(RSMSColors.primaryText)
                     .lineLimit(2)
                 HStack(spacing: 6) {
-                    Text("₹\(formatINR(product.price))")
+                    Text(formatIndianCurrency(product.price))
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(RSMSColors.burgundy)
                     Text("each")
@@ -180,7 +180,7 @@ struct CartView: View {
 
             VStack(alignment: .trailing, spacing: 6) {
                 // Line total
-                Text("₹\(formatINR(product.price * Double(count)))")
+                Text(formatIndianCurrency(product.price * Double(count)))
                     .font(.system(size: 13, weight: .bold))
                     .foregroundColor(RSMSColors.primaryText)
 
@@ -222,11 +222,5 @@ struct CartView: View {
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(RSMSColors.cardBorder, lineWidth: 1))
     }
 
-    private func formatINR(_ value: Double) -> String {
-        let f = NumberFormatter()
-        f.numberStyle = .decimal
-        f.groupingSeparator = ","
-        f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: value)) ?? "\(Int(value))"
-    }
+
 }
