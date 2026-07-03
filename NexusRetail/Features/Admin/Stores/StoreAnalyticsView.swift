@@ -45,7 +45,7 @@ struct StoreAnalyticsView: View {
         self._analyticsVM = State(initialValue: StoreAnalyticsViewModel(store: store))
     }
 
-    private var isActive: Bool { store.status == .active }
+    private var isActive: Bool { store.status == .active && store.managerID != nil }
 
     private var locationLine: String {
         [store.city, store.country]
@@ -158,7 +158,7 @@ struct StoreAnalyticsView: View {
                     Circle()
                         .fill(isActive ? Color(hex: "34C759") : .gray)
                         .frame(width: 6, height: 6)
-                    Text(isActive ? "Active" : "In-Active")
+                    Text(isActive ? "Active" : "Inactive")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.white.opacity(0.9))
                 }
