@@ -5,14 +5,18 @@ struct RecentOrdersView: View {
     @Environment(SellViewModel.self) private var viewModel
     @Environment(SessionStore.self) private var sessionStore
 
+    var hideHeader: Bool = false
+    
     var body: some View {
         ZStack {
             RSMSColors.background.ignoresSafeArea()
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    customHeaderSection
-
+                    if !hideHeader {
+                        customHeaderSection
+                    }
+                    
                     VStack(alignment: .leading, spacing: 20) {
                         Text("Order History")
                             .font(.system(size: 16, weight: .bold, design: .rounded))

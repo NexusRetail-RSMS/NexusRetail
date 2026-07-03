@@ -17,6 +17,8 @@ enum POSFlowDestination: Hashable {
     case checkout
     case payment
     case receipt
+    case bopis
+    case ordersHub
 }
 
 // MARK: - Chart / Period
