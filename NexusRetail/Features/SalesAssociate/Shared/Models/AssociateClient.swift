@@ -9,11 +9,11 @@ import Foundation
 
 struct AssociateClient: Identifiable {
     let id          = UUID()
-    let name:       String
-    let phone:      String
-    let email:      String
-    let preferences: String
-    let purchasePattern: String
+    var name:       String
+    var phone:      String
+    var email:      String
+    var preferences: String
+    var purchasePattern: String
 
     var initials: String {
         name

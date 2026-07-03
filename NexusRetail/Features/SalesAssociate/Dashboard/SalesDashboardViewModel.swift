@@ -82,6 +82,15 @@ final class SalesDashboardViewModel {
         return ordersCompletedCount % 4
     }
 
+    // MARK: - Fulfillment Stats
+    var scheduledInStoreCount: Int { 
+        dbOrders.filter { $0.orderType == "store" && $0.status != "completed" }.count
+    }
+    
+    var scheduledBOPISCount: Int { 
+        dbOrders.filter { $0.orderType == "bopis" && $0.status != "completed" }.count
+    }
+
     // MARK: - Revenue Chart Data
     var chartDataPoints: [StoreRevenueChartPoint] {
         let formatter = ISO8601DateFormatter()
@@ -170,6 +179,9 @@ final class SalesDashboardViewModel {
             let associateID:   UUID?
             let total:         Double
             let createdAt:     String
+            let orderType:     String?
+            let status:        String?
+            let client:        StoreOrderClient?
             let orderLineItems: [DashboardOrderLineItem]?
 
             enum CodingKeys: String, CodingKey {
@@ -179,6 +191,9 @@ final class SalesDashboardViewModel {
                 case associateID   = "associate_id"
                 case total
                 case createdAt     = "created_at"
+                case orderType     = "order_type"
+                case status
+                case client
                 case orderLineItems = "order_line_item"
             }
         }
@@ -186,8 +201,9 @@ final class SalesDashboardViewModel {
         do {
             let fetched: [DashboardOrder] = try await SupabaseManager.shared.client
                 .from("orders")
-                .select("id, client_id, store_id, associate_id, total, created_at, order_line_item(id, quantity)")
+                .select("id, client_id, store_id, associate_id, total, created_at, order_type, status, client!client_id(name, phone), order_line_item(id, quantity)")
                 .eq("store_id", value: storeID)
+                .order("created_at", ascending: false)
                 .execute()
                 .value
 
@@ -204,6 +220,9 @@ final class SalesDashboardViewModel {
                     associateID: dOrder.associateID,
                     total: dOrder.total,
                     createdAt: dOrder.createdAt,
+                    orderType: dOrder.orderType,
+                    status: dOrder.status,
+                    client: dOrder.client,
                     orderLineItems: lineItems
                 )
             }
