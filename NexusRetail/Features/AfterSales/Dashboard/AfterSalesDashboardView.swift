@@ -22,7 +22,6 @@ struct AfterSalesDashboardView: View {
                         kpiSection
                         serviceTrendChartSection
                         serviceStatusDonutSection
-                        urgentCasesSection
                         Spacer(minLength: 80)
                     }
                     .padding(.horizontal, RSMSSpacing.lg)
@@ -113,7 +112,7 @@ struct AfterSalesDashboardView: View {
             
             Chart(vm.serviceRequestChartData) { point in
                 BarMark(x: .value("Period", point.label), y: .value("Requests", point.value), width: .ratio(0.45))
-                    .foregroundStyle(LinearGradient(colors: [Color(hex: "2A9D8F").opacity(0.6), Color(hex: "2A9D8F")], startPoint: .top, endPoint: .bottom))
+                    .foregroundStyle(LinearGradient(colors: [RSMSColors.burgundy.opacity(0.8), RSMSColors.burgundy], startPoint: .top, endPoint: .bottom))
                     .cornerRadius(8)
             }
             .chartYAxis {
@@ -161,10 +160,10 @@ struct AfterSalesDashboardView: View {
                 .cornerRadius(4)
             }
             .chartForegroundStyleScale([
-                "Pending": RSMSColors.warning,
+                "Pending": Color(hex: "E9C46A"),
                 "Repair": Color(hex: "2A9D8F"),
-                "Completed": RSMSColors.success,
-                "Returned": RSMSColors.error
+                "Completed": Color(hex: "264653"),
+                "Returned": Color(hex: "8A2BE2")
             ])
             .chartBackground { chartProxy in
                 GeometryReader { geometry in
@@ -185,63 +184,6 @@ struct AfterSalesDashboardView: View {
             .frame(height: 220)
         }
         .padding(RSMSSpacing.lg)
-        .background(RSMSColors.cardBackground)
-        .cornerRadius(RSMSRadius.large)
-        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
-    }
-    
-    // MARK: - Urgent Cases
-    private var urgentCasesSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Urgent Cases")
-                .font(.system(size: 16, weight: .bold, design: .rounded))
-                .foregroundColor(RSMSColors.darkBrown)
-                .padding(.horizontal, 4)
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 16) {
-                    ForEach(vm.urgentCases) { request in
-                        urgentCaseCard(request)
-                    }
-                }
-                .padding(.horizontal, 4)
-                .padding(.bottom, 8)
-            }
-        }
-    }
-    
-    private func urgentCaseCard(_ request: ServiceRequest) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text(request.serviceId)
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(RSMSColors.burgundy)
-                Spacer()
-                Text("\(request.daysRemaining) Days Left")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(RSMSColors.error)
-            }
-            
-            Text(request.customerName)
-                .font(.system(size: 16, weight: .bold, design: .rounded))
-                .foregroundColor(RSMSColors.primaryText)
-            
-            HStack {
-                Label(request.issueType, systemImage: "tag.fill")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
-                Spacer()
-                Text(request.priority.rawValue)
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(request.priority.color)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(request.priority.color.opacity(0.1))
-                    .clipShape(Capsule())
-            }
-        }
-        .padding(16)
-        .frame(width: 240)
         .background(RSMSColors.cardBackground)
         .cornerRadius(RSMSRadius.large)
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
