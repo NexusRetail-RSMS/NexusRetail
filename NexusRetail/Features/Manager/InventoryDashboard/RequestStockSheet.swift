@@ -24,8 +24,7 @@ struct RequestStockSheet: View {
                 RSMSColors.background
                     .ignoresSafeArea()
 
-                ScrollView {
-                    VStack(spacing: RSMSSpacing.xl) {
+                VStack(spacing: RSMSSpacing.xl) {
                         // Product info
                         AsyncImage(url: URL(string: item.imageUrl ?? "")) { phase in
                             switch phase {
@@ -49,14 +48,18 @@ struct RequestStockSheet: View {
 
                         VStack(alignment: .leading, spacing: 4) {
                             Text(item.name)
-                                .font(.system(size: 16, weight: .semibold))
+                                .font(.system(size: 16, weight: .bold))
                                 .foregroundColor(RSMSColors.primaryText)
-                            Text("\(item.skuCode) · \(item.category)")
+                            Text("\(item.skuCode)")
                                 .font(.system(size: 13))
                                 .foregroundColor(RSMSColors.secondaryText)
                         }
-
+                        
                         Spacer()
+                        Text("\(formatIndianCurrency(item.localPrice))")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(RSMSColors.primaryText)
+
                     }
                     .padding(16)
                     .background(Color.white)
@@ -130,7 +133,6 @@ struct RequestStockSheet: View {
                     .disabled(isSubmitting || isSuccess)
                 }
                 .padding(RSMSSpacing.lg)
-                }
             }
             .navigationTitle("Request Stock")
             .navigationBarTitleDisplayMode(.inline)
