@@ -17,6 +17,8 @@ struct DisplayEmployee: Identifiable, Hashable, Codable {
     var phone: String = ""
     var email: String = ""
     var imageData: Data? = nil
+    var storeId: UUID?
+    var customerAttraction: Int
 }
 
 // MARK: - Employee Card View
@@ -51,7 +53,8 @@ struct EmployeeCard: View {
             role: role,
             productsSold: productsSold,
             revenue: amount,
-            imageUrl: imageUrl
+            imageUrl: imageUrl,
+            customerAttraction: 0
         )
         self.onEdit = onEdit
         self.onDelete = onDelete

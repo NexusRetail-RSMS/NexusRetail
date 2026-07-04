@@ -22,7 +22,7 @@ struct StaffPerformanceChart: View {
                 Spacer()
 
                 Picker("Time Range", selection: $timeRange) {
-                    ForEach(SalesTimeRange.allCases, id: \.self) { range in
+                    ForEach([SalesTimeRange.weekly, SalesTimeRange.monthly], id: \.self) { range in
                         Text(range.rawValue).tag(range)
                     }
                 }
