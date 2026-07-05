@@ -35,9 +35,9 @@ struct AddProductView: View {
     
     private var canSave: Bool {
         !productName.trimmingCharacters(in: .whitespaces).isEmpty &&
-
         Double(basePrice) != nil &&
-        Int(stock) != nil
+        // Stock is only entered when adding; on edit the field is hidden.
+        (product != nil || Int(stock) != nil)
     }
 
     var body: some View {
@@ -134,9 +134,14 @@ struct AddProductView: View {
                     .tint(RSMSColors.burgundy)
                 }
 
-                Section("Stocks") {
-                    TextField("Stock Quantity", text: $stock)
-                        .keyboardType(.numberPad)
+                // Stock is set only at creation. On edit it's aggregated per-store
+                // from inventory and can't be written back here, so hide the field
+                // rather than show a control that silently does nothing.
+                if product == nil {
+                    Section("Stocks") {
+                        TextField("Stock Quantity", text: $stock)
+                            .keyboardType(.numberPad)
+                    }
                 }
 
                 Section("Pricing") {
@@ -205,28 +210,25 @@ struct AddProductView: View {
                         ProgressView()
                     } else {
                         Button(product == nil ? "Save" : "Update") {
-                            guard
-                                canSave,
-                                let price = Double(basePrice),
-                                let stockInt = Int(stock)
-                            else { return }
+                            guard canSave, let price = Double(basePrice) else { return }
 
                             Task {
                                 isSaving = true
                                 defer { isSaving = false }
                                 do {
                                     if let product {
+                                        // Stock is not editable here (tracked per-store in inventory).
                                         try await viewModel.updateProduct(
                                             product,
                                             name: productName,
                                             sku: sku,
                                             category: category,
                                             price: price,
-                                            stock: stockInt,
                                             floorPrice: Double(floorPrice),
                                             image: selectedImage
                                         )
                                     } else {
+                                        guard let stockInt = Int(stock) else { return }
                                         try await viewModel.addProduct(
                                             name: productName,
                                             sku: sku,

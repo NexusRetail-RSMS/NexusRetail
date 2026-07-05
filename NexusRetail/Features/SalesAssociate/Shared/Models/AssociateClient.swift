@@ -9,6 +9,7 @@ import Foundation
 
 struct AssociateClient: Identifiable {
     let id          = UUID()
+    var dbId:       UUID? = nil   // real client.id from Supabase (nil for sample data)
     var name:       String
     var phone:      String
     var email:      String

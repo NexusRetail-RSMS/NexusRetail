@@ -124,15 +124,14 @@ class StaffViewModel {
     }
     
     func deleteEmployee(id: UUID) async -> Bool {
+        // Optimistically hide from the in-memory list for a responsive UI, but do
+        // NOT persist to deletedIDs yet — otherwise a failed server delete would
+        // filter the still-live employee out of every future load permanently.
         await MainActor.run {
-            var currentDeleted = self.deletedIDs
-            currentDeleted.insert(id)
-            self.deletedIDs = currentDeleted
-            
             self.employees.removeAll { $0.id == id }
             self.saveToCache()
         }
-        
+
         var deleted = false
         do {
             struct Params: Encodable { let staff_id: UUID }
@@ -143,7 +142,7 @@ class StaffViewModel {
         } catch {
             print("delete_staff RPC failed: \(error)")
         }
-        
+
         if !deleted {
             do {
                 struct Params: Encodable { let manager_id: UUID }
@@ -155,7 +154,7 @@ class StaffViewModel {
                 print("delete_manager RPC failed: \(error)")
             }
         }
-        
+
         if !deleted {
             do {
                 try await SupabaseManager.shared.client
@@ -168,7 +167,18 @@ class StaffViewModel {
                 print("Direct app_user delete failed: \(error)")
             }
         }
-        
+
+        // Only record the tombstone once the server has actually deleted the row.
+        if deleted {
+            await MainActor.run {
+                var currentDeleted = self.deletedIDs
+                currentDeleted.insert(id)
+                self.deletedIDs = currentDeleted
+            }
+        }
+
+        // Reload either way: on success this confirms removal, on failure it
+        // brings the still-live employee back into the list.
         await loadStaff()
         return deleted
     }
@@ -202,17 +212,19 @@ class StaffViewModel {
                 staff_role: roleVal
             )
             
-            var rpcSucceeded = false
+            var persisted = false
+            var lastFailure: Error? = nil
             do {
                 try await SupabaseManager.shared.client
                     .rpc("create_staff", params: params)
                     .execute()
-                rpcSucceeded = true
+                persisted = true
             } catch {
+                lastFailure = error
                 print("create_staff RPC failed: \(error). Attempting direct table insert fallback...")
             }
-            
-            if !rpcSucceeded {
+
+            if !persisted {
                 do {
                     struct DirectStaffInsert: Encodable {
                         let id: UUID
@@ -234,11 +246,23 @@ class StaffViewModel {
                         .from("app_user")
                         .insert(insertRecord)
                         .execute()
+                    persisted = true
                 } catch let directError {
+                    lastFailure = directError
                     print("Direct table insert fallback also failed: \(directError)")
                 }
             }
-            
+
+            // Both persistence paths failed — surface the error instead of
+            // reporting a phantom success and caching an employee the DB never got.
+            guard persisted else {
+                let msg = lastFailure?.localizedDescription ?? "Unknown error"
+                if msg.contains("already exists") || msg.contains("duplicate") {
+                    return "This email is already associated with another account."
+                }
+                return "Couldn't create staff member: \(msg)"
+            }
+
             var tempEmp = employee
             if let uploadedUrl = uploadedUrl {
                 tempEmp.imageUrl = uploadedUrl

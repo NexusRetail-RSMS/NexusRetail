@@ -81,6 +81,8 @@ class SellViewModel {
         let p_associate_id: UUID
         let p_items: [[String: AnyCodable]]
         let p_total: Double
+        let p_client_id: UUID?
+        let p_payment_method: String?
     }
     
     struct AnyCodable: Encodable {
@@ -121,11 +123,16 @@ class SellViewModel {
             ]
         }
         
+        // Map the POS payment method to the DB payment_method enum ('razorpay' | 'card').
+        let paymentMethodValue = selectedPaymentMethod == .razorpay ? "razorpay" : "card"
+
         let params = CheckoutParams(
             p_store_id: storeID,
             p_associate_id: associateID,
             p_items: pItems,
-            p_total: totalAmount
+            p_total: totalAmount,
+            p_client_id: selectedClientId,
+            p_payment_method: paymentMethodValue
         )
         
         let orderIdResponse: UUID = try await SupabaseManager.shared.client

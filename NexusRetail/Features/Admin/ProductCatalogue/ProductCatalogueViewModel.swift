@@ -353,13 +353,17 @@ final class ProductCatalogueViewModel: ObservableObject {
         throw lastError ?? URLError(.unknown)
     }
 
+    /// Updates catalogue fields (name/category/price/image/floor price).
+    /// Stock is intentionally NOT a parameter: on-hand is tracked per store in
+    /// `inventory_item` and aggregated for display, so there is no single stock
+    /// value to write back here. The edit form hides its stock field for the
+    /// same reason. Adjust stock through inventory, not the product catalogue.
     func updateProduct(
         _ product: CatalogueProduct,
         name: String,
         sku: String,
         category: String,
         price: Double,
-        stock: Int,
         floorPrice: Double? = nil,
         image: UIImage?
     ) async throws {
