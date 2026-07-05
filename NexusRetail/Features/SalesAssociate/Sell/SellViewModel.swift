@@ -249,6 +249,15 @@ struct DBOrder: Identifiable, Hashable {
     let status: String
     let createdAt: String
 
+    /// Parsed timestamp for sorting (falls back to distantPast if unparseable).
+    var createdDate: Date {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let d = f.date(from: createdAt) { return d }
+        f.formatOptions = [.withInternetDateTime]
+        return f.date(from: createdAt) ?? .distantPast
+    }
+
     var formattedTime: String {
         let f = ISO8601DateFormatter()
         f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]

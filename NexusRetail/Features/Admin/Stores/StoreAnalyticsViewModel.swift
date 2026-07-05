@@ -163,7 +163,7 @@ class StoreAnalyticsViewModel {
             for item in order.orderLineItems ?? [] {
                 let cat = item.products?.category ?? "Uncategorized"
                 categoryUnits[cat, default: 0] += item.quantity
-                categoryRevenue[cat, default: 0.0] += (Double(item.quantity) * item.appliedPrice)
+                categoryRevenue[cat, default: 0.0] += (Double(item.quantity) * (item.appliedPrice ?? 0))
             }
         }
         
