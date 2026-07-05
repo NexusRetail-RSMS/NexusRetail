@@ -33,6 +33,10 @@ final class SalesDashboardViewModel {
         let todayPrefix = fallbackFmt.string(from: now)
 
         return dbOrders.filter { order in
+            // Only completed orders count toward the KPIs (previously every
+            // status — open/cancelled — was included, inflating the numbers).
+            guard order.status == "completed" else { return false }
+
             if let date = formatter.date(from: order.createdAt) {
                 switch selectedPeriod {
                 case .today:

@@ -66,32 +66,6 @@ struct NewSaleView: View {
                                     )
                                 }
                                 .buttonStyle(.plain)
-                                
-                                // Recent Products
-                                Button {
-                                    path.append(POSFlowDestination.searchProduct)
-                                } label: {
-                                    actionRow(
-                                        title: "Recent Products",
-                                        subtitle: "Frequently sold items in your store",
-                                        icon: "clock.fill",
-                                        color: .blue
-                                    )
-                                }
-                                .buttonStyle(.plain)
-                                
-                                // Favorites
-                                Button {
-                                    path.append(POSFlowDestination.searchProduct)
-                                } label: {
-                                    actionRow(
-                                        title: "Favorites",
-                                        subtitle: "Frequently purchased by regular clients",
-                                        icon: "star.fill",
-                                        color: .yellow
-                                    )
-                                }
-                                .buttonStyle(.plain)
                             }
                         }
                         .padding(.horizontal, RSMSSpacing.lg)

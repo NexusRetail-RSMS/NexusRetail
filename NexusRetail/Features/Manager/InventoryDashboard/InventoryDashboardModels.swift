@@ -43,18 +43,20 @@ enum InventorySortOrder: String, CaseIterable {
 
 /// Product categories from the database
 enum InventoryCategory: String, CaseIterable {
+    // Raw values must match the real `products.category` strings, otherwise the
+    // category filter matches nothing. DB uses "Perfumes" and "Jewellery".
     case bags = "Bags"
     case clothes = "Clothes"
-    case fragrances = "Fragrances"
-    case jewelry = "Jewelry"
+    case perfumes = "Perfumes"
+    case jewellery = "Jewellery"
     case watches = "Watches"
-    
+
     var icon: String {
         switch self {
         case .bags: return "bag.fill"
         case .clothes: return "tshirt.fill"
-        case .fragrances: return "drop.fill"
-        case .jewelry: return "diamond.fill"
+        case .perfumes: return "drop.fill"
+        case .jewellery: return "diamond.fill"
         case .watches: return "clock.fill"
         }
     }
