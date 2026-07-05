@@ -31,8 +31,6 @@ struct OrdersHubView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Orders Hub")
                                 .font(.system(size: 24, weight: .bold)).foregroundColor(RSMSColors.primaryText)
-                            Text("Manage and track all pickup orders")
-                                .font(.system(size: 14)).foregroundColor(RSMSColors.secondaryText)
                         }
                         Spacer()
                         
