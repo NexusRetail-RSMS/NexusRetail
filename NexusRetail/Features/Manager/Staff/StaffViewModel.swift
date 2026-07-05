@@ -16,6 +16,7 @@ struct StaffStatsRPC: Decodable {
     let productsSold: Int?
     let revenue: Double?
     let storeId: UUID?
+    let customerAttraction: Int?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -27,6 +28,7 @@ struct StaffStatsRPC: Decodable {
         case productsSold = "products_sold"
         case revenue
         case storeId = "store_id"
+        case customerAttraction = "customer_attraction"
     }
 }
 
@@ -107,7 +109,9 @@ class StaffViewModel {
                     imageUrl: finalImageUrl,
                     phone: stat.phone ?? "",
                     email: stat.email ?? "",
-                    imageData: finalImageData
+                    imageData: finalImageData,
+                    storeId: stat.storeId,
+                    customerAttraction: stat.customerAttraction ?? 0
                 )
             }
             

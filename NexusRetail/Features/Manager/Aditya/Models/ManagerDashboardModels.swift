@@ -6,10 +6,8 @@
 import Foundation
 
 /// Defines the time range for sales data in the manager dashboard
-enum ManagerSalesTimeRange: String, CaseIterable {
-    case weekly = "Weekly"
-    case monthly = "Monthly"
-}
+// ManagerSalesTimeRange removed in favor of unified SalesTimeRange
+
 
 struct ManagerRevenueChartPoint: Identifiable, Equatable {
     var id: String { label }

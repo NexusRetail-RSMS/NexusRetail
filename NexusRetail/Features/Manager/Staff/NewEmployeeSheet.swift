@@ -202,7 +202,9 @@ struct NewEmployeeSheet: View {
             imageUrl: nil,
             phone: phone,
             email: email,
-            imageData: imageData
+            imageData: imageData,
+            storeId: nil,
+            customerAttraction: 0
         )
         
         // Simulate save / persist
