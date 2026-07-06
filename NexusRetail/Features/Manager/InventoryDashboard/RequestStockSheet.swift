@@ -12,10 +12,13 @@ struct RequestStockSheet: View {
     @Environment(\.dismiss) private var dismiss
     let item: InventoryItemRow
     let storeID: UUID?
-    let onSubmit: (Int64, Int) -> Void
+    /// Returns nil on success, or an error message on failure.
+    let onSubmit: (Int64, Int) async -> String?
 
     @State private var quantity: Int = 10
     @State private var isSubmitting = false
+    @State private var isSuccess = false
+    @State private var errorMessage: String?
 
     var body: some View {
         NavigationStack {
@@ -23,9 +26,9 @@ struct RequestStockSheet: View {
                 RSMSColors.background
                     .ignoresSafeArea()
 
-                VStack(spacing: RSMSSpacing.xl) {
-                    // Product info
-                    HStack(spacing: 14) {
+                ScrollView {
+                    VStack(spacing: RSMSSpacing.xl) {
+                        // Product info
                         AsyncImage(url: URL(string: item.imageUrl ?? "")) { phase in
                             switch phase {
                             case .success(let image):
@@ -40,9 +43,11 @@ struct RequestStockSheet: View {
                                 }
                             }
                         }
-                        .frame(width: 56, height: 56)
-                        .cornerRadius(10)
+                        .frame(width: 370)
+                        .frame(height: 260)
+                        .cornerRadius(24)
                         .clipped()
+                    HStack(spacing: 14) {
 
                         VStack(alignment: .leading, spacing: 4) {
                             Text(item.name)
@@ -51,92 +56,96 @@ struct RequestStockSheet: View {
                             Text("\(item.skuCode) · \(item.category)")
                                 .font(.system(size: 13))
                                 .foregroundColor(RSMSColors.secondaryText)
-
-                            HStack(spacing: 6) {
-                                Text("\(item.onHand) in stock")
-                                    .font(.system(size: 13, weight: .medium))
-                                    .foregroundColor(item.stockStatus.color)
-                                Text("· Min: \(item.reorderThreshold)")
-                                    .font(.system(size: 13))
-                                    .foregroundColor(RSMSColors.secondaryText)
-                            }
                         }
 
                         Spacer()
                     }
                     .padding(16)
                     .background(Color.white)
-                    .cornerRadius(RSMSRadius.medium)
+                    .cornerRadius(24)
 
                     // Quantity
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Quantity to Request")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(RSMSColors.primaryText)
+                    HStack(spacing: 16) {
+                        HStack(spacing: 8) {
+                            Text("Quantity")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(RSMSColors.secondaryText)
 
-                        HStack(spacing: 16) {
-                            Button {
-                                if quantity > 1 { quantity -= 1 }
-                            } label: {
-                                Image(systemName: "minus")
-                                    .font(.system(size: 18, weight: .semibold))
-                                    .foregroundColor(RSMSColors.burgundy)
-                                    .frame(width: 44, height: 44)
-                                    .background(RSMSColors.burgundy.opacity(0.08))
-                                    .cornerRadius(10)
-                            }
-
-                            Text("\(quantity)")
-                                .font(.system(size: 24, weight: .bold))
-                                .foregroundColor(RSMSColors.primaryText)
-                                .frame(minWidth: 60)
-                                .multilineTextAlignment(.center)
-
-                            Button {
-                                if quantity < 999 { quantity += 1 }
-                            } label: {
-                                Image(systemName: "plus")
-                                    .font(.system(size: 18, weight: .semibold))
-                                    .foregroundColor(RSMSColors.burgundy)
-                                    .frame(width: 44, height: 44)
-                                    .background(RSMSColors.burgundy.opacity(0.08))
-                                    .cornerRadius(10)
-                            }
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(12)
-                        .background(Color.white)
-                        .cornerRadius(RSMSRadius.medium)
+
+                        Spacer()
+                        TextField("", value: $quantity, format: .number)
+                            .keyboardType(.numberPad)
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(RSMSColors.primaryText)
+                            .multilineTextAlignment(.center)
+                            .frame(width: 50)
+                        Stepper(
+                            "",
+                            value: $quantity,
+                            in: 1...999
+                        )
+                        .labelsHidden()
+                        .tint(RSMSColors.burgundy)
                     }
+                    .padding(16)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.white)
+                    .cornerRadius(24)
 
-                    Spacer()
-
-                    // Submit button
+                    // Submit button — reflects the real DB result, not a timer.
                     Button {
+                        errorMessage = nil
                         isSubmitting = true
-                        onSubmit(item.itemId, quantity)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            isSubmitting = false
-                            dismiss()
+                        Task {
+                            let error = await onSubmit(item.itemId, quantity)
+                            await MainActor.run {
+                                isSubmitting = false
+                                if let error {
+                                    errorMessage = error
+                                } else {
+                                    withAnimation { isSuccess = true }
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                        dismiss()
+                                    }
+                                }
+                            }
                         }
                     } label: {
                         HStack {
-                            if isSubmitting {
+                            if isSuccess {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 18, weight: .bold))
+                                Text("Request Sent")
+                                    .font(.system(size: 16, weight: .bold))
+                            } else if isSubmitting {
                                 ProgressView()
                                     .tint(.white)
+                                Text("Sending\u{2026}")
+                                    .font(.system(size: 16, weight: .bold))
+                            } else {
+                                Text("Submit Request")
+                                    .font(.system(size: 16, weight: .bold))
                             }
-                            Text(isSubmitting ? "Sending\u{2026}" : "Submit Request")
-                                .font(.system(size: 16, weight: .bold))
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(RSMSColors.burgundy)
+                        .padding(.vertical, 16)
+                        .background(isSuccess ? Color.green : RSMSColors.burgundy)
                         .foregroundColor(.white)
-                        .cornerRadius(12)
+                        .cornerRadius(24)
                     }
-                    .disabled(isSubmitting)
+                    .disabled(isSubmitting || isSuccess)
+
+                    if let errorMessage {
+                        Text(errorMessage)
+                            .font(.system(size: 13))
+                            .foregroundColor(.red)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity)
+                    }
                 }
                 .padding(RSMSSpacing.lg)
+                }
             }
             .navigationTitle("Request Stock")
             .navigationBarTitleDisplayMode(.inline)

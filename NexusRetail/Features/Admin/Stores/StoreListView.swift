@@ -169,16 +169,6 @@ struct StoreListView: View {
                         .font(.system(size: 34, weight: .bold, design: .rounded))
                         .foregroundColor(RSMSColors.primaryText)
 
-                    if !viewModel.stores.isEmpty {
-                        HStack(spacing: 5) {
-                            Circle()
-                                .fill(Color.green)
-                                .frame(width: 6, height: 6)
-                            Text("\(activeCount) active of \(viewModel.stores.count)")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                    }
                 }
 
                 Spacer()
@@ -226,7 +216,7 @@ private struct StoreImageCard: View {
     let store: Store
     let manager: DisplayManager?
 
-    private var isActive: Bool { store.status == .active }
+    private var isActive: Bool { store.status == .active && store.managerID != nil }
 
     // MARK: - City · Country (clean; avoids the ugly full-address string)
     private var locationLine: String {
@@ -270,7 +260,7 @@ private struct StoreImageCard: View {
                         Circle()
                             .fill(isActive ? Color(hex: "34C759") : Color.red)
                             .frame(width: 6, height: 6)
-                        Text(isActive ? "Active" : "In-Active")
+                        Text(isActive ? "Active" : "Inactive")
                             .font(.system(size: 11, weight: .medium))
                             .tracking(0.2)
                             .foregroundColor(.white.opacity(0.9))

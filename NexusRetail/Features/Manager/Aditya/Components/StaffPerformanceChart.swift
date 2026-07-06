@@ -8,26 +8,19 @@ import Charts
 
 struct StaffPerformanceChart: View {
     let data: [StaffPerformancePoint]
-    @Binding var timeRange: SalesTimeRange
 
     var body: some View {
         VStack(alignment: .leading, spacing: RSMSSpacing.md) {
 
-            // Title row with toggle
+            // Title row. No period toggle: get_staff_stats returns aggregate
+            // all-time stats with no period parameter, so a Weekly/Monthly
+            // control here would be purely cosmetic.
             HStack {
                 Text("Staff Performance")
                     .font(RSMSFonts.headline)
                     .foregroundColor(RSMSColors.primaryText)
 
                 Spacer()
-
-                Picker("Time Range", selection: $timeRange) {
-                    ForEach(SalesTimeRange.allCases, id: \.self) { range in
-                        Text(range.rawValue).tag(range)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 150)
             }
 
             if data.isEmpty {

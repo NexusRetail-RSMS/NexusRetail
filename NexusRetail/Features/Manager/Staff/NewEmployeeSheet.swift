@@ -181,8 +181,9 @@ struct NewEmployeeSheet: View {
     }
 
     private func generatePassword() {
-        let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
-        password = String((0..<12).map { _ in chars.randomElement()! })
+        let cleanName = firstName.trimmingCharacters(in: .whitespaces)
+        let number = Int.random(in: 100...999)
+        password = "\(cleanName)\(number)"
     }
 
     private func saveEmployee() async {
@@ -202,7 +203,9 @@ struct NewEmployeeSheet: View {
             imageUrl: nil,
             phone: phone,
             email: email,
-            imageData: imageData
+            imageData: imageData,
+            storeId: nil,
+            customerAttraction: 0
         )
         
         // Simulate save / persist

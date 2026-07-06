@@ -228,7 +228,7 @@ fileprivate struct ProductCardView: View {
                     .foregroundStyle(RSMSColors.primaryText)
                     .lineLimit(2)
                 
-                Text(String(format: "$%.2f", product.price))
+                Text(formatIndianCurrency(product.price))
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(RSMSColors.burgundy)
             }

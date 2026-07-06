@@ -19,9 +19,8 @@ class InventoryViewModel {
     
     // MARK: - UI State
     var searchText: String = ""
-    var selectedFilter: InventoryFilter = .allItems
     var selectedCategory: InventoryCategory? = nil
-    var sortOrder: InventorySortOrder = .stockLowToHigh
+    var sortOrder: InventorySortOrder = .all
     var isLoading: Bool = false
     var errorMessage: String? = nil
     
@@ -54,26 +53,19 @@ class InventoryViewModel {
             }
         }
         
-        // Filter by stock status
-        if selectedFilter == .lowStock {
-            result = result.filter { $0.isLowStock }
-        }
-        
         // Category
         if let cat = selectedCategory {
-            result = result.filter { $0.category == cat.rawValue }
+            result = result.filter { $0.category.lowercased() == cat.rawValue.lowercased() }
         }
         
         // Sort
         switch sortOrder {
+        case .all:
+            break
         case .stockLowToHigh:
             result.sort { $0.onHand < $1.onHand }
-        case .nameAZ:
-            result.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-        case .category:
-            result.sort { $0.category.localizedCaseInsensitiveCompare($1.category) == .orderedAscending }
-        case .valueHighToLow:
-            result.sort { $0.inventoryValue > $1.inventoryValue }
+        case .stockHighToLow:
+            result.sort { $0.onHand > $1.onHand }
         }
         
         return result
@@ -90,10 +82,15 @@ class InventoryViewModel {
         }
         
         guard let finalStoreID = targetStoreID else {
-            await loadMockData()
+            await MainActor.run {
+                self.items = []
+                self.requests = []
+                self.isLoading = false
+                self.errorMessage = "No store is associated with your account."
+            }
             return
         }
-        
+
         isLoading = true
         errorMessage = nil
         
@@ -125,20 +122,13 @@ class InventoryViewModel {
             }
         } catch {
             print("Inventory fetch error: \(error)")
-            // Fallback to mock data
-            await loadMockData()
+            // Surface the real failure instead of fabricating sample inventory.
             await MainActor.run {
-                self.errorMessage = "Using offline data. Pull to refresh."
+                self.items = []
+                self.requests = []
+                self.errorMessage = "Couldn't load inventory. Pull to refresh."
                 self.isLoading = false
             }
-        }
-    }
-    
-    private func loadMockData() async {
-        await MainActor.run {
-            self.items = InventoryItemRow.mockItems
-            self.requests = TransferRequestRow.mockRequests
-            self.isLoading = false
         }
     }
     

@@ -34,40 +34,29 @@ enum StockStatus: String {
     }
 }
 
-/// Filter for the inventory list
-enum InventoryFilter: String, CaseIterable {
-    case allItems = "All Items"
-    case lowStock = "Low Stock"
-}
-
 /// Sort options for the inventory list
 enum InventorySortOrder: String, CaseIterable {
+    case all = "All"
     case stockLowToHigh = "Stock: Low → High"
-    case nameAZ = "Name: A → Z"
-    case category = "Category"
-    case valueHighToLow = "Value: High → Low"
+    case stockHighToLow = "Stock: High → Low"
 }
 
 /// Product categories from the database
 enum InventoryCategory: String, CaseIterable {
-    case accessories = "Accessories"
+    // Raw values must match the real `products.category` strings, otherwise the
+    // category filter matches nothing. DB uses "Perfumes" and "Jewellery".
     case bags = "Bags"
     case clothes = "Clothes"
-    case fragrances = "Fragrances"
-    case jewelry = "Jewelry"
-    case leatherGoods = "Leather Goods"
-    case shoes = "Shoes"
+    case perfumes = "Perfumes"
+    case jewellery = "Jewellery"
     case watches = "Watches"
-    
+
     var icon: String {
         switch self {
-        case .accessories: return "sparkles"
         case .bags: return "bag.fill"
         case .clothes: return "tshirt.fill"
-        case .fragrances: return "drop.fill"
-        case .jewelry: return "diamond.fill"
-        case .leatherGoods: return "bag.fill"
-        case .shoes: return "shoe.fill"
+        case .perfumes: return "drop.fill"
+        case .jewellery: return "diamond.fill"
         case .watches: return "clock.fill"
         }
     }
@@ -89,7 +78,7 @@ enum TransferStatus: String, Codable, CaseIterable {
     var color: Color {
         switch self {
         case .pending: return RSMSColors.warning
-        case .approved: return RSMSColors.burgundy.opacity(0.6)
+        case .approved: return .green.opacity(0.6)
         case .routed: return RSMSColors.burgundy.opacity(0.8)
         case .dispatched: return RSMSColors.burgundy
         case .delivered: return RSMSColors.success

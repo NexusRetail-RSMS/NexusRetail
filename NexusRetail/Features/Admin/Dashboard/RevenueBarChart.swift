@@ -144,7 +144,7 @@ struct TimeRangeToggle: View {
 
     var body: some View {
         Picker("Time Range", selection: $selection) {
-            ForEach(SalesTimeRange.allCases, id: \.self) { range in
+            ForEach([SalesTimeRange.weekly, SalesTimeRange.monthly], id: \.self) { range in
                 Text(range.rawValue).tag(range)
             }
         }

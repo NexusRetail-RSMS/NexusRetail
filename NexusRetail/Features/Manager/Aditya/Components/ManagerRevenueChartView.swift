@@ -11,7 +11,7 @@ struct ManagerRevenueChartView: View {
     let maxValue: Double
     let sixMonthTotal: String
     let peakMonth: String
-    @Binding var timeRange: ManagerSalesTimeRange
+    @Binding var timeRange: SalesTimeRange
     
     @State private var selectedPointLabel: String?
     
@@ -121,7 +121,7 @@ struct ManagerRevenueChartView: View {
 }
 
 #Preview {
-    @Previewable @State var range: ManagerSalesTimeRange = .monthly
+    @Previewable @State var range: SalesTimeRange = .monthly
     let vm = ManagerDashboardViewModel()
     
     ManagerRevenueChartView(

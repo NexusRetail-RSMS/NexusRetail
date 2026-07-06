@@ -48,7 +48,9 @@ final class ManagerDashboardViewModel {
     
     // Toggles for the main dashboard charts
     var topProductsTimeRange: SalesTimeRange = .monthly
-    var staffTimeRange: SalesTimeRange = .monthly
+    // (staff performance has no period toggle — get_staff_stats is all-time)
+    var revenueTimeRange: SalesTimeRange = .yearly
+    var revenueDate: Date = Date()
     
     var isLoading: Bool = false
     var errorMessage: String? = nil
@@ -101,6 +103,7 @@ final class ManagerDashboardViewModel {
                 .from("orders")
                 .select("total")
                 .eq("store_id", value: storeID.uuidString)
+                .eq("status", value: "completed")
                 .gte("created_at", value: ISO8601DateFormatter().string(from: startOfDay))
                 .execute()
                 .value
@@ -138,7 +141,14 @@ final class ManagerDashboardViewModel {
             let inventory = try? await inventoryTask
             
             // 4. Fetch Charts (Top Products & Revenue)
-            let periodPrefix = topProductsTimeRange == .weekly ? "W" : "M"
+            // Map every period, not just W/M — the RPC supports a Y: prefix, and
+            // the old `== .weekly ? "W" : "M"` silently turned Yearly into Monthly.
+            let periodPrefix: String
+            switch topProductsTimeRange {
+            case .weekly:  periodPrefix = "W"
+            case .monthly: periodPrefix = "M"
+            case .yearly:  periodPrefix = "Y"
+            }
             let params = ManagerSalesParams(
                 p_store_id: ManagerNullableUUID(value: storeID),
                 p_period: "\(periodPrefix):\(ISO8601DateFormatter().string(from: Date()))"
@@ -150,17 +160,11 @@ final class ManagerDashboardViewModel {
                 p_limit: 5
             )
             
-            async let salesChartTask: [SalesPeriodResult] = SupabaseManager.shared.client
-                .rpc("store_sales_by_period", params: params)
-                .execute()
-                .value
-                
             async let topProductsTask: [DashboardTopProduct] = SupabaseManager.shared.client
                 .rpc("store_top_products_by_period", params: topParams)
                 .execute()
                 .value
                 
-            let salesChart = try? await salesChartTask
             let topProds = try? await topProductsTask
             
             // Fetch real staff data
@@ -191,20 +195,9 @@ final class ManagerDashboardViewModel {
                     
                     self.topProductsMaxValue = self.topProductsData.map(\.sales).max() ?? 100
                 }
-                
-                // Revenue Chart
-                if let chart = salesChart {
-                    self.revenueChartData = chart.map { ManagerRevenueChartPoint(label: $0.label, revenue: ($0.online + $0.offline) / 100000.0) } // Assuming Laks
-                    self.revenueMaxValue = self.revenueChartData.map(\.revenue).max() ?? 1.0
-                    
-                    let totalLaks = self.revenueChartData.reduce(0) { $0 + $1.revenue }
-                    self.sixMonthTotal = String(format: "₹%.2fL", totalLaks)
-                    
-                    if let peak = self.revenueChartData.max(by: { $0.revenue < $1.revenue }) {
-                        self.peakMonth = peak.label
-                    }
-                }
-                
+                // Revenue Chart fetching is now decoupled
+                // Wait for independent fetch
+
                 // Calculate performance
                 let storeStaff = staffStatsTask.filter { $0.storeId == storeID }
                 
@@ -236,6 +229,67 @@ final class ManagerDashboardViewModel {
                 self.errorMessage = error.localizedDescription
                 self.isLoading = false
             }
+        }
+    }
+    
+    // MARK: - Independent Chart Fetchers
+    func fetchRevenueData(storeID: UUID?) async {
+        guard let storeID = storeID else { return }
+        
+        let prefix: String
+        let allLabels: [String]
+        switch revenueTimeRange {
+        case .weekly: 
+            prefix = "W"
+            allLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        case .monthly: 
+            prefix = "M"
+            allLabels = ["W1", "W2", "W3", "W4", "W5"]
+        case .yearly: 
+            prefix = "Y"
+            allLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        }
+        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let dateString = formatter.string(from: revenueDate)
+        
+        let params = ManagerSalesParams(
+            p_store_id: ManagerNullableUUID(value: storeID),
+            p_period: "\(prefix):\(dateString)"
+        )
+        
+        do {
+            let salesChart: [SalesPeriodResult] = try await SupabaseManager.shared.client
+                .rpc("store_sales_by_period", params: params)
+                .execute()
+                .value
+            
+            await MainActor.run {
+                // Pad data with 0 for missing periods
+                var paddedData: [ManagerRevenueChartPoint] = []
+                for label in allLabels {
+                    if let existing = salesChart.first(where: { $0.label == label }) {
+                        paddedData.append(ManagerRevenueChartPoint(label: label, revenue: (existing.online + existing.offline) / 100000.0))
+                    } else {
+                        paddedData.append(ManagerRevenueChartPoint(label: label, revenue: 0.0))
+                    }
+                }
+                
+                self.revenueChartData = paddedData
+                self.revenueMaxValue = self.revenueChartData.map(\.revenue).max() ?? 1.0
+                
+                let totalLaks = self.revenueChartData.reduce(0) { $0 + $1.revenue }
+                self.sixMonthTotal = String(format: "₹%.2fL", totalLaks)
+                
+                if let peak = self.revenueChartData.max(by: { $0.revenue < $1.revenue }), peak.revenue > 0 {
+                    self.peakMonth = peak.label
+                } else {
+                    self.peakMonth = "-"
+                }
+            }
+        } catch {
+            print("Manager Dashboard Revenue fetch error: \(error)")
         }
     }
 }

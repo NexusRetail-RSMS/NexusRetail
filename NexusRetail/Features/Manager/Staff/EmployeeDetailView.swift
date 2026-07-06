@@ -4,7 +4,7 @@
 //
 
 import SwiftUI
-
+import Supabase
 struct EmployeeDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State var employee: DisplayEmployee
@@ -13,42 +13,61 @@ struct EmployeeDetailView: View {
     
     @State private var isEditPresented = false
     @State private var showDeleteAlert = false
-    @State private var revenueTimeRange: SalesTimeRange = .monthly
+    @State private var revenueTimeRange: SalesTimeRange = .yearly
+    @State private var revenueChartData: [ManagerRevenueChartPoint] = []
+    @State private var revenueMaxValue: Double = 1.0
     
-    private var revenueChartData: [RevenueChartPoint] {
-        let cleanedNumber = employee.revenue
-            .replacingOccurrences(of: "$", with: "")
-            .replacingOccurrences(of: ",", with: "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        let totalVal = Double(cleanedNumber) ?? 48500.0
-        
-        let weights: [Double] = [0.5, 1.0, 1.2, 0.8, 10.5, 19.5, 26.8, 37.2, 12.0, 9.0, 19.5, 1.5]
-        let totalWeight = weights.reduce(0, +)
-        let scale = (totalVal > 0 ? (totalVal / 1000.0) : 48.5) / (totalWeight / 3.0)
-        
-        if revenueTimeRange == .weekly {
-            let q1 = (weights[0] + weights[1] + weights[2]) * scale
-            let q2 = (weights[3] + weights[4] + weights[5]) * scale
-            let q3 = (weights[6] + weights[7] + weights[8]) * scale
-            let q4 = (weights[9] + weights[10] + weights[11]) * scale
-            
-            return [
-                RevenueChartPoint(label: "W1", index: 0, revenue: q1),
-                RevenueChartPoint(label: "W2", index: 1, revenue: q2),
-                RevenueChartPoint(label: "W3", index: 2, revenue: q3),
-                RevenueChartPoint(label: "W4", index: 3, revenue: q4)
-            ]
-        } else {
-            let months = ["Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"]
-            return months.enumerated().map { index, month in
-                RevenueChartPoint(label: month, index: index, revenue: weights[index] * scale)
-            }
+    private func fetchRevenueData() async {
+        let prefix: String
+        let allLabels: [String]
+        switch revenueTimeRange {
+        case .weekly: 
+            prefix = "W"
+            allLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        case .monthly: 
+            prefix = "M"
+            allLabels = ["W1", "W2", "W3", "W4", "W5"]
+        case .yearly: 
+            prefix = "Y"
+            allLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
         }
-    }
-    
-    private var revenueMaxValue: Double {
-        let maxRev = revenueChartData.map(\.revenue).max() ?? 50.0
-        return max(50.0, ceil(maxRev / 10.0) * 10.0)
+        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let dateString = formatter.string(from: Date()) // Current date for now
+        
+        let params = [
+            "p_associate_id": employee.id.uuidString,
+            "p_period": "\(prefix):\(dateString)"
+        ]
+        
+        do {
+            struct SalesPeriodResult: Decodable {
+                let label: String
+                let online: Double
+                let offline: Double
+            }
+            let salesChart: [SalesPeriodResult] = try await SupabaseManager.shared.client
+                .rpc("associate_sales_by_period", params: params)
+                .execute()
+                .value
+            
+            await MainActor.run {
+                var paddedData: [ManagerRevenueChartPoint] = []
+                for label in allLabels {
+                    if let existing = salesChart.first(where: { $0.label == label }) {
+                        paddedData.append(ManagerRevenueChartPoint(label: label, revenue: (existing.online + existing.offline) / 100000.0))
+                    } else {
+                        paddedData.append(ManagerRevenueChartPoint(label: label, revenue: 0.0))
+                    }
+                }
+                
+                self.revenueChartData = paddedData
+                self.revenueMaxValue = self.revenueChartData.map(\.revenue).max() ?? 1.0
+            }
+        } catch {
+            print("Associate Revenue fetch error: \(error)")
+        }
     }
 
     var body: some View {
@@ -179,13 +198,7 @@ struct EmployeeDetailView: View {
                         
                         Spacer()
                         
-                        let cleanedNumber = employee.revenue
-                            .replacingOccurrences(of: "$", with: "")
-                            .replacingOccurrences(of: ",", with: "")
-                            .trimmingCharacters(in: .whitespacesAndNewlines)
-                        let rawInt = Int(cleanedNumber) ?? 0
-                        let attractionCount = rawInt > 500 ? ((rawInt % 25) + 18) : (rawInt == 0 ? 14 : rawInt)
-                        Text("\(attractionCount)")
+                        Text("\(employee.customerAttraction)")
                             .font(.system(size: 14, weight: .bold))
                             .foregroundStyle(RSMSColors.burgundy)
                     }
@@ -194,12 +207,33 @@ struct EmployeeDetailView: View {
                 .luxuryCard()
                 
                 // MARK: - Revenue Chart
-                RevenueBarChart(
-                    title: "Total Revenue",
-                    data: revenueChartData,
-                    maxValue: revenueMaxValue,
-                    timeRange: $revenueTimeRange
-                )
+                VStack {
+                    HStack {
+                        Text("Sales Report")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(RSMSColors.primaryText)
+                        Spacer()
+                        Picker("Time Range", selection: $revenueTimeRange) {
+                            Text("Weekly").tag(SalesTimeRange.weekly)
+                            Text("Monthly").tag(SalesTimeRange.monthly)
+                            Text("Yearly").tag(SalesTimeRange.yearly)
+                        }
+                        .pickerStyle(.menu)
+                        .onChange(of: revenueTimeRange) { _, _ in
+                            Task { await fetchRevenueData() }
+                        }
+                    }
+                    
+                    ManagerRevenueChartView(
+                        data: revenueChartData,
+                        maxValue: revenueMaxValue,
+                        sixMonthTotal: employee.revenue,
+                        peakMonth: "",
+                        timeRange: $revenueTimeRange
+                    )
+                }
+                .padding()
+                .luxuryCard()
                 
                 // MARK: - Delete Action
                 if onDelete != nil {
@@ -220,6 +254,9 @@ struct EmployeeDetailView: View {
             .screenPadding()
         }
         .background(RSMSColors.background.ignoresSafeArea())
+        .task {
+            await fetchRevenueData()
+        }
         .navigationTitle("Employee Detail")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
@@ -274,7 +311,9 @@ struct EmployeeDetailView: View {
                 revenue: "$48,500",
                 imageUrl: nil,
                 phone: "+1 (555) 234-5678",
-                email: "sarah.j@nexusretail.com"
+                email: "sarah.j@nexusretail.com",
+                storeId: nil,
+                customerAttraction: 14
             )
         )
     }

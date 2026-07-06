@@ -15,6 +15,8 @@ struct AddProductView: View {
     @State private var launchDate = Date()
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var selectedImage: UIImage?
+    @State private var isSaving = false
+    @State private var errorMessage: String?
     let product: CatalogueProduct?
     let categories = ["Bags", "Watches", "Perfumes", "Clothes", "Jewellery"]
     
@@ -33,9 +35,9 @@ struct AddProductView: View {
     
     private var canSave: Bool {
         !productName.trimmingCharacters(in: .whitespaces).isEmpty &&
-
         Double(basePrice) != nil &&
-        Int(stock) != nil
+        // Stock is only entered when adding; on edit the field is hidden.
+        (product != nil || Int(stock) != nil)
     }
 
     var body: some View {
@@ -132,9 +134,14 @@ struct AddProductView: View {
                     .tint(RSMSColors.burgundy)
                 }
 
-                Section("Stocks") {
-                    TextField("Stock Quantity", text: $stock)
-                        .keyboardType(.numberPad)
+                // Stock is set only at creation. On edit it's aggregated per-store
+                // from inventory and can't be written back here, so hide the field
+                // rather than show a control that silently does nothing.
+                if product == nil {
+                    Section("Stocks") {
+                        TextField("Stock Quantity", text: $stock)
+                            .keyboardType(.numberPad)
+                    }
                 }
 
                 Section("Pricing") {
@@ -176,6 +183,13 @@ struct AddProductView: View {
             }
             .navigationTitle(product == nil ? "Add New Product" : "Edit Product")
             .navigationBarTitleDisplayMode(.inline)
+            .alert("Couldn’t save product",
+                   isPresented: Binding(get: { errorMessage != nil },
+                                        set: { if !$0 { errorMessage = nil } })) {
+                Button("OK", role: .cancel) { errorMessage = nil }
+            } message: {
+                Text(errorMessage ?? "")
+            }
             .onAppear {
                 if product == nil && sku.isEmpty {
                     sku = viewModel.generateSKU(for: category)
@@ -192,38 +206,50 @@ struct AddProductView: View {
                         .tint(RSMSColors.burgundy)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(product == nil ? "Save" : "Update") {
-                        guard
-                            canSave,
-                            let price = Double(basePrice),
-                            let stockInt = Int(stock)
-                        else { return }
-                        if let product {
-                            viewModel.updateProduct(
-                                product,
-                                name: productName,
-                                sku: sku,
-                                category: category,
-                                price: price,
-                                stock: stockInt,
-                                image: selectedImage
-                            )
-                        } else {
-                            viewModel.addProduct(
-                                name: productName,
-                                sku: sku,
-                                category: category,
-                                price: price,
-                                stock: stockInt,
-                                launchDate: launchDate,
-                                image: selectedImage
-                            )
+                    if isSaving {
+                        ProgressView()
+                    } else {
+                        Button(product == nil ? "Save" : "Update") {
+                            guard canSave, let price = Double(basePrice) else { return }
+
+                            Task {
+                                isSaving = true
+                                defer { isSaving = false }
+                                do {
+                                    if let product {
+                                        // Stock is not editable here (tracked per-store in inventory).
+                                        try await viewModel.updateProduct(
+                                            product,
+                                            name: productName,
+                                            sku: sku,
+                                            category: category,
+                                            price: price,
+                                            floorPrice: Double(floorPrice),
+                                            image: selectedImage
+                                        )
+                                    } else {
+                                        guard let stockInt = Int(stock) else { return }
+                                        try await viewModel.addProduct(
+                                            name: productName,
+                                            sku: sku,
+                                            category: category,
+                                            price: price,
+                                            stock: stockInt,
+                                            launchDate: launchDate,
+                                            floorPrice: Double(floorPrice),
+                                            image: selectedImage
+                                        )
+                                    }
+                                    dismiss()
+                                } catch {
+                                    errorMessage = error.localizedDescription
+                                }
+                            }
                         }
-                        dismiss()
+                        .fontWeight(.bold)
+                        .tint(RSMSColors.burgundy)
+                        .disabled(!canSave)
                     }
-                    .fontWeight(.bold)
-                    .tint(RSMSColors.burgundy)
-                    .disabled(!canSave)
                 }
             }
         }

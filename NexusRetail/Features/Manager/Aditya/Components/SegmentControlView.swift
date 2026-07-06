@@ -6,11 +6,11 @@
 import SwiftUI
 
 struct SegmentControlView: View {
-    @Binding var selection: ManagerSalesTimeRange
+    @Binding var selection: SalesTimeRange
     
     var body: some View {
         Picker("Time Range", selection: $selection) {
-            ForEach(ManagerSalesTimeRange.allCases, id: \.self) { range in
+            ForEach([SalesTimeRange.weekly, SalesTimeRange.monthly], id: \.self) { range in
                 Text(range.rawValue).tag(range)
             }
         }
@@ -20,7 +20,7 @@ struct SegmentControlView: View {
 }
 
 #Preview {
-    @Previewable @State var selection: ManagerSalesTimeRange = .weekly
+    @Previewable @State var selection: SalesTimeRange = .weekly
     SegmentControlView(selection: $selection)
         .padding()
         .background(RSMSColors.background)

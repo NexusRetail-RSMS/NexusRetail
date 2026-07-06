@@ -19,6 +19,7 @@ import Supabase
 enum SalesTimeRange: String, CaseIterable {
     case weekly = "Weekly"
     case monthly = "Monthly"
+    case yearly = "Yearly"
 }
 
 // MARK: - Chart-ready data points
