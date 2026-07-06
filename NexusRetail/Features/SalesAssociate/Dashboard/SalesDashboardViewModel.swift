@@ -164,9 +164,13 @@ final class SalesDashboardViewModel {
     }
 
     // MARK: - Supabase Fetch
-    func fetchStoreOrders(storeID: UUID?) async {
-        guard let storeID else {
-            print("SalesDashboardViewModel: No storeID, skipping fetch")
+    func fetchStoreOrders(storeID: UUID?, associateID: UUID?) async {
+        guard let storeID, let associateID else {
+            print("SalesDashboardViewModel: Missing storeID/associateID, skipping fetch")
+            await MainActor.run {
+                self.dbOrders = []
+                self.isStatsLoading = false
+            }
             return
         }
         isStatsLoading = true
@@ -207,6 +211,7 @@ final class SalesDashboardViewModel {
                 .from("orders")
                 .select("id, client_id, store_id, associate_id, total, created_at, order_type, status, client!client_id(name, phone), order_line_item(id, quantity)")
                 .eq("store_id", value: storeID)
+                .eq("associate_id", value: associateID)
                 .order("created_at", ascending: false)
                 .execute()
                 .value

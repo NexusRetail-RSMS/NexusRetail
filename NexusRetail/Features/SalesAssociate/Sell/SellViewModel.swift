@@ -190,8 +190,11 @@ class SellViewModel {
         return inserted.id
     }
 
-    func fetchRecentOrders(storeID: UUID?) async {
-        guard let storeID = storeID else { return }
+    func fetchRecentOrders(storeID: UUID?, associateID: UUID?) async {
+        guard let storeID = storeID, let associateID = associateID else {
+            await MainActor.run { self.completedOrders = [] }
+            return
+        }
         isLoadingOrders = true
         defer { isLoadingOrders = false }
 
@@ -209,6 +212,7 @@ class SellViewModel {
                 .from("orders")
                 .select("id, total, status, created_at, associate_id, client_id")
                 .eq("store_id", value: storeID)
+                .eq("associate_id", value: associateID)
                 .eq("status", value: "completed")
                 .order("created_at", ascending: false)
                 .limit(20)

@@ -260,7 +260,9 @@ struct OrdersHubView: View {
 
     private func reloadAll() async {
         let storeID = sessionStore.currentUser?.storeID
-        await sellVM.fetchRecentOrders(storeID: storeID)
+        // Recent POS orders are personal to this associate; BOPIS is a shared
+        // store-level pickup queue (associate_id is null until packed).
+        await sellVM.fetchRecentOrders(storeID: storeID, associateID: sessionStore.currentUser?.id)
         await bopisVM.loadData(storeID: storeID)
     }
 

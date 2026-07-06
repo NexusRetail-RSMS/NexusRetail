@@ -58,7 +58,7 @@ struct RecentOrdersView: View {
         }
         .navigationBarHidden(true)
         .task {
-            await viewModel.fetchRecentOrders(storeID: sessionStore.currentUser?.storeID)
+            await viewModel.fetchRecentOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
         }
     }
 

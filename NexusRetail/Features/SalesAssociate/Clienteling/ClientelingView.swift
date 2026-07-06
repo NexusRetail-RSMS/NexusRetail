@@ -505,9 +505,11 @@ struct ClientelingView: View {
                 let email: String?
             }
             
+            // Only this associate's client book (created / sold-to / appointment),
+            // matching the performance-attribution definition. Checkout linking
+            // still searches all clients so anyone can attach an existing customer.
             let fetched: [FetchClient] = try await SupabaseManager.shared.client
-                .from("client")
-                .select("id, name, phone, email")
+                .rpc("get_my_clients")
                 .execute()
                 .value
                 
