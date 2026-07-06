@@ -74,17 +74,17 @@ struct SalesDashboardView: View {
         }
         .environment(posViewModel)
         .refreshable {
-            await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID)
+            await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
         }
-        .task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID) }
-        .onAppear { 
+        .task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id) }
+        .onAppear {
             // Refresh data when view appears (e.g., after completing a sale)
-            Task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID) } 
+            Task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id) }
         }
         .onChange(of: navigationPath.count) { _, newCount in
             // Refresh when returning to dashboard (path becomes empty)
             if newCount == 0 {
-                Task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID) }
+                Task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id) }
             }
         }
     }

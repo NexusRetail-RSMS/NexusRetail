@@ -36,7 +36,7 @@ class BOPISViewModel {
         do {
             let fetchedOrders: [StoreOrder] = try await SupabaseManager.shared.client
                 .from("orders")
-                .select("id, client_id, store_id, associate_id, total, created_at, order_type, status, client!client_id(name, phone), order_line_item(id, quantity, products(item_id, item_name))")
+                .select("id, client_id, store_id, associate_id, total, created_at, order_type, status, client!client_id(name, phone), order_line_item(id, quantity, applied_price, products(item_id, item_name))")
                 .eq("store_id", value: storeID)
                 .eq("order_type", value: "bopis")
                 .execute()
@@ -50,7 +50,7 @@ class BOPISViewModel {
                         name: lineItem.products?.itemName ?? "Unknown Item",
                         sku: "SKU-\(lineItem.products?.itemId ?? 0)",
                         quantity: lineItem.quantity,
-                        price: 0, // Mocked for BOPISOrderItem if not available
+                        price: lineItem.appliedPrice ?? 0,
                         qrCode: "",
                         imageUrl: nil
                     )
@@ -72,6 +72,7 @@ class BOPISViewModel {
                     customerName: dOrder.client?.name ?? "Guest",
                     phoneNumber: dOrder.client?.phone ?? "No Phone",
                     pickupTime: dOrder.createdAt.prefix(10).description,
+                    createdAt: dOrder.createdAt,
                     status: bStatus,
                     items: orderItems,
                     itemCount: totalItems,
@@ -79,9 +80,10 @@ class BOPISViewModel {
                     verificationCode: nil
                 )
             }
-            
+
             await MainActor.run {
-                self.orders = bopisOrders.sorted { $0.pickupTime > $1.pickupTime }
+                // Newest orders first.
+                self.orders = bopisOrders.sorted { $0.createdDate > $1.createdDate }
             }
         } catch {
             print("Failed to fetch BOPIS orders: \(error)")
@@ -90,7 +92,7 @@ class BOPISViewModel {
     
     // MARK: - State Transitions
     
-    func packAndNotify(id: UUID) {
+    func packAndNotify(id: UUID, associateID: UUID? = nil) {
         if let index = orders.firstIndex(where: { $0.id == id }) {
             let order = orders[index]
             let initials = order.customerName.components(separatedBy: " ")
@@ -100,21 +102,34 @@ class BOPISViewModel {
                 .uppercased()
             let randomCode = String(format: "%04d", Int.random(in: 1000...9999))
             let code = "\(initials)-\(randomCode)"
-            
+
             orders[index].verificationCode = code
             orders[index].status = .waitingForCustomer
-            
-            // Execute Supabase update
+
             Task {
-                do {
-                    try await SupabaseManager.shared.client
-                        .from("orders")
-                        .update(["status": "waitingForCustomer"])
-                        .eq("id", value: id)
-                        .execute()
-                } catch {
-                    print("Error updating status to waitingForCustomer: \(error)")
+                // Attribute fulfillment to the associate who packs the order.
+                // Written separately from status because status persistence is a
+                // known pending item ("waitingForCustomer" isn't a valid
+                // order_status enum value yet); keeping this write standalone
+                // ensures the associate stamp still succeeds.
+                if let associateID {
+                    do {
+                        try await SupabaseManager.shared.client
+                            .from("orders")
+                            .update(["associate_id": associateID.uuidString])
+                            .eq("id", value: id)
+                            .execute()
+                    } catch {
+                        print("Error stamping associate_id on pack: \(error)")
+                    }
                 }
+
+                // The "packed / waiting for customer" step is tracked in-app only.
+                // We intentionally do NOT persist it: order_status is limited to
+                // {open, completed, cancelled}, so there's no valid value for this
+                // intermediate stage. The order stays 'open' in the DB until it's
+                // collected (markCollected writes 'completed'). Persisting this
+                // step would require a dedicated pickup_stage column.
             }
         }
     }

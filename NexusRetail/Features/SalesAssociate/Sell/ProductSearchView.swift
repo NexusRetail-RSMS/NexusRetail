@@ -58,6 +58,12 @@ struct ProductSearchView: View {
             .ignoresSafeArea(edges: .top)
         }
         .navigationBarHidden(true)
+        .safeAreaInset(edge: .bottom) {
+            // Persistent cart access, matching the scanner flow.
+            if selectedProduct == nil {
+                POSCartBar(path: $path)
+            }
+        }
         .task {
             isLoading = true
             allProducts = await POSProductRepository.shared.fetchProducts(storeID: sessionStore.currentUser?.storeID)
@@ -230,8 +236,8 @@ struct ProductSearchView: View {
                     Text("SKU: \(product.sku)  •  Size: \(product.size)")
                         .font(.system(size: 12))
                         .foregroundColor(RSMSColors.secondaryText)
-                    
-                    Text("₹\(String(format: "%.0f", product.price))")
+
+                    Text(formatIndianCurrency(product.price))
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(RSMSColors.burgundy)
                 }
@@ -308,11 +314,11 @@ struct ProductSearchView: View {
                     Text("Category: \(product.category)  •  Size: \(product.size)")
                         .font(.system(size: 13))
                         .foregroundColor(RSMSColors.secondaryText)
-                    
-                    Text("₹\(String(format: "%.0f", product.price))")
+
+                    Text(formatIndianCurrency(product.price))
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(RSMSColors.burgundy)
-                    
+
                     // Out of stock banner
                     HStack(spacing: 4) {
                         Image(systemName: "xmark.circle.fill")
@@ -403,7 +409,7 @@ struct ProductSearchView: View {
                     .font(.system(size: 14, weight: .bold, design: .rounded))
                     .foregroundColor(RSMSColors.primaryText)
                 
-                Text("Price: ₹\(String(format: "%.0f", alt.price))  •  Size: \(alt.size)")
+                Text("Price: \(formatIndianCurrency(alt.price))  •  Size: \(alt.size)")
                     .font(.system(size: 11))
                     .foregroundColor(RSMSColors.secondaryText)
             }

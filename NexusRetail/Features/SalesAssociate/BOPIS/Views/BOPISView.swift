@@ -31,11 +31,14 @@ struct BOPISView: View {
                 .background(Color.white)
                 .shadow(color: Color.black.opacity(0.05), radius: 4, y: 2)
                 
-                // Main Content
-                if viewModel.filteredOrders.isEmpty {
-                    emptyStateView
-                } else {
-                    ScrollView {
+                // Main Content — always a ScrollView so pull-to-refresh works
+                // even when the list is empty (e.g. waiting for a new online order).
+                ScrollView {
+                    if viewModel.filteredOrders.isEmpty {
+                        emptyStateView
+                            .frame(maxWidth: .infinity)
+                            .frame(minHeight: 480)
+                    } else {
                         LazyVStack(spacing: RSMSSpacing.lg) {
                             ForEach(viewModel.filteredOrders) { order in
                                 BOPISCardView(order: order) {
@@ -45,6 +48,9 @@ struct BOPISView: View {
                         }
                         .padding(RSMSSpacing.lg)
                     }
+                }
+                .refreshable {
+                    await viewModel.loadData(storeID: sessionStore.currentUser?.storeID)
                 }
             }
         }
@@ -60,7 +66,7 @@ struct BOPISView: View {
         }
         .sheet(item: $orderToPack) { order in
             BOPISPackOrderView(order: order) {
-                viewModel.packAndNotify(id: order.id)
+                viewModel.packAndNotify(id: order.id, associateID: sessionStore.currentUser?.id)
                 notifiedCustomerName = order.customerName
                 showNotifiedAlert = true
             }

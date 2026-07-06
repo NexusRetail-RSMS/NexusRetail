@@ -54,8 +54,9 @@ struct NewManagerSheet: View {
     }
 
     private func generatePassword() {
-        let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
-        password = String((0..<12).map { _ in chars.randomElement()! })
+        let cleanName = firstName.trimmingCharacters(in: .whitespaces)
+        let number = Int.random(in: 100...999)
+        password = "\(cleanName)\(number)"
     }
 
     var body: some View {

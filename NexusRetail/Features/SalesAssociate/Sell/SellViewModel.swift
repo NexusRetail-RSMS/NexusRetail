@@ -81,6 +81,8 @@ class SellViewModel {
         let p_associate_id: UUID
         let p_items: [[String: AnyCodable]]
         let p_total: Double
+        let p_client_id: UUID?
+        let p_payment_method: String?
     }
     
     struct AnyCodable: Encodable {
@@ -121,11 +123,16 @@ class SellViewModel {
             ]
         }
         
+        // Map the POS payment method to the DB payment_method enum ('razorpay' | 'card').
+        let paymentMethodValue = selectedPaymentMethod == .razorpay ? "razorpay" : "card"
+
         let params = CheckoutParams(
             p_store_id: storeID,
             p_associate_id: associateID,
             p_items: pItems,
-            p_total: totalAmount
+            p_total: totalAmount,
+            p_client_id: selectedClientId,
+            p_payment_method: paymentMethodValue
         )
         
         let orderIdResponse: UUID = try await SupabaseManager.shared.client
@@ -135,8 +142,59 @@ class SellViewModel {
         self.lastOrderId = orderIdResponse
     }
     
-    func fetchRecentOrders(storeID: UUID?) async {
-        guard let storeID = storeID else { return }
+    // MARK: - Client lookup / quick-create (checkout customer linking)
+
+    /// Normalizes a phone string to its last 10 digits for tolerant matching
+    /// (e.g. "+91 98765 43210" and "9876543210" compare equal).
+    private func normalizedPhone(_ phone: String) -> String {
+        let digits = phone.filter(\.isNumber)
+        return String(digits.suffix(10))
+    }
+
+    /// Looks up a client by phone. Fetches all clients and matches in memory on
+    /// normalized digits — fine for this dataset's size; if the client table
+    /// grows large, replace with a server-side normalized-phone query/index.
+    func findClient(byPhone phone: String) async -> (id: UUID, name: String)? {
+        let target = normalizedPhone(phone)
+        guard target.count >= 6 else { return nil }
+
+        struct ClientRow: Decodable { let id: UUID; let name: String; let phone: String? }
+        do {
+            let rows: [ClientRow] = try await SupabaseManager.shared.client
+                .from("client")
+                .select("id, name, phone")
+                .execute()
+                .value
+            if let match = rows.first(where: { normalizedPhone($0.phone ?? "") == target }) {
+                return (match.id, match.name)
+            }
+            return nil
+        } catch {
+            print("SellViewModel: findClient error: \(error)")
+            return nil
+        }
+    }
+
+    /// Creates a new client with the given name/phone and returns its id.
+    func createClient(name: String, phone: String, createdBy: UUID?) async throws -> UUID {
+        struct InsertClient: Encodable { let name: String; let phone: String; let created_by: UUID? }
+        struct InsertedClient: Decodable { let id: UUID }
+
+        let inserted: InsertedClient = try await SupabaseManager.shared.client
+            .from("client")
+            .insert(InsertClient(name: name, phone: phone, created_by: createdBy))
+            .select("id")
+            .single()
+            .execute()
+            .value
+        return inserted.id
+    }
+
+    func fetchRecentOrders(storeID: UUID?, associateID: UUID?) async {
+        guard let storeID = storeID, let associateID = associateID else {
+            await MainActor.run { self.completedOrders = [] }
+            return
+        }
         isLoadingOrders = true
         defer { isLoadingOrders = false }
 
@@ -154,6 +212,7 @@ class SellViewModel {
                 .from("orders")
                 .select("id, total, status, created_at, associate_id, client_id")
                 .eq("store_id", value: storeID)
+                .eq("associate_id", value: associateID)
                 .eq("status", value: "completed")
                 .order("created_at", ascending: false)
                 .limit(20)
@@ -193,6 +252,15 @@ struct DBOrder: Identifiable, Hashable {
     let amount: Double
     let status: String
     let createdAt: String
+
+    /// Parsed timestamp for sorting (falls back to distantPast if unparseable).
+    var createdDate: Date {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let d = f.date(from: createdAt) { return d }
+        f.formatOptions = [.withInternetDateTime]
+        return f.date(from: createdAt) ?? .distantPast
+    }
 
     var formattedTime: String {
         let f = ISO8601DateFormatter()

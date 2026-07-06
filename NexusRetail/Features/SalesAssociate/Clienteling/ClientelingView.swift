@@ -252,7 +252,7 @@ struct ClientelingView: View {
                     Menu {
                         Button("Edit Client") {
                             isEditingClient = true
-                            editingClientId = client.id
+                            editingClientId = client.dbId
                             clientName = client.name
                             clientPhone = client.phone
                             stylePreferences = client.preferences
@@ -267,9 +267,7 @@ struct ClientelingView: View {
                             isNewAppointmentPresented = true
                         }
                         Button("Delete Client", role: .destructive) {
-                            if let index = clients.firstIndex(where: { $0.id == client.id }) {
-                                withAnimation { clients.remove(at: index) }
-                            }
+                            deleteClient(client)
                         }
                     } label: {
                         Image(systemName: "ellipsis")
@@ -357,29 +355,38 @@ struct ClientelingView: View {
     private func saveClientCard() {
         let name = clientName.trimmingCharacters(in: .whitespacesAndNewlines)
         let phone = clientPhone.trimmingCharacters(in: .whitespacesAndNewlines)
-        let prefs = stylePreferences.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        let newClient = AssociateClient(name: name, phone: phone, email: "new@example.com", preferences: prefs.isEmpty ? "Preferences to be captured" : prefs, purchasePattern: "New Client")
-        
+        let editingId = isEditingClient ? editingClientId : nil
+
         Task {
             do {
-                struct InsertClient: Encodable {
-                    let name: String
-                    let phone: String
-                    let created_by: UUID?
+                if let editingId {
+                    // Persist an edit as a real UPDATE (previously always inserted a duplicate).
+                    struct UpdateClient: Encodable {
+                        let name: String
+                        let phone: String
+                    }
+                    try await SupabaseManager.shared.client
+                        .from("client")
+                        .update(UpdateClient(name: name, phone: phone))
+                        .eq("id", value: editingId)
+                        .execute()
+                } else {
+                    struct InsertClient: Encodable {
+                        let name: String
+                        let phone: String
+                        let created_by: UUID?
+                    }
+                    try await SupabaseManager.shared.client
+                        .from("client")
+                        .insert(InsertClient(name: name, phone: phone, created_by: sessionStore.currentUser?.id))
+                        .execute()
                 }
-                
-                try await SupabaseManager.shared.client
-                    .from("client")
-                    .insert(InsertClient(name: name, phone: phone, created_by: sessionStore.currentUser?.id))
-                    .execute()
-                    
                 await loadClients()
             } catch {
-                print("Error saving client: \\(error)")
+                print("Error saving client: \(error)")
             }
         }
-        
+
         isNewClientPresented = false
         isEditingClient = false
         editingClientId = nil
@@ -387,6 +394,25 @@ struct ClientelingView: View {
         clientPhone = ""
         stylePreferences = ""
         hasConsent = true
+    }
+
+    private func deleteClient(_ client: AssociateClient) {
+        // Optimistic removal; reconcile with the DB result below.
+        withAnimation { clients.removeAll { $0.id == client.id } }
+
+        guard let dbId = client.dbId else { return } // sample/local-only row
+        struct DeleteClientParams: Encodable { let p_client_id: UUID }
+        Task {
+            do {
+                try await SupabaseManager.shared.client
+                    .rpc("delete_client", params: DeleteClientParams(p_client_id: dbId))
+                    .execute()
+                await loadClients()
+            } catch {
+                print("Error deleting client: \(error)")
+                await loadClients() // failed delete → row reappears instead of silently vanishing
+            }
+        }
     }
 
     private func initials(for name: String?) -> String {
@@ -479,15 +505,18 @@ struct ClientelingView: View {
                 let email: String?
             }
             
+            // Only this associate's client book (created / sold-to / appointment),
+            // matching the performance-attribution definition. Checkout linking
+            // still searches all clients so anyone can attach an existing customer.
             let fetched: [FetchClient] = try await SupabaseManager.shared.client
-                .from("client")
-                .select("id, name, phone, email")
+                .rpc("get_my_clients")
                 .execute()
                 .value
                 
             await MainActor.run {
                 self.clients = fetched.map { c in
                     AssociateClient(
+                        dbId: c.id,
                         name: c.name,
                         phone: c.phone,
                         email: c.email ?? "",

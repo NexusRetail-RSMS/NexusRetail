@@ -59,11 +59,10 @@ struct InventoryDashboardView: View {
         .sheet(isPresented: $viewModel.showRestockSheet) {
             if let item = viewModel.restockItem {
                 RequestStockSheet(item: item, storeID: sessionStore.currentUser?.storeID) { itemId, qty in
-                    if let storeID = sessionStore.currentUser?.storeID {
-                        Task {
-                            _ = await viewModel.requestRestock(itemId: itemId, quantity: qty, storeID: storeID)
-                        }
+                    guard let storeID = sessionStore.currentUser?.storeID else {
+                        return "No store is associated with your account."
                     }
+                    return await viewModel.requestRestock(itemId: itemId, quantity: qty, storeID: storeID)
                 }
                 .presentationDetents([.height(590)])
             }
@@ -157,12 +156,21 @@ struct InventoryDashboardView: View {
     private var inventoryList: some View {
         Group {
             if viewModel.filteredItems.isEmpty {
-                emptyState(
-                    icon: "shippingbox",
-                    title: "No items found",
-                    message: viewModel.searchText.isEmpty ? "No inventory items match the current filter." : "No results for \"\(viewModel.searchText)\"."
-                )
-                .padding(.top, 40)
+                if let errorMessage = viewModel.errorMessage {
+                    emptyState(
+                        icon: "exclamationmark.triangle",
+                        title: "Couldn't load inventory",
+                        message: errorMessage
+                    )
+                    .padding(.top, 40)
+                } else {
+                    emptyState(
+                        icon: "shippingbox",
+                        title: "No items found",
+                        message: viewModel.searchText.isEmpty ? "No inventory items match the current filter." : "No results for \"\(viewModel.searchText)\"."
+                    )
+                    .padding(.top, 40)
+                }
             } else {
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)], spacing: 16) {
                     ForEach(viewModel.filteredItems) { item in

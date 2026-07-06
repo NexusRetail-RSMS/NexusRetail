@@ -48,7 +48,7 @@ final class ManagerDashboardViewModel {
     
     // Toggles for the main dashboard charts
     var topProductsTimeRange: SalesTimeRange = .monthly
-    var staffTimeRange: SalesTimeRange = .monthly
+    // (staff performance has no period toggle — get_staff_stats is all-time)
     var revenueTimeRange: SalesTimeRange = .yearly
     var revenueDate: Date = Date()
     
@@ -141,7 +141,14 @@ final class ManagerDashboardViewModel {
             let inventory = try? await inventoryTask
             
             // 4. Fetch Charts (Top Products & Revenue)
-            let periodPrefix = topProductsTimeRange == .weekly ? "W" : "M"
+            // Map every period, not just W/M — the RPC supports a Y: prefix, and
+            // the old `== .weekly ? "W" : "M"` silently turned Yearly into Monthly.
+            let periodPrefix: String
+            switch topProductsTimeRange {
+            case .weekly:  periodPrefix = "W"
+            case .monthly: periodPrefix = "M"
+            case .yearly:  periodPrefix = "Y"
+            }
             let params = ManagerSalesParams(
                 p_store_id: ManagerNullableUUID(value: storeID),
                 p_period: "\(periodPrefix):\(ISO8601DateFormatter().string(from: Date()))"

@@ -55,7 +55,7 @@ struct BOPISCardView: View {
                         Text("Total")
                             .font(RSMSFonts.caption)
                             .foregroundColor(RSMSColors.secondaryText)
-                        Text(String(format: "$%.2f", order.totalAmount))
+                        Text(formatIndianCurrency(order.totalAmount))
                             .font(RSMSFonts.headline)
                             .foregroundColor(RSMSColors.primaryText)
                     }

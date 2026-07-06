@@ -103,9 +103,11 @@ struct OrderLineItem: Codable, Identifiable {
     let id: UUID?
     let orderID: UUID?
     let quantity: Int
-    let appliedPrice: Double
+    // Optional: some queries don't select applied_price. Decoding must not fail
+    // when the column is omitted (previously crashed the BOPIS fetch).
+    let appliedPrice: Double?
     let products: NestedProduct?
-    
+
     enum CodingKeys: String, CodingKey {
         case id
         case orderID = "order_id"
@@ -113,8 +115,8 @@ struct OrderLineItem: Codable, Identifiable {
         case appliedPrice = "applied_price"
         case products
     }
-    
-    init(id: UUID?, orderID: UUID?, quantity: Int, appliedPrice: Double, products: NestedProduct?) {
+
+    init(id: UUID?, orderID: UUID?, quantity: Int, appliedPrice: Double?, products: NestedProduct?) {
         self.id = id
         self.orderID = orderID
         self.quantity = quantity
@@ -124,10 +126,12 @@ struct OrderLineItem: Codable, Identifiable {
 }
 
 struct NestedProduct: Codable {
+    // All optional: different queries select different subsets of product
+    // columns, so decoding must tolerate any missing field rather than crash.
     let itemId: Int64?
-    let itemName: String
-    let category: String
-    
+    let itemName: String?
+    let category: String?
+
     enum CodingKeys: String, CodingKey {
         case itemId = "item_id"
         case itemName = "item_name"

@@ -13,6 +13,9 @@ struct ProductSalesChart: View {
     let data: [ProductChartPoint]
     let maxValue: Int
     @Binding var timeRange: SalesTimeRange
+    /// When true, the toggle also offers Yearly. Off by default so the Admin
+    /// dashboard (weekly/monthly only) is unaffected; the Manager passes true.
+    var allowsYearly: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: RSMSSpacing.md) {
@@ -30,7 +33,17 @@ struct ProductSalesChart: View {
 
                 Spacer()
 
-                TimeRangeToggle(selection: $timeRange)
+                if allowsYearly {
+                    Picker("Time Range", selection: $timeRange) {
+                        ForEach(SalesTimeRange.allCases, id: \.self) { range in
+                            Text(range.rawValue).tag(range)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 200)
+                } else {
+                    TimeRangeToggle(selection: $timeRange)
+                }
             }
 
             if data.isEmpty {

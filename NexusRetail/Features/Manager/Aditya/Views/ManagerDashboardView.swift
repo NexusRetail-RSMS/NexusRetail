@@ -31,13 +31,13 @@ struct ManagerDashboardView: View {
                 ProductSalesChart(
                     data: viewModel.topProductsData,
                     maxValue: viewModel.topProductsMaxValue,
-                    timeRange: $viewModel.topProductsTimeRange
+                    timeRange: $viewModel.topProductsTimeRange,
+                    allowsYearly: true
                 )
                 
                 // MARK: - Staff Performance
                 StaffPerformanceChart(
-                    data: viewModel.staffPerformanceData,
-                    timeRange: $viewModel.staffTimeRange
+                    data: viewModel.staffPerformanceData
                 )
             }
             .padding(.horizontal, RSMSSpacing.lg)
