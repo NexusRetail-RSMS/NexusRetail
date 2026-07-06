@@ -137,7 +137,7 @@ struct AdminDashboardView: View {
                         viewModel.selectedCountry = nil
                     }
                 } label: {
-                    Text("🌍 All Global")
+                    Text("All Global")
                 }
                 ForEach(viewModel.countries, id: \.self) { country in
                     Button {
@@ -145,7 +145,7 @@ struct AdminDashboardView: View {
                             viewModel.selectedCountry = country
                         }
                     } label: {
-                        Text("\(countryFlag(for: country)) \(country)")
+                        Text(country)
                     }
                 }
             } label: {
@@ -155,11 +155,13 @@ struct AdminDashboardView: View {
                         .frame(width: 44, height: 44)
 
                     if let selected = viewModel.selectedCountry {
-                        Text(countryFlag(for: selected))
-                            .font(.system(size: 22))
+                        Text(countryCode(for: selected))
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(RSMSColors.burgundy)
                     } else {
-                        Text("🌍")
-                            .font(.system(size: 22))
+                        Text("ALL")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(RSMSColors.burgundy)
                     }
                 }
             }
@@ -211,23 +213,23 @@ struct AdminDashboardView: View {
         return "AD"
     }
 
-    private func countryFlag(for country: String) -> String {
+    private func countryCode(for country: String) -> String {
         let map: [String: String] = [
-            "United States":        "🇺🇸",
-            "USA":                  "🇺🇸",
-            "United Kingdom":       "🇬🇧",
-            "UK":                   "🇬🇧",
-            "Canada":               "🇨🇦",
-            "Australia":            "🇦🇺",
-            "Germany":              "🇩🇪",
-            "France":               "🇫🇷",
-            "Japan":                "🇯🇵",
-            "India":                "🇮🇳",
-            "Singapore":            "🇸🇬",
-            "United Arab Emirates": "🇦🇪",
-            "UAE":                  "🇦🇪",
+            "United States":        "US",
+            "USA":                  "US",
+            "United Kingdom":       "UK",
+            "UK":                   "UK",
+            "Canada":               "CA",
+            "Australia":            "AU",
+            "Germany":              "DE",
+            "France":               "FR",
+            "Japan":                "JP",
+            "India":                "IN",
+            "Singapore":            "SG",
+            "United Arab Emirates": "AE",
+            "UAE":                  "AE",
         ]
-        return map[country] ?? "🌍"
+        return map[country] ?? "ALL"
     }
 
     private var kpiSection: some View {
