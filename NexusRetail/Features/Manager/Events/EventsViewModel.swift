@@ -32,6 +32,7 @@ struct MockGuest: Identifiable, Codable {
     let email: String
     let phone: String
     let avatarName: String
+    var storeId: UUID?
 }
 
 struct MockEvent: Identifiable, Codable {
@@ -70,6 +71,7 @@ struct MockEvent: Identifiable, Codable {
 class EventsViewModel {
     var events: [MockEvent] = []
     var allCustomers: [MockGuest] = []
+    var storeCustomers: [MockGuest] = []
     
     init() {
         generateMockData()
@@ -87,7 +89,8 @@ class EventsViewModel {
                 name: name,
                 email: "\(name.split(separator: " ").first!.lowercased())@example.com",
                 phone: "+91 98765 \(String(format: "%04d", 4321 + index))",
-                avatarName: name.prefix(1).uppercased()
+                avatarName: name.prefix(1).uppercased(),
+                storeId: nil // Mock data
             )
         }
         
@@ -165,12 +168,38 @@ class EventsViewModel {
         events.removeAll { $0.id == id }
     }
     
+    // MARK: - Backend Ready Fetch
+    
+    @MainActor
+    func fetchCustomers(for storeID: UUID?) async {
+        guard let storeID = storeID else { return }
+        
+        // TODO: Replace with real backend fetch
+        /*
+        do {
+            let fetchedCustomers: [MockGuest] = try await supabase
+                .from("customers")
+                .select()
+                .eq("store_id", value: storeID.uuidString)
+                .execute()
+                .value
+            self.storeCustomers = fetchedCustomers
+        } catch {
+            print("Failed to fetch customers: \(error)")
+        }
+        */
+        
+        // Mock implementation: For now, we populate with all mock customers 
+        // to keep the UI functional, but in reality this would use the fetched data.
+        self.storeCustomers = allCustomers
+    }
+    
     // MARK: - Guest Actions
     
     func inviteGuests(to eventId: UUID, guestIds: Set<UUID>) {
         guard let eventIndex = events.firstIndex(where: { $0.id == eventId }) else { return }
         
-        let customersToInvite = allCustomers.filter { guestIds.contains($0.id) }
+        let customersToInvite = storeCustomers.filter { guestIds.contains($0.id) }
         
         // Add only guests that aren't already in the list
         for customer in customersToInvite {

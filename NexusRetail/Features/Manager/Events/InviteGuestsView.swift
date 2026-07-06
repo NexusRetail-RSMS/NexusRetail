@@ -4,12 +4,13 @@ struct InviteGuestsView: View {
     @Bindable var viewModel: EventsViewModel
     let eventId: UUID
     @Environment(\.dismiss) private var dismiss
+    @Environment(SessionStore.self) private var sessionStore
     
     @State private var searchText = ""
     @State private var selectedGuestIds = Set<UUID>()
     
-    private var allCustomers: [MockGuest] {
-        viewModel.allCustomers
+    private var storeCustomers: [MockGuest] {
+        viewModel.storeCustomers
     }
     
     private var currentGuestIds: Set<UUID> {
@@ -18,7 +19,7 @@ struct InviteGuestsView: View {
     }
     
     private var availableCustomers: [MockGuest] {
-        let available = allCustomers.filter { !currentGuestIds.contains($0.id) }
+        let available = storeCustomers.filter { !currentGuestIds.contains($0.id) }
         if searchText.isEmpty {
             return available
         } else {
@@ -128,6 +129,9 @@ struct InviteGuestsView: View {
             }
             .navigationTitle("Invite Guests")
             .navigationBarTitleDisplayMode(.inline)
+            .task {
+                await viewModel.fetchCustomers(for: sessionStore.currentUser?.storeID)
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {

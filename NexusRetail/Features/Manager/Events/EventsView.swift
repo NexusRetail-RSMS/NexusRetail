@@ -126,21 +126,8 @@ struct EventsView: View {
     // MARK: - Search Bar
     
     private var searchBar: some View {
-        HStack {
-            Image(systemName: "magnifyingglass")
-                .foregroundColor(.gray)
-            TextField("Search events...", text: $searchText)
-                .font(.body)
-                .foregroundColor(RSMSColors.primaryText)
-            
-            if !searchText.isEmpty {
-                Button {
-                    searchText = ""
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.gray)
-                }
-            }
+        HStack(spacing: 12) {
+            NexusSearchBar(text: $searchText, placeholder: "Search events...")
             
             Menu {
                 Picker("Filter", selection: $selectedFilter) {
@@ -149,17 +136,17 @@ struct EventsView: View {
                     }
                 }
             } label: {
-                Image(systemName: "line.3.horizontal.decrease.circle.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(RSMSColors.burgundy)
+                ZStack {
+                    Circle()
+                        .fill(RSMSColors.burgundy.opacity(0.08))
+                        .frame(width: 48, height: 48)
+
+                    Image(systemName: "line.3.horizontal.decrease")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundColor(RSMSColors.burgundy)
+                }
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color.white)
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.02), radius: 4, x: 0, y: 2)
-        .animation(.easeInOut, value: searchText)
     }
     
     // MARK: - Empty States
