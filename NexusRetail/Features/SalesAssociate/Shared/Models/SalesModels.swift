@@ -19,6 +19,11 @@ enum POSFlowDestination: Hashable {
     case receipt
     case bopis
     case ordersHub
+    
+    // After Sales Flow
+    case invoiceScanner
+    case invoiceItemsSelection(invoiceId: String)
+    case actionSelection(invoiceId: String, selectedItemIds: Set<UUID>)
 }
 
 // MARK: - Chart / Period
