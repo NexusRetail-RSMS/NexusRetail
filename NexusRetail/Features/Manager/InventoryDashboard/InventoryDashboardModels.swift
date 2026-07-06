@@ -43,18 +43,20 @@ enum InventorySortOrder: String, CaseIterable {
 
 /// Product categories from the database
 enum InventoryCategory: String, CaseIterable {
+    // Raw values must match the real `products.category` strings, otherwise the
+    // category filter matches nothing. DB uses "Perfumes" and "Jewellery".
     case bags = "Bags"
     case clothes = "Clothes"
-    case fragrances = "Fragrances"
-    case jewelry = "Jewelry"
+    case perfumes = "Perfumes"
+    case jewellery = "Jewellery"
     case watches = "Watches"
-    
+
     var icon: String {
         switch self {
         case .bags: return "bag.fill"
         case .clothes: return "tshirt.fill"
-        case .fragrances: return "drop.fill"
-        case .jewelry: return "diamond.fill"
+        case .perfumes: return "drop.fill"
+        case .jewellery: return "diamond.fill"
         case .watches: return "clock.fill"
         }
     }
@@ -290,21 +292,7 @@ struct InventorySummary {
 
 // MARK: - Currency Formatting Helper
 
-/// Formats a number into Indian ₹ with Lac / Cr suffixes
-func formatIndianCurrency(_ value: Double) -> String {
-    if value >= 1_00_00_000 {
-        let cr = value / 1_00_00_000
-        return String(format: "₹%.1fCr", cr)
-    } else if value >= 1_00_000 {
-        let lac = value / 1_00_000
-        return String(format: "₹%.1fL", lac)
-    } else if value >= 1_000 {
-        let k = value / 1_000
-        return String(format: "₹%.1fK", k)
-    } else {
-        return String(format: "₹%.0f", value)
-    }
-}
+
 
 // MARK: - Mock Data
 

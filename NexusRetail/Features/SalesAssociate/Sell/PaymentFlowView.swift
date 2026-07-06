@@ -335,7 +335,7 @@ struct PaymentFlowView: View {
                 // Refresh product stock after checkout
                 await POSProductRepository.shared.refreshStockForStore(storeID: sessionStore.currentUser?.storeID)
                 
-                await viewModel.fetchRecentOrders(storeID: sessionStore.currentUser?.storeID)
+                await viewModel.fetchRecentOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
                 
                 await MainActor.run {
                     withAnimation {
@@ -371,7 +371,7 @@ struct PaymentFlowView: View {
                 // Refresh product stock after checkout
                 await POSProductRepository.shared.refreshStockForStore(storeID: sessionStore.currentUser?.storeID)
                 
-                await viewModel.fetchRecentOrders(storeID: sessionStore.currentUser?.storeID)
+                await viewModel.fetchRecentOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
                 
                 await MainActor.run {
                     withAnimation {

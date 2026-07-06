@@ -56,7 +56,7 @@ struct SalesAssociateDashboardView: View {
             }
         }
         .sheet(isPresented: $isNewClientPresented) { newClientSheet }
-        .sheet(isPresented: $isProfilePresented) { SalesProfileSheet() }
+        .sheet(isPresented: $isProfilePresented) { AdminProfileSheet() }
     }
 
     private var headerBar: some View {

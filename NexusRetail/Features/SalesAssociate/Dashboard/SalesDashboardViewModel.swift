@@ -33,6 +33,10 @@ final class SalesDashboardViewModel {
         let todayPrefix = fallbackFmt.string(from: now)
 
         return dbOrders.filter { order in
+            // Only completed orders count toward the KPIs (previously every
+            // status — open/cancelled — was included, inflating the numbers).
+            guard order.status == "completed" else { return false }
+
             if let date = formatter.date(from: order.createdAt) {
                 switch selectedPeriod {
                 case .today:
@@ -57,11 +61,7 @@ final class SalesDashboardViewModel {
     // MARK: - KPI Strings (with mock fallbacks)
     var salesAmountString: String {
         let total = filteredDbOrders.reduce(0.0) { $0 + $1.total }
-        let fmt = NumberFormatter()
-        fmt.numberStyle   = .currency
-        fmt.currencySymbol = "₹"
-        fmt.maximumFractionDigits = 2
-        return fmt.string(from: NSNumber(value: total)) ?? "₹\(String(format: "%.2f", total))"
+        return formatIndianCurrency(total)
     }
 
     var salesTrendString: String {
@@ -84,6 +84,15 @@ final class SalesDashboardViewModel {
 
     var returnsCount: Int {
         return ordersCompletedCount % 4
+    }
+
+    // MARK: - Fulfillment Stats
+    var scheduledInStoreCount: Int { 
+        dbOrders.filter { $0.orderType == "store" && $0.status != "completed" }.count
+    }
+    
+    var scheduledBOPISCount: Int { 
+        dbOrders.filter { $0.orderType == "bopis" && $0.status != "completed" }.count
     }
 
     // MARK: - Revenue Chart Data
@@ -155,9 +164,13 @@ final class SalesDashboardViewModel {
     }
 
     // MARK: - Supabase Fetch
-    func fetchStoreOrders(storeID: UUID?) async {
-        guard let storeID else {
-            print("SalesDashboardViewModel: No storeID, skipping fetch")
+    func fetchStoreOrders(storeID: UUID?, associateID: UUID?) async {
+        guard let storeID, let associateID else {
+            print("SalesDashboardViewModel: Missing storeID/associateID, skipping fetch")
+            await MainActor.run {
+                self.dbOrders = []
+                self.isStatsLoading = false
+            }
             return
         }
         isStatsLoading = true
@@ -174,6 +187,9 @@ final class SalesDashboardViewModel {
             let associateID:   UUID?
             let total:         Double
             let createdAt:     String
+            let orderType:     String?
+            let status:        String?
+            let client:        StoreOrderClient?
             let orderLineItems: [DashboardOrderLineItem]?
 
             enum CodingKeys: String, CodingKey {
@@ -183,6 +199,9 @@ final class SalesDashboardViewModel {
                 case associateID   = "associate_id"
                 case total
                 case createdAt     = "created_at"
+                case orderType     = "order_type"
+                case status
+                case client
                 case orderLineItems = "order_line_item"
             }
         }
@@ -190,8 +209,10 @@ final class SalesDashboardViewModel {
         do {
             let fetched: [DashboardOrder] = try await SupabaseManager.shared.client
                 .from("orders")
-                .select("id, client_id, store_id, associate_id, total, created_at, order_line_item(id, quantity)")
+                .select("id, client_id, store_id, associate_id, total, created_at, order_type, status, client!client_id(name, phone), order_line_item(id, quantity)")
                 .eq("store_id", value: storeID)
+                .eq("associate_id", value: associateID)
+                .order("created_at", ascending: false)
                 .execute()
                 .value
 
@@ -208,6 +229,9 @@ final class SalesDashboardViewModel {
                     associateID: dOrder.associateID,
                     total: dOrder.total,
                     createdAt: dOrder.createdAt,
+                    orderType: dOrder.orderType,
+                    status: dOrder.status,
+                    client: dOrder.client,
                     orderLineItems: lineItems
                 )
             }

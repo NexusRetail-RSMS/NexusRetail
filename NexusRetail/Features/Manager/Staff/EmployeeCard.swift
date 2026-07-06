@@ -17,6 +17,8 @@ struct DisplayEmployee: Identifiable, Hashable, Codable {
     var phone: String = ""
     var email: String = ""
     var imageData: Data? = nil
+    var storeId: UUID?
+    var customerAttraction: Int
 }
 
 // MARK: - Employee Card View
@@ -51,7 +53,8 @@ struct EmployeeCard: View {
             role: role,
             productsSold: productsSold,
             revenue: amount,
-            imageUrl: imageUrl
+            imageUrl: imageUrl,
+            customerAttraction: 0
         )
         self.onEdit = onEdit
         self.onDelete = onDelete
@@ -85,26 +88,33 @@ struct EmployeeCard: View {
                 } else {
                     Image(systemName: "person.fill")
                         .foregroundColor(RSMSColors.burgundy)
-                        .font(.system(size: 22))
+                        .font(.system(size: 24))
                 }
             }
 
             // Name & products sold with amount below
             VStack(alignment: .leading, spacing: 4) {
                 Text(employee.name)
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.system(size: 17, weight: .bold, design: .rounded))
                     .foregroundColor(RSMSColors.primaryText)
                 
-                Text("\(employee.productsSold) Products Sold • \(employee.revenue)")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
+                HStack(spacing: 5) {
+                    let isAfterSales = employee.role.localizedCaseInsensitiveContains("after")
+                    Image(systemName: isAfterSales ? "wrench.and.screwdriver" : "bag")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(RSMSColors.burgundy)
+                    
+                    Text("\(employee.productsSold) \(isAfterSales ? "Products Aftercare" : "Products Sold")")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(RSMSColors.secondaryText)
+                }
             }
 
             Spacer()
 
             // Chevron at right edge
             Image(systemName: "chevron.right")
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(RSMSColors.secondaryText)
         }
         .padding(16)

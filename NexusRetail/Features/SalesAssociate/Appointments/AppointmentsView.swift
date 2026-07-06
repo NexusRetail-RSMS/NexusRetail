@@ -134,8 +134,7 @@ struct AppointmentsView: View {
                 Label(appt.time, systemImage: "clock")
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(RSMSColors.darkBrown)
-                Spacer()
-                statusBadge(appt.status)
+
             }
 
             Text(appt.clientName)
@@ -147,22 +146,13 @@ struct AppointmentsView: View {
                 .foregroundStyle(RSMSColors.secondaryText)
 
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(RSMSColors.cardBackground)
                 .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 3)
         )
-    }
-
-    private func statusBadge(_ status: AppointmentStatus) -> some View {
-        Label(status.title, systemImage: status.icon)
-            .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(status.color)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(status.color.opacity(0.14))
-            .clipShape(Capsule())
     }
 }
 

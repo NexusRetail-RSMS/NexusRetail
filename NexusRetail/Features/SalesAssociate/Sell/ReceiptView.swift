@@ -225,7 +225,7 @@ struct ReceiptView: View {
                             }
                         }
                         Spacer()
-                        Text("₹\(formatINR(item.product.price * Double(item.count)))")
+                        Text(formatIndianCurrency(item.product.price * Double(item.count)))
                             .font(.system(size: 13, weight: .bold)).foregroundColor(RSMSColors.primaryText)
                     }
                 }
@@ -238,17 +238,17 @@ struct ReceiptView: View {
                 HStack {
                     Text("Subtotal").font(.system(size: 13)).foregroundColor(RSMSColors.secondaryText)
                     Spacer()
-                    Text("₹\(formatINR(cachedSubtotal))").font(.system(size: 13, weight: .bold)).foregroundColor(RSMSColors.primaryText)
+                    Text(formatIndianCurrency(cachedSubtotal)).font(.system(size: 13, weight: .bold)).foregroundColor(RSMSColors.primaryText)
                 }
                 HStack {
                     Text("GST (18% incl.)").font(.system(size: 13)).foregroundColor(RSMSColors.secondaryText)
                     Spacer()
-                    Text("₹\(formatINR(cachedTotal * 0.18))").font(.system(size: 13)).foregroundColor(RSMSColors.secondaryText)
+                    Text(formatIndianCurrency(cachedTotal * 0.18)).font(.system(size: 13)).foregroundColor(RSMSColors.secondaryText)
                 }
                 HStack {
                     Text("Total Paid").font(.system(size: 16, weight: .bold)).foregroundColor(RSMSColors.primaryText)
                     Spacer()
-                    Text("₹\(formatINR(cachedTotal))").font(.system(size: 18, weight: .black)).foregroundColor(RSMSColors.burgundy)
+                    Text(formatIndianCurrency(cachedTotal)).font(.system(size: 18, weight: .black)).foregroundColor(RSMSColors.burgundy)
                 }
             }
             .padding(.bottom, 10)
@@ -285,11 +285,7 @@ struct ReceiptView: View {
         }
     }
 
-    private func formatINR(_ value: Double) -> String {
-        let f = NumberFormatter()
-        f.numberStyle = .decimal; f.groupingSeparator = ","; f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: value)) ?? "\(Int(value))"
-    }
+
     
     private var groupedCachedItems: [(product: POSProduct, count: Int)] {
         var counts: [UUID: Int] = [:]

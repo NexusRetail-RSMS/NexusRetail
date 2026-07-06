@@ -27,6 +27,17 @@ struct StaffView: View {
         }
     }
     
+    private var currentRoleEmployees: [DisplayEmployee] {
+        viewModel.employees.filter { $0.role == selectedRoleFilter.rawValue }
+    }
+    
+    private var formattedTotalProducts: String {
+        let total = currentRoleEmployees.reduce(0) { $0 + $1.productsSold }
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        return formatter.string(from: NSNumber(value: total)) ?? "\(total)"
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
             // MARK: - Custom Header
@@ -72,6 +83,69 @@ struct StaffView: View {
             // MARK: - Content List
             ScrollView {
                 VStack(spacing: RSMSSpacing.md) {
+                    // MARK: - Team Overview
+                    VStack(alignment: .leading, spacing: RSMSSpacing.md) {
+                        Text("Team Overview")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(RSMSColors.primaryText)
+                        
+                        HStack(spacing: 0) {
+                            // Left column
+                            VStack(spacing: 8) {
+                                Circle()
+                                    .fill(RSMSColors.burgundy.opacity(0.12))
+                                    .frame(width: 50, height: 50)
+                                    .overlay(
+                                        Image(systemName: "person.2")
+                                            .font(.system(size: 20, weight: .semibold))
+                                            .foregroundColor(RSMSColors.burgundy)
+                                    )
+                                
+                                Text("Total Employees")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(RSMSColors.secondaryText)
+                                
+                                Text("\(currentRoleEmployees.count)")
+                                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                                    .foregroundColor(RSMSColors.primaryText)
+                            }
+                            .frame(maxWidth: .infinity)
+                            
+                            Divider()
+                                .frame(height: 85)
+                            
+                            // Right column
+                            VStack(spacing: 8) {
+                                Circle()
+                                    .fill(Color(red: 0.96, green: 0.93, blue: 0.84))
+                                    .frame(width: 50, height: 50)
+                                    .overlay(
+                                        Image(systemName: selectedRoleFilter == .afterSales ? "wrench.and.screwdriver" : "bag")
+                                            .font(.system(size: 20, weight: .semibold))
+                                            .foregroundColor(Color(red: 0.55, green: 0.35, blue: 0.15))
+                                    )
+                                
+                                Text(selectedRoleFilter == .afterSales ? "Product Aftercare" : "Products Sold")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(RSMSColors.secondaryText)
+                                
+                                Text(formattedTotalProducts)
+                                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                                    .foregroundColor(RSMSColors.primaryText)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                        .padding(.vertical, 16)
+                        .background(RSMSColors.cardBackground)
+                        .cornerRadius(RSMSRadius.extraLarge)
+                        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: RSMSRadius.extraLarge)
+                                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                        )
+                    }
+                    .padding(.bottom, RSMSSpacing.xs)
+                    
                     if filteredEmployees.isEmpty {
                         VStack(spacing: RSMSSpacing.md) {
                             Image(systemName: "person.slash")
@@ -134,7 +208,7 @@ struct StaffView: View {
             await viewModel.loadStaff()
         }
         .sheet(isPresented: $isAddEmployeePresented) {
-            NewEmployeeSheet(onCreate: { newEmployee, password in
+            NewEmployeeSheet(initialRole: selectedRoleFilter == .afterSales ? .afterSales : .salesAssociate, onCreate: { newEmployee, password in
                 let error = await viewModel.addEmployee(newEmployee, password: password)
                 if error == nil {
                     if newEmployee.role == "After Sales Associate" {

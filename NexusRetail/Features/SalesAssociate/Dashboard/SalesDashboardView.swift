@@ -18,6 +18,7 @@ struct SalesDashboardView: View {
 
     // UI state
     @State private var isProfilePresented = false
+    @Namespace private var namespace
 
     // ViewModel
     @State private var vm = SalesDashboardViewModel()
@@ -33,15 +34,18 @@ struct SalesDashboardView: View {
                         headerSection
                         kpiSection
                         revenueChartSection
-                        quickActionsSection
-                        recentActivitySection
                         Spacer(minLength: 80)
                     }
                     .padding(.horizontal, RSMSSpacing.lg)
                     .padding(.top, 16)
                 }
 
-                floatingQRButton
+                if #available(iOS 18.0, *) {
+                    floatingQRButton
+                        .matchedTransitionSource(id: "scannerButton", in: namespace)
+                } else {
+                    floatingQRButton
+                }
             }
             .navigationBarHidden(true)
             .sheet(isPresented: $isProfilePresented) { AdminProfileSheet() }
@@ -49,28 +53,38 @@ struct SalesDashboardView: View {
                 switch dest {
                 case .newSale:       NewSaleView(path: $navigationPath)
                 case .searchProduct: ProductSearchView(path: $navigationPath)
-                case .barcodeScanner: BarcodeScannerView(path: $navigationPath)
+                case .barcodeScanner: 
+                    if #available(iOS 18.0, *) {
+                        BarcodeScannerView(path: $navigationPath)
+                            .navigationTransition(.zoom(sourceID: "scannerButton", in: namespace))
+                    } else {
+                        BarcodeScannerView(path: $navigationPath)
+                    }
                 case .cart:          CartView(path: $navigationPath)
                 case .checkout:      CheckoutView(path: $navigationPath)
                 case .payment:       PaymentFlowView(path: $navigationPath)
                 case .receipt:
                     ReceiptView(onComplete: { navigationPath = NavigationPath() })
+                case .bopis:
+                    BOPISView()
+                case .ordersHub:
+                    OrdersHubView(path: $navigationPath)
                 }
             }
         }
         .environment(posViewModel)
         .refreshable {
-            await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID)
+            await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
         }
-        .task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID) }
-        .onAppear { 
+        .task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id) }
+        .onAppear {
             // Refresh data when view appears (e.g., after completing a sale)
-            Task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID) } 
+            Task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id) }
         }
         .onChange(of: navigationPath.count) { _, newCount in
             // Refresh when returning to dashboard (path becomes empty)
             if newCount == 0 {
-                Task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID) }
+                Task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id) }
             }
         }
     }
@@ -110,14 +124,44 @@ struct SalesDashboardView: View {
         .padding(.vertical, 4)
     }
 
-    // MARK: - KPI Cards
+    // MARK: - Top Actions & KPIs
     private var kpiSection: some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: RSMSSpacing.md) {
-            KPICardView(title: "Total Revenue",     value: vm.salesAmountString,         icon: "indianrupeesign.circle.fill", trend: nil, color: Color(hex: "2A9D8F"))
-            KPICardView(title: "Orders Completed",  value: "\(vm.ordersCompletedCount)",  icon: "bag.fill",                    trend: nil, color: RSMSColors.burgundy)
-            KPICardView(title: "Items Sold",        value: "\(vm.itemsSoldCount)",         icon: "shippingbox.fill",            trend: nil, color: Color(hex: "E76F51"))
-            KPICardView(title: "Returns",           value: "\(vm.returnsCount)",           icon: "arrow.uturn.backward.circle.fill", trend: nil, color: Color(hex: "D4A017"))
+        VStack(spacing: RSMSSpacing.md) {
+            startOrderCard
+
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: RSMSSpacing.md) {
+                KPICardView(title: "Orders Completed",  value: "\(vm.ordersCompletedCount)",  icon: "bag.fill",                    trend: nil, color: RSMSColors.burgundy)
+                KPICardView(title: "Items Sold",        value: "\(vm.itemsSoldCount)",         icon: "shippingbox.fill",            trend: nil, color: Color(hex: "E76F51"))
+            }
         }
+    }
+    
+    private var startOrderCard: some View {
+        NavigationLink(value: POSFlowDestination.ordersHub) {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.2)).frame(width: 44, height: 44)
+                    Image(systemName: "bag.fill").font(.system(size: 18, weight: .bold)).foregroundColor(.white)
+                }
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("View All Orders")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                }
+                Spacer()
+                Image(systemName: "chevron.right").font(.system(size: 14, weight: .bold)).foregroundColor(.white.opacity(0.8))
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 16)
+            .background(LinearGradient(
+                colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ))
+            .clipShape(RoundedRectangle(cornerRadius: 18))
+            .shadow(color: RSMSColors.darkBurgundy.opacity(0.18), radius: 10, x: 0, y: 5)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Revenue Chart
@@ -176,130 +220,41 @@ struct SalesDashboardView: View {
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
     }
 
-    // MARK: - Quick Actions (single burgundy button)
-    private var quickActionsSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Quick Actions")
-                .font(.system(size: 16, weight: .bold, design: .rounded))
-                .foregroundColor(RSMSColors.darkBrown)
-                .padding(.horizontal, 4)
-
-            NavigationLink(value: POSFlowDestination.newSale) {
-                HStack(spacing: 12) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.2)).frame(width: 44, height: 44)
-                        Image(systemName: "bag.fill").font(.system(size: 18, weight: .bold)).foregroundColor(.white)
-                    }
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("New Sale").font(.system(size: 16, weight: .bold, design: .rounded)).foregroundColor(.white)
-                        Text("Start a new point of sale checkout session").font(.system(size: 12)).foregroundColor(.white.opacity(0.8))
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right").font(.system(size: 14, weight: .bold)).foregroundColor(.white.opacity(0.8))
-                }
-                .padding(.horizontal, 18)
-                .padding(.vertical, 16)
-                .background(LinearGradient(
-                    colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ))
-                .clipShape(RoundedRectangle(cornerRadius: 18))
-                .shadow(color: RSMSColors.darkBurgundy.opacity(0.18), radius: 10, x: 0, y: 5)
-            }
-            .buttonStyle(.plain)
-        }
-    }
+    // (Quick Actions removed as it's now at the top)
 
     // MARK: - Floating QR Button
     private var floatingQRButton: some View {
-        NavigationLink(value: POSFlowDestination.barcodeScanner) {
+        Button {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                navigationPath.append(POSFlowDestination.barcodeScanner)
+            }
+        } label: {
             ZStack {
-                Circle().fill(Color(
-                    red: 122/255,
-                    green: 22/255,
-                    blue: 34/255
-                )).frame(width: 100, height: 60)
-                    .shadow(color: Color(
-                        red: 122/255,
-                        green: 22/255,
-                        blue: 34/255
-                    ).opacity(0.5), radius: 10, x: 0, y: 5)
-                Image(systemName: "qrcode.viewfinder").font(.system(size: 28, weight: .bold)).foregroundColor(.white)
+                Circle()
+                    .fill(Color(red: 122/255, green: 22/255, blue: 34/255))
+                    .frame(width: 60, height: 60)
+                    .shadow(color: Color(red: 122/255, green: 22/255, blue: 34/255).opacity(0.5), radius: 8, x: 0, y: 4)
+                
+                Image(systemName: "qrcode.viewfinder")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
             }
         }
-        .buttonStyle(.plain)
-        .padding(.trailing, 24)
+        .buttonStyle(AnimatedFloatingButtonStyle())
+        .padding(.trailing, 20)
         .padding(.bottom, 24)
         .accessibilityLabel("Scan QR Code")
     }
 
-    // MARK: - Recent Activity
-    private var recentActivitySection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text("Recent Activity")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.darkBrown)
-                Spacer()
-                NavigationLink(destination: RecentOrdersView()) {
-                    Text("View All").font(.system(size: 12, weight: .bold)).foregroundColor(RSMSColors.burgundy)
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, 4)
+    // (Recent Activity section moved to startOrderCard)
 
-            if vm.dbOrders.isEmpty {
-                Text("No recent orders")
-                    .font(.system(size: 13))
-                    .foregroundColor(RSMSColors.secondaryText)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, 20)
-            } else {
-                VStack(spacing: 12) {
-                    ForEach(Array(vm.dbOrders.prefix(3))) { order in
-                        let orderId = "ORD-\(order.id.uuidString.prefix(8).uppercased())"
-                        let amount  = "₹\(Int(order.total))"
-                        let date    = String(order.createdAt.prefix(10))
-                        activityRow(
-                            orderId: orderId,
-                            client: "Customer",
-                            amount: amount,
-                            status: "Completed",
-                            statusColor: RSMSColors.success,
-                            time: date
-                        )
-                    }
-                }
-            }
-        }
+}
+
+struct AnimatedFloatingButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.85 : 1.0)
+            .opacity(configuration.isPressed ? 0.9 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: configuration.isPressed)
     }
-
-    private func activityRow(orderId: String, client: String, amount: String, status: String, statusColor: Color, time: String) -> some View {
-        HStack(spacing: 14) {
-            ZStack {
-                Circle().fill(RSMSColors.burgundy.opacity(0.06)).frame(width: 40, height: 40)
-                Image(systemName: "shippingbox.fill").font(.system(size: 15)).foregroundColor(RSMSColors.burgundy)
-            }
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Order \(orderId)").font(.system(size: 14, weight: .bold, design: .rounded)).foregroundColor(RSMSColors.primaryText)
-                Text(client).font(.system(size: 12)).foregroundColor(RSMSColors.secondaryText)
-            }
-            Spacer()
-            VStack(alignment: .trailing, spacing: 4) {
-                Text(amount).font(.system(size: 13, weight: .bold)).foregroundColor(RSMSColors.primaryText)
-                HStack(spacing: 4) {
-                    Text(status).font(.system(size: 9, weight: .bold)).foregroundColor(statusColor)
-                        .padding(.horizontal, 6).padding(.vertical, 3)
-                        .background(statusColor.opacity(0.08)).clipShape(Capsule())
-                    Text(time).font(.system(size: 10)).foregroundColor(RSMSColors.secondaryText.opacity(0.8))
-                }
-            }
-        }
-        .padding(12)
-        .background(RSMSColors.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(RSMSColors.cardBorder, lineWidth: 1))
-    }
-
 }

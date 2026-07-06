@@ -2,38 +2,52 @@
 //  ProductSalesChart.swift
 //  NexusRetail
 //
-//  Top product-sales bar chart with its OWN Weekly ↔ Monthly toggle
+//  Top product-sales ranked list with its OWN Weekly ↔ Monthly toggle
 //  (independent from the Revenue chart).
-//  Each category bar uses a shade from the brand gradient palette
-//  (#200E01 → #5B0202 → #8B0000 → #EDE7C7) for a homogenous look.
-//  Categories are labeled on the X-axis so no separate legend is needed.
+//  Displays products as a ranked list with image, multiline text, and a slim progress bar.
 //
 
 import SwiftUI
-import Charts
 
 struct ProductSalesChart: View {
     let data: [ProductChartPoint]
     let maxValue: Int
     @Binding var timeRange: SalesTimeRange
+    /// When true, the toggle also offers Yearly. Off by default so the Admin
+    /// dashboard (weekly/monthly only) is unaffected; the Manager passes true.
+    var allowsYearly: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: RSMSSpacing.md) {
 
-            // Title row with toggle
-            HStack {
-                Text("Top Products")
-                    .font(RSMSFonts.headline)
-                    .foregroundColor(RSMSColors.primaryText)
+            // Title row
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 8) {
+
+                        Text("Top Products")
+                            .font(RSMSFonts.headline)
+                            .foregroundColor(RSMSColors.primaryText)
+                    }
+                }
 
                 Spacer()
 
-                TimeRangeToggle(selection: $timeRange)
+                if allowsYearly {
+                    Picker("Time Range", selection: $timeRange) {
+                        ForEach(SalesTimeRange.allCases, id: \.self) { range in
+                            Text(range.rawValue).tag(range)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 200)
+                } else {
+                    TimeRangeToggle(selection: $timeRange)
+                }
             }
 
-            // Chart
             if data.isEmpty {
-                // Empty state - just show text, no chart to avoid rendering issues
+                // Empty state
                 VStack(spacing: 8) {
                     Image(systemName: "bag")
                         .font(.system(size: 32))
@@ -42,93 +56,139 @@ struct ProductSalesChart: View {
                         .font(.system(size: 14))
                         .foregroundColor(RSMSColors.secondaryText)
                 }
-                .frame(height: 200)
-                .padding(.top, RSMSSpacing.sm)
-            } else if data.allSatisfy({ $0.sales > 0 }) {
-                // Only render chart if all values are positive (Charts library requirement)
-                ZStack {
-                    Chart(data) { point in
-                        SectorMark(
-                            angle: .value("Sales", point.sales),
-                            innerRadius: .ratio(0.65),
-                            angularInset: 2
-                        )
-                        .foregroundStyle(by: .value("Category", shortLabel(point.category)))
-                        .cornerRadius(4)
-                    }
-                    .chartForegroundStyleScale([
-                        "Couture": RSMSColors.burgundy,
-                        "Perfume": Color(hex: "F4A261"),
-                        "Perfumes": Color(hex: "F4A261"),
-                        "Fragrances": Color(hex: "F4A261"),
-                        "Fragrance": Color(hex: "F4A261"),
-                        "Jewellery": Color(hex: "E9C46A"),
-                        "Jewelry": Color(hex: "E9C46A"),
-                        "Leather": Color(hex: "2A9D8F"),
-                        "Leather Goods": Color(hex: "2A9D8F"),
-                        "Watches": Color(hex: "264653"),
-                        "Accessories": Color(hex: "8A2BE2"),
-                        "Bags": Color(hex: "2A9D8F"),
-                        "Clothes": RSMSColors.burgundy
-                    ])
-                    .chartLegend(.hidden)
-                    .frame(height: 200)
-
-                    VStack {
-                        Text("Total Units")
-                            .font(.system(size: 10))
-                            .foregroundColor(RSMSColors.secondaryText)
-                        Text("\(data.map(\.sales).reduce(0, +))")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundColor(RSMSColors.primaryText)
-                    }
-                }
+                .frame(maxWidth: .infinity, minHeight: 150)
                 .padding(.top, RSMSSpacing.sm)
             } else {
-                // Data has zero or negative values - show error state
-                VStack(spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 32))
-                        .foregroundColor(Color(hex: "FF9500"))
-                    Text("Invalid data")
-                        .font(.system(size: 14))
-                        .foregroundColor(RSMSColors.secondaryText)
-                }
-                .frame(height: 200)
-                .padding(.top, RSMSSpacing.sm)
-            }
-
-            // Legend
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: RSMSSpacing.sm) {
-                ForEach(data) { point in
-                    HStack(spacing: 6) {
-                        Circle()
-                            .fill(colorFor(category: shortLabel(point.category)))
-                            .frame(width: 8, height: 8)
-                        Text(shortLabel(point.category))
-                            .font(.system(size: 12))
-                            .foregroundColor(RSMSColors.secondaryText)
-                            .lineLimit(1)
-                        Spacer()
+                VStack(spacing: RSMSSpacing.sm) {
+                    ForEach(Array(data.prefix(4).enumerated()), id: \.element.id) { index, point in
+                        ProductRankRow(
+                            rank: index + 1,
+                            point: point,
+                            maxValue: max(1, data.map(\.sales).max() ?? 1)
+                        )
                     }
                 }
+                .padding(.top, RSMSSpacing.xs)
             }
         }
         .padding(RSMSSpacing.lg)
-        .background(RSMSColors.cardBackground)
+        .background(Color.white)
         .cornerRadius(RSMSRadius.large)
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
         .animation(.easeInOut(duration: 0.3), value: data)
     }
+}
 
-    /// Shortens category labels so they fit under the bars.
-    private func shortLabel(_ category: String) -> String {
-        switch category {
-        case "Leather Goods": return "Leather"
-        case "Perfumes":      return "Perfume"
-        case "Jewellery":     return "Jewellery"
-        default:              return category
+struct ProductRankRow: View {
+    let rank: Int
+    let point: ProductChartPoint
+    let maxValue: Int
+    
+    var body: some View {
+        HStack(spacing: 0) {
+            // Rank Block on the left
+            ZStack {
+                Rectangle()
+                    .fill(rankGradient(for: rank))
+                
+                Text("#\(rank)")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.white)
+            }
+            .frame(width: 40)
+            
+            HStack(spacing: 12) {
+                // Product Image
+                Group {
+                    if let url = point.imageURL {
+                        AsyncImage(url: url) { image in
+                            image.resizable().aspectRatio(contentMode: .fill)
+                        } placeholder: {
+                            imagePlaceholder
+                        }
+                    } else {
+                        imagePlaceholder
+                    }
+                }
+                .frame(width: 44, height: 44)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.black.opacity(0.05), lineWidth: 1))
+                
+                // Details and Progress Bar
+                VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(point.name)
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(RSMSColors.primaryText)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                        
+                        Text(point.category)
+                            .font(.system(size: 10, weight: .regular))
+                            .foregroundColor(RSMSColors.secondaryText)
+                    }
+                    
+                    // Slim Progress Bar
+                    GeometryReader { geo in
+                        let progress = CGFloat(point.sales) / CGFloat(maxValue)
+                        ZStack(alignment: .leading) {
+                            Capsule()
+                                .fill(Color.gray.opacity(0.15))
+                                .frame(height: 3)
+                            
+                            Capsule()
+                                .fill(colorFor(category: point.category))
+                                .frame(width: max(0, geo.size.width * progress), height: 3)
+                        }
+                    }
+                    .frame(height: 3)
+                }
+                
+                Spacer(minLength: 8)
+                
+                // Units
+                VStack(alignment: .trailing, spacing: 1) {
+                    let formattedSales = NumberFormatter.localizedString(from: NSNumber(value: point.sales), number: .decimal)
+                    Text("\(formattedSales)")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(RSMSColors.primaryText)
+                    
+                    Text("units")
+                        .font(.system(size: 10))
+                        .foregroundColor(RSMSColors.secondaryText)
+                }
+            }
+            .padding(10)
+            .background(Color.white)
         }
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.black.opacity(0.05), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.02), radius: 3, x: 0, y: 1)
+    }
+    
+    private var imagePlaceholder: some View {
+        ZStack {
+            Color(hex: "F8F9FA")
+            Image(systemName: "bag.fill")
+                .foregroundColor(Color.gray.opacity(0.3))
+                .font(.system(size: 16))
+        }
+    }
+    
+    private func rankGradient(for rank: Int) -> LinearGradient {
+        let colors: [Color]
+        switch rank {
+        case 1: colors = [Color(hex: "F6D365"), Color(hex: "FDA085")] // Gold/Orange
+        case 2: colors = [Color(hex: "E2E2E2"), Color(hex: "9B9B9B")] // Silver
+        case 3: colors = [Color(hex: "E6B980"), Color(hex: "EACDA3")] // Bronze
+        case 4: colors = [Color(hex: "C6A9FF"), Color(hex: "A385E0")] // Purple
+        case 5: colors = [Color(hex: "A8E0D2"), Color(hex: "7FBBAF")] // Mint
+        default: colors = [Color.gray.opacity(0.3), Color.gray.opacity(0.5)]
+        }
+        return LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)
     }
     
     private func colorFor(category: String) -> Color {
@@ -151,5 +211,5 @@ struct ProductSalesChart: View {
     let vm = DashboardViewModel()
     ProductSalesChart(data: vm.productChartData, maxValue: vm.productMaxValue, timeRange: $range)
         .padding()
-        .background(RSMSColors.background)
+        .background(Color(hex: "F5F5F7"))
 }

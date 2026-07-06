@@ -125,21 +125,6 @@ struct ManagerDetailView: View {
                 }
             }
             
-            // // MARK: - Performance
-            // Section(header: Text("Performance")
-            //     .font(.system(size: 17, weight: .semibold))
-            //     .foregroundColor(RSMSColors.secondaryText)
-            //     .textCase(.none)
-            // ) {
-            //     infoRow(icon: "dollarsign.circle.fill",
-            //             label: "Revenue",
-            //             value: manager.revenue.isEmpty ? "$0" : manager.revenue)
-                
-            //     infoRow(icon: "shippingbox.fill",
-            //             label: "Products Sold",
-            //             value: "\(manager.productsSold)")
-            // }
-            
             // MARK: - Account
             if onResetPassword != nil {
                 Section(header: Text("Account")

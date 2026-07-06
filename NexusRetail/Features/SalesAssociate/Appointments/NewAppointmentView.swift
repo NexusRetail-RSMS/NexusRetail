@@ -179,6 +179,9 @@ struct NewAppointmentView: View {
             } message: {
                 Text("The appointment invitation has been successfully sent to the client.")
             }
+            .onAppear {
+                ClientDirectory.seedIfNeeded(from: viewModel.appointments)
+            }
         }
     }
 

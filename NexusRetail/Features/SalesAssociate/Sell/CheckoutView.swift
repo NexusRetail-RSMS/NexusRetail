@@ -7,15 +7,19 @@ struct CheckoutView: View {
     @Environment(SessionStore.self) private var sessionStore
     @Binding var path: NavigationPath
 
-    // Clients loaded from DB
-    @State private var clients: [ClientRow] = []
-    @State private var clientSelection: String = "Skip"   // "Skip" or client.id.uuidString
     @State private var selectedPayment: POSPaymentMethod = .razorpay
 
-    struct ClientRow: Decodable, Identifiable {
-        let id: UUID
-        let name: String
+    // Phone-first customer linking
+    enum LookupState: Equatable {
+        case idle
+        case searching
+        case found(name: String)
+        case notFound
     }
+    @State private var phoneText: String = ""
+    @State private var newClientName: String = ""
+    @State private var lookupState: LookupState = .idle
+    @State private var isCreatingClient = false
 
     var body: some View {
         ZStack {
@@ -40,12 +44,12 @@ struct CheckoutView: View {
                                             Text(item.product.name)
                                                 .font(.system(size: 14, weight: .medium))
                                                 .foregroundColor(RSMSColors.primaryText)
-                                            Text("Qty: \(item.count) × ₹\(formatINR(item.product.price))")
+                                            Text("Qty: \(item.count) × \(formatIndianCurrency(item.product.price))")
                                                 .font(.system(size: 11))
                                                 .foregroundColor(RSMSColors.secondaryText)
                                         }
                                         Spacer()
-                                        Text("₹\(formatINR(item.product.price * Double(item.count)))")
+                                        Text(formatIndianCurrency(item.product.price * Double(item.count)))
                                             .font(.system(size: 14, weight: .bold))
                                             .foregroundColor(RSMSColors.primaryText)
                                     }
@@ -60,41 +64,13 @@ struct CheckoutView: View {
                             .overlay(RoundedRectangle(cornerRadius: 16).stroke(RSMSColors.cardBorder, lineWidth: 1))
                         }
 
-                        // 2. Customer Selection
+                        // 2. Customer Link (phone-first)
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Customer Link")
                                 .font(.system(size: 16, weight: .bold, design: .rounded))
                                 .foregroundColor(RSMSColors.darkBrown)
 
-                            VStack(spacing: 12) {
-                                Picker("Customer", selection: $clientSelection) {
-                                    Text("Anonymous / Skip").tag("Skip")
-                                    ForEach(clients) { client in
-                                        Text(client.name).tag(client.id.uuidString)
-                                    }
-                                }
-                                .pickerStyle(.menu)
-                                .tint(RSMSColors.burgundy)
-
-                                if clientSelection != "Skip" {
-                                    let name = clients.first(where: { $0.id.uuidString == clientSelection })?.name ?? ""
-                                    HStack {
-                                        Image(systemName: "person.crop.circle.badge.checkmark").foregroundColor(RSMSColors.success)
-                                        Text("Attached client: \(name)")
-                                            .font(.system(size: 13, weight: .semibold))
-                                            .foregroundColor(RSMSColors.success)
-                                        Spacer()
-                                    }
-                                    .padding(10)
-                                    .background(RSMSColors.success.opacity(0.08))
-                                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                                }
-                            }
-                            .padding(16)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(RSMSColors.cardBackground)
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
-                            .overlay(RoundedRectangle(cornerRadius: 16).stroke(RSMSColors.cardBorder, lineWidth: 1))
+                            customerLinkCard
                         }
 
                         // 3. Payment Method
@@ -111,19 +87,14 @@ struct CheckoutView: View {
 
                         // Pay Button
                         Button {
-                            // Store chosen client
-                            if clientSelection == "Skip" {
-                                viewModel.selectedClient = nil
-                                viewModel.selectedClientId = nil
-                            } else {
-                                viewModel.selectedClient = clients.first(where: { $0.id.uuidString == clientSelection })?.name
-                                viewModel.selectedClientId = UUID(uuidString: clientSelection)
-                            }
+                            // Customer link is already resolved into viewModel
+                            // (selectedClientId/selectedClient) as the user looks
+                            // up or creates the client above.
                             viewModel.selectedPaymentMethod = selectedPayment
                             path.append(POSFlowDestination.payment)
                         } label: {
                             HStack {
-                                Text("Pay ₹\(formatINR(viewModel.totalAmount))").font(.system(size: 16, weight: .bold))
+                                Text("Pay \(formatIndianCurrency(viewModel.totalAmount))").font(.system(size: 16, weight: .bold))
                                 Spacer()
                                 Image(systemName: "lock.fill")
                             }
@@ -145,19 +116,169 @@ struct CheckoutView: View {
             .ignoresSafeArea(edges: .top)
         }
         .navigationBarHidden(true)
-        .task {
-            // Load clients from DB for the current associate
-            if let userId = sessionStore.currentUser?.id {
-                let rows: [ClientRow] = (try? await SupabaseManager.shared.client
-                    .from("client")
-                    .select("id, name")
-                    .eq("created_by", value: userId)
-                    .order("name")
-                    .execute()
-                    .value) ?? []
-                clients = rows
+    }
+
+    // MARK: - Customer Link (phone-first lookup / quick-create)
+    private var customerLinkCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            // Phone entry + lookup
+            HStack(spacing: 10) {
+                Image(systemName: "phone.fill")
+                    .font(.system(size: 14))
+                    .foregroundColor(RSMSColors.secondaryText)
+                TextField("Customer phone number", text: $phoneText)
+                    .keyboardType(.phonePad)
+                    .font(.system(size: 15))
+                    .onChange(of: phoneText) { _, _ in
+                        // Any edit invalidates a prior match so nothing stale lingers.
+                        if lookupState != .idle {
+                            lookupState = .idle
+                            clearAttachedClient()
+                        }
+                    }
+                    .onSubmit { lookUpPhone() }
+
+                Button { lookUpPhone() } label: {
+                    if lookupState == .searching {
+                        ProgressView().tint(RSMSColors.burgundy)
+                    } else {
+                        Text("Look up").font(.system(size: 14, weight: .bold))
+                    }
+                }
+                .foregroundColor(RSMSColors.burgundy)
+                .disabled(phoneText.filter(\.isNumber).count < 6 || lookupState == .searching)
+            }
+            .padding(12)
+            .background(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(RSMSColors.inputBorder, lineWidth: 1))
+
+            switch lookupState {
+            case .found(let name):
+                HStack {
+                    Image(systemName: "person.crop.circle.badge.checkmark").foregroundColor(RSMSColors.success)
+                    Text("Attached: \(name)")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(RSMSColors.success)
+                    Spacer()
+                    Button("Change") { resetLookup() }
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(RSMSColors.burgundy)
+                }
+                .padding(10)
+                .background(RSMSColors.success.opacity(0.08))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+
+            case .notFound:
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("No customer found with this number. Add a new one:")
+                        .font(.system(size: 12))
+                        .foregroundColor(RSMSColors.secondaryText)
+                    TextField("Full name", text: $newClientName)
+                        .textContentType(.name)
+                        .autocorrectionDisabled()
+                        .font(.system(size: 15))
+                        .padding(12)
+                        .background(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(RSMSColors.inputBorder, lineWidth: 1))
+
+                    Button { createAndAttach() } label: {
+                        HStack {
+                            if isCreatingClient { ProgressView().tint(.white) }
+                            Text(isCreatingClient ? "Creating…" : "Create & Attach")
+                                .font(.system(size: 14, weight: .bold))
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(canCreateClient ? RSMSColors.burgundy : RSMSColors.disabled)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!canCreateClient || isCreatingClient)
+                }
+
+            case .idle, .searching:
+                Text("Look up a customer by phone to attach them, or continue anonymously.")
+                    .font(.system(size: 12))
+                    .foregroundColor(RSMSColors.secondaryText)
+            }
+
+            // Skip / Anonymous
+            if viewModel.selectedClientId != nil || lookupState != .idle {
+                Button { resetLookup() } label: {
+                    Text("Continue as Anonymous / Skip")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(RSMSColors.secondaryText)
+                }
+                .buttonStyle(.plain)
             }
         }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RSMSColors.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(RSMSColors.cardBorder, lineWidth: 1))
+    }
+
+    private var canCreateClient: Bool {
+        !newClientName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        phoneText.filter(\.isNumber).count >= 6
+    }
+
+    private func lookUpPhone() {
+        guard phoneText.filter(\.isNumber).count >= 6 else { return }
+        lookupState = .searching
+        clearAttachedClient()
+        Task {
+            let result = await viewModel.findClient(byPhone: phoneText)
+            await MainActor.run {
+                if let result {
+                    viewModel.selectedClientId = result.id
+                    viewModel.selectedClient = result.name
+                    lookupState = .found(name: result.name)
+                } else {
+                    lookupState = .notFound
+                }
+            }
+        }
+    }
+
+    private func createAndAttach() {
+        let name = newClientName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard canCreateClient else { return }
+        isCreatingClient = true
+        Task {
+            do {
+                let newId = try await viewModel.createClient(
+                    name: name,
+                    phone: phoneText,
+                    createdBy: sessionStore.currentUser?.id
+                )
+                await MainActor.run {
+                    viewModel.selectedClientId = newId
+                    viewModel.selectedClient = name
+                    lookupState = .found(name: name)
+                    isCreatingClient = false
+                }
+            } catch {
+                print("CheckoutView: createClient failed: \(error)")
+                await MainActor.run { isCreatingClient = false }
+            }
+        }
+    }
+
+    private func resetLookup() {
+        phoneText = ""
+        newClientName = ""
+        lookupState = .idle
+        clearAttachedClient()
+    }
+
+    private func clearAttachedClient() {
+        viewModel.selectedClient = nil
+        viewModel.selectedClientId = nil
     }
 
     private var customHeaderSection: some View {
@@ -213,11 +334,7 @@ struct CheckoutView: View {
         .buttonStyle(.plain)
     }
 
-    private func formatINR(_ value: Double) -> String {
-        let f = NumberFormatter()
-        f.numberStyle = .decimal; f.groupingSeparator = ","; f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: value)) ?? "\(Int(value))"
-    }
+
     
     private var groupedItems: [(product: POSProduct, count: Int)] {
         var counts: [UUID: Int] = [:]

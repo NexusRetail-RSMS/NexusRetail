@@ -31,13 +31,13 @@ struct ManagerDashboardView: View {
                 ProductSalesChart(
                     data: viewModel.topProductsData,
                     maxValue: viewModel.topProductsMaxValue,
-                    timeRange: $viewModel.topProductsTimeRange
+                    timeRange: $viewModel.topProductsTimeRange,
+                    allowsYearly: true
                 )
                 
                 // MARK: - Staff Performance
                 StaffPerformanceChart(
-                    data: viewModel.staffPerformanceData,
-                    timeRange: $viewModel.staffTimeRange
+                    data: viewModel.staffPerformanceData
                 )
             }
             .padding(.horizontal, RSMSSpacing.lg)
@@ -50,6 +50,7 @@ struct ManagerDashboardView: View {
         }
         .task {
             await viewModel.fetchData(storeID: sessionStore.currentUser?.storeID)
+            await viewModel.fetchRevenueData(storeID: sessionStore.currentUser?.storeID)
         }
         .onChange(of: viewModel.topProductsTimeRange) { _, _ in
             Task { await viewModel.fetchData(storeID: sessionStore.currentUser?.storeID) }
@@ -77,12 +78,24 @@ struct ManagerDashboardView: View {
                             }
                             Spacer()
                             Menu {
-                                Button("Weekly") { selectedRange = .weekly(Date()) }
-                                Button("Monthly") { selectedRange = .monthly(Date()) }
-                                Button("Yearly") { selectedRange = .yearly(Date()) }
+                                Button("Weekly") { 
+                                    viewModel.revenueTimeRange = .weekly
+                                    viewModel.revenueDate = Date()
+                                    Task { await viewModel.fetchRevenueData(storeID: sessionStore.currentUser?.storeID) }
+                                }
+                                Button("Monthly") { 
+                                    viewModel.revenueTimeRange = .monthly
+                                    viewModel.revenueDate = Date()
+                                    Task { await viewModel.fetchRevenueData(storeID: sessionStore.currentUser?.storeID) }
+                                }
+                                Button("Yearly") { 
+                                    viewModel.revenueTimeRange = .yearly
+                                    viewModel.revenueDate = Date()
+                                    Task { await viewModel.fetchRevenueData(storeID: sessionStore.currentUser?.storeID) }
+                                }
                             } label: {
                                 HStack(spacing: 4) {
-                                    Text(selectedRange.isWeekly ? "Weekly" : selectedRange.isMonthly ? "Monthly" : "Yearly")
+                                    Text(viewModel.revenueTimeRange.rawValue)
                                         .font(.system(size: 14, weight: .medium))
                                     Image(systemName: "chevron.down")
                                         .font(.system(size: 10, weight: .bold))
@@ -97,7 +110,31 @@ struct ManagerDashboardView: View {
                         .padding(.horizontal, RSMSSpacing.lg)
                         .padding(.top, RSMSSpacing.lg)
                         
-                        SwipeableCalendarView(selectedRange: $selectedRange)
+                        let calendarBinding = Binding<StoreChartTimeRange>(
+                            get: {
+                                switch viewModel.revenueTimeRange {
+                                case .weekly: return .weekly(viewModel.revenueDate)
+                                case .monthly: return .monthly(viewModel.revenueDate)
+                                case .yearly: return .yearly(viewModel.revenueDate)
+                                }
+                            },
+                            set: { newRange in
+                                switch newRange {
+                                case .weekly(let d):
+                                    viewModel.revenueTimeRange = .weekly
+                                    viewModel.revenueDate = d
+                                case .monthly(let d):
+                                    viewModel.revenueTimeRange = .monthly
+                                    viewModel.revenueDate = d
+                                case .yearly(let d):
+                                    viewModel.revenueTimeRange = .yearly
+                                    viewModel.revenueDate = d
+                                }
+                                Task { await viewModel.fetchRevenueData(storeID: sessionStore.currentUser?.storeID) }
+                            }
+                        )
+                        
+                        SwipeableCalendarView(selectedRange: calendarBinding)
                             .padding(.top, 4)
                         
                         ManagerRevenueChartView(
@@ -105,7 +142,7 @@ struct ManagerDashboardView: View {
                             maxValue: viewModel.revenueMaxValue,
                             sixMonthTotal: viewModel.sixMonthTotal,
                             peakMonth: viewModel.peakMonth,
-                            timeRange: .constant(.weekly) // Fixed to weekly for now
+                            timeRange: $viewModel.revenueTimeRange
                         )
                         .padding()
                         Spacer()
@@ -128,10 +165,7 @@ struct ManagerDashboardView: View {
                 ZStack {
                     RSMSColors.background.ignoresSafeArea()
                     VStack {
-                        SwipeableCalendarView(selectedRange: $selectedRange)
-                            .padding(.top)
-                        ManagerPlaceholderView(title: "Pending Requests History", message: "Chart or list for Pending Requests over time.", icon: "doc.text.fill")
-                        Spacer()
+                        ManagerRequestsView()
                     }
                 }
                 .navigationTitle("Requests")
@@ -151,10 +185,7 @@ struct ManagerDashboardView: View {
                 ZStack {
                     RSMSColors.background.ignoresSafeArea()
                     VStack {
-                        SwipeableCalendarView(selectedRange: $selectedRange)
-                            .padding(.top)
-                        ManagerPlaceholderView(title: "Low Stock Items", message: "List of items currently low in stock.", icon: "exclamationmark.triangle.fill")
-                        Spacer()
+                        ManagerLowStockView()
                     }
                 }
                 .navigationTitle("Low Stock")
@@ -174,10 +205,7 @@ struct ManagerDashboardView: View {
                 ZStack {
                     RSMSColors.background.ignoresSafeArea()
                     VStack {
-                        SwipeableCalendarView(selectedRange: $selectedRange)
-                            .padding(.top)
-                        ManagerPlaceholderView(title: "Returns History", message: "Chart or list for Returns over time.", icon: "arrow.uturn.left")
-                        Spacer()
+                        ManagerReturnsView()
                     }
                 }
                 .navigationTitle("Returns")

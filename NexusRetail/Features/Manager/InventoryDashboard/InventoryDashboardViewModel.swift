@@ -82,10 +82,15 @@ class InventoryViewModel {
         }
         
         guard let finalStoreID = targetStoreID else {
-            await loadMockData()
+            await MainActor.run {
+                self.items = []
+                self.requests = []
+                self.isLoading = false
+                self.errorMessage = "No store is associated with your account."
+            }
             return
         }
-        
+
         isLoading = true
         errorMessage = nil
         
@@ -117,20 +122,13 @@ class InventoryViewModel {
             }
         } catch {
             print("Inventory fetch error: \(error)")
-            // Fallback to mock data
-            await loadMockData()
+            // Surface the real failure instead of fabricating sample inventory.
             await MainActor.run {
-                self.errorMessage = "Using offline data. Pull to refresh."
+                self.items = []
+                self.requests = []
+                self.errorMessage = "Couldn't load inventory. Pull to refresh."
                 self.isLoading = false
             }
-        }
-    }
-    
-    private func loadMockData() async {
-        await MainActor.run {
-            self.items = InventoryItemRow.mockItems
-            self.requests = TransferRequestRow.mockRequests
-            self.isLoading = false
         }
     }
     

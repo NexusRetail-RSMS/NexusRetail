@@ -5,14 +5,18 @@ struct RecentOrdersView: View {
     @Environment(SellViewModel.self) private var viewModel
     @Environment(SessionStore.self) private var sessionStore
 
+    var hideHeader: Bool = false
+    
     var body: some View {
         ZStack {
             RSMSColors.background.ignoresSafeArea()
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    customHeaderSection
-
+                    if !hideHeader {
+                        customHeaderSection
+                    }
+                    
                     VStack(alignment: .leading, spacing: 20) {
                         Text("Order History")
                             .font(.system(size: 16, weight: .bold, design: .rounded))
@@ -54,7 +58,7 @@ struct RecentOrdersView: View {
         }
         .navigationBarHidden(true)
         .task {
-            await viewModel.fetchRecentOrders(storeID: sessionStore.currentUser?.storeID)
+            await viewModel.fetchRecentOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
         }
     }
 
@@ -109,7 +113,7 @@ struct RecentOrdersView: View {
             Spacer()
 
             VStack(alignment: .trailing, spacing: 6) {
-                Text("₹\(formatINR(order.amount))")
+                Text(formatIndianCurrency(order.amount))
                     .font(.system(size: 14, weight: .bold)).foregroundColor(RSMSColors.primaryText)
                 statusPill(order.status)
             }
@@ -128,12 +132,5 @@ struct RecentOrdersView: View {
             .foregroundColor(color)
             .padding(.horizontal, 8).padding(.vertical, 4)
             .background(bg).clipShape(Capsule())
-    }
-
-    private func formatINR(_ value: Double) -> String {
-        let f = NumberFormatter()
-        f.numberStyle = .decimal; f.groupingSeparator = ","
-        f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: value)) ?? "\(Int(value))"
     }
 }

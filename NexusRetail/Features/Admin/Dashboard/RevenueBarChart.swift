@@ -11,6 +11,7 @@ import SwiftUI
 import Charts
 
 struct RevenueBarChart: View {
+    var title: String = "Store Revenue"
     let data: [RevenueChartPoint]
     let maxValue: Double
     @Binding var timeRange: SalesTimeRange
@@ -20,7 +21,7 @@ struct RevenueBarChart: View {
 
             // Row 1: Title + time-range toggle
             HStack {
-                Text("Store Revenue")
+                Text(title)
                     .font(RSMSFonts.headline)
                     .foregroundColor(RSMSColors.primaryText)
 
@@ -73,8 +74,7 @@ struct RevenueBarChart: View {
                         .font(RSMSFonts.subheadline)
                         .foregroundColor(RSMSColors.secondaryText)
                 }
-            } else if maxValue > 0 {
-                // Only render chart if we have valid positive data
+            } else {
                 Chart(data) { point in
                     BarMark(
                         x: .value("Period", point.label),
@@ -116,17 +116,6 @@ struct RevenueBarChart: View {
                     }
                 }
                 .frame(height: 200)
-            } else {
-                // Invalid max value
-                VStack(spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 32))
-                        .foregroundColor(Color(hex: "FF9500"))
-                    Text("Invalid revenue data")
-                        .font(.system(size: 14))
-                        .foregroundColor(RSMSColors.secondaryText)
-                }
-                .frame(height: 200)
             }
 
             // Legend
@@ -155,12 +144,12 @@ struct TimeRangeToggle: View {
 
     var body: some View {
         Picker("Time Range", selection: $selection) {
-            ForEach(SalesTimeRange.allCases, id: \.self) { range in
+            ForEach([SalesTimeRange.weekly, SalesTimeRange.monthly], id: \.self) { range in
                 Text(range.rawValue).tag(range)
             }
         }
         .pickerStyle(.segmented)
-        .fixedSize()
+        .frame(width: 160)
     }
 }
 

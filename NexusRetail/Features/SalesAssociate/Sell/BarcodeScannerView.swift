@@ -9,22 +9,19 @@ struct BarcodeScannerView: View {
     @Binding var path: NavigationPath
     
     @State private var allProducts: [POSProduct] = []
-    @State private var scannedProduct: POSProduct? = nil
+    @State private var scannedProduct: POSProduct? = nil   // set only for out-of-stock (alternatives)
     @State private var isScanning = true
     @State private var selectedPhoto: PhotosPickerItem? = nil
     @State private var stockLimitReached = false   // shown when scan hits stock limit
-    @State private var addedToCartFeedback = false // brief "added" confirmation
+    @State private var toastMessage: String? = nil // brief add-to-cart confirmation
     
     var body: some View {
-        ZStack {
+        ZStack(alignment: .top) {
             RSMSColors.background
                 .ignoresSafeArea()
             
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    // Custom Curved Header
-                    customHeaderSection
-                    
                     if scannedProduct == nil {
                         // Scanner view
                         scannerViewSection
@@ -33,23 +30,26 @@ struct BarcodeScannerView: View {
                         productDetailSection(product)
                     }
                 }
+                .padding(.top, 120)
             }
             .ignoresSafeArea(edges: .top)
+            
+            customHeaderSection
 
-            // ── Toast: qty bumped ──────────────────────────────────────
-            if addedToCartFeedback {
+            // ── Toast: added / qty bumped ──────────────────────────────
+            if let toastMessage {
                 VStack {
                     Spacer()
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark.circle.fill").foregroundColor(.white)
-                        Text("Quantity increased in cart")
+                        Text(toastMessage)
                             .font(.system(size: 13, weight: .bold)).foregroundColor(.white)
                     }
                     .padding(.vertical, 12).padding(.horizontal, 20)
                     .background(RSMSColors.success)
                     .clipShape(Capsule())
                     .shadow(radius: 6)
-                    .padding(.bottom, 40)
+                    .padding(.bottom, 96) // clear the sticky cart bar
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .zIndex(10)
@@ -68,13 +68,17 @@ struct BarcodeScannerView: View {
                     .background(RSMSColors.error)
                     .clipShape(Capsule())
                     .shadow(radius: 6)
-                    .padding(.bottom, 40)
+                    .padding(.bottom, 96) // clear the sticky cart bar
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .zIndex(10)
             }
         }
         .navigationBarHidden(true)
+        .safeAreaInset(edge: .bottom) {
+            // Persistent cart access — checkout is always one tap away.
+            POSCartBar(path: $path)
+        }
         .onAppear {
             scannedProduct = nil
             isScanning = true
@@ -99,12 +103,12 @@ struct BarcodeScannerView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.2))
+                        .fill(RSMSColors.burgundy.opacity(0.1))
                         .frame(width: 44, height: 44)
 
                     Image(systemName: "chevron.left")
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(RSMSColors.primaryText)
                 }
             }
             .accessibilityLabel("Back")
@@ -112,28 +116,22 @@ struct BarcodeScannerView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(scannedProduct == nil ? "Scan Barcode" : scannedProduct!.name)
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(RSMSColors.primaryText)
                     .lineLimit(1)
                 
                 Text(scannedProduct == nil ? "Barcode Scanner" : scannedProduct!.sku)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.8))
+                    .foregroundColor(RSMSColors.secondaryText)
             }
             
             Spacer()
         }
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.top, 60)
-        .padding(.bottom, RSMSSpacing.xxxl)
+        .padding(.bottom, RSMSSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            LinearGradient(
-                colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
-        .clipShape(HeaderCurve())
+        .background(.regularMaterial)
+        .ignoresSafeArea(edges: .top)
     }
     
     private var scannerViewSection: some View {
@@ -193,7 +191,7 @@ struct BarcodeScannerView: View {
     private func simulateScan(forSku sku: String) {
         guard let match = allProducts.first(where: { $0.sku == sku }) else { return }
 
-        // Out of stock — show detail for alternatives
+        // Out of stock — show detail so the associate can pick an alternative.
         if match.stock == 0 {
             withAnimation {
                 isScanning = false
@@ -203,36 +201,31 @@ struct BarcodeScannerView: View {
             return
         }
 
-        // Already at max quantity in cart
+        // Already at max available quantity in cart — warn, don't add.
         if !viewModel.canAddMore(match) {
             withAnimation { stockLimitReached = true }
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
                 withAnimation { self.stockLimitReached = false }
             }
-            // Play haptic feedback for error
-            let generator = UINotificationFeedbackGenerator()
-            generator.notificationOccurred(.error)
+            UINotificationFeedbackGenerator().notificationOccurred(.error)
             return
         }
 
-        // Item already in cart — bump quantity and stay on scanner with feedback
-        if viewModel.quantityInCart(productId: match.id) > 0 {
-            viewModel.addToCart(product: match)
-            withAnimation { addedToCartFeedback = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                withAnimation { self.addedToCartFeedback = false }
+        // In stock — add straight to the cart (no interrupting detail screen).
+        // Fresh vs. already-in-cart just changes the toast copy.
+        let alreadyInCart = viewModel.quantityInCart(productId: match.id) > 0
+        viewModel.addToCart(product: match)
+        showToast(alreadyInCart ? "Quantity increased in cart" : "Added to cart")
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+    }
+
+    /// Shows a brief confirmation toast, auto-dismissing after 1.5s.
+    private func showToast(_ message: String) {
+        withAnimation { toastMessage = message }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            withAnimation {
+                if self.toastMessage == message { self.toastMessage = nil }
             }
-            // Play haptic feedback for success
-            let generator = UINotificationFeedbackGenerator()
-            generator.notificationOccurred(.success)
-            return
-        }
-
-        // Fresh item — show product detail
-        withAnimation {
-            isScanning = false
-            scannedProduct = match
-            viewModel.originalUnavailableProduct = match
         }
     }
     
@@ -287,38 +280,24 @@ struct BarcodeScannerView: View {
                     Text("Category: \(product.category)  •  Size: \(product.size)")
                         .font(.system(size: 13))
                         .foregroundColor(RSMSColors.secondaryText)
-                    
-                    Text("₹\(String(format: "%.0f", product.price))")
+
+                    Text(formatIndianCurrency(product.price))
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(RSMSColors.burgundy)
-                    
-                    if product.stock > 0 {
-                        // In stock banner
-                        HStack(spacing: 4) {
-                            Image(systemName: "checkmark.circle.fill")
-                            Text("In Stock (\(product.stock) available)")
-                        }
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(RSMSColors.success)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(RSMSColors.success.opacity(0.08))
-                        .clipShape(Capsule())
-                        .padding(.top, 4)
-                    } else {
-                        // Out of stock banner
-                        HStack(spacing: 4) {
-                            Image(systemName: "xmark.circle.fill")
-                            Text("Out of Stock")
-                        }
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(RSMSColors.error)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(RSMSColors.error.opacity(0.08))
-                        .clipShape(Capsule())
-                        .padding(.top, 4)
+
+                    // This detail screen is only reached for out-of-stock items now
+                    // (in-stock scans add straight to the cart).
+                    HStack(spacing: 4) {
+                        Image(systemName: "xmark.circle.fill")
+                        Text("Out of Stock")
                     }
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(RSMSColors.error)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(RSMSColors.error.opacity(0.08))
+                    .clipShape(Capsule())
+                    .padding(.top, 4)
                 }
                 Spacer()
             }
@@ -331,81 +310,31 @@ struct BarcodeScannerView: View {
             )
             .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 3)
             
-            if product.stock > 0 {
-                // In Stock Actions
-                VStack(spacing: 14) {
-                    Button {
-                        // Add to cart and begin checkout
-                        viewModel.addToCart(product: product)
-                        path.append(POSFlowDestination.checkout)
-                    } label: {
-                        HStack {
-                            Text("Begin Checkout")
-                                .font(.system(size: 16, weight: .bold))
-                            Spacer()
-                            Image(systemName: "arrow.right")
-                        }
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .padding(.horizontal, 20)
-                        .background(RSMSColors.burgundy)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                        .shadow(color: RSMSColors.burgundy.opacity(0.2), radius: 10, x: 0, y: 5)
-                    }
-                    .buttonStyle(.plain)
-                    
-                    Button {
-                        // Add to cart and resume scanning
-                        viewModel.addToCart(product: product)
-                        withAnimation {
-                            scannedProduct = nil
-                            isScanning = true
-                        }
-                    } label: {
-                        HStack {
-                            Image(systemName: "barcode.viewfinder")
-                            Text("Add to Cart & Scan More")
-                                .font(.system(size: 16, weight: .bold))
-                        }
-                        .foregroundColor(RSMSColors.burgundy)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16)
-                                .stroke(RSMSColors.burgundy, lineWidth: 1)
-                        )
-                    }
-                    .buttonStyle(.plain)
+            // This screen is only reached for out-of-stock scans now, so it
+            // always shows suggested in-stock alternatives.
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Suggested Alternatives")
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundColor(RSMSColors.darkBrown)
+
+                HStack(spacing: 12) {
+                    checklistBadge("Same Category")
+                    checklistBadge("Similar Price")
+                    checklistBadge("Same Size")
                 }
-            } else {
-                // Suggested Alternatives Checklist (Out of Stock)
-                VStack(alignment: .leading, spacing: 14) {
-                    Text("Suggested Alternatives")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                        .foregroundColor(RSMSColors.darkBrown)
-                    
-                    HStack(spacing: 12) {
-                        checklistBadge("Same Category")
-                        checklistBadge("Similar Price")
-                        checklistBadge("Same Size")
-                    }
-                    .padding(.bottom, 6)
-                    
-                    // Fetch and list alternatives
-                    let alternatives = getAlternatives(for: product)
-                    if alternatives.isEmpty {
-                        Text("No suitable alternatives found in stock.")
-                            .font(.system(size: 14))
-                            .foregroundColor(RSMSColors.secondaryText)
-                            .padding(.vertical, 10)
-                    } else {
-                        VStack(spacing: 12) {
-                            ForEach(alternatives) { alt in
-                                alternativeRow(alt)
-                            }
+                .padding(.bottom, 6)
+
+                // Fetch and list alternatives
+                let alternatives = getAlternatives(for: product)
+                if alternatives.isEmpty {
+                    Text("No suitable alternatives found in stock.")
+                        .font(.system(size: 14))
+                        .foregroundColor(RSMSColors.secondaryText)
+                        .padding(.vertical, 10)
+                } else {
+                    VStack(spacing: 12) {
+                        ForEach(alternatives) { alt in
+                            alternativeRow(alt)
                         }
                     }
                 }
@@ -448,7 +377,7 @@ struct BarcodeScannerView: View {
                     .font(.system(size: 14, weight: .bold, design: .rounded))
                     .foregroundColor(RSMSColors.primaryText)
                 
-                Text("Price: ₹\(String(format: "%.0f", alt.price))  •  Size: \(alt.size)")
+                Text("Price: \(formatIndianCurrency(alt.price))  •  Size: \(alt.size)")
                     .font(.system(size: 11))
                     .foregroundColor(RSMSColors.secondaryText)
             }

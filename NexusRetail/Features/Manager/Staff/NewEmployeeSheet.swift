@@ -10,6 +10,7 @@ import PhotosUI
 
 struct NewEmployeeSheet: View {
     @Environment(\.dismiss) private var dismiss
+    var initialRole: UserRole? = nil
     var onCreate: ((DisplayEmployee, String) async -> String?)? = nil
 
     @State private var firstName = ""
@@ -144,6 +145,11 @@ struct NewEmployeeSheet: View {
             } message: {
                 Text(errorMessage)
             }
+            .onAppear {
+                if selectedRole == nil {
+                    selectedRole = initialRole
+                }
+            }
         }
     }
 
@@ -175,8 +181,9 @@ struct NewEmployeeSheet: View {
     }
 
     private func generatePassword() {
-        let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
-        password = String((0..<12).map { _ in chars.randomElement()! })
+        let cleanName = firstName.trimmingCharacters(in: .whitespaces)
+        let number = Int.random(in: 100...999)
+        password = "\(cleanName)\(number)"
     }
 
     private func saveEmployee() async {
@@ -186,6 +193,7 @@ struct NewEmployeeSheet: View {
         let fullName = "\(firstName.trimmingCharacters(in: .whitespaces)) \(lastName.trimmingCharacters(in: .whitespaces))"
         let roleStr = selectedRole == .afterSales ? "After Sales Associate" : "Sales Associate"
         
+        let imageData = selectedImage?.jpegData(compressionQuality: 0.6)
         let newEmp = DisplayEmployee(
             id: UUID(),
             name: fullName,
@@ -194,7 +202,10 @@ struct NewEmployeeSheet: View {
             revenue: "$0",
             imageUrl: nil,
             phone: phone,
-            email: email
+            email: email,
+            imageData: imageData,
+            storeId: nil,
+            customerAttraction: 0
         )
         
         // Simulate save / persist

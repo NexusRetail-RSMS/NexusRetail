@@ -12,11 +12,13 @@ struct RequestStockSheet: View {
     @Environment(\.dismiss) private var dismiss
     let item: InventoryItemRow
     let storeID: UUID?
-    let onSubmit: (Int64, Int) -> Void
+    /// Returns nil on success, or an error message on failure.
+    let onSubmit: (Int64, Int) async -> String?
 
     @State private var quantity: Int = 10
     @State private var isSubmitting = false
     @State private var isSuccess = false
+    @State private var errorMessage: String?
 
     var body: some View {
         NavigationStack {
@@ -94,17 +96,22 @@ struct RequestStockSheet: View {
                     .background(Color.white)
                     .cornerRadius(24)
 
-                    // Submit button
+                    // Submit button — reflects the real DB result, not a timer.
                     Button {
+                        errorMessage = nil
                         isSubmitting = true
-                        onSubmit(item.itemId, quantity)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            withAnimation {
+                        Task {
+                            let error = await onSubmit(item.itemId, quantity)
+                            await MainActor.run {
                                 isSubmitting = false
-                                isSuccess = true
-                            }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                                dismiss()
+                                if let error {
+                                    errorMessage = error
+                                } else {
+                                    withAnimation { isSuccess = true }
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                        dismiss()
+                                    }
+                                }
                             }
                         }
                     } label: {
@@ -131,6 +138,14 @@ struct RequestStockSheet: View {
                         .cornerRadius(24)
                     }
                     .disabled(isSubmitting || isSuccess)
+
+                    if let errorMessage {
+                        Text(errorMessage)
+                            .font(.system(size: 13))
+                            .foregroundColor(.red)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity)
+                    }
                 }
                 .padding(RSMSSpacing.lg)
             }

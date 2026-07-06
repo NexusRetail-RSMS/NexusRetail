@@ -35,11 +35,4 @@ enum AppointmentStatus: String, CaseIterable, Identifiable {
         case .cancelled: return "xmark.circle.fill"
         }
     }
-    var color: Color {
-        switch self {
-        case .confirmed: return RSMSColors.success
-        case .pending: return RSMSColors.warning
-        case .cancelled: return RSMSColors.error
-        }
-    }
 }

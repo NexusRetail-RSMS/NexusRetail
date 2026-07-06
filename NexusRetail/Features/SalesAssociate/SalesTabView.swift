@@ -26,23 +26,24 @@ struct SalesTabView: View {
     
     var body: some View {
         TabView {
-            SalesDashboardView()
-                .tabItem {
-                    Label("Dashboard", systemImage: "square.grid.2x2")
+            Tab("Dashboard", systemImage: "square.grid.2x2") {
+                SalesDashboardView()
+            }
+            
+            Tab("Clients", systemImage: "person.3.fill") {
+                NavigationStack {
+                    ClientelingView()
                 }
-            
-            NavigationStack {
-                SalesAssociateDashboardView()
-            }
-            .tabItem {
-                Label("Clients", systemImage: "person.3.fill")
             }
             
-            NavigationStack {
-                AppointmentsView()
+            Tab("Appointments", systemImage: "calendar.badge.clock") {
+                NavigationStack {
+                    AppointmentsView()
+                }
             }
-            .tabItem {
-                Label("Appointments", systemImage: "calendar")
+            
+            Tab("Search", systemImage: "magnifyingglass", role: .search) {
+                InventoryCatalogView()
             }
         }
         .tint(RSMSColors.burgundy)
