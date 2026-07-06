@@ -177,19 +177,21 @@ struct StoreFormView: View {
                         }
                     }
 
-                    FormSectionCard(title: "Payment Terminals") {
-                        PremiumToggleRow(icon: "creditcard.fill", title: "Razorpay", isOn: $includeRazorpay)
-                        if includeRazorpay {
+                    if editingStore == nil {
+                        FormSectionCard(title: "Payment Terminals") {
+                            PremiumToggleRow(icon: "creditcard.fill", title: "Razorpay", isOn: $includeRazorpay)
+                            if includeRazorpay {
+                                FormDivider()
+                                PremiumTextField(icon: "key.fill", placeholder: "Razorpay Key ID", text: $razorpayKey)
+                                FormDivider()
+                                PremiumTextField(icon: "lock.fill", placeholder: "Razorpay Key Secret", text: $razorpaySecret)
+                            }
                             FormDivider()
-                            PremiumTextField(icon: "key.fill", placeholder: "Razorpay Key ID", text: $razorpayKey)
-                            FormDivider()
-                            PremiumTextField(icon: "lock.fill", placeholder: "Razorpay Key Secret", text: $razorpaySecret)
-                        }
-                        FormDivider()
-                        PremiumToggleRow(icon: "wave.3.right.circle.fill", title: "Card Terminal", isOn: $includeCard)
-                        if includeCard {
-                            FormDivider()
-                            PremiumTextField(icon: "terminal.fill", placeholder: "Terminal ID", text: $cardTerminalID)
+                            PremiumToggleRow(icon: "wave.3.right.circle.fill", title: "Card Terminal", isOn: $includeCard)
+                            if includeCard {
+                                FormDivider()
+                                PremiumTextField(icon: "terminal.fill", placeholder: "Terminal ID", text: $cardTerminalID)
+                            }
                         }
                     }
 
@@ -401,7 +403,10 @@ struct StoreFormView: View {
                     managerID: selectedManagerID,
                     status: isActive ? .active : .archived,
                     includeRazorpay: includeRazorpay,
+                    razorpayKey: razorpayKey,
+                    razorpaySecret: razorpaySecret,
                     includeCard: includeCard,
+                    cardTerminalID: cardTerminalID,
                     latitude: pickedCoordinate?.latitude,
                     longitude: pickedCoordinate?.longitude,
                     city: city,

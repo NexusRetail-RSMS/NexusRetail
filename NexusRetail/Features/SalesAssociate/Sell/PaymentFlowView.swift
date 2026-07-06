@@ -330,7 +330,7 @@ struct PaymentFlowView: View {
         
         Task {
             do {
-                try await viewModel.processCheckout(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
+                try await viewModel.processRazorpayCheckout(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
                 
                 // Refresh product stock after checkout
                 await POSProductRepository.shared.refreshStockForStore(storeID: sessionStore.currentUser?.storeID)

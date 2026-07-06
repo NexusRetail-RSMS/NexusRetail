@@ -52,7 +52,7 @@ class StoresViewModel {
     }
     
     /// Creates a new store and re-fetches the list.
-    func create(name: String, address: String, phone: String, locale: String, currencyCode: String, timezone: String, managerID: UUID?, status: StoreStatus, includeRazorpay: Bool, includeCard: Bool, latitude: Double?, longitude: Double?, city: String?, country: String?, imageData: Data? = nil) async -> Bool {
+    func create(name: String, address: String, phone: String, locale: String, currencyCode: String, timezone: String, managerID: UUID?, status: StoreStatus, includeRazorpay: Bool, razorpayKey: String, razorpaySecret: String, includeCard: Bool, cardTerminalID: String, latitude: Double?, longitude: Double?, city: String?, country: String?, imageData: Data? = nil) async -> Bool {
         guard !name.isEmpty, !address.isEmpty else {
             errorMessage = "Name and Address are required."
             return false
@@ -100,23 +100,23 @@ class StoresViewModel {
         var terminals: [PaymentTerminal] = []
         if includeRazorpay {
             let initialConfig = PaymentTerminalConfig(
-                isEnabled: false,
-                status: .notConfigured,
+                isEnabled: true,
+                status: .configured,
                 environment: .test,
-                credential1: nil,
-                credential2: nil,
-                updatedAt: nil
+                credential1: razorpayKey.isEmpty ? nil : razorpayKey,
+                credential2: razorpaySecret.isEmpty ? nil : razorpaySecret,
+                updatedAt: Date().ISO8601Format()
             )
             terminals.append(PaymentTerminal(id: UUID(), storeID: newStoreId, type: .razorpay, config: initialConfig))
         }
         if includeCard {
             let initialConfig = PaymentTerminalConfig(
-                isEnabled: false,
-                status: .notConfigured,
+                isEnabled: true,
+                status: .configured,
                 environment: .test,
-                credential1: nil,
+                credential1: cardTerminalID.isEmpty ? nil : cardTerminalID,
                 credential2: nil,
-                updatedAt: nil
+                updatedAt: Date().ISO8601Format()
             )
             terminals.append(PaymentTerminal(id: UUID(), storeID: newStoreId, type: .card, config: initialConfig))
         }
