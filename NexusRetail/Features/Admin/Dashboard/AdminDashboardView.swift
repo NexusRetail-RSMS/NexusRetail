@@ -200,9 +200,23 @@ struct AdminDashboardView: View {
                         .fill(RSMSColors.burgundy)
                         .frame(width: 44, height: 44)
 
-                    Text(initials(for: sessionStore.currentUser?.name))
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white)
+                    if let urlString = sessionStore.currentUser?.imageUrl, let url = URL(string: urlString) {
+                        CachedAsyncImage(url: url) { image in
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 44, height: 44)
+                                .clipShape(Circle())
+                        } placeholder: {
+                            Text(initials(for: sessionStore.currentUser?.name))
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                    } else {
+                        Text(initials(for: sessionStore.currentUser?.name))
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                    }
                 }
             }
             .accessibilityLabel("Profile")
