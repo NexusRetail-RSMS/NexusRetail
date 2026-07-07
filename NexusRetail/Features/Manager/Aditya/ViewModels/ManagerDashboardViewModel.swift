@@ -168,7 +168,7 @@ final class ManagerDashboardViewModel {
             let topProds = try? await topProductsTask
             
             // Fetch real staff data
-            let staffStatsTask: [StaffStatsRPC] = try await SupabaseManager.shared.client
+            let staffStatsTask: [StaffStatsRPC]? = try? await SupabaseManager.shared.client
                 .rpc("get_staff_stats")
                 .execute()
                 .value
@@ -199,7 +199,7 @@ final class ManagerDashboardViewModel {
                 // Wait for independent fetch
 
                 // Calculate performance
-                let storeStaff = staffStatsTask.filter { $0.storeId == storeID }
+                let storeStaff = (staffStatsTask ?? []).filter { $0.storeId == storeID }
                 
                 let maxRev = storeStaff.compactMap { $0.revenue }.max() ?? 1.0
                 let maxRevSafe = maxRev > 0 ? maxRev : 1.0
