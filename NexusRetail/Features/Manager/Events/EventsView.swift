@@ -61,17 +61,17 @@ struct EventsView: View {
                         .padding(.horizontal, RSMSSpacing.lg)
                         .padding(.bottom, 16)
                     
-                    ScrollView {
-                        VStack(spacing: 24) {
-                            if filteredEvents.isEmpty {
-                                if searchText.isEmpty {
-                                    emptyState
-                                        .padding(.top, 60)
-                                } else {
-                                    emptySearchState
-                                        .padding(.top, 60)
-                                }
-                            } else {
+                    if filteredEvents.isEmpty {
+                        Spacer()
+                        if searchText.isEmpty {
+                            emptyState
+                        } else {
+                            emptySearchState
+                        }
+                        Spacer()
+                    } else {
+                        ScrollView {
+                            VStack(spacing: 24) {
                                 // Event List
                                 LazyVStack(spacing: 16) {
                                     ForEach(Array(filteredEvents.enumerated()), id: \.element.id) { index, event in
@@ -85,8 +85,8 @@ struct EventsView: View {
                                 }
                                 .padding(.horizontal, RSMSSpacing.lg)
                             }
+                            .padding(.bottom, 32)
                         }
-                        .padding(.bottom, 32)
                     }
                 }
             }
@@ -168,26 +168,6 @@ struct EventsView: View {
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(RSMSColors.primaryText)
-            
-            Text("Create your first store event to invite customers and showcase new products.")
-                .font(.body)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
-            
-            Button {
-                showingCreateEvent = true
-            } label: {
-                Text("Create Event")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(height: 50)
-                    .frame(maxWidth: .infinity)
-                    .background(RSMSColors.burgundy)
-                    .cornerRadius(25)
-            }
-            .padding(.horizontal, 40)
-            .padding(.top, 16)
         }
     }
     
