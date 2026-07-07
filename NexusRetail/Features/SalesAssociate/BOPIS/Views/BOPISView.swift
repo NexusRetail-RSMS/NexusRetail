@@ -9,9 +9,10 @@ struct BOPISView: View {
     @Environment(SessionStore.self) private var sessionStore
     @State private var viewModel = BOPISViewModel()
     @State private var orderToPack: BOPISOrder?
+    @State private var orderToCollect: BOPISOrder?
     @State private var showNotifiedAlert = false
-    @State private var notifiedCustomerName = ""
-    
+    @State private var notifiedMessage = ""
+
     var hideHeader: Bool = false
     
     var body: some View {
@@ -66,15 +67,29 @@ struct BOPISView: View {
         }
         .sheet(item: $orderToPack) { order in
             BOPISPackOrderView(order: order) {
-                viewModel.packAndNotify(id: order.id, associateID: sessionStore.currentUser?.id)
-                notifiedCustomerName = order.customerName
-                showNotifiedAlert = true
+                Task {
+                    let outcome = await viewModel.packAndNotify(id: order.id, associateID: sessionStore.currentUser?.id)
+                    switch outcome {
+                    case .emailed:
+                        notifiedMessage = "A pickup code has been emailed to \(order.customerName)."
+                    case .noEmail:
+                        notifiedMessage = "Order packed, but no email is on file for \(order.customerName). Ask them for their code another way."
+                    case .sendFailed:
+                        notifiedMessage = "Order packed, but the pickup email couldn't be sent right now. Please try resending or check the email setup."
+                    }
+                    showNotifiedAlert = true
+                }
             }
         }
-        .alert("Customer Notified", isPresented: $showNotifiedAlert) {
+        .sheet(item: $orderToCollect) { order in
+            CollectVerifyView(order: order) { code in
+                await viewModel.verifyAndCollect(id: order.id, code: code)
+            }
+        }
+        .alert("Ready for Pickup", isPresented: $showNotifiedAlert) {
             Button("OK", role: .cancel) { }
         } message: {
-            Text("\(notifiedCustomerName) has been sent a verification code for pickup.")
+            Text(notifiedMessage)
         }
         .task {
             await viewModel.loadData(storeID: sessionStore.currentUser?.storeID)
@@ -150,7 +165,7 @@ struct BOPISView: View {
             case .pending:
                 orderToPack = order
             case .waitingForCustomer:
-                viewModel.markCollected(id: order.id)
+                orderToCollect = order
             case .collected:
                 break
             }

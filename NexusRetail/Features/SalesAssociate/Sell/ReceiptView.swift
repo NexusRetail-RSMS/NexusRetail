@@ -124,6 +124,7 @@ struct ReceiptView: View {
             }
         }
         .navigationBarHidden(true)
+        .toolbar(.hidden, for: .tabBar)
         .onAppear {
             // Cache immediately before viewModel.resetFlow() is ever called
             if cachedItems.isEmpty {
