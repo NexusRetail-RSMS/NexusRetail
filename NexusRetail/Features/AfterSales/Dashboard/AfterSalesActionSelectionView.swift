@@ -107,8 +107,7 @@ struct AfterSalesActionSelectionView: View {
                 icon: "wrench.and.screwdriver.fill",
                 color: Color(hex: "34495E")
             ) {
-                print("Repair initiated for invoice \(invoiceId), item: \(selectedItem.id)")
-                // Future navigation to repair flow
+                path.append(POSFlowDestination.repairForm(invoiceId: invoiceId, selectedItem: selectedItem))
             }
         }
         .padding(.horizontal, RSMSSpacing.lg)
