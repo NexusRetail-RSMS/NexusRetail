@@ -146,7 +146,18 @@ struct InventoryCatalogView: View {
     // MARK: - Data Loading
     private func loadProducts() async {
         isLoading = true
-        self.products = await POSProductRepository.shared.fetchProducts(storeID: sessionStore.currentUser?.storeID)
+        // Use the shared repository which joins real per-store inventory (on_hand),
+        // real sku_code, and store-specific pricing. Stock is scoped to THIS associate's
+        // store, so the search results match the actual backend inventory.
+        //
+        // Run the fetch in a detached task so it isn't torn down by SwiftUI cancelling the
+        // view's `.task` (which the searchable field / tab switches can trigger, surfacing
+        // as CancellationError and leaving stale/empty stock).
+        let storeID = sessionStore.currentUser?.storeID
+        let fetched = await Task.detached(priority: .userInitiated) {
+            await POSProductRepository.shared.fetchProducts(storeID: storeID)
+        }.value
+        self.products = fetched
         isLoading = false
     }
 }

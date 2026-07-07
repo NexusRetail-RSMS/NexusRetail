@@ -1,7 +1,7 @@
 import SwiftUI
+import Supabase
 
-// MARK: - Models (Mock for UI Dev)
-// TODO: Replace with real Supabase models later.
+// MARK: - Enums
 
 enum EventType: String, CaseIterable, Codable {
     case productLaunch = "Product Launch"
@@ -26,192 +26,261 @@ enum EventFilter: String, CaseIterable {
     case completed = "Completed"
 }
 
-struct MockGuest: Identifiable, Codable {
-    let id: UUID
-    let name: String
-    let email: String
-    let phone: String
-    let avatarName: String
-    var storeId: UUID?
-}
-
-struct MockEvent: Identifiable, Codable {
-    let id: UUID
-    var title: String
-    var description: String
-    var eventType: EventType
-    var venue: String
-    var eventDate: Date
-    var startTime: Date
-    var endTime: Date
-    var maximumGuests: Int
-    var bannerImageData: Data?
-    var bannerImageURL: String? // Prepared for backend
-    var guests: [MockGuest]
-    
-    var status: EventStatus {
-        let now = Date()
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: now)
-        let eventDay = calendar.startOfDay(for: eventDate)
-        
-        if eventDay == today {
-            return .today
-        } else if eventDay < today {
-            return .completed
-        } else {
-            return .upcoming
-        }
-    }
-    
-    var invitedCount: Int { guests.count }
-}
-
 @Observable
 class EventsViewModel {
-    var events: [MockEvent] = []
-    var allCustomers: [MockGuest] = []
-    var storeCustomers: [MockGuest] = []
+    var events: [SupabaseEvent] = []
+    var storeCustomers: [SupabaseClientModel] = []
+    
+    // Using shared supabase client
+    private var supabase: SupabaseClient {
+        SupabaseManager.shared.client
+    }
     
     init() {
-        generateMockData()
+        // Initialization can be empty as we fetch async
     }
     
-    // MARK: - Mock Data Generation
+    // MARK: - Fetch Events
     
-    private func generateMockData() {
-        // Generate Mock Customers
-        let names = ["Aarav Patel", "Riya Sharma", "Ishaan Singh", "Diya Kumar", "Aditya Gupta", "Neha Verma", "Arjun Reddy", "Pooja Desai", "Kabir Joshi", "Ananya Rao"]
+    @MainActor
+    func fetchEvents(for storeID: UUID?) async {
+        guard let storeID = storeID else { return }
         
-        allCustomers = names.enumerated().map { index, name in
-            MockGuest(
-                id: UUID(),
-                name: name,
-                email: "\(name.split(separator: " ").first!.lowercased())@example.com",
-                phone: "+91 98765 \(String(format: "%04d", 4321 + index))",
-                avatarName: name.prefix(1).uppercased(),
-                storeId: nil // Mock data
-            )
+        do {
+            let fetchedEvents: [SupabaseEvent] = try await supabase
+                .from("event")
+                .select("*, event_guest(*, client(*))")
+                .eq("store_id", value: storeID.uuidString)
+                .order("scheduled_at", ascending: true)
+                .execute()
+                .value
+                
+            self.events = fetchedEvents
+        } catch {
+            print("Failed to fetch events: \(error)")
         }
-        
-        // Generate Mock Events
-        let now = Date()
-        
-        let event1 = MockEvent(
-            id: UUID(),
-            title: "Summer Jewellery Launch",
-            description: "Join us for the exclusive preview of our new summer jewellery collection. Refreshments will be served.",
-            eventType: .productLaunch,
-            venue: "NexusRetail Delhi, Main Hall",
-            eventDate: Calendar.current.date(byAdding: .day, value: 5, to: now)!,
-            startTime: Calendar.current.date(bySettingHour: 10, minute: 0, second: 0, of: now)!,
-            endTime: Calendar.current.date(bySettingHour: 13, minute: 0, second: 0, of: now)!,
-            maximumGuests: 100,
-            guests: Array(allCustomers.prefix(4))
-        )
-        
-        let event2 = MockEvent(
-            id: UUID(),
-            title: "Luxury Watch Preview",
-            description: "An intimate gathering for our VIP customers to experience the latest luxury timepieces.",
-            eventType: .vipEvent,
-            venue: "NexusRetail Mumbai, VIP Lounge",
-            eventDate: now,
-            startTime: Calendar.current.date(bySettingHour: 18, minute: 0, second: 0, of: now)!,
-            endTime: Calendar.current.date(bySettingHour: 21, minute: 0, second: 0, of: now)!,
-            maximumGuests: 50,
-            guests: Array(allCustomers.suffix(6))
-        )
-        
-        let event3 = MockEvent(
-            id: UUID(),
-            title: "Festive Sale Setup",
-            description: "Preparation and early access for the grand festive sale.",
-            eventType: .seasonalSale,
-            venue: "NexusRetail Bangalore",
-            eventDate: Calendar.current.date(byAdding: .day, value: -10, to: now)!,
-            startTime: Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: now)!,
-            endTime: Calendar.current.date(bySettingHour: 17, minute: 0, second: 0, of: now)!,
-            maximumGuests: 200,
-            guests: allCustomers
-        )
-        
-        events = [event1, event2, event3]
     }
     
+    // MARK: - Image Upload (resilient)
+
+    /// Uploads a banner image, retrying on transient network drops (e.g. NSURLError -1005
+    /// which the simulator throws intermittently). Uses the proven public `product-images`
+    /// bucket. Returns the public URL, or nil if all attempts fail.
+    private func uploadBanner(_ data: Data, attempts: Int = 3) async -> String? {
+        for attempt in 1...attempts {
+            do {
+                return try await ImageUploader.uploadDirect(data: data, bucket: "product-images", folder: "events")
+            } catch {
+                print("Banner upload attempt \(attempt)/\(attempts) failed: \(error)")
+                if attempt < attempts {
+                    // brief backoff before retrying
+                    try? await Task.sleep(nanoseconds: 500_000_000)
+                }
+            }
+        }
+        return nil
+    }
+
     // MARK: - Event Actions
-    
-    func createEvent(title: String, description: String, eventType: EventType, venue: String, eventDate: Date, startTime: Date, endTime: Date, maximumGuests: Int, bannerImageData: Data?) {
-        let newEvent = MockEvent(
-            id: UUID(),
-            title: title,
+
+    /// Returns true on success so the UI can keep a spinner up until the work completes.
+    @MainActor
+    @discardableResult
+    func createEvent(storeID: UUID, title: String, description: String, eventType: EventType, venue: String, eventDate: Date, startTime: Date, endTime: Date, maximumGuests: Int, bannerImageData: Data?) async -> Bool {
+        // Start time is effectively the scheduledAt, we can combine eventDate and startTime
+        // or just use startTime as scheduledAt
+        let calendar = Calendar.current
+        var components = calendar.dateComponents([.year, .month, .day], from: eventDate)
+        let timeComponents = calendar.dateComponents([.hour, .minute, .second], from: startTime)
+        components.hour = timeComponents.hour
+        components.minute = timeComponents.minute
+        components.second = timeComponents.second
+        
+        let scheduledAt = calendar.date(from: components) ?? startTime
+        
+        // Similar for endTime
+        var endComponents = components
+        let endTimeComponents = calendar.dateComponents([.hour, .minute, .second], from: endTime)
+        endComponents.hour = endTimeComponents.hour
+        endComponents.minute = endTimeComponents.minute
+        endComponents.second = endTimeComponents.second
+        let finalEndTime = calendar.date(from: endComponents) ?? endTime
+        
+        // Upload the banner image (if the manager picked one) and capture its public URL.
+        var bannerURL: String? = nil
+        if let bannerImageData {
+            bannerURL = await uploadBanner(bannerImageData)
+        }
+
+        struct EventInsert: Codable {
+            let store_id: UUID
+            let name: String
+            let description: String
+            let event_type: String
+            let venue: String
+            let scheduled_at: Date
+            let end_time: Date
+            let max_guests: Int
+            let banner_image_url: String?
+        }
+        
+        let newEvent = EventInsert(
+            store_id: storeID,
+            name: title,
             description: description,
-            eventType: eventType,
+            event_type: eventType.rawValue,
             venue: venue,
-            eventDate: eventDate,
-            startTime: startTime,
-            endTime: endTime,
-            maximumGuests: maximumGuests,
-            bannerImageData: bannerImageData,
-            guests: []
+            scheduled_at: scheduledAt,
+            end_time: finalEndTime,
+            max_guests: maximumGuests,
+            banner_image_url: bannerURL
         )
-        events.append(newEvent)
-    }
-    
-    func updateEvent(_ event: MockEvent) {
-        if let index = events.firstIndex(where: { $0.id == event.id }) {
-            events[index] = event
+        
+        do {
+            try await supabase
+                .from("event")
+                .insert(newEvent)
+                .execute()
+                
+            // Refresh events list
+            await fetchEvents(for: storeID)
+            return true
+        } catch {
+            print("Failed to create event: \(error)")
+            return false
         }
     }
     
-    func deleteEvent(id: UUID) {
-        events.removeAll { $0.id == id }
+    @MainActor
+    @discardableResult
+    func updateEvent(_ event: SupabaseEvent, newBannerData: Data? = nil) async -> Bool {
+        // NOTE: we must NOT send the whole `SupabaseEvent` to `.update()` because it
+        // carries the nested `event_guest` relation (and other read-only keys). PostgREST
+        // rejects those since they are not columns on `event` (error PGRST204). Send only
+        // the real, updatable columns via a dedicated payload struct.
+
+        // If the manager picked a new banner, upload it; otherwise keep the existing URL.
+        var bannerURL = event.bannerImageURL
+        if let newBannerData {
+            bannerURL = await uploadBanner(newBannerData) ?? event.bannerImageURL
+        }
+
+        struct EventUpdate: Encodable {
+            let name: String
+            let description: String?
+            let event_type: String?
+            let venue: String?
+            let scheduled_at: Date
+            let end_time: Date?
+            let max_guests: Int?
+            let banner_image_url: String?
+        }
+
+        let payload = EventUpdate(
+            name: event.name,
+            description: event.description,
+            event_type: event.eventType,
+            venue: event.venue,
+            scheduled_at: event.scheduledAt,
+            end_time: event.endTime,
+            max_guests: event.maxGuests,
+            banner_image_url: bannerURL
+        )
+
+        do {
+            try await supabase
+                .from("event")
+                .update(payload)
+                .eq("id", value: event.id.uuidString)
+                .execute()
+
+            if let storeID = event.storeID {
+                await fetchEvents(for: storeID)
+            }
+            return true
+        } catch {
+            print("Failed to update event: \(error)")
+            return false
+        }
+    }
+    
+    @MainActor
+    func deleteEvent(id: UUID, storeID: UUID?) async {
+        do {
+            try await supabase
+                .from("event")
+                .delete()
+                .eq("id", value: id.uuidString)
+                .execute()
+                
+            if let storeID = storeID {
+                await fetchEvents(for: storeID)
+            }
+        } catch {
+            print("Failed to delete event: \(error)")
+        }
     }
     
     // MARK: - Backend Ready Fetch
     
     @MainActor
     func fetchCustomers(for storeID: UUID?) async {
-        guard let storeID = storeID else { return }
-        
-        // TODO: Replace with real backend fetch
-        /*
+        // In reality, this might fetch clients from the 'client' table.
+        // We'll fetch a limited set of clients for now.
         do {
-            let fetchedCustomers: [MockGuest] = try await supabase
-                .from("customers")
+            let fetchedCustomers: [SupabaseClientModel] = try await supabase
+                .from("client")
                 .select()
-                .eq("store_id", value: storeID.uuidString)
+                .limit(50)
                 .execute()
                 .value
             self.storeCustomers = fetchedCustomers
         } catch {
             print("Failed to fetch customers: \(error)")
         }
-        */
-        
-        // Mock implementation: For now, we populate with all mock customers 
-        // to keep the UI functional, but in reality this would use the fetched data.
-        self.storeCustomers = allCustomers
     }
     
     // MARK: - Guest Actions
     
-    func inviteGuests(to eventId: UUID, guestIds: Set<UUID>) {
-        guard let eventIndex = events.firstIndex(where: { $0.id == eventId }) else { return }
+    @MainActor
+    func inviteGuests(to eventId: UUID, guestIds: Set<UUID>, storeID: UUID?) async {
+        let inserts = guestIds.map { guestId in
+            return [
+                "event_id": eventId.uuidString,
+                "client_id": guestId.uuidString,
+                "status": "invited"
+            ]
+        }
         
-        let customersToInvite = storeCustomers.filter { guestIds.contains($0.id) }
-        
-        // Add only guests that aren't already in the list
-        for customer in customersToInvite {
-            if !events[eventIndex].guests.contains(where: { $0.id == customer.id }) {
-                events[eventIndex].guests.append(customer)
+        do {
+            try await supabase
+                .from("event_guest")
+                .insert(inserts)
+                .execute()
+                
+            if let storeID = storeID {
+                await fetchEvents(for: storeID)
             }
+        } catch {
+            print("Failed to invite guests: \(error)")
         }
     }
     
-    func removeGuest(eventId: UUID, guestId: UUID) {
-        if let eventIndex = events.firstIndex(where: { $0.id == eventId }) {
-            events[eventIndex].guests.removeAll { $0.id == guestId }
+    @MainActor
+    func removeGuest(eventId: UUID, guestId: UUID, storeID: UUID?) async {
+        do {
+            try await supabase
+                .from("event_guest")
+                .delete()
+                .eq("event_id", value: eventId.uuidString)
+                .eq("client_id", value: guestId.uuidString)
+                .execute()
+                
+            if let storeID = storeID {
+                await fetchEvents(for: storeID)
+            }
+        } catch {
+            print("Failed to remove guest: \(error)")
         }
     }
 }

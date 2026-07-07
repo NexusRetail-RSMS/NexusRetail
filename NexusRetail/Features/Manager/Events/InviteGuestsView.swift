@@ -9,21 +9,22 @@ struct InviteGuestsView: View {
     @State private var searchText = ""
     @State private var selectedGuestIds = Set<UUID>()
     
-    private var storeCustomers: [MockGuest] {
+    private var storeCustomers: [SupabaseClientModel] {
         viewModel.storeCustomers
     }
     
     private var currentGuestIds: Set<UUID> {
-        let event = viewModel.events.first { $0.id == eventId }
-        return Set(event?.guests.map { $0.id } ?? [])
+        guard let event = viewModel.events.first(where: { $0.id == eventId }) else { return [] }
+        let eventGuests = event.eventGuests ?? []
+        return Set(eventGuests.compactMap { $0.clientID })
     }
     
-    private var availableCustomers: [MockGuest] {
+    private var availableCustomers: [SupabaseClientModel] {
         let available = storeCustomers.filter { !currentGuestIds.contains($0.id) }
         if searchText.isEmpty {
             return available
         } else {
-            return available.filter { $0.name.localizedCaseInsensitiveContains(searchText) || $0.email.localizedCaseInsensitiveContains(searchText) }
+            return available.filter { ($0.name ?? "").localizedCaseInsensitiveContains(searchText) || ($0.email ?? "").localizedCaseInsensitiveContains(searchText) }
         }
     }
     
@@ -83,11 +84,11 @@ struct InviteGuestsView: View {
                             }
                             
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(guest.name)
+                                Text(guest.name ?? "Unknown")
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(RSMSColors.primaryText)
                                 
-                                Text(guest.email)
+                                Text(guest.email ?? "No Email")
                                     .font(.system(size: 13))
                                     .foregroundColor(.secondary)
                             }
@@ -142,8 +143,11 @@ struct InviteGuestsView: View {
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Invite (\(selectedGuestIds.count))") {
-                        viewModel.inviteGuests(to: eventId, guestIds: selectedGuestIds)
-                        dismiss()
+                        Task {
+                            let storeID = sessionStore.currentUser?.storeID
+                            await viewModel.inviteGuests(to: eventId, guestIds: selectedGuestIds, storeID: storeID)
+                            dismiss()
+                        }
                     }
                     .fontWeight(.bold)
                     .foregroundColor(selectedGuestIds.isEmpty ? .gray : RSMSColors.burgundy)

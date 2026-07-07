@@ -9,7 +9,7 @@ struct EventDetailsView: View {
     @State private var showingInviteGuests = false
     @State private var showingDeleteAlert = false
     
-    var event: MockEvent? {
+    var event: SupabaseEvent? {
         viewModel.events.first { $0.id == eventId }
     }
     
@@ -34,7 +34,7 @@ struct EventDetailsView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
         let start = formatter.string(from: event.startTime)
-        let end = formatter.string(from: event.endTime)
+        let end = formatter.string(from: event.endTime ?? event.startTime)
         return "\(start) – \(end)"
     }
     
@@ -46,12 +46,16 @@ struct EventDetailsView: View {
                         // Banner Image
                         ZStack(alignment: .bottomLeading) {
                             Group {
-                                if let imageData = event.bannerImageData, let uiImage = UIImage(data: imageData) {
-                                    Image(uiImage: uiImage)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                        .frame(height: 200)
-                                        .clipped()
+                                if let urlString = event.bannerImageURL, let url = URL(string: urlString) {
+                                    AsyncImage(url: url) { image in
+                                        image
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                    } placeholder: {
+                                        Color.gray.opacity(0.1)
+                                    }
+                                    .frame(height: 250)
+                                    .clipped()
                                 } else {
                                     Rectangle()
                                         .fill(Color.gray.opacity(0.1))
@@ -65,7 +69,7 @@ struct EventDetailsView: View {
                             }
                             
                             HStack {
-                                Text(event.eventType.rawValue)
+                                Text(event.eventType ?? "Custom")
                                     .font(.system(size: 13, weight: .bold))
                                     .foregroundColor(.white)
                                     .padding(.horizontal, 12)
@@ -94,22 +98,23 @@ struct EventDetailsView: View {
                                 VStack(alignment: .leading, spacing: 12) {
                                     Label(formattedDate, systemImage: "calendar")
                                     Label(formattedTime, systemImage: "clock")
-                                    Label(event.venue, systemImage: "mappin.and.ellipse")
+                                    Label(event.venueStr ?? "No venue specified", systemImage: "mappin.and.ellipse")
                                 }
                                 .font(.system(size: 15))
                                 .foregroundColor(.secondary)
                             }
                             
-                            if !event.description.isEmpty {
-                                Text("About")
-                                    .font(.title3)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(RSMSColors.primaryText)
-                                
-                                Text(event.description)
-                                    .font(.body)
-                                    .foregroundColor(.secondary)
-                                    .lineSpacing(4)
+                            if let desc = event.description, !desc.isEmpty {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("About")
+                                        .font(.headline)
+                                        .foregroundColor(RSMSColors.primaryText)
+                                    
+                                    Text(desc)
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                        .lineSpacing(4)
+                                }
                             }
                         }
                         .padding(20)
@@ -131,7 +136,7 @@ struct EventDetailsView: View {
                             }
                             
                             HStack(spacing: 12) {
-                                StatBox(title: "Category", value: event.eventType.rawValue, icon: "tag.fill")
+                                StatBox(title: "Category", value: event.eventType ?? "Custom", icon: "tag.fill")
                                 StatBox(title: "Status", value: event.status.rawValue, icon: "info.circle.fill")
                             }
                             
@@ -160,16 +165,18 @@ struct EventDetailsView: View {
                                 .foregroundColor(RSMSColors.primaryText)
                                 .padding(20)
                             
-                            if event.guests.isEmpty {
+                            if event.eventGuests?.isEmpty ?? true {
                                 Text("No guests invited yet.")
                                     .foregroundColor(.secondary)
                                     .padding(.horizontal, 20)
                                     .padding(.bottom, 40)
                             } else {
                                 LazyVStack(spacing: 0) {
-                                    ForEach(event.guests) { guest in
-                                        GuestRow(guest: guest) {
-                                            viewModel.removeGuest(eventId: event.id, guestId: guest.id)
+                                    ForEach(event.eventGuests ?? [], id: \.self) { eventGuest in
+                                        if let guest = eventGuest.client {
+                                            GuestRow(guest: guest) {
+                                                Task { await viewModel.removeGuest(eventId: event.id, guestId: guest.id, storeID: event.storeID) }
+                                            }
                                         }
                                         Divider()
                                             .padding(.leading, 70)
@@ -209,9 +216,13 @@ struct EventDetailsView: View {
                 }
                 .alert("Delete Event", isPresented: $showingDeleteAlert) {
                     Button("Cancel", role: .cancel) { }
-                    Button("Delete", role: .destructive) {
-                        viewModel.deleteEvent(id: event.id)
-                        dismiss()
+                    Button(role: .destructive) {
+                        Task {
+                            await viewModel.deleteEvent(id: event.id, storeID: event.storeID)
+                            dismiss()
+                        }
+                    } label: {
+                        Text("Delete")
                     }
                 } message: {
                     Text("Are you sure you want to delete this event? This action cannot be undone.")
@@ -261,7 +272,7 @@ struct StatBox: View {
 // MARK: - GuestRow
 
 struct GuestRow: View {
-    let guest: MockGuest
+    let guest: SupabaseClientModel
     let onRemove: () -> Void
     
     var body: some View {
@@ -277,11 +288,11 @@ struct GuestRow: View {
             }
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(guest.name)
+                Text(guest.name ?? "Unknown")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(RSMSColors.primaryText)
                 
-                Text(guest.email)
+                Text(guest.email ?? "No Email")
                     .font(.system(size: 13))
                     .foregroundColor(.secondary)
             }
