@@ -74,7 +74,12 @@ class StaffViewModel {
         return decoded
     }
 
-    func loadStaff() async {
+    func loadStaff(storeID: UUID?) async {
+        if let sid = storeID {
+            self.lastStoreID = sid
+        }
+        let currentStoreID = self.lastStoreID
+        
         isLoading = true
         errorMessage = nil
         do {
@@ -283,7 +288,7 @@ class StaffViewModel {
                 _ = await sendEmployeeEmail(to: employee.email, password: password, name: employee.name, role: employee.role)
             }
             
-            await loadStaff() // Reload to get the new staff member and true ID
+            await loadStaff(storeID: nil) // Reload to get the new staff member and true ID
             return nil
             
         } catch {
