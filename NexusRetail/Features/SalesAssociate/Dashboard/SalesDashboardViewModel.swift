@@ -14,7 +14,7 @@ import Observation
 final class SalesDashboardViewModel {
 
     // MARK: - UI State
-    var selectedPeriod: SalesPeriod      = .today
+    var selectedPeriod: SalesPeriod      = .month
     var selectedChartPeriod: ChartPeriod = .monthly
     var isStatsLoading                   = false
 
@@ -35,9 +35,18 @@ final class SalesDashboardViewModel {
         return dbOrders.filter { order in
             // Only completed orders count toward the KPIs (previously every
             // status — open/cancelled — was included, inflating the numbers).
-            guard order.status == "completed" else { return false }
+            guard order.status?.lowercased() == "completed" else { return false }
 
-            if let date = formatter.date(from: order.createdAt) {
+            let date: Date?
+            if let parsed = formatter.date(from: order.createdAt) {
+                date = parsed
+            } else {
+                let fallbackFormatter = ISO8601DateFormatter()
+                fallbackFormatter.formatOptions = [.withInternetDateTime]
+                date = fallbackFormatter.date(from: order.createdAt)
+            }
+            
+            if let date = date {
                 switch selectedPeriod {
                 case .today:
                     return calendar.isDate(date, inSameDayAs: now)
