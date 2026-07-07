@@ -18,7 +18,7 @@ struct NotificationBellView: View {
                 Image(systemName: unreadCount > 0 ? "bell.badge.fill" : "bell.fill")
                     .font(.system(size: 18, weight: .medium))
                     .foregroundColor(RSMSColors.burgundy)
-                    .frame(width: 40, height: 40)
+                    .frame(width: 44, height: 44)
                     .background(
                         Circle()
                             .fill(RSMSColors.burgundy.opacity(0.1))
