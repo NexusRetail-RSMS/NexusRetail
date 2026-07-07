@@ -84,11 +84,117 @@ struct AfterSalesProcessResult: Decodable {
     }
 }
 
+/// Full invoice detail powering the After-Sales invoice screen (customer + items
+/// with per-item purchase date, warranty end, and eligibility).
+struct AfterSalesInvoiceDetails: Decodable {
+    let found: Bool
+    let customer: RequestCustomer?
+    let items: [AfterSalesInvoiceLine]
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        found = (try? c.decode(Bool.self, forKey: .found)) ?? false
+        items = (try? c.decode([AfterSalesInvoiceLine].self, forKey: .items)) ?? []
+        let custDTO: CustomerDTO? = (try? c.decodeIfPresent(CustomerDTO.self, forKey: .customer)) ?? nil
+        if let cust = custDTO {
+            customer = RequestCustomer(name: cust.name ?? "Customer",
+                                       phone: cust.phone ?? "",
+                                       email: cust.email ?? "")
+        } else {
+            customer = nil
+        }
+    }
+
+    private struct CustomerDTO: Decodable {
+        let name: String?
+        let phone: String?
+        let email: String?
+    }
+
+    enum CodingKeys: String, CodingKey { case found, customer, items }
+}
+
+struct AfterSalesInvoiceLine: Decodable, Identifiable, Hashable {
+    let lineId: UUID
+    let itemId: Int64
+    let name: String
+    let category: String
+    let sku: String
+    let price: Double
+    let quantity: Int
+    let imageUrl: String?
+    let purchaseDate: Date?
+    let warrantyEndDate: Date?
+    let inWarranty: Bool
+    let exchangeAllowed: Bool
+
+    var id: UUID { lineId }
+
+    enum CodingKeys: String, CodingKey {
+        case lineId = "line_id"
+        case itemId = "item_id"
+        case name, category, sku, price, quantity
+        case imageUrl = "image_url"
+        case pexelsPage = "pexels_page"
+        case purchasedAt = "purchased_at"
+        case warrantyEnd = "warranty_end"
+        case inWarranty = "in_warranty"
+        case exchangeAllowed = "exchange_allowed"
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        lineId = try c.decode(UUID.self, forKey: .lineId)
+        itemId = try c.decode(Int64.self, forKey: .itemId)
+        name = (try? c.decode(String.self, forKey: .name)) ?? "Item"
+        category = (try? c.decode(String.self, forKey: .category)) ?? "—"
+        sku = (try? c.decode(String.self, forKey: .sku)) ?? "—"
+        // numeric can arrive as number or string
+        if let d = try? c.decode(Double.self, forKey: .price) { price = d }
+        else if let s = try? c.decode(String.self, forKey: .price) { price = Double(s) ?? 0 }
+        else { price = 0 }
+        quantity = (try? c.decode(Int.self, forKey: .quantity)) ?? 1
+
+        let rawImage = (try? c.decodeIfPresent(String.self, forKey: .imageUrl)) ?? nil
+        let pexels = (try? c.decodeIfPresent(String.self, forKey: .pexelsPage)) ?? nil
+        imageUrl = POSProductRepository.shared.extractPexelsImageUrl(from: pexels ?? "") ?? rawImage
+
+        let purchasedStr = (try? c.decodeIfPresent(String.self, forKey: .purchasedAt)) ?? nil
+        let warrantyStr = (try? c.decodeIfPresent(String.self, forKey: .warrantyEnd)) ?? nil
+        purchaseDate = AfterSalesService.parseServerDate(purchasedStr)
+        warrantyEndDate = AfterSalesService.parseServerDate(warrantyStr)
+
+        inWarranty = (try? c.decode(Bool.self, forKey: .inWarranty)) ?? false
+        exchangeAllowed = (try? c.decode(Bool.self, forKey: .exchangeAllowed)) ?? false
+    }
+}
+
 // MARK: - Service
 
 enum AfterSalesService {
 
     private static var client: SupabaseClient { SupabaseManager.shared.client }
+
+    /// Parses Postgres timestamptz strings (with or without fractional seconds).
+    static func parseServerDate(_ string: String?) -> Date? {
+        guard let string else { return nil }
+        let withFrac = ISO8601DateFormatter()
+        withFrac.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let d = withFrac.date(from: string) { return d }
+        let plain = ISO8601DateFormatter()
+        plain.formatOptions = [.withInternetDateTime]
+        return plain.date(from: string)
+    }
+
+    struct InvoiceParams: Encodable { let p_order_id: String }
+
+    /// Single-call invoice detail (customer + items + warranty/eligibility).
+    static func fetchInvoiceDetails(orderId: String) async throws -> AfterSalesInvoiceDetails {
+        try await client
+            .rpc("after_sales_invoice", params: InvoiceParams(p_order_id: orderId))
+            .execute()
+            .value
+    }
 
     /// Fetch the real purchased items on a scanned invoice (order UUID string).
     static func fetchInvoiceItems(orderId: String) async throws -> [AfterSalesInvoiceItem] {

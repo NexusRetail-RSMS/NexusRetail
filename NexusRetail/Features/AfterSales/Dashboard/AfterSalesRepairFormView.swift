@@ -6,14 +6,15 @@ struct AfterSalesRepairFormView: View {
     
     let invoiceId: String
     let selectedItem: POSProduct
+    /// Warranty end determined on the previous (action) screen — reused here so the
+    /// two screens never disagree and we don't re-hit the network.
+    var warrantyEndDate: Date? = nil
     
     @State private var problemDescription: String = ""
     @State private var additionalAmountText: String = ""
 
     enum WarrantyCheckPhase { case checking, result, done }
 
-    @State private var eligibility: AfterSalesEligibility? = nil
-    @State private var isLoading = true
     @State private var checkPhase: WarrantyCheckPhase = .checking
     @State private var checkmarkScale: CGFloat = 0.4
     @State private var isProcessing = false
@@ -26,7 +27,11 @@ struct AfterSalesRepairFormView: View {
     
     private let serviceCost: Double = 500.0
 
-    private var inWarranty: Bool { eligibility?.inWarranty ?? false }
+    /// Uses the warranty date passed from the action page (single source of truth).
+    private var inWarranty: Bool {
+        guard let warrantyEndDate else { return false }
+        return Date() <= warrantyEndDate
+    }
     
     private var totalAmount: Double {
         if inWarranty { return 0 }
@@ -72,7 +77,7 @@ struct AfterSalesRepairFormView: View {
             }
         }
         .navigationBarHidden(true)
-        .task { await loadEligibility() }
+        .task { await runWarrantyAnimation() }
         .alert(resultTitle, isPresented: $showResult) {
             Button("OK") {
                 if resultWasSuccess { path = NavigationPath() }
@@ -82,29 +87,17 @@ struct AfterSalesRepairFormView: View {
         }
     }
 
-    private func loadEligibility() async {
-        isLoading = true
+    /// No network call — warranty is already known from the action page. We just play
+    /// the brief checking → result animation using that value.
+    private func runWarrantyAnimation() async {
         checkPhase = .checking
-        // Run the real check, but keep the "checking" animation up for a minimum duration
-        // so it always feels intentional even when the network is instant.
-        let start = Date()
-        do {
-            eligibility = try await AfterSalesService.checkEligibility(orderId: invoiceId, itemId: selectedItem.itemId)
-        } catch {
-            print("Repair eligibility check failed: \(error)")
-        }
-        let elapsed = Date().timeIntervalSince(start)
-        if elapsed < 1.4 {
-            try? await Task.sleep(nanoseconds: UInt64((1.4 - elapsed) * 1_000_000_000))
-        }
-        isLoading = false
+        try? await Task.sleep(nanoseconds: 1_100_000_000)
 
-        // Reveal the result with a spring-in checkmark, hold, then show the form.
         withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
             checkPhase = .result
             checkmarkScale = 1.0
         }
-        try? await Task.sleep(nanoseconds: 1_600_000_000)
+        try? await Task.sleep(nanoseconds: 1_500_000_000)
         withAnimation(.easeInOut(duration: 0.4)) {
             checkPhase = .done
         }
@@ -112,8 +105,7 @@ struct AfterSalesRepairFormView: View {
 
     // MARK: - Warranty Check Overlay
     private var warrantyCheckOverlay: some View {
-        let inW = eligibility?.inWarranty ?? false
-        let months = eligibility?.warrantyMonths
+        let inW = inWarranty
         return ZStack {
             RSMSColors.background.ignoresSafeArea()
 
@@ -164,8 +156,8 @@ struct AfterSalesRepairFormView: View {
                                 .multilineTextAlignment(.center)
                         }
 
-                        if let months, inW {
-                            Text("\(selectedItem.category) • \(months)-month warranty")
+                        if inW, let end = warrantyEndDate {
+                            Text("\(selectedItem.category) • covered until \(end.formatted(date: .abbreviated, time: .omitted))")
                                 .font(.system(size: 12))
                                 .foregroundColor(RSMSColors.secondaryText)
                                 .padding(.top, 2)
@@ -307,9 +299,7 @@ struct AfterSalesRepairFormView: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(RSMSColors.primaryText)
 
-                if isLoading {
-                    HStack { ProgressView().tint(RSMSColors.burgundy); Text("Checking warranty...").font(.system(size: 13)).foregroundColor(RSMSColors.secondaryText) }
-                } else if inWarranty {
+                if inWarranty {
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark.seal.fill").foregroundColor(RSMSColors.success)
                         Text("Covered under warranty — no charge")
