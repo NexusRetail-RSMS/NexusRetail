@@ -109,7 +109,7 @@ struct AfterSalesRepairFormView: View {
                     }
                 }
             }
-            .presentationDetents([.medium])
+            .presentationDetents([.height(520)])
         }
     }
     
