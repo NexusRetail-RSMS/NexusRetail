@@ -3,6 +3,7 @@ import SwiftUI
 struct AfterSalesRepairFormView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SellViewModel.self) private var viewModel
+    @Environment(SessionStore.self) private var sessionStore
     @Binding var path: NavigationPath
     
     let invoiceId: String
@@ -11,6 +12,7 @@ struct AfterSalesRepairFormView: View {
     
     @State private var problemDescription: String = ""
     @State private var additionalAmountText: String = ""
+    @State private var isProcessing: Bool = false
     
     @FocusState private var isInputFocused: Bool
     
@@ -48,6 +50,23 @@ struct AfterSalesRepairFormView: View {
                 }
                 
                 bottomActionBar
+            }
+            
+            if isProcessing {
+                ZStack {
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                    
+                    VStack(spacing: 20) {
+                        ProgressView()
+                            .controlSize(.large)
+                            .tint(.white)
+                        
+                        Text("Processing Request...")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                }
             }
         }
         .navigationBarHidden(true)
@@ -240,12 +259,30 @@ struct AfterSalesRepairFormView: View {
                 )
                 
                 viewModel.resetFlow()
-                // Force adding to cart by bypassing stock check if needed, 
-                // but since stock is 999 it will pass canAddMore
                 viewModel.cartItems.append(repairProduct)
-                viewModel.selectedPaymentMethod = .razorpay
                 
-                path.append(POSFlowDestination.payment)
+                if totalAmount == 0 {
+                    isProcessing = true
+                    Task {
+                        do {
+                            // Automatically process the checkout without payment gateway
+                            try await viewModel.processCheckout(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
+                            await POSProductRepository.shared.refreshStockForStore(storeID: sessionStore.currentUser?.storeID)
+                            await viewModel.fetchRecentOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
+                            
+                            await MainActor.run {
+                                isProcessing = false
+                                path.append(POSFlowDestination.receipt)
+                            }
+                        } catch {
+                            print("Checkout failed: \(error)")
+                            await MainActor.run { isProcessing = false }
+                        }
+                    }
+                } else {
+                    viewModel.selectedPaymentMethod = .razorpay
+                    path.append(POSFlowDestination.payment)
+                }
                 
             } label: {
                 Text("Submit Repair Request")
