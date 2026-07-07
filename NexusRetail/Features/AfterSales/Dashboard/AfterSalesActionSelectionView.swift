@@ -7,11 +7,14 @@ struct AfterSalesActionSelectionView: View {
     let invoiceId: String
     let selectedItem: POSProduct
     
-    private var isUnderWarranty: Bool {
+    private var warrantyMonthsRemaining: Int? {
         // Mocking a purchase date 4 months ago for demonstration
         let purchaseDate = Date().addingTimeInterval(-4 * 30 * 24 * 60 * 60)
-        let warrantyPeriod: TimeInterval = 6 * 30 * 24 * 60 * 60
-        return Date().timeIntervalSince(purchaseDate) <= warrantyPeriod
+        let warrantyMonths = 6
+        let timePassed = Date().timeIntervalSince(purchaseDate)
+        let monthsPassed = Int(timePassed / (30 * 24 * 60 * 60))
+        let remaining = warrantyMonths - monthsPassed
+        return remaining > 0 ? remaining : nil
     }
     
     var body: some View {
@@ -112,7 +115,7 @@ struct AfterSalesActionSelectionView: View {
                 icon: "wrench.and.screwdriver.fill",
                 color: Color(hex: "34495E")
             ) {
-                path.append(POSFlowDestination.repairForm(invoiceId: invoiceId, selectedItem: selectedItem, isUnderWarranty: isUnderWarranty))
+                path.append(POSFlowDestination.repairForm(invoiceId: invoiceId, selectedItem: selectedItem, warrantyMonthsRemaining: warrantyMonthsRemaining))
             }
         }
         .padding(.horizontal, RSMSSpacing.lg)

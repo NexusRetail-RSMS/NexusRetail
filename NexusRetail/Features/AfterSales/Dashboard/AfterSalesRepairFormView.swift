@@ -8,7 +8,11 @@ struct AfterSalesRepairFormView: View {
     
     let invoiceId: String
     let selectedItem: POSProduct
-    let isUnderWarranty: Bool
+    let warrantyMonthsRemaining: Int?
+    
+    private var isUnderWarranty: Bool {
+        return warrantyMonthsRemaining != nil
+    }
     
     @State private var problemDescription: String = ""
     @State private var additionalAmountText: String = ""
@@ -131,11 +135,11 @@ struct AfterSalesRepairFormView: View {
                     .font(.system(size: 13))
                     .foregroundColor(RSMSColors.secondaryText)
                 
-                if isUnderWarranty {
+                if let months = warrantyMonthsRemaining {
                     HStack(spacing: 4) {
                         Image(systemName: "checkmark.seal.fill")
                             .font(.system(size: 12))
-                        Text("Under Warranty (6 Months)")
+                        Text("Warranty: \(months) month\(months == 1 ? "" : "s") remaining")
                             .font(.system(size: 12, weight: .bold))
                     }
                     .foregroundColor(.green)
