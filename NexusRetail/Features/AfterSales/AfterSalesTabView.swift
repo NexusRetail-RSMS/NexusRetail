@@ -82,7 +82,7 @@ struct AfterSalesToolbarModifier: ViewModifier {
     
     func body(content: Content) -> some View {
         content
-            .navigationTitle(title)
+            .navigationTitle(LocalizedStringKey(title))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -152,12 +152,12 @@ struct AfterSalesPlaceholderView: View {
                     .foregroundColor(RSMSColors.burgundy)
                     .accessibilityHidden(true)
                 
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(RSMSFonts.title)
                     .fontWeight(.bold)
                     .foregroundColor(RSMSColors.primaryText)
                 
-                Text(message)
+                Text(LocalizedStringKey(message))
                     .font(RSMSFonts.body)
                     .foregroundColor(RSMSColors.secondaryText)
                     .multilineTextAlignment(.center)

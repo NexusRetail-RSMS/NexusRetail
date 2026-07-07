@@ -119,7 +119,7 @@ struct ManagerRequestsView: View {
                                             .font(.system(size: 12))
                                             .foregroundColor(RSMSColors.secondaryText)
                                             
-                                        Text((request.urgency ?? "Normal").capitalized)
+                                        Text(LocalizedStringKey((request.urgency ?? "Normal").capitalized))
                                             .font(.system(size: 12, weight: .bold))
                                             .foregroundColor((request.urgency ?? "") == "high" ? .red : RSMSColors.secondaryText)
                                     }
@@ -128,7 +128,7 @@ struct ManagerRequestsView: View {
                                 Spacer()
                                 
                                 VStack(alignment: .trailing, spacing: 4) {
-                                    Text((request.status ?? "Pending").capitalized)
+                                    Text(LocalizedStringKey((request.status ?? "Pending").capitalized))
                                         .font(.system(size: 12, weight: .bold))
                                         .padding(.horizontal, 8)
                                         .padding(.vertical, 4)

@@ -73,7 +73,7 @@ struct StaffView: View {
             // MARK: - Role Segmented Control
             Picker("Role Filter", selection: $selectedRoleFilter) {
                 ForEach(EmployeeRoleFilter.allCases, id: \.self) { role in
-                    Text(role.rawValue).tag(role)
+                    Text(LocalizedStringKey(role.rawValue)).tag(role)
                 }
             }
             .pickerStyle(.segmented)

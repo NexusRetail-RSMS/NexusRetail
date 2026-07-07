@@ -8,6 +8,7 @@ import SwiftUI
 struct ProfileView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SessionStore.self) private var sessionStore
+    @Environment(LocalizationManager.self) private var localizationManager
     
     var body: some View {
         NavigationStack {
@@ -88,6 +89,35 @@ struct ProfileView: View {
                                 .cornerRadius(RSMSRadius.large)
                                 .padding(.horizontal, RSMSSpacing.lg)
                             }
+                        }
+                        
+                        // General Settings Section
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("General Settings")
+                                .font(.subheadline)
+                                .foregroundColor(RSMSColors.secondaryText)
+                                .padding(.horizontal, RSMSSpacing.lg)
+                            
+                            VStack(spacing: 0) {
+                                NavigationLink {
+                                    LanguagePickerView(isInitialLaunch: false, initialLanguageCode: localizationManager.currentLanguage)
+                                } label: {
+                                    HStack {
+                                        Image(systemName: "globe")
+                                            .foregroundColor(RSMSColors.burgundy)
+                                        Text(String(localized: "Language"))
+                                            .foregroundColor(RSMSColors.primaryText)
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .foregroundColor(RSMSColors.secondaryText)
+                                            .font(.caption)
+                                    }
+                                    .padding()
+                                }
+                            }
+                            .background(Color.white)
+                            .cornerRadius(RSMSRadius.large)
+                            .padding(.horizontal, RSMSSpacing.lg)
                         }
                         
                         // Sign Out Button

@@ -11,7 +11,7 @@ struct SegmentControlView: View {
     var body: some View {
         Picker("Time Range", selection: $selection) {
             ForEach([SalesTimeRange.weekly, SalesTimeRange.monthly], id: \.self) { range in
-                Text(range.rawValue).tag(range)
+                Text(LocalizedStringKey(range.rawValue)).tag(range)
             }
         }
         .pickerStyle(.segmented)

@@ -36,7 +36,7 @@ struct ProductSalesChart: View {
                 if allowsYearly {
                     Picker("Time Range", selection: $timeRange) {
                         ForEach(SalesTimeRange.allCases, id: \.self) { range in
-                            Text(range.rawValue).tag(range)
+                            Text(LocalizedStringKey(range.rawValue)).tag(range)
                         }
                     }
                     .pickerStyle(.segmented)

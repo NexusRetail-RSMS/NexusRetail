@@ -21,7 +21,7 @@ struct RevenueBarChart: View {
 
             // Row 1: Title + time-range toggle
             HStack {
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(RSMSFonts.headline)
                     .foregroundColor(RSMSColors.primaryText)
 
@@ -145,7 +145,7 @@ struct TimeRangeToggle: View {
     var body: some View {
         Picker("Time Range", selection: $selection) {
             ForEach([SalesTimeRange.weekly, SalesTimeRange.monthly], id: \.self) { range in
-                Text(range.rawValue).tag(range)
+                Text(LocalizedStringKey(range.rawValue)).tag(range)
             }
         }
         .pickerStyle(.segmented)

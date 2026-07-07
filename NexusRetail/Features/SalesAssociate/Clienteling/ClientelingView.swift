@@ -166,7 +166,7 @@ struct ClientelingView: View {
             HStack(spacing: 6) {
                 Image(systemName: icon)
                     .font(.system(size: 12))
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.system(size: 14, weight: isSelected ? .semibold : .medium))
                 
                 if let count = count {
@@ -240,7 +240,7 @@ struct ClientelingView: View {
                     Image(systemName: "bag")
                         .font(.system(size: 12))
                         .foregroundColor(.gray)
-                    Text(client.preferences)
+                    Text(LocalizedStringKey(client.preferences))
                         .font(.system(size: 13))
                         .foregroundStyle(.gray)
                         .lineLimit(1)
@@ -298,7 +298,7 @@ struct ClientelingView: View {
         return HStack(spacing: 4) {
             Image(systemName: icon)
                 .font(.system(size: 10))
-            Text(pattern)
+            Text(LocalizedStringKey(pattern))
                 .font(.system(size: 10, weight: .semibold))
         }
         .foregroundColor(color)

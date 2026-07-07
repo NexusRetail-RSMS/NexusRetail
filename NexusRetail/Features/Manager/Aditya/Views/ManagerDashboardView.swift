@@ -95,7 +95,7 @@ struct ManagerDashboardView: View {
                                 }
                             } label: {
                                 HStack(spacing: 4) {
-                                    Text(viewModel.revenueTimeRange.rawValue)
+                                    Text(LocalizedStringKey(viewModel.revenueTimeRange.rawValue))
                                         .font(.system(size: 14, weight: .medium))
                                     Image(systemName: "chevron.down")
                                         .font(.system(size: 10, weight: .bold))

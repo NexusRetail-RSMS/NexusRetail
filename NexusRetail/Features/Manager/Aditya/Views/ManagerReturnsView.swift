@@ -92,7 +92,7 @@ struct ManagerReturnsView: View {
                         ForEach(viewModel.tickets) { ticket in
                             VStack(alignment: .leading, spacing: 12) {
                                 HStack {
-                                    Text(ticket.type.capitalized)
+                                    Text(LocalizedStringKey(ticket.type.capitalized))
                                         .font(.system(size: 12, weight: .bold))
                                         .padding(.horizontal, 8)
                                         .padding(.vertical, 4)
@@ -102,7 +102,7 @@ struct ManagerReturnsView: View {
                                     
                                     Spacer()
                                     
-                                    Text(ticket.stage.capitalized)
+                                    Text(LocalizedStringKey(ticket.stage.capitalized))
                                         .font(.system(size: 12, weight: .semibold))
                                         .foregroundColor(RSMSColors.secondaryText)
                                 }

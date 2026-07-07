@@ -90,7 +90,7 @@ struct KPICardView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
                 
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.system(size: 13))
                     .foregroundColor(RSMSColors.secondaryText)
                     .lineLimit(2)
