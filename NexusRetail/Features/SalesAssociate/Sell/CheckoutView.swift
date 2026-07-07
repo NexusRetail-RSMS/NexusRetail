@@ -116,6 +116,7 @@ struct CheckoutView: View {
             .ignoresSafeArea(edges: .top)
         }
         .navigationBarHidden(true)
+        .toolbar(.hidden, for: .tabBar)
     }
 
     // MARK: - Customer Link (phone-first lookup / quick-create)
