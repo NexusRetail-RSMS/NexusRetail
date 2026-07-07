@@ -8,21 +8,18 @@ struct AfterSalesRepairFormView: View {
     
     let invoiceId: String
     let selectedItem: POSProduct
-    let warrantyMonthsRemaining: Int?
-    
-    private var isUnderWarranty: Bool {
-        return warrantyMonthsRemaining != nil
-    }
+    let remainingWarrantyMonths: Int
     
     @State private var problemDescription: String = ""
     @State private var additionalAmountText: String = ""
+    @State private var pickupDate: Date = Date().addingTimeInterval(7 * 24 * 60 * 60)
     @State private var isProcessing: Bool = false
-    @State private var pickupDate: Date = Calendar.current.date(byAdding: .day, value: 3, to: Date()) ?? Date()
-    @State private var showDatePicker: Bool = false
-    @State private var showErrorAlert: Bool = false
-    @State private var errorMessage: String = ""
     
     @FocusState private var isInputFocused: Bool
+    
+    private var isUnderWarranty: Bool {
+        remainingWarrantyMonths > 0
+    }
     
     private let baseServiceCost: Double = 500.0
     private var actualServiceCost: Double {
@@ -52,7 +49,6 @@ struct AfterSalesRepairFormView: View {
                         formSection
                     }
                     .padding(.vertical, RSMSSpacing.lg)
-                    .padding(.bottom, 60) // Extra padding so 'Total Amount' is fully visible
                 }
                 .onTapGesture {
                     isInputFocused = false
@@ -79,46 +75,6 @@ struct AfterSalesRepairFormView: View {
             }
         }
         .navigationBarHidden(true)
-        .sheet(isPresented: $showDatePicker) {
-            NavigationStack {
-                VStack {
-                    DatePicker("Select Date", selection: $pickupDate, in: Calendar.current.startOfDay(for: Date())..., displayedComponents: .date)
-                        .datePickerStyle(.graphical)
-                        .accentColor(RSMSColors.burgundy)
-                        .padding()
-                    
-                    Spacer()
-                    
-                    Button("Confirm") {
-                        showDatePicker = false
-                    }
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(RSMSColors.burgundy)
-                    .cornerRadius(12)
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 24)
-                }
-                .navigationTitle("Pickup Date")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button("Cancel") {
-                            showDatePicker = false
-                        }
-                        .foregroundColor(RSMSColors.burgundy)
-                    }
-                }
-            }
-            .presentationDetents([.height(520)])
-        }
-        .alert("Checkout Failed", isPresented: $showErrorAlert) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text(errorMessage)
-        }
     }
     
     // MARK: - Header
@@ -180,11 +136,11 @@ struct AfterSalesRepairFormView: View {
                     .font(.system(size: 13))
                     .foregroundColor(RSMSColors.secondaryText)
                 
-                if let months = warrantyMonthsRemaining {
+                if isUnderWarranty {
                     HStack(spacing: 4) {
                         Image(systemName: "checkmark.seal.fill")
                             .font(.system(size: 12))
-                        Text("Warranty: \(months) month\(months == 1 ? "" : "s") remaining")
+                        Text("Under Warranty (\(remainingWarrantyMonths) \(remainingWarrantyMonths == 1 ? "Month" : "Months") Remaining)")
                             .font(.system(size: 12, weight: .bold))
                     }
                     .foregroundColor(.green)
@@ -225,39 +181,21 @@ struct AfterSalesRepairFormView: View {
                     )
             }
             
+            // Pickup Date Field
             VStack(alignment: .leading, spacing: 8) {
-                Text("Estimated Pickup Date")
+                Text("Scheduled Pickup Date")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(RSMSColors.secondaryText)
                 
-                Button {
-                    isInputFocused = false
-                    showDatePicker = true
-                } label: {
-                    HStack {
-                        Image(systemName: "calendar")
-                            .font(.system(size: 16))
-                            .foregroundColor(RSMSColors.burgundy)
-                        
-                        Text(pickupDate.formatted(date: .long, time: .omitted))
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(RSMSColors.primaryText)
-                        
-                        Spacer()
-                        
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
-                    }
-                    .padding(16)
+                DatePicker("Pickup Date", selection: $pickupDate, in: Date()..., displayedComponents: .date)
+                    .datePickerStyle(.compact)
+                    .padding(12)
                     .background(Color.white)
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(RSMSColors.inputBorder, lineWidth: 1)
                     )
-                }
-                .buttonStyle(.plain)
             }
             
             Divider()
@@ -330,43 +268,22 @@ struct AfterSalesRepairFormView: View {
             Button {
                 isInputFocused = false
                 
+                let repairProduct = POSProduct(
+                    id: UUID(),
+                    itemId: selectedItem.itemId,
+                    name: "Repair: \(selectedItem.name)",
+                    sku: selectedItem.sku,
+                    category: "Service",
+                    price: totalAmount,
+                    stock: 999,
+                    size: selectedItem.size,
+                    imageUrl: selectedItem.imageUrl
+                )
+                
                 viewModel.resetFlow()
+                viewModel.cartItems.append(repairProduct)
                 
-                let baseCost = actualServiceCost
-                if baseCost > 0 || isUnderWarranty {
-                    let baseRepairProduct = POSProduct(
-                        id: UUID(),
-                        itemId: selectedItem.itemId,
-                        name: "Service Fee (\(selectedItem.name))",
-                        sku: "SRV-\(selectedItem.sku)",
-                        category: "Service",
-                        price: baseCost,
-                        stock: 999,
-                        size: selectedItem.size,
-                        imageUrl: selectedItem.imageUrl
-                    )
-                    viewModel.cartItems.append(baseRepairProduct)
-                }
-                
-                let additional = Double(additionalAmountText) ?? 0.0
-                if additional > 0 {
-                    let partsProduct = POSProduct(
-                        id: UUID(),
-                        itemId: selectedItem.itemId,
-                        name: "Parts (\(selectedItem.name))",
-                        sku: "PRT-\(selectedItem.sku)",
-                        category: "Parts",
-                        price: additional,
-                        stock: 999,
-                        size: selectedItem.size,
-                        imageUrl: selectedItem.imageUrl
-                    )
-                    viewModel.cartItems.append(partsProduct)
-                }
-                
-                let currentTotal = totalAmount
-                
-                if currentTotal == 0 {
+                if totalAmount == 0 {
                     isProcessing = true
                     Task {
                         do {
@@ -381,18 +298,12 @@ struct AfterSalesRepairFormView: View {
                             }
                         } catch {
                             print("Checkout failed: \(error)")
-                            await MainActor.run { 
-                                isProcessing = false
-                                errorMessage = error.localizedDescription
-                                showErrorAlert = true
-                            }
+                            await MainActor.run { isProcessing = false }
                         }
                     }
                 } else {
                     viewModel.selectedPaymentMethod = .razorpay
-                    DispatchQueue.main.async {
-                        path.append(POSFlowDestination.payment)
-                    }
+                    path.append(POSFlowDestination.payment)
                 }
                 
             } label: {

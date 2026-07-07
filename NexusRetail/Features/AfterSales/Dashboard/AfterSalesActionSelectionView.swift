@@ -7,14 +7,12 @@ struct AfterSalesActionSelectionView: View {
     let invoiceId: String
     let selectedItem: POSProduct
     
-    private var warrantyMonthsRemaining: Int? {
+    private var remainingWarrantyMonths: Int {
         // Mocking a purchase date 4 months ago for demonstration
         let purchaseDate = Date().addingTimeInterval(-4 * 30 * 24 * 60 * 60)
-        let warrantyMonths = 6
-        let timePassed = Date().timeIntervalSince(purchaseDate)
-        let monthsPassed = Int(timePassed / (30 * 24 * 60 * 60))
-        let remaining = warrantyMonths - monthsPassed
-        return remaining > 0 ? remaining : nil
+        let warrantyPeriod: TimeInterval = 6 * 30 * 24 * 60 * 60
+        let remaining = warrantyPeriod - Date().timeIntervalSince(purchaseDate)
+        return max(0, Int(remaining / (30 * 24 * 60 * 60)))
     }
     
     var body: some View {
@@ -63,20 +61,22 @@ struct AfterSalesActionSelectionView: View {
     // MARK: - Product Hero
     private var productHeroSection: some View {
         VStack(spacing: 0) {
-            CachedAsyncImage(url: URL(string: selectedItem.imageUrl ?? "")) { image in
-                image
-                    .resizable()
-                    .scaledToFill()
-                    .aspectRatio(1 / 1.1, contentMode: .fit)
-                    .frame(maxWidth: .infinity)
-                    .clipped()
-            } placeholder: {
-                Rectangle()
-                    .fill(Color.gray.opacity(0.1))
-                    .aspectRatio(1 / 1.1, contentMode: .fit)
-                    .frame(maxWidth: .infinity)
-                    .overlay(ProgressView())
+            GeometryReader { geo in
+                let width = geo.size.width
+                CachedAsyncImage(url: URL(string: selectedItem.imageUrl ?? "")) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: width, height: width * 1.1)
+                        .clipped()
+                } placeholder: {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.1))
+                        .frame(width: width, height: width * 1.1)
+                        .overlay(ProgressView())
+                }
             }
+            .frame(height: UIScreen.main.bounds.width * 1.1)
             
             // Product info
             VStack(alignment: .center, spacing: 8) {
@@ -115,7 +115,7 @@ struct AfterSalesActionSelectionView: View {
                 icon: "wrench.and.screwdriver.fill",
                 color: Color(hex: "34495E")
             ) {
-                path.append(POSFlowDestination.repairForm(invoiceId: invoiceId, selectedItem: selectedItem, warrantyMonthsRemaining: warrantyMonthsRemaining))
+                path.append(POSFlowDestination.repairForm(invoiceId: invoiceId, selectedItem: selectedItem, remainingWarrantyMonths: remainingWarrantyMonths))
             }
         }
         .padding(.horizontal, RSMSSpacing.lg)

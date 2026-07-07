@@ -24,7 +24,7 @@ enum POSFlowDestination: Hashable {
     case invoiceScanner
     case invoiceItemsSelection(invoiceId: String)
     case actionSelection(invoiceId: String, selectedItem: POSProduct)
-    case repairForm(invoiceId: String, selectedItem: POSProduct, warrantyMonthsRemaining: Int?)
+    case repairForm(invoiceId: String, selectedItem: POSProduct, remainingWarrantyMonths: Int)
 }
 
 // MARK: - Chart / Period
