@@ -169,6 +169,16 @@ class SellViewModel {
         let message: String?
     }
     
+    private func extractEdgeFunctionError(_ error: Error) -> Error {
+        if let functionsError = error as? FunctionsError,
+           case .httpError(let code, let data) = functionsError,
+           let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let errMsg = dict["error"] as? String {
+            return NSError(domain: "Checkout", code: code, userInfo: [NSLocalizedDescriptionKey: errMsg])
+        }
+        return error
+    }
+    
     func processRazorpayCheckout(storeID: UUID?, associateID: UUID?) async throws {
         guard let storeID = storeID else { throw NSError(domain: "Checkout", code: 1, userInfo: [NSLocalizedDescriptionKey: "Missing storeID"]) }
         
@@ -179,10 +189,15 @@ class SellViewModel {
             let razorpay_order_id: String
         }
         
-        let createResponse: CreateOrderResponse = try await SupabaseManager.shared.client.functions.invoke(
-            "razorpay-checkout",
-            options: FunctionInvokeOptions(body: createRequest)
-        )
+        let createResponse: CreateOrderResponse
+        do {
+            createResponse = try await SupabaseManager.shared.client.functions.invoke(
+                "razorpay-checkout",
+                options: FunctionInvokeOptions(body: createRequest)
+            )
+        } catch {
+            throw extractEdgeFunctionError(error)
+        }
         
         let razorpayOrderID = createResponse.razorpay_order_id
         
@@ -197,6 +212,8 @@ class SellViewModel {
         return try await withCheckedThrowingContinuation { continuation in
             DispatchQueue.main.async {
                 let options: [String: Any] = [
+                    "amount": Int(self.totalAmount * 100),
+                    "currency": "INR",
                     "description": "Nexus Retail Checkout",
                     "order_id": razorpayOrderID,
                     "name": "Nexus Retail",
@@ -232,10 +249,15 @@ class SellViewModel {
                                     checkout_params: checkoutParams
                                 )
                                 
-                                let verifyResponse: VerifyResponse = try await SupabaseManager.shared.client.functions.invoke(
-                                    "razorpay-checkout",
-                                    options: FunctionInvokeOptions(body: verifyRequest)
-                                )
+                                let verifyResponse: VerifyResponse
+                                do {
+                                    verifyResponse = try await SupabaseManager.shared.client.functions.invoke(
+                                        "razorpay-checkout",
+                                        options: FunctionInvokeOptions(body: verifyRequest)
+                                    )
+                                } catch {
+                                    throw self.extractEdgeFunctionError(error)
+                                }
                                 
                                 if verifyResponse.success, let dbOrderId = verifyResponse.order_id {
                                     self.lastOrderId = dbOrderId

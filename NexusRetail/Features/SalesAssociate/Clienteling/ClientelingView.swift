@@ -93,7 +93,7 @@ struct ClientelingView: View {
     }
 
     private func clientRow(_ client: AssociateClient) -> some View {
-        HStack(alignment: .top, spacing: 16) {
+        HStack(alignment: .center, spacing: 16) {
             // Avatar
             ZStack {
                 Circle()
@@ -105,37 +105,21 @@ struct ClientelingView: View {
             }
             
             // Details
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text(client.name)
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(.black)
-                    Spacer()
-                    Text(client.phone)
-                        .font(.system(size: 13))
-                        .foregroundStyle(.gray)
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(Color.gray.opacity(0.6))
-                        .padding(.leading, 4)
-                }
-                
-                HStack(spacing: 6) {
-                    Image(systemName: "bag")
-                        .font(.system(size: 12))
-                        .foregroundColor(.gray)
-                    Text(client.preferences)
-                        .font(.system(size: 13))
-                        .foregroundStyle(.gray)
-                        .lineLimit(1)
-                }
-                
-                HStack {
-                    statusBadge(for: client.purchasePattern)
-                    Spacer()
-                }
-                .padding(.top, 2)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(client.name)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(.black)
+                Text(client.phone)
+                    .font(.system(size: 13))
+                    .foregroundStyle(.gray)
             }
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Color.gray.opacity(0.6))
+                .padding(.leading, 4)
         }
         .padding(16)
         .background(Color.white)
