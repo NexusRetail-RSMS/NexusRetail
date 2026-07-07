@@ -14,6 +14,7 @@ struct BarcodeScannerView: View {
     @State private var selectedPhoto: PhotosPickerItem? = nil
     @State private var stockLimitReached = false   // shown when scan hits stock limit
     @State private var toastMessage: String? = nil // brief add-to-cart confirmation
+    @State private var invoiceNumber: String = ""
     
     var body: some View {
         ZStack(alignment: .top) {
@@ -115,14 +116,16 @@ struct BarcodeScannerView: View {
             .accessibilityLabel("Back")
             
             VStack(alignment: .leading, spacing: 2) {
-                Text(scannedProduct == nil ? "Scan Barcode" : scannedProduct!.name)
+                Text(scannedProduct == nil ? "Scan QR Code" : scannedProduct!.name)
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(RSMSColors.primaryText)
                     .lineLimit(1)
                 
-                Text(scannedProduct == nil ? "Barcode Scanner" : scannedProduct!.sku)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
+                if let product = scannedProduct {
+                    Text(product.sku)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(RSMSColors.secondaryText)
+                }
             }
             
             Spacer()
@@ -137,11 +140,6 @@ struct BarcodeScannerView: View {
     
     private var scannerViewSection: some View {
         VStack(spacing: 32) {
-            Text("Point camera at product barcode")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(RSMSColors.secondaryText)
-                .multilineTextAlignment(.center)
-            
             // Live Camera Viewfinder
             ZStack {
                 CameraScannerView { scannedCode in
@@ -165,7 +163,7 @@ struct BarcodeScannerView: View {
             .padding(.horizontal, RSMSSpacing.lg)
             
             // Simulator Controls
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .center, spacing: 16) {
                 // Photo picker for simulator QR testing
                 PhotosPicker(selection: $selectedPhoto, matching: .images) {
                     HStack {
@@ -182,6 +180,35 @@ struct BarcodeScannerView: View {
                 .onChange(of: selectedPhoto) { _, newItem in
                     processSelectedPhoto(newItem)
                 }
+                
+                Text("OR")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(RSMSColors.secondaryText)
+                    .padding(.vertical, 4)
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Invoice Number")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(RSMSColors.primaryText)
+                    
+                    TextField("Enter invoice number", text: $invoiceNumber)
+                        .font(.system(size: 15, weight: .medium))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 14)
+                        .background(Color.gray.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                        )
+                        .onSubmit {
+                            if !invoiceNumber.isEmpty {
+                                simulateScan(forSku: invoiceNumber)
+                                invoiceNumber = ""
+                            }
+                        }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.horizontal, RSMSSpacing.lg)
         }
