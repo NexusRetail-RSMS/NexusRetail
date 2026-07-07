@@ -23,41 +23,66 @@ struct ActiveRepairsView: View {
             RSMSColors.background
                 .ignoresSafeArea()
             
-            if isLoading {
-                ProgressView("Loading Repairs...")
-                    .tint(RSMSColors.burgundy)
-            } else if repairOrders.isEmpty {
-                VStack(spacing: 16) {
-                    Image(systemName: "wrench.and.screwdriver.fill")
-                        .font(.system(size: 48))
-                        .foregroundColor(RSMSColors.secondaryText)
-                    Text("No Active Repairs")
-                        .font(RSMSFonts.title)
-                        .foregroundColor(RSMSColors.primaryText)
-                }
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 16) {
-                        ForEach(repairOrders) { repair in
-                            NavigationLink(destination: RepairOrderDetailsView(repair: repair)) {
-                                RepairCardView(
-                                    customerName: repair.customerName,
-                                    customerImageURL: nil,
-                                    itemImageURL: repair.itemImageURL,
-                                    itemName: repair.itemName,
-                                    itemSKU: repair.itemSKU,
-                                    pickupDate: repair.pickupDate
-                                )
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                        }
+            VStack(spacing: 0) {
+                headerSection
+                
+                if isLoading {
+                    Spacer()
+                    ProgressView("Loading Repairs...")
+                        .tint(RSMSColors.burgundy)
+                    Spacer()
+                } else if repairOrders.isEmpty {
+                    Spacer()
+                    VStack(spacing: 16) {
+                        Image(systemName: "wrench.and.screwdriver.fill")
+                            .font(.system(size: 48))
+                            .foregroundColor(RSMSColors.secondaryText)
+                        Text("No Active Repairs")
+                            .font(RSMSFonts.title)
+                            .foregroundColor(RSMSColors.primaryText)
                     }
-                    .padding(16)
+                    Spacer()
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 16) {
+                            ForEach(repairOrders) { repair in
+                                NavigationLink(destination: RepairOrderDetailsView(repair: repair)) {
+                                    RepairCardView(
+                                        customerName: repair.customerName,
+                                        customerImageURL: nil,
+                                        itemImageURL: repair.itemImageURL,
+                                        itemName: repair.itemName,
+                                        itemSKU: repair.itemSKU,
+                                        pickupDate: repair.pickupDate
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+                        }
+                        .padding(16)
+                        .padding(.bottom, 80) // To account for the floating tab bar
+                    }
+                    .refreshable { await fetchRepairOrders() }
                 }
-                .refreshable { await fetchRepairOrders() }
             }
         }
         .task { await fetchRepairOrders() }
+        .navigationBarHidden(true)
+    }
+
+    // MARK: - Header
+    
+    private var headerSection: some View {
+        HStack(alignment: .center, spacing: 12) {
+            Text("Repairs")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .foregroundColor(RSMSColors.primaryText)
+            Spacer()
+        }
+        .padding(.horizontal, RSMSSpacing.lg)
+        .padding(.top, 16)
+        .padding(.bottom, 4)
     }
 
     // MARK: - Data (backed by the real after_sales_ticket table)

@@ -71,6 +71,8 @@ struct SalesDashboardView: View {
                     OrdersHubView(path: $navigationPath)
                 case .invoiceScanner, .invoiceItemsSelection, .actionSelection, .repairForm:
                     EmptyView()
+                case .afterSalesHistory:
+                    AfterSalesHistoryView(path: $navigationPath)
                 }
             }
         }

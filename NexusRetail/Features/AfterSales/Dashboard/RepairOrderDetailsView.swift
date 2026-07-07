@@ -5,8 +5,14 @@ struct RepairOrderDetailsView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
+        ZStack(alignment: .top) {
+            RSMSColors.background.ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                headerSection
+                
+                ScrollView {
+                    VStack(spacing: 24) {
                 // Header Image & Item Details
                 VStack(spacing: 16) {
                     if let imageURL = repair.itemImageURL, let url = URL(string: imageURL) {
@@ -77,12 +83,47 @@ struct RepairOrderDetailsView: View {
                 .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
                 .padding(.horizontal, 20)
                 
-                Spacer()
+                    Spacer()
+                }
             }
         }
-        .background(RSMSColors.background.ignoresSafeArea())
-        .navigationTitle("Repair Details")
-        .navigationBarTitleDisplayMode(.inline)
+    }
+    .navigationBarHidden(true)
+}
+    
+    // MARK: - Header
+    private var headerSection: some View {
+        HStack(alignment: .center) {
+            Button {
+                dismiss()
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(RSMSColors.burgundy.opacity(0.1))
+                        .frame(width: 44, height: 44)
+                    
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(RSMSColors.burgundy)
+                }
+            }
+            .accessibilityLabel("Back")
+            
+            Spacer()
+            
+            Text("Details")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .foregroundColor(RSMSColors.primaryText)
+            
+            Spacer()
+            
+            Color.clear
+                .frame(width: 44, height: 44)
+        }
+        .padding(.horizontal, RSMSSpacing.lg)
+        .padding(.top, 16)
+        .padding(.bottom, 8)
     }
     
     private var placeholderImage: some View {
