@@ -8,6 +8,7 @@ class RepairOrderManager {
     
     struct RepairOrderData: Codable {
         let pickupDate: TimeInterval
+        let problemDescription: String?
     }
     
     // In-memory mapping from Order ID to Repair Data
@@ -15,36 +16,47 @@ class RepairOrderManager {
     
     // Pending repair request data for PaymentFlowView to consume
     private var pendingRepairDate: Date?
+    private var pendingProblemDescription: String?
     private var pendingInvoiceId: String?
     
     private init() {
         loadFromDefaults()
     }
     
-    func setPendingRepair(date: Date, invoiceId: String) {
+    func setPendingRepair(date: Date, problemDescription: String, invoiceId: String) {
         pendingRepairDate = date
+        pendingProblemDescription = problemDescription
         pendingInvoiceId = invoiceId
     }
     
     func commitPendingRepair(forOrderId orderId: UUID) {
         guard let date = pendingRepairDate else { return }
         
-        repairData[orderId] = RepairOrderData(pickupDate: date.timeIntervalSince1970)
+        let problem = pendingProblemDescription ?? ""
+        repairData[orderId] = RepairOrderData(pickupDate: date.timeIntervalSince1970, problemDescription: problem)
         saveToDefaults()
         
         // Clear pending
         pendingRepairDate = nil
+        pendingProblemDescription = nil
         pendingInvoiceId = nil
     }
     
-    func setRepairData(date: Date, invoiceId: String, forOrderId orderId: UUID) {
-        repairData[orderId] = RepairOrderData(pickupDate: date.timeIntervalSince1970)
+    func setRepairData(date: Date, problemDescription: String, invoiceId: String, forOrderId orderId: UUID) {
+        repairData[orderId] = RepairOrderData(pickupDate: date.timeIntervalSince1970, problemDescription: problemDescription)
         saveToDefaults()
     }
     
     func getPickupDate(forOrderId orderId: UUID) -> Date? {
         if let data = repairData[orderId] {
             return Date(timeIntervalSince1970: data.pickupDate)
+        }
+        return nil
+    }
+    
+    func getProblemDescription(forOrderId orderId: UUID) -> String? {
+        if let data = repairData[orderId] {
+            return data.problemDescription
         }
         return nil
     }

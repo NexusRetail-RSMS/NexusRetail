@@ -72,7 +72,6 @@
 			children = (
 				6EC142777C32E72452D213BA /* Features */,
 			);
-			name = NexusRetail;
 			path = NexusRetail;
 			sourceTree = "<group>";
 		};
@@ -81,7 +80,6 @@
 			children = (
 				823D8E2B9B8BDB7153F23FEE /* Dashboard */,
 			);
-			name = AfterSales;
 			path = AfterSales;
 			sourceTree = "<group>";
 		};
@@ -90,7 +88,6 @@
 			children = (
 				3E4B071C1FFB150148099E59 /* AfterSales */,
 			);
-			name = Features;
 			path = Features;
 			sourceTree = "<group>";
 		};
@@ -101,7 +98,6 @@
 				95F943550CCD27FF68EEB689 /* RepairCardView.swift */,
 				7982917165A6A051FB1E2A11 /* ActiveRepairsView.swift */,
 			);
-			name = Dashboard;
 			path = Dashboard;
 			sourceTree = "<group>";
 		};

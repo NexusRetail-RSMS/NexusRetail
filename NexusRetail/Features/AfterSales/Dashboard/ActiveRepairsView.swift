@@ -14,6 +14,7 @@ struct ActiveRepairsView: View {
         let itemSKU: String
         let itemImageURL: String?
         let pickupDate: Date
+        let problemDescription: String?
     }
     
     var body: some View {
@@ -37,14 +38,17 @@ struct ActiveRepairsView: View {
                 ScrollView {
                     LazyVStack(spacing: 16) {
                         ForEach(repairOrders) { repair in
-                            RepairCardView(
-                                customerName: repair.customerName,
-                                customerImageURL: nil, // Add if supported in backend later
-                                itemImageURL: repair.itemImageURL,
-                                itemName: repair.itemName,
-                                itemSKU: repair.itemSKU,
-                                pickupDate: repair.pickupDate
-                            )
+                            NavigationLink(destination: RepairOrderDetailsView(repair: repair)) {
+                                RepairCardView(
+                                    customerName: repair.customerName,
+                                    customerImageURL: nil, // Add if supported in backend later
+                                    itemImageURL: repair.itemImageURL,
+                                    itemName: repair.itemName,
+                                    itemSKU: repair.itemSKU,
+                                    pickupDate: repair.pickupDate
+                                )
+                            }
+                            .buttonStyle(PlainButtonStyle())
                         }
                     }
                     .padding(16)
@@ -87,6 +91,7 @@ struct ActiveRepairsView: View {
                     let pickupDate = RepairOrderManager.shared.getPickupDate(forOrderId: order.id) ?? fallbackPickupDate(from: order.createdAt)
                     
                     let customerName = order.client?.name ?? "Customer (Unlinked Invoice)"
+                    let problemDesc = RepairOrderManager.shared.getProblemDescription(forOrderId: order.id)
                     
                     let vm = RepairOrderViewModel(
                         id: order.id,
@@ -94,7 +99,8 @@ struct ActiveRepairsView: View {
                         itemName: product.itemName ?? "Unknown Item",
                         itemSKU: product.skuCode ?? "N/A",
                         itemImageURL: product.imageUrl,
-                        pickupDate: pickupDate
+                        pickupDate: pickupDate,
+                        problemDescription: problemDesc
                     )
                     
                     fetchedRepairs.append(vm)
