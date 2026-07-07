@@ -12,6 +12,13 @@ struct ClientDetailView: View {
     let client: AssociateClient
     @Environment(SessionStore.self) private var sessionStore
     
+    @State private var isEditingClient = false
+    @State private var clientName = ""
+    @State private var clientPhone = ""
+    @State private var stylePreferences = ""
+    @State private var hasConsent = true
+    @State private var isNewClientPresented = false
+    
     @State private var selectedTab = 0
     @State private var forYouProducts: [POSProduct] = []
     @State private var trendingProducts: [POSProduct] = []
@@ -116,6 +123,21 @@ struct ClientDetailView: View {
         .background(RSMSColors.background.ignoresSafeArea())
         .navigationTitle("Client Card")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Edit") {
+                    clientName = client.name
+                    clientPhone = client.phone
+                    stylePreferences = client.preferences
+                    hasConsent = true
+                    isEditingClient = true
+                    isNewClientPresented = true
+                }
+                .foregroundStyle(RSMSColors.burgundy)
+                .bold()
+            }
+        }
+        .sheet(isPresented: $isNewClientPresented) { newClientSheet }
         .task {
             await loadRecommendations()
         }
@@ -193,6 +215,81 @@ struct ClientDetailView: View {
             print("Error fetching top products for profile: \(error)")
             trendingProducts = Array(allProducts.shuffled().prefix(6))
         }
+    }
+    
+    // MARK: - Edit Client Sheet
+    private var newClientSheet: some View {
+        NavigationStack {
+            Form {
+                Section("Client Details") {
+                    TextField("Full Name", text: $clientName)
+                        .textContentType(.name)
+                        .autocorrectionDisabled()
+                    TextField("Phone Number", text: $clientPhone)
+                        .textContentType(.telephoneNumber)
+                        .keyboardType(.phonePad)
+                }
+
+                Section("Style Preferences") {
+                    TextField("Colors, fits, fabrics, occasions…", text: $stylePreferences, axis: .vertical)
+                        .lineLimit(3...6)
+                }
+
+                Section {
+                    Toggle("Client consent received", isOn: $hasConsent)
+                        .tint(RSMSColors.burgundy)
+                } footer: {
+                    Text("Required before saving personal details.")
+                }
+            }
+            .navigationTitle("Edit Client")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { isNewClientPresented = false }
+                        .foregroundColor(RSMSColors.burgundy)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Save") { saveClientCard() }
+                        .bold()
+                        .foregroundColor(canCreateClient ? RSMSColors.burgundy : .gray)
+                        .disabled(!canCreateClient)
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+    }
+    
+    private var canCreateClient: Bool {
+        !clientName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !clientPhone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        hasConsent
+    }
+
+    private func saveClientCard() {
+        let name = clientName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let phone = clientPhone.trimmingCharacters(in: .whitespacesAndNewlines)
+        let editingId = client.dbId
+
+        Task {
+            do {
+                if let editingId {
+                    struct UpdateClient: Encodable {
+                        let name: String
+                        let phone: String
+                    }
+                    try await SupabaseManager.shared.client
+                        .from("client")
+                        .update(UpdateClient(name: name, phone: phone))
+                        .eq("id", value: editingId)
+                        .execute()
+                }
+            } catch {
+                print("Error saving client: \(error)")
+            }
+        }
+        isNewClientPresented = false
     }
 }
 

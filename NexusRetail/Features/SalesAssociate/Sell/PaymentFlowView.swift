@@ -47,6 +47,7 @@ struct PaymentFlowView: View {
             }
         }
         .navigationBarHidden(true)
+        .toolbar(.hidden, for: .tabBar)
     }
     
     // MARK: - Header

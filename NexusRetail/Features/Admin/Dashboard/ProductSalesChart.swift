@@ -1,17 +1,35 @@
+//
+//  ProductSalesChart.swift
+//  NexusRetail
+//
+//  Top product-sales ranked list with its OWN Weekly ↔ Monthly toggle
+//  (independent from the Revenue chart).
+//  Displays products as a ranked list with image, multiline text, and a slim progress bar.
+//
+
 import SwiftUI
 
 struct ProductSalesChart: View {
     let data: [ProductChartPoint]
     let maxValue: Int
     @Binding var timeRange: SalesTimeRange
+    /// When true, the toggle also offers Yearly. Off by default so the Admin
+    /// dashboard (weekly/monthly only) is unaffected; the Manager passes true.
     var allowsYearly: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: RSMSSpacing.md) {
+
+            // Title row
             HStack(alignment: .top) {
-                Text("Top Products")
-                    .font(RSMSFonts.headline)
-                    .foregroundColor(RSMSColors.primaryText)
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 8) {
+
+                        Text("Top Products")
+                            .font(RSMSFonts.headline)
+                            .foregroundColor(RSMSColors.primaryText)
+                    }
+                }
 
                 Spacer()
 
@@ -29,6 +47,7 @@ struct ProductSalesChart: View {
             }
 
             if data.isEmpty {
+                // Empty state
                 VStack(spacing: 8) {
                     Image(systemName: "bag")
                         .font(.system(size: 32))
@@ -64,20 +83,22 @@ struct ProductRankRow: View {
     let rank: Int
     let point: ProductChartPoint
     let maxValue: Int
-
+    
     var body: some View {
         HStack(spacing: 0) {
+            // Rank Block on the left
             ZStack {
                 Rectangle()
                     .fill(rankGradient(for: rank))
-
+                
                 Text("#\(rank)")
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(rankTextColor(for: rank))
+                    .foregroundColor(.white)
             }
             .frame(width: 40)
-
+            
             HStack(spacing: 12) {
+                // Product Image
                 Group {
                     if let url = point.imageURL {
                         AsyncImage(url: url) { image in
@@ -91,8 +112,9 @@ struct ProductRankRow: View {
                 }
                 .frame(width: 44, height: 44)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.nexusDark.opacity(0.06), lineWidth: 1))
-
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.black.opacity(0.05), lineWidth: 1))
+                
+                // Details and Progress Bar
                 VStack(alignment: .leading, spacing: 6) {
                     VStack(alignment: .leading, spacing: 1) {
                         Text(point.name)
@@ -100,19 +122,20 @@ struct ProductRankRow: View {
                             .foregroundColor(RSMSColors.primaryText)
                             .lineLimit(2)
                             .fixedSize(horizontal: false, vertical: true)
-
+                        
                         Text(point.category)
                             .font(.system(size: 10, weight: .regular))
                             .foregroundColor(RSMSColors.secondaryText)
                     }
-
+                    
+                    // Slim Progress Bar
                     GeometryReader { geo in
                         let progress = CGFloat(point.sales) / CGFloat(maxValue)
                         ZStack(alignment: .leading) {
                             Capsule()
-                                .fill(Color.nexusDark.opacity(0.06))
+                                .fill(Color.gray.opacity(0.15))
                                 .frame(height: 3)
-
+                            
                             Capsule()
                                 .fill(colorFor(category: point.category))
                                 .frame(width: max(0, geo.size.width * progress), height: 3)
@@ -120,15 +143,16 @@ struct ProductRankRow: View {
                     }
                     .frame(height: 3)
                 }
-
+                
                 Spacer(minLength: 8)
-
+                
+                // Units
                 VStack(alignment: .trailing, spacing: 1) {
                     let formattedSales = NumberFormatter.localizedString(from: NSNumber(value: point.sales), number: .decimal)
                     Text("\(formattedSales)")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(RSMSColors.primaryText)
-
+                    
                     Text("units")
                         .font(.system(size: 10))
                         .foregroundColor(RSMSColors.secondaryText)
@@ -140,10 +164,11 @@ struct ProductRankRow: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(rank == 1 ? Color.nexusGold.opacity(0.35) : Color.nexusDark.opacity(0.06), lineWidth: rank == 1 ? 1.25 : 1)
+                .stroke(Color.black.opacity(0.05), lineWidth: 1)
         )
+        .shadow(color: Color.black.opacity(0.02), radius: 3, x: 0, y: 1)
     }
-
+    
     private var imagePlaceholder: some View {
         ZStack {
             Color(hex: "F8F9FA")
@@ -152,30 +177,28 @@ struct ProductRankRow: View {
                 .font(.system(size: 16))
         }
     }
-
+    
     private func rankGradient(for rank: Int) -> LinearGradient {
         let colors: [Color]
         switch rank {
-        case 1: colors = [Color.nexusGold, Color(hex: "8A6A42")]
-        case 2: colors = [Color.nexusDark.opacity(0.85), Color.nexusDark]
-        case 3: colors = [RSMSColors.burgundy.opacity(0.85), RSMSColors.burgundy]
-        default: colors = [Color.nexusDark.opacity(0.35), Color.nexusDark.opacity(0.5)]
+        case 1: colors = [Color(hex: "F6D365"), Color(hex: "FDA085")] // Gold/Orange
+        case 2: colors = [Color(hex: "E2E2E2"), Color(hex: "9B9B9B")] // Silver
+        case 3: colors = [Color(hex: "E6B980"), Color(hex: "EACDA3")] // Bronze
+        case 4: colors = [Color(hex: "C6A9FF"), Color(hex: "A385E0")] // Purple
+        case 5: colors = [Color(hex: "A8E0D2"), Color(hex: "7FBBAF")] // Mint
+        default: colors = [Color.gray.opacity(0.3), Color.gray.opacity(0.5)]
         }
         return LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)
     }
-
-    private func rankTextColor(for rank: Int) -> Color {
-        rank == 1 ? Color.nexusDark : .white
-    }
-
+    
     private func colorFor(category: String) -> Color {
         switch category {
         case "Couture": return RSMSColors.burgundy
-        case "Perfume", "Perfumes", "Fragrances", "Fragrance": return Color.nexusGold
-        case "Jewellery", "Jewelry": return Color(hex: "8A6A42")
+        case "Perfume", "Perfumes", "Fragrances", "Fragrance": return Color(hex: "F4A261")
+        case "Jewellery", "Jewelry": return Color(hex: "E9C46A")
         case "Leather", "Leather Goods": return Color(hex: "2A9D8F")
-        case "Watches": return Color.nexusDark
-        case "Accessories": return Color(hex: "8E6C88")
+        case "Watches": return Color(hex: "264653")
+        case "Accessories": return Color(hex: "8A2BE2")
         case "Bags": return Color(hex: "2A9D8F")
         case "Clothes": return RSMSColors.burgundy
         default: return RSMSColors.chartBar

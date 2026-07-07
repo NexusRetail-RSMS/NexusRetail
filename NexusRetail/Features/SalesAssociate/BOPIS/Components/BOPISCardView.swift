@@ -62,22 +62,21 @@ struct BOPISCardView: View {
                 }
             }
             
-            // Verification Code (if applicable)
-            if let code = order.verificationCode {
-                HStack {
-                    Text("Verification Code:")
+            // The pickup code is emailed to the customer only — never shown here.
+            if order.status == .waitingForCustomer {
+                HStack(spacing: 6) {
+                    Image(systemName: "envelope.badge.fill")
+                        .font(.system(size: 12))
+                    Text("Pickup code sent to customer")
                         .font(RSMSFonts.subheadline)
-                        .foregroundColor(RSMSColors.secondaryText)
                     Spacer()
-                    Text(code)
-                        .font(RSMSFonts.headline)
-                        .foregroundColor(RSMSColors.burgundy)
                 }
+                .foregroundColor(RSMSColors.secondaryText)
                 .padding()
                 .background(RSMSColors.cream)
                 .cornerRadius(RSMSRadius.small)
             }
-            
+
             // Action Button
             if order.status != .collected {
                 PickupActionButton(status: order.status, action: action)
