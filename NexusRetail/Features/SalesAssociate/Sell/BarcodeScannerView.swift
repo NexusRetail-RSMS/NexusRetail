@@ -8,7 +8,7 @@ struct BarcodeScannerView: View {
     @Environment(SessionStore.self) private var sessionStore
     @Binding var path: NavigationPath
     
-    @State private var allProducts: [POSProduct] = []
+
     @State private var scannedProduct: POSProduct? = nil   // set only for out-of-stock (alternatives)
     @State private var isScanning = true
     @State private var selectedPhoto: PhotosPickerItem? = nil
@@ -86,7 +86,7 @@ struct BarcodeScannerView: View {
         }
         .toolbar(.hidden, for: .tabBar)
         .task {
-            allProducts = await POSProductRepository.shared.fetchProducts(storeID: sessionStore.currentUser?.storeID)
+            _ = await POSProductRepository.shared.fetchProducts(storeID: sessionStore.currentUser?.storeID)
         }
     }
     
@@ -217,7 +217,7 @@ struct BarcodeScannerView: View {
     }
     
     private func simulateScan(forSku sku: String) {
-        guard let match = allProducts.first(where: { $0.sku == sku }) else { return }
+        guard let match = POSProductRepository.shared.products.first(where: { $0.sku == sku }) else { return }
 
         // Out of stock — show detail so the associate can pick an alternative.
         if match.stock == 0 {
@@ -443,7 +443,7 @@ struct BarcodeScannerView: View {
         // Try ML-powered recommendations first
         let mlRecommendations = RecommendationService.shared.getRecommendedProducts(
             for: product,
-            from: allProducts,
+            from: POSProductRepository.shared.products,
             count: 5
         )
         
@@ -452,7 +452,7 @@ struct BarcodeScannerView: View {
         }
         
         // Fallback: same category, stock > 0, not itself, similar price
-        return allProducts.filter { item in
+        return POSProductRepository.shared.products.filter { item in
             item.id != product.id &&
             item.category == product.category &&
             item.stock > 0 &&

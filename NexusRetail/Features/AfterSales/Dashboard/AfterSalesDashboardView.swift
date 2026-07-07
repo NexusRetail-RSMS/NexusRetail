@@ -16,6 +16,7 @@ struct AfterSalesDashboardView: View {
 
     @State private var vm = AfterSalesDashboardViewModel()
     @State private var isProfilePresented = false
+    @State private var ticketFilter: AfterSalesTicketFilter? = nil
     
     var body: some View {
         NavigationStack(path: $navigationPath) {
@@ -33,6 +34,8 @@ struct AfterSalesDashboardView: View {
                     .padding(.horizontal, RSMSSpacing.lg)
                     .padding(.top, 16)
                 }
+                .refreshable { await vm.fetch(storeID: sessionStore.currentUser?.storeID) }
+                .task { await vm.fetch(storeID: sessionStore.currentUser?.storeID) }
                 
                 if #available(iOS 18.0, *) {
                     floatingQRButton
@@ -44,6 +47,9 @@ struct AfterSalesDashboardView: View {
             .navigationBarHidden(true)
             .sheet(isPresented: $isProfilePresented) {
                 AdminProfileSheet()
+            }
+            .sheet(item: $ticketFilter) { filter in
+                AfterSalesTicketsListView(filter: filter, storeID: sessionStore.currentUser?.storeID)
             }
             .navigationDestination(for: POSFlowDestination.self) { dest in
                 switch dest {
@@ -135,8 +141,19 @@ struct AfterSalesDashboardView: View {
     // MARK: - KPI Section
     private var kpiSection: some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: RSMSSpacing.md) {
-            KPICardView(title: "Pending Service Requests", value: "\(vm.pendingServiceRequests)", icon: "wrench.and.screwdriver.fill", trend: nil, color: RSMSColors.warning)
-            KPICardView(title: "Repairs In Progress", value: "\(vm.repairsInProgress)", icon: "hammer.fill", trend: nil, color: Color(hex: "2A9D8F"))
+            Button {
+                ticketFilter = .pending
+            } label: {
+                KPICardView(title: "Pending Service Requests", value: "\(vm.pendingServiceRequests)", icon: "wrench.and.screwdriver.fill", trend: nil, color: RSMSColors.warning)
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                ticketFilter = .inProgress
+            } label: {
+                KPICardView(title: "Repairs In Progress", value: "\(vm.repairsInProgress)", icon: "hammer.fill", trend: nil, color: Color(hex: "2A9D8F"))
+            }
+            .buttonStyle(.plain)
         }
     }
     
@@ -157,6 +174,9 @@ struct AfterSalesDashboardView: View {
                 .fixedSize()
             }
             
+            if vm.serviceRequestChartData.allSatisfy({ $0.value == 0 }) {
+                emptyChartPlaceholder(text: "No service requests in this period")
+            } else {
             Chart(vm.serviceRequestChartData) { point in
                 BarMark(x: .value("Period", point.label), y: .value("Requests", point.value), width: .ratio(0.45))
                     .foregroundStyle(LinearGradient(colors: [RSMSColors.burgundy.opacity(0.8), RSMSColors.burgundy], startPoint: .top, endPoint: .bottom))
@@ -183,11 +203,24 @@ struct AfterSalesDashboardView: View {
                 }
             }
             .frame(height: 200)
+            }
         }
         .padding(RSMSSpacing.lg)
         .background(RSMSColors.cardBackground)
         .cornerRadius(RSMSRadius.large)
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+    }
+
+    private func emptyChartPlaceholder(text: String) -> some View {
+        VStack(spacing: 8) {
+            Image(systemName: "chart.bar.xaxis")
+                .font(.system(size: 32))
+                .foregroundColor(RSMSColors.secondaryText.opacity(0.4))
+            Text(text)
+                .font(.system(size: 13))
+                .foregroundColor(RSMSColors.secondaryText)
+        }
+        .frame(maxWidth: .infinity, minHeight: 180)
     }
     
     // MARK: - Service Status Donut Chart
@@ -197,6 +230,9 @@ struct AfterSalesDashboardView: View {
                 .font(RSMSFonts.headline)
                 .foregroundColor(RSMSColors.primaryText)
             
+            if vm.totalServiceRequests == 0 {
+                emptyChartPlaceholder(text: "No service tickets yet")
+            } else {
             Chart(vm.serviceStatusChartData) { point in
                 SectorMark(
                     angle: .value("Requests", point.value),
@@ -229,6 +265,7 @@ struct AfterSalesDashboardView: View {
                 }
             }
             .frame(height: 220)
+            }
         }
         .padding(RSMSSpacing.lg)
         .background(RSMSColors.cardBackground)

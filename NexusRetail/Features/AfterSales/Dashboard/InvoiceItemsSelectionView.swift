@@ -4,14 +4,12 @@ struct InvoiceItemsSelectionView: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var path: NavigationPath
     let invoiceId: String
-    
-    // Mocked data for demonstration
-    @State private var items: [POSProduct] = [
-        POSProduct(id: UUID(), itemId: 1, name: "Signature Leather Tote", sku: "TOTE-001", category: "Bags", price: 14500, stock: 10, size: "One Size", imageUrl: "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=500&auto=format&fit=crop&q=60"),
-        POSProduct(id: UUID(), itemId: 2, name: "Classic Silk Scarf", sku: "SCRF-045", category: "Accessories", price: 4200, stock: 25, size: "M", imageUrl: "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=500&auto=format&fit=crop&q=60"),
-        POSProduct(id: UUID(), itemId: 3, name: "Aviator Sunglasses", sku: "SUN-892", category: "Eyewear", price: 8900, stock: 5, size: "Standard", imageUrl: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=500&auto=format&fit=crop&q=60")
-    ]
-    
+
+    // Real purchased items on the scanned invoice.
+    @State private var items: [AfterSalesInvoiceItem] = []
+    @State private var isLoading = true
+    @State private var loadError: String? = nil
+
     @State private var selectedItemId: UUID? = nil
     
     var body: some View {
@@ -28,14 +26,23 @@ struct InvoiceItemsSelectionView: View {
                             .foregroundColor(RSMSColors.secondaryText.opacity(0.8))
                             .padding(.horizontal, RSMSSpacing.lg)
                             .padding(.bottom, 4)
-                        
-                        LazyVStack(spacing: 12) {
-                            ForEach(items) { item in
-                                itemRow(item)
+
+                        if isLoading {
+                            HStack { Spacer(); ProgressView("Loading invoice...").tint(RSMSColors.burgundy); Spacer() }
+                                .padding(.top, 40)
+                        } else if let loadError {
+                            emptyState(message: loadError, icon: "exclamationmark.triangle")
+                        } else if items.isEmpty {
+                            emptyState(message: "No items found for this invoice. Check the invoice number and try again.", icon: "doc.text.magnifyingglass")
+                        } else {
+                            LazyVStack(spacing: 12) {
+                                ForEach(items) { item in
+                                    itemRow(item)
+                                }
                             }
+                            .padding(.horizontal, RSMSSpacing.lg)
+                            .padding(.bottom, 120) // Give space for bottom bar
                         }
-                        .padding(.horizontal, RSMSSpacing.lg)
-                        .padding(.bottom, 120) // Give space for bottom bar
                     }
                     .padding(.top, 150) // Give space for header
                 }
@@ -45,9 +52,40 @@ struct InvoiceItemsSelectionView: View {
             }
             
             // Bottom Action Bar
-            bottomActionBar
+            if !items.isEmpty {
+                bottomActionBar
+            }
         }
         .navigationBarHidden(true)
+        .task { await loadItems() }
+    }
+
+    private func emptyState(message: String, icon: String) -> some View {
+        VStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 40))
+                .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+            Text(message)
+                .font(.system(size: 14))
+                .foregroundColor(RSMSColors.secondaryText)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, RSMSSpacing.lg)
+        .padding(.top, 40)
+    }
+
+    private func loadItems() async {
+        isLoading = true
+        loadError = nil
+        do {
+            let fetched = try await AfterSalesService.fetchInvoiceItems(orderId: invoiceId)
+            self.items = fetched
+        } catch {
+            self.loadError = "Couldn't load this invoice. It may not exist or belongs to another store."
+            print("After Sales invoice fetch error: \(error)")
+        }
+        isLoading = false
     }
     
     // MARK: - Header
@@ -87,7 +125,7 @@ struct InvoiceItemsSelectionView: View {
         .ignoresSafeArea(edges: .top)
     }
     
-    private func itemRow(_ item: POSProduct) -> some View {
+    private func itemRow(_ item: AfterSalesInvoiceItem) -> some View {
         let isSelected = selectedItemId == item.id
         
         return Button {
@@ -133,7 +171,7 @@ struct InvoiceItemsSelectionView: View {
                         .foregroundColor(RSMSColors.primaryText)
                         .lineLimit(1)
                     
-                    Text("\(item.category) • Size: \(item.size)")
+                    Text("\(item.category) • Qty: \(item.quantity)")
                         .font(.system(size: 12))
                         .foregroundColor(RSMSColors.secondaryText)
                     
@@ -161,7 +199,21 @@ struct InvoiceItemsSelectionView: View {
         VStack {
             Button {
                 if let selectedId = selectedItemId, let selectedItem = items.first(where: { $0.id == selectedId }) {
-                    path.append(POSFlowDestination.actionSelection(invoiceId: invoiceId, selectedItem: selectedItem))
+                    // Map the real invoice line to a POSProduct so downstream views (which
+                    // are POSProduct-based) can display it. itemId carries the DB key used
+                    // for eligibility/processing.
+                    let posProduct = POSProduct(
+                        id: selectedItem.id,
+                        itemId: selectedItem.itemId,
+                        name: selectedItem.name,
+                        sku: selectedItem.sku,
+                        category: selectedItem.category,
+                        price: selectedItem.price,
+                        stock: selectedItem.quantity,
+                        size: "—",
+                        imageUrl: selectedItem.imageUrl
+                    )
+                    path.append(POSFlowDestination.actionSelection(invoiceId: invoiceId, selectedItem: posProduct))
                 }
             } label: {
                 Text("Continue")
