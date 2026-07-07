@@ -8,6 +8,7 @@ struct TransferRequestCard: View {
 
     @Environment(AdminTransfersViewModel.self) private var viewModel
     @State private var showingScheduleSheet = false
+    @State private var predictedSource: String? = nil
 
     private var productImageURL: URL? {
         request.products.imageUrl.flatMap { URL(string: $0) }
@@ -38,16 +39,27 @@ struct TransferRequestCard: View {
             requestInfoRow
                 .padding(.top, 18)
 
-            // MARK: Actions
-            actionButtons
-                .padding(.top, 20)
+            if request.status == .pending {
+                // MARK: Sourcing Prediction
+                sourcingPredictionRow
+                    .padding(.top, 14)
+            }
+
+            // MARK: Action Buttons
+            if request.status == .pending {
+                actionButtons
+                    .padding(.top, 24)
+            }
         }
         .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 24)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
-        )
+        .background(Color.white)
+        .cornerRadius(24)
+        .shadow(color: Color.black.opacity(0.04), radius: 15, x: 0, y: 8)
+        .task {
+            if request.status == .pending {
+                predictedSource = await viewModel.predictSourceString(for: request)
+            }
+        }
         .sheet(isPresented: $showingScheduleSheet) {
             ScheduleSheet(request: request)
         }
@@ -120,6 +132,36 @@ struct TransferRequestCard: View {
             Spacer()
             InfoColumn(title: "Requested On", value: formattedDate, alignment: .trailing)
         }
+    }
+
+    // MARK: - Sourcing Prediction Row
+    
+    private var sourcingPredictionRow: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "box.truck.badge.clock.fill")
+                .foregroundColor(Color.nexusRed)
+                .font(.system(size: 16))
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Smart Routing")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(Color.nexusRed)
+                    .textCase(.uppercase)
+                
+                if let source = predictedSource {
+                    Text("From: \(source)")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.primary)
+                } else {
+                    ProgressView()
+                        .scaleEffect(0.6)
+                }
+            }
+            Spacer()
+        }
+        .padding(12)
+        .background(Color.nexusRed.opacity(0.06))
+        .cornerRadius(12)
     }
 
     // MARK: - Actions
