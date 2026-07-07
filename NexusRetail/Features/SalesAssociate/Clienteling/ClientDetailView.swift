@@ -89,7 +89,7 @@ struct ClientDetailView: View {
                             Text("Purchase Pattern")
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundStyle(RSMSColors.primaryText)
-                            Text(client.purchasePattern)
+                            Text("")
                                 .font(RSMSFonts.subheadline)
                                 .foregroundStyle(RSMSColors.secondaryText)
                         }

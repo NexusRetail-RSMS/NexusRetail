@@ -52,7 +52,7 @@ struct StoreFormView: View {
             _currencyCode = State(initialValue: store.currencyCode ?? "INR")
             _timezone = State(initialValue: store.timezone ?? "Asia/Kolkata")
             _selectedManagerID = State(initialValue: store.managerID)
-            _isActive = State(initialValue: store.status == .active)
+            _isActive = State(initialValue: store.status == .active && store.managerID != nil)
             _country = State(initialValue: store.country ?? "")
             _city = State(initialValue: store.city ?? "")
             if let lat = store.latitude, let lng = store.longitude {
@@ -374,6 +374,8 @@ struct StoreFormView: View {
                 .filter { !$0.isEmpty }
                 .joined(separator: ", ")
 
+            let finalStatus: StoreStatus = (isActive && selectedManagerID != nil) ? .active : .archived
+
             if let store = editingStore {
                 let success = await viewModel.update(
                     storeId: store.id,
@@ -384,7 +386,7 @@ struct StoreFormView: View {
                     currencyCode: currencyCode,
                     timezone: timezone,
                     managerID: selectedManagerID,
-                    status: isActive ? .active : .archived,
+                    status: finalStatus,
                     latitude: pickedCoordinate?.latitude,
                     longitude: pickedCoordinate?.longitude,
                     city: city,
@@ -401,7 +403,7 @@ struct StoreFormView: View {
                     currencyCode: currencyCode,
                     timezone: timezone,
                     managerID: selectedManagerID,
-                    status: isActive ? .active : .archived,
+                    status: finalStatus,
                     includeRazorpay: includeRazorpay,
                     razorpayKey: razorpayKey,
                     razorpaySecret: razorpaySecret,
