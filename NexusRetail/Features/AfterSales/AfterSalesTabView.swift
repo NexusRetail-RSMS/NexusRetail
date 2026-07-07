@@ -17,19 +17,6 @@ struct AfterSalesTabView: View {
                     Label("Dashboard", systemImage: "square.grid.2x2")
                 }
             
-            // 2. Service Requests
-            NavigationStack {
-                AfterSalesPlaceholderView(
-                    title: "Service Requests",
-                    message: "Manage incoming service requests, returns, and exchanges.",
-                    icon: "tray.and.arrow.down.fill"
-                )
-                .modifier(AfterSalesToolbarModifier(title: "Requests"))
-            }
-            .tabItem {
-                Label("Requests", systemImage: "tray.full.fill")
-            }
-            
             // 3. Repairs
             NavigationStack {
                 AfterSalesPlaceholderView(
@@ -41,32 +28,6 @@ struct AfterSalesTabView: View {
             }
             .tabItem {
                 Label("Repairs", systemImage: "wrench.and.screwdriver.fill")
-            }
-            
-            // 4. Customers
-            NavigationStack {
-                AfterSalesPlaceholderView(
-                    title: "Customers",
-                    message: "View customer profiles, warranty history, and past services.",
-                    icon: "person.2.fill"
-                )
-                .modifier(AfterSalesToolbarModifier(title: "Customers"))
-            }
-            .tabItem {
-                Label("Customers", systemImage: "person.2.fill")
-            }
-            
-            // 5. Profile
-            NavigationStack {
-                AfterSalesPlaceholderView(
-                    title: "My Profile",
-                    message: "Manage your After-Sales Specialist profile and settings.",
-                    icon: "person.crop.circle.fill"
-                )
-                .modifier(AfterSalesToolbarModifier(title: "Profile"))
-            }
-            .tabItem {
-                Label("Profile", systemImage: "person.crop.circle")
             }
         }
         .tint(RSMSColors.burgundy)
