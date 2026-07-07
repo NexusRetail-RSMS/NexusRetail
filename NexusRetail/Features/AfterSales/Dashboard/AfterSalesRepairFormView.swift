@@ -17,6 +17,7 @@ struct AfterSalesRepairFormView: View {
     @State private var problemDescription: String = ""
     @State private var additionalAmountText: String = ""
     @State private var isProcessing: Bool = false
+    @State private var pickupDate: Date = Calendar.current.date(byAdding: .day, value: 3, to: Date()) ?? Date()
     
     @FocusState private var isInputFocused: Bool
     
@@ -172,6 +173,25 @@ struct AfterSalesRepairFormView: View {
                     .focused($isInputFocused)
                     .frame(height: 120)
                     .padding(12)
+                    .background(Color.white)
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(RSMSColors.inputBorder, lineWidth: 1)
+                    )
+            }
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Estimated Pickup Date")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(RSMSColors.secondaryText)
+                
+                DatePicker("", selection: $pickupDate, displayedComponents: .date)
+                    .datePickerStyle(.compact)
+                    .labelsHidden()
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color.white)
                     .cornerRadius(12)
                     .overlay(
