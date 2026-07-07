@@ -245,6 +245,9 @@ struct BarcodeScannerView: View {
         viewModel.addToCart(product: match)
         showToast(alreadyInCart ? "Quantity increased in cart" : "Added to cart")
         UINotificationFeedbackGenerator().notificationOccurred(.success)
+        
+        // Automatically move to the next screen (Cart) after scanning
+        path.append(POSFlowDestination.cart)
     }
 
     /// Shows a brief confirmation toast, auto-dismissing after 1.5s.
@@ -465,6 +468,7 @@ struct CameraScannerView: UIViewControllerRepresentable {
     
     class Coordinator: NSObject, AVCaptureMetadataOutputObjectsDelegate {
         var parent: CameraScannerView
+        var lastScanTime: Date = Date.distantPast
         
         init(parent: CameraScannerView) {
             self.parent = parent
@@ -474,6 +478,12 @@ struct CameraScannerView: UIViewControllerRepresentable {
             if let metadataObject = metadataObjects.first {
                 guard let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject else { return }
                 guard let stringValue = readableObject.stringValue else { return }
+                
+                // Debounce scans by 1.5 seconds to prevent runaway cart additions
+                if Date().timeIntervalSince(lastScanTime) < 1.5 {
+                    return
+                }
+                lastScanTime = Date()
                 
                 // Vibrate on successful scan
                 AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
