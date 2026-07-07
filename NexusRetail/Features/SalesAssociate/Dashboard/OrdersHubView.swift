@@ -15,15 +15,14 @@ struct OrdersHubView: View {
     @State private var notifiedMessage = ""
 
     enum Segment: String, CaseIterable, Identifiable {
-        case all = "All"
         case instore = "In-Store"
         case bopis = "BOPIS"
         var id: String { rawValue }
     }
-    @State private var segment: Segment = .all
+    @State private var segment: Segment = .instore
 
-    private var showInStore: Bool { segment == .all || segment == .instore }
-    private var showBOPIS: Bool { segment == .all || segment == .bopis }
+    private var showInStore: Bool { segment == .instore }
+    private var showBOPIS: Bool { segment == .bopis }
 
     var body: some View {
         ZStack {
@@ -90,14 +89,9 @@ struct OrdersHubView: View {
 
             Text("Orders Hub")
                 .font(.system(size: 24, weight: .bold)).foregroundColor(RSMSColors.primaryText)
-
+                
             Spacer()
 
-            ZStack {
-                Circle().fill(RSMSColors.burgundy).frame(width: 40, height: 40)
-                Text(initials(for: sessionStore.currentUser?.name))
-                    .font(.system(size: 15, weight: .semibold)).foregroundColor(.white)
-            }
         }
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.top, 60)
@@ -134,25 +128,6 @@ struct OrdersHubView: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: RSMSSpacing.lg) {
                 switch segment {
-                case .all:
-                    if mergedEntries.isEmpty {
-                        emptyRow(icon: "bag", text: "No orders yet")
-                    } else {
-                        ForEach(mergedEntries) { entry in
-                            switch entry {
-                            case .pos(let order):
-                                VStack(alignment: .leading, spacing: 6) {
-                                    typeBadge("In-Store", systemImage: "bag.fill")
-                                    posOrderRow(order)
-                                }
-                            case .bopis(let order):
-                                VStack(alignment: .leading, spacing: 6) {
-                                    typeBadge("BOPIS", systemImage: "shippingbox.fill")
-                                    BOPISCardView(order: order) { handleBOPISAction(order) }
-                                }
-                            }
-                        }
-                    }
                 case .instore:
                     inStoreContent
                 case .bopis:
