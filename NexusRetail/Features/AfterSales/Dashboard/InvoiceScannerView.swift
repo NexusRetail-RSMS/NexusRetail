@@ -155,6 +155,42 @@ struct InvoiceScannerView: View {
                     .disabled(invoiceNumber.isEmpty)
                     .padding(.top, 8)
                 }
+                
+                Divider()
+                    .padding(.vertical, 8)
+                
+                // Quick Test Actions
+                VStack(spacing: 12) {
+                    Button {
+                        simulateScan(forInvoice: "ORD-\(Int.random(in: 1000...9999))")
+                    } label: {
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                            Text("Simulate Valid Bill (< 7 Days)")
+                        }
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(RSMSColors.primaryText)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.gray.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                    }
+                    
+                    Button {
+                        simulateScan(forInvoice: "ORD-\(Int.random(in: 1000...9999))-EXPIRED")
+                    } label: {
+                        HStack {
+                            Image(systemName: "xmark.circle.fill")
+                            Text("Simulate Expired Bill (> 7 Days)")
+                        }
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(RSMSColors.error)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(RSMSColors.error.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                    }
+                }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.horizontal, RSMSSpacing.lg)

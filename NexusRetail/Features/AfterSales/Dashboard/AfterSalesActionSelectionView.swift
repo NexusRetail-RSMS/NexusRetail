@@ -7,6 +7,25 @@ struct AfterSalesActionSelectionView: View {
     let invoiceId: String
     let selectedItemIds: Set<UUID>
     
+    @State private var showExchangeDeclinedAlert = false
+    
+    // Mirrors the same mock logic from InvoiceItemsSelectionView
+    private var isInvoiceExpired: Bool {
+        invoiceId.lowercased().contains("old") || invoiceId.lowercased().contains("expired")
+    }
+    
+    private var purchaseDate: Date {
+        if isInvoiceExpired {
+            return Calendar.current.date(byAdding: .day, value: -12, to: Date()) ?? Date()
+        } else {
+            return Calendar.current.date(byAdding: .day, value: -3, to: Date()) ?? Date()
+        }
+    }
+    
+    private var daysSincePurchase: Int {
+        Calendar.current.dateComponents([.day], from: purchaseDate, to: Date()).day ?? 0
+    }
+    
     var body: some View {
         ZStack(alignment: .top) {
             // Premium background
@@ -48,7 +67,11 @@ struct AfterSalesActionSelectionView: View {
                                 icon: "arrow.triangle.2.circlepath",
                                 color: RSMSColors.burgundy
                             ) {
-                                path.append(POSFlowDestination.exchangeProduct(invoiceId: invoiceId, selectedItemIds: selectedItemIds))
+                                if isInvoiceExpired {
+                                    showExchangeDeclinedAlert = true
+                                } else {
+                                    path.append(POSFlowDestination.exchangeProduct(invoiceId: invoiceId, selectedItemIds: selectedItemIds))
+                                }
                             }
                             
                             actionCard(
@@ -67,6 +90,11 @@ struct AfterSalesActionSelectionView: View {
             }
         }
         .navigationBarHidden(true)
+        .alert("Exchange Not Possible", isPresented: $showExchangeDeclinedAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("This invoice was purchased \(daysSincePurchase) days ago. Exchanges are only allowed within 7 days of purchase. The exchange window for Invoice #\(invoiceId) has closed.")
+        }
     }
     
     // MARK: - Header
