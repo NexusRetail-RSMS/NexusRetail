@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AfterSalesRepairFormView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(SellViewModel.self) private var viewModel
     @Binding var path: NavigationPath
     
     let invoiceId: String
@@ -202,7 +203,27 @@ struct AfterSalesRepairFormView: View {
         VStack {
             Button {
                 isInputFocused = false
-                print("Repair form submitted for item \(selectedItem.id). Problem: \(problemDescription). Total Cost: \(totalAmount)")
+                
+                let repairProduct = POSProduct(
+                    id: UUID(),
+                    itemId: selectedItem.itemId,
+                    name: "Repair: \(selectedItem.name)",
+                    sku: selectedItem.sku,
+                    category: "Service",
+                    price: totalAmount,
+                    stock: 999,
+                    size: selectedItem.size,
+                    imageUrl: selectedItem.imageUrl
+                )
+                
+                viewModel.resetFlow()
+                // Force adding to cart by bypassing stock check if needed, 
+                // but since stock is 999 it will pass canAddMore
+                viewModel.cartItems.append(repairProduct)
+                viewModel.selectedPaymentMethod = .razorpay
+                
+                path.append(POSFlowDestination.payment)
+                
             } label: {
                 Text("Submit Repair Request")
                     .font(.system(size: 18, weight: .bold))
