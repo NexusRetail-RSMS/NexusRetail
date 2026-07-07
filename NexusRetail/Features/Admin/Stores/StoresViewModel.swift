@@ -52,7 +52,7 @@ class StoresViewModel {
     }
     
     /// Creates a new store and re-fetches the list.
-    func create(name: String, address: String, phone: String, locale: String, currencyCode: String, timezone: String, managerID: UUID?, status: StoreStatus, includeRazorpay: Bool, razorpayKey: String, razorpaySecret: String, includeCard: Bool, cardTerminalID: String, latitude: Double?, longitude: Double?, city: String?, country: String?, imageData: Data? = nil) async -> Bool {
+    func create(name: String, address: String, phone: String, locale: String, currencyCode: String, timezone: String, managerID: UUID?, status: StoreStatus, includeRazorpay: Bool, includeCard: Bool, latitude: Double?, longitude: Double?, city: String?, country: String?, imageData: Data? = nil) async -> Bool {
         guard !name.isEmpty, !address.isEmpty else {
             errorMessage = "Name and Address are required."
             return false
@@ -99,22 +99,24 @@ class StoresViewModel {
         
         var terminals: [PaymentTerminal] = []
         if includeRazorpay {
+            // Auto-configured Razorpay test credentials
             let initialConfig = PaymentTerminalConfig(
                 isEnabled: true,
                 status: .configured,
                 environment: .test,
-                credential1: razorpayKey.isEmpty ? nil : razorpayKey,
-                credential2: razorpaySecret.isEmpty ? nil : razorpaySecret,
+                credential1: "rzp_test_T5N7vTgXxMXuFv",
+                credential2: "GyUWYy1jR0dh4wu433gFQjTt",
                 updatedAt: Date().ISO8601Format()
             )
             terminals.append(PaymentTerminal(id: UUID(), storeID: newStoreId, type: .razorpay, config: initialConfig))
         }
         if includeCard {
+            // Auto-configured card terminal
             let initialConfig = PaymentTerminalConfig(
                 isEnabled: true,
                 status: .configured,
                 environment: .test,
-                credential1: cardTerminalID.isEmpty ? nil : cardTerminalID,
+                credential1: "DEFAULT_TERMINAL",
                 credential2: nil,
                 updatedAt: Date().ISO8601Format()
             )

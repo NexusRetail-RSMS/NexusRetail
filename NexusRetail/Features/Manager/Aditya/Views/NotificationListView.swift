@@ -48,11 +48,11 @@ struct NotificationListView: View {
             LazyVStack(spacing: 12) {
                 // Section header
                 HStack {
-                    Image(systemName: "exclamationmark.triangle.fill")
+                    Image(systemName: "bell.badge.fill")
                         .font(.system(size: 14))
-                        .foregroundColor(RSMSColors.warning)
+                        .foregroundColor(RSMSColors.burgundy)
                     
-                    Text("Low Stock Alerts")
+                    Text("Alerts")
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(RSMSColors.primaryText)
                     
@@ -110,14 +110,21 @@ struct NotificationListView: View {
                     .foregroundColor(RSMSColors.primaryText)
                     .lineLimit(1)
                 
-                Text("SKU: \(notification.skuCode)")
-                    .font(.system(size: 12))
-                    .foregroundColor(RSMSColors.secondaryText)
-                
-                if let category = notification.category {
-                    Text(category)
-                        .font(.system(size: 11))
-                        .foregroundColor(RSMSColors.secondaryText.opacity(0.8))
+                switch notification.type {
+                case .lowStock(_, let sku, let category):
+                    Text("SKU: \(sku)")
+                        .font(.system(size: 12))
+                        .foregroundColor(RSMSColors.secondaryText)
+                    
+                    if let category = category {
+                        Text(category)
+                            .font(.system(size: 11))
+                            .foregroundColor(RSMSColors.secondaryText.opacity(0.8))
+                    }
+                case .transferApproved(_):
+                    Text("Transfer Request Approved")
+                        .font(.system(size: 12))
+                        .foregroundColor(RSMSColors.success)
                 }
             }
             
@@ -127,8 +134,13 @@ struct NotificationListView: View {
             VStack(alignment: .trailing, spacing: 6) {
                 // Stock count
                 HStack(spacing: 2) {
-                    Image(systemName: "cube.box.fill")
-                        .font(.system(size: 10))
+                    if case .transferApproved = notification.type {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 10))
+                    } else {
+                        Image(systemName: "cube.box.fill")
+                            .font(.system(size: 10))
+                    }
                     Text("\(notification.onHand)")
                         .font(.system(size: 14, weight: .bold))
                 }
