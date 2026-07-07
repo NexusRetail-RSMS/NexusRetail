@@ -5,6 +5,7 @@ struct PaymentFlowView: View {
     @Environment(SellViewModel.self) private var viewModel
     @Environment(SessionStore.self) private var sessionStore
     @Binding var path: NavigationPath
+    var storeId: UUID? = nil
     
     @State private var paymentState: PaymentState = .initial
     @State private var isProcessing = false
@@ -331,7 +332,7 @@ struct PaymentFlowView: View {
         
         Task {
             do {
-                let finalStoreID = sessionStore.currentUser?.storeID ?? UUID()
+                let finalStoreID = storeId ?? sessionStore.currentUser?.storeID ?? UUID()
                 let finalAssociateID = sessionStore.currentUser?.id ?? UUID()
                 try await viewModel.processRazorpayCheckout(storeID: finalStoreID, associateID: finalAssociateID)
                 
@@ -369,7 +370,7 @@ struct PaymentFlowView: View {
         
         Task {
             do {
-                let finalStoreID = sessionStore.currentUser?.storeID ?? UUID()
+                let finalStoreID = storeId ?? sessionStore.currentUser?.storeID ?? UUID()
                 let finalAssociateID = sessionStore.currentUser?.id ?? UUID()
                 try await viewModel.processCheckout(storeID: finalStoreID, associateID: finalAssociateID)
                 

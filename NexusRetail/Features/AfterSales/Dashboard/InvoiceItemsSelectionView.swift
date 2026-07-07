@@ -1,16 +1,15 @@
 import SwiftUI
+import Supabase
 
 struct InvoiceItemsSelectionView: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var path: NavigationPath
     let invoiceId: String
     
-    // Mocked data for demonstration
-    @State private var items: [POSProduct] = [
-        POSProduct(id: UUID(), itemId: 1, name: "Signature Leather Tote", sku: "TOTE-001", category: "Bags", price: 14500, stock: 10, size: "One Size", imageUrl: "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=500&auto=format&fit=crop&q=60"),
-        POSProduct(id: UUID(), itemId: 2, name: "Classic Silk Scarf", sku: "SCRF-045", category: "Accessories", price: 4200, stock: 25, size: "M", imageUrl: "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=500&auto=format&fit=crop&q=60"),
-        POSProduct(id: UUID(), itemId: 3, name: "Aviator Sunglasses", sku: "SUN-892", category: "Eyewear", price: 8900, stock: 5, size: "Standard", imageUrl: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=500&auto=format&fit=crop&q=60")
-    ]
+    @State private var items: [POSProduct] = []
+    @State private var isLoading: Bool = true
+    @State private var errorMessage: String? = nil
+    @State private var fetchedStoreId: UUID? = nil
     
     @State private var selectedItemId: UUID? = nil
     
@@ -29,13 +28,48 @@ struct InvoiceItemsSelectionView: View {
                             .padding(.horizontal, RSMSSpacing.lg)
                             .padding(.bottom, 4)
                         
-                        LazyVStack(spacing: 12) {
-                            ForEach(items) { item in
-                                itemRow(item)
+                        if isLoading {
+                            VStack(spacing: 16) {
+                                ProgressView()
+                                    .scaleEffect(1.2)
+                                Text("Fetching Invoice...")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(RSMSColors.secondaryText)
                             }
+                            .frame(maxWidth: .infinity, minHeight: 200)
+                            .padding(.bottom, 120)
+                        } else if let errorMessage = errorMessage {
+                            VStack(spacing: 12) {
+                                Image(systemName: "exclamationmark.triangle")
+                                    .font(.system(size: 32))
+                                    .foregroundColor(.red)
+                                Text(errorMessage)
+                                    .font(.system(size: 15))
+                                    .foregroundColor(RSMSColors.primaryText)
+                                    .multilineTextAlignment(.center)
+                            }
+                            .frame(maxWidth: .infinity, minHeight: 200)
+                            .padding(.bottom, 120)
+                        } else if items.isEmpty {
+                            VStack(spacing: 12) {
+                                Image(systemName: "tray")
+                                    .font(.system(size: 32))
+                                    .foregroundColor(RSMSColors.secondaryText)
+                                Text("No items found in this invoice")
+                                    .font(.system(size: 15))
+                                    .foregroundColor(RSMSColors.primaryText)
+                            }
+                            .frame(maxWidth: .infinity, minHeight: 200)
+                            .padding(.bottom, 120)
+                        } else {
+                            LazyVStack(spacing: 12) {
+                                ForEach(items) { item in
+                                    itemRow(item)
+                                }
+                            }
+                            .padding(.horizontal, RSMSSpacing.lg)
+                            .padding(.bottom, 120) // Give space for bottom bar
                         }
-                        .padding(.horizontal, RSMSSpacing.lg)
-                        .padding(.bottom, 120) // Give space for bottom bar
                     }
                     .padding(.top, 150) // Give space for header
                 }
@@ -48,6 +82,9 @@ struct InvoiceItemsSelectionView: View {
             bottomActionBar
         }
         .navigationBarHidden(true)
+        .task {
+            await fetchInvoiceItems()
+        }
     }
     
     // MARK: - Header
@@ -161,7 +198,7 @@ struct InvoiceItemsSelectionView: View {
         VStack {
             Button {
                 if let selectedId = selectedItemId, let selectedItem = items.first(where: { $0.id == selectedId }) {
-                    path.append(POSFlowDestination.actionSelection(invoiceId: invoiceId, selectedItem: selectedItem))
+                    path.append(POSFlowDestination.actionSelection(invoiceId: invoiceId, selectedItem: selectedItem, storeId: fetchedStoreId))
                 }
             } label: {
                 Text("Continue")
@@ -177,5 +214,72 @@ struct InvoiceItemsSelectionView: View {
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.bottom, 24)
         .padding(.top, 16)
+    }
+    
+    // MARK: - Data Fetching
+    private func fetchInvoiceItems() async {
+        guard let invoiceUUID = UUID(uuidString: invoiceId) else {
+            await MainActor.run {
+                self.errorMessage = "Invalid invoice format."
+                self.isLoading = false
+            }
+            return
+        }
+        
+        do {
+            let fetchedOrders: [StoreOrder] = try await SupabaseManager.shared.client
+                .from("orders")
+                .select("id, store_id, order_line_item(id, quantity, applied_price, products(item_id, item_name, category, sku_code, price, pexels_page, image_url))")
+                .eq("id", value: invoiceUUID)
+                .execute()
+                .value
+            
+            guard let order = fetchedOrders.first else {
+                await MainActor.run {
+                    self.errorMessage = "Invoice not found."
+                    self.isLoading = false
+                }
+                return
+            }
+            
+            var mappedItems: [POSProduct] = []
+            
+            if let lineItems = order.orderLineItems {
+                for item in lineItems {
+                    if let nested = item.products {
+                        let sizes = ["S", "M", "L", "XL"]
+                        let randomSize = sizes.randomElement() ?? "S"
+                        
+                        // Extract image from pexels_page or fallback to image_url
+                        let pexelsImageUrl = POSProductRepository.shared.extractPexelsImageUrl(from: nested.pexelsPage ?? "") ?? nested.imageUrl
+                        
+                        let product = POSProduct(
+                            id: item.id ?? UUID(),
+                            itemId: nested.itemId ?? 0,
+                            name: nested.itemName ?? "Unknown Item",
+                            sku: nested.skuCode ?? "SKU-\(nested.itemId ?? 0)",
+                            category: nested.category ?? "General",
+                            price: item.appliedPrice ?? nested.price ?? 0.0,
+                            stock: item.quantity,
+                            size: randomSize,
+                            imageUrl: pexelsImageUrl
+                        )
+                        mappedItems.append(product)
+                    }
+                }
+            }
+            
+            await MainActor.run {
+                self.fetchedStoreId = order.storeID
+                self.items = mappedItems
+                self.isLoading = false
+            }
+        } catch {
+            print("Invoice fetch error: \(error)")
+            await MainActor.run {
+                self.errorMessage = "Failed to load invoice items. Make sure you entered a valid Database Order ID."
+                self.isLoading = false
+            }
+        }
     }
 }

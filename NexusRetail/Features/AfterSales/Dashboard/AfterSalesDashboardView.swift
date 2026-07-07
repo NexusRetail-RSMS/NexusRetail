@@ -65,13 +65,18 @@ struct AfterSalesDashboardView: View {
                     }
                 case .invoiceItemsSelection(let invoiceId):
                     InvoiceItemsSelectionView(path: $navigationPath, invoiceId: invoiceId)
-                case .actionSelection(let invoiceId, let selectedItem):
-                    AfterSalesActionSelectionView(path: $navigationPath, invoiceId: invoiceId, selectedItem: selectedItem)
-                case .repairForm(let invoiceId, let selectedItem, let remainingWarrantyMonths):
-                    AfterSalesRepairFormView(path: $navigationPath, invoiceId: invoiceId, selectedItem: selectedItem, remainingWarrantyMonths: remainingWarrantyMonths)
+                case .actionSelection(let invoiceId, let selectedItem, let storeId):
+                    AfterSalesActionSelectionView(path: $navigationPath, invoiceId: invoiceId, selectedItem: selectedItem, storeId: storeId)
+                        .navigationTransition(.zoom(sourceID: "scannerButton", in: namespace))
+                    
+                case .repairForm(let invoiceId, let selectedItem, let warrantyMonths, let storeId):
+                    AfterSalesRepairFormView(path: $navigationPath, invoiceId: invoiceId, selectedItem: selectedItem, remainingWarrantyMonths: warrantyMonths, storeId: storeId)
+                        .navigationTransition(.zoom(sourceID: "scannerButton", in: namespace))
+                    
                 case .cart:          CartView(path: $navigationPath)
                 case .checkout:      CheckoutView(path: $navigationPath)
-                case .payment:       PaymentFlowView(path: $navigationPath)
+                case .payment(let storeId):       
+                    PaymentFlowView(path: $navigationPath, storeId: storeId)
                 case .receipt:
                     ReceiptView(onComplete: { navigationPath = NavigationPath() })
                 case .bopis:

@@ -6,6 +6,7 @@ struct AfterSalesActionSelectionView: View {
     
     let invoiceId: String
     let selectedItem: POSProduct
+    let storeId: UUID?
     
     private var remainingWarrantyMonths: Int {
         // Mocking a purchase date 4 months ago for demonstration
@@ -115,7 +116,7 @@ struct AfterSalesActionSelectionView: View {
                 icon: "wrench.and.screwdriver.fill",
                 color: Color(hex: "34495E")
             ) {
-                path.append(POSFlowDestination.repairForm(invoiceId: invoiceId, selectedItem: selectedItem, remainingWarrantyMonths: remainingWarrantyMonths))
+                path.append(POSFlowDestination.repairForm(invoiceId: invoiceId, selectedItem: selectedItem, remainingWarrantyMonths: remainingWarrantyMonths, storeId: storeId))
             }
         }
         .padding(.horizontal, RSMSSpacing.lg)

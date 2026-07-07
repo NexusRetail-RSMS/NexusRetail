@@ -15,7 +15,7 @@ enum POSFlowDestination: Hashable {
     case barcodeScanner
     case cart
     case checkout
-    case payment
+    case payment(storeId: UUID? = nil)
     case receipt
     case bopis
     case ordersHub
@@ -23,8 +23,8 @@ enum POSFlowDestination: Hashable {
     // After Sales Flow
     case invoiceScanner
     case invoiceItemsSelection(invoiceId: String)
-    case actionSelection(invoiceId: String, selectedItem: POSProduct)
-    case repairForm(invoiceId: String, selectedItem: POSProduct, remainingWarrantyMonths: Int)
+    case actionSelection(invoiceId: String, selectedItem: POSProduct, storeId: UUID?)
+    case repairForm(invoiceId: String, selectedItem: POSProduct, remainingWarrantyMonths: Int, storeId: UUID?)
 }
 
 // MARK: - Chart / Period

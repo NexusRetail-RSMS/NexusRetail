@@ -135,10 +135,18 @@ struct NestedProduct: Codable {
     let itemId: Int64?
     let itemName: String?
     let category: String?
+    let skuCode: String?
+    let price: Double?
+    let pexelsPage: String?
+    let imageUrl: String?
 
     enum CodingKeys: String, CodingKey {
         case itemId = "item_id"
         case itemName = "item_name"
         case category
+        case skuCode = "sku_code"
+        case price
+        case pexelsPage = "pexels_page"
+        case imageUrl = "image_url"
     }
 }

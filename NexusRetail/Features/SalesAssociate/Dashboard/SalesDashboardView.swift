@@ -62,7 +62,7 @@ struct SalesDashboardView: View {
                     }
                 case .cart:          CartView(path: $navigationPath)
                 case .checkout:      CheckoutView(path: $navigationPath)
-                case .payment:       PaymentFlowView(path: $navigationPath)
+                case .payment(let storeId):       PaymentFlowView(path: $navigationPath, storeId: storeId)
                 case .receipt:
                     ReceiptView(onComplete: { navigationPath = NavigationPath() })
                 case .bopis:

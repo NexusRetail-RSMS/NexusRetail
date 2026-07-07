@@ -91,7 +91,7 @@ struct CheckoutView: View {
                             // (selectedClientId/selectedClient) as the user looks
                             // up or creates the client above.
                             viewModel.selectedPaymentMethod = selectedPayment
-                            path.append(POSFlowDestination.payment)
+                            path.append(POSFlowDestination.payment(storeId: nil))
                         } label: {
                             HStack {
                                 Text("Pay \(formatIndianCurrency(viewModel.totalAmount))").font(.system(size: 16, weight: .bold))

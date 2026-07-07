@@ -9,6 +9,7 @@ struct AfterSalesRepairFormView: View {
     let invoiceId: String
     let selectedItem: POSProduct
     let remainingWarrantyMonths: Int
+    let storeId: UUID?
     
     @State private var problemDescription: String = ""
     @State private var additionalAmountText: String = ""
@@ -288,7 +289,7 @@ struct AfterSalesRepairFormView: View {
                     Task {
                         do {
                             // Fallback IDs for mock After-Sales users who might not have a storeID assigned
-                            let finalStoreID = sessionStore.currentUser?.storeID ?? UUID()
+                            let finalStoreID = storeId ?? sessionStore.currentUser?.storeID ?? UUID()
                             let finalAssociateID = sessionStore.currentUser?.id ?? UUID()
                             
                             // Automatically process the checkout without payment gateway
@@ -306,8 +307,8 @@ struct AfterSalesRepairFormView: View {
                         }
                     }
                 } else {
-                    viewModel.selectedPaymentMethod = .razorpay
-                    path.append(POSFlowDestination.payment)
+                    // Start Payment Flow
+                    path.append(POSFlowDestination.payment(storeId: storeId))
                 }
                 
             } label: {
