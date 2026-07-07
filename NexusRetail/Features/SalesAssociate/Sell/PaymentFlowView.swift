@@ -336,6 +336,11 @@ struct PaymentFlowView: View {
                 let finalAssociateID = sessionStore.currentUser?.id ?? UUID()
                 try await viewModel.processRazorpayCheckout(storeID: finalStoreID, associateID: finalAssociateID)
                 
+                if let generatedOrderId = viewModel.lastOrderId,
+                   let pendingDate = RepairOrderManager.shared.getPickupDate(forOrderId: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!) {
+                    RepairOrderManager.shared.setPickupDate(pendingDate, forOrderId: generatedOrderId)
+                }
+                
                 // Refresh product stock after checkout
                 await POSProductRepository.shared.refreshStockForStore(storeID: finalStoreID)
                 
@@ -373,6 +378,11 @@ struct PaymentFlowView: View {
                 let finalStoreID = storeId ?? sessionStore.currentUser?.storeID ?? UUID()
                 let finalAssociateID = sessionStore.currentUser?.id ?? UUID()
                 try await viewModel.processCheckout(storeID: finalStoreID, associateID: finalAssociateID)
+                
+                if let generatedOrderId = viewModel.lastOrderId,
+                   let pendingDate = RepairOrderManager.shared.getPickupDate(forOrderId: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!) {
+                    RepairOrderManager.shared.setPickupDate(pendingDate, forOrderId: generatedOrderId)
+                }
                 
                 // Refresh product stock after checkout
                 await POSProductRepository.shared.refreshStockForStore(storeID: finalStoreID)

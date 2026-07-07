@@ -17,14 +17,10 @@ struct AfterSalesTabView: View {
                     Label("Dashboard", systemImage: "square.grid.2x2")
                 }
             
-            // 3. Repairs
+            // 2. Repairs
             NavigationStack {
-                AfterSalesPlaceholderView(
-                    title: "Active Repairs",
-                    message: "Track and update items currently in queue for diagnostics or repair.",
-                    icon: "wrench.and.screwdriver.fill"
-                )
-                .modifier(AfterSalesToolbarModifier(title: "Repairs"))
+                ActiveRepairsView()
+                    .modifier(AfterSalesToolbarModifier(title: "Active Repairs"))
             }
             .tabItem {
                 Label("Repairs", systemImage: "wrench.and.screwdriver.fill")

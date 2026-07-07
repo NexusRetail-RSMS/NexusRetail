@@ -8,17 +8,23 @@
 
 /* Begin PBXBuildFile section */
 		327BE9D92FEB91EC00A9318C /* Config.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 327BE9D82FEB91EC00A9318C /* Config.xcconfig */; };
+		419B1B92A978667D8BB80CEB /* RepairOrderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB459299F6818F2A1DAC570F /* RepairOrderManager.swift */; };
 		64A4892BAE1C97F76E0F2DAE /* RazorpayCheckout in Frameworks */ = {isa = PBXBuildFile; productRef = 38B3F665C2D2130AA45356F0 /* RazorpayCheckout */; };
+		8CC692AF0F5BF07B2B9BA543 /* RepairCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95F943550CCD27FF68EEB689 /* RepairCardView.swift */; };
 		C7B5B7912FEB0A8100E6CF91 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = C7B5B7902FEB0A8100E6CF91 /* Auth */; };
 		C7B5B7932FEB0A8100E6CF91 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = C7B5B7922FEB0A8100E6CF91 /* Functions */; };
 		C7B5B7952FEB0A8100E6CF91 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = C7B5B7942FEB0A8100E6CF91 /* PostgREST */; };
 		C7B5B7972FEB0A8100E6CF91 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = C7B5B7962FEB0A8100E6CF91 /* Realtime */; };
 		C7B5B7992FEB0A8100E6CF91 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = C7B5B7982FEB0A8100E6CF91 /* Storage */; };
 		C7B5B79B2FEB0A8100E6CF91 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = C7B5B79A2FEB0A8100E6CF91 /* Supabase */; };
+		D6021666D1DD8F7B019CF918 /* ActiveRepairsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7982917165A6A051FB1E2A11 /* ActiveRepairsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		327BE9D82FEB91EC00A9318C /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		7982917165A6A051FB1E2A11 /* ActiveRepairsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ActiveRepairsView.swift; sourceTree = "<group>"; };
+		95F943550CCD27FF68EEB689 /* RepairCardView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RepairCardView.swift; sourceTree = "<group>"; };
+		BB459299F6818F2A1DAC570F /* RepairOrderManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RepairOrderManager.swift; sourceTree = "<group>"; };
 		C7B5B6A92FEA47B800E6CF91 /* NexusRetail.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NexusRetail.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -61,6 +67,44 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		00FB2F53FA66160969B3385F /* NexusRetail */ = {
+			isa = PBXGroup;
+			children = (
+				6EC142777C32E72452D213BA /* Features */,
+			);
+			name = NexusRetail;
+			path = NexusRetail;
+			sourceTree = "<group>";
+		};
+		3E4B071C1FFB150148099E59 /* AfterSales */ = {
+			isa = PBXGroup;
+			children = (
+				823D8E2B9B8BDB7153F23FEE /* Dashboard */,
+			);
+			name = AfterSales;
+			path = AfterSales;
+			sourceTree = "<group>";
+		};
+		6EC142777C32E72452D213BA /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				3E4B071C1FFB150148099E59 /* AfterSales */,
+			);
+			name = Features;
+			path = Features;
+			sourceTree = "<group>";
+		};
+		823D8E2B9B8BDB7153F23FEE /* Dashboard */ = {
+			isa = PBXGroup;
+			children = (
+				BB459299F6818F2A1DAC570F /* RepairOrderManager.swift */,
+				95F943550CCD27FF68EEB689 /* RepairCardView.swift */,
+				7982917165A6A051FB1E2A11 /* ActiveRepairsView.swift */,
+			);
+			name = Dashboard;
+			path = Dashboard;
+			sourceTree = "<group>";
+		};
 		C7B5B6A02FEA47B800E6CF91 = {
 			isa = PBXGroup;
 			children = (
@@ -68,6 +112,7 @@
 				C7B5B6AA2FEA47B800E6CF91 /* Products */,
 				C7B5B78F2FEB0A7800E6CF91 /* Frameworks */,
 				327BE9D82FEB91EC00A9318C /* Config.xcconfig */,
+				00FB2F53FA66160969B3385F /* NexusRetail */,
 			);
 			sourceTree = "<group>";
 		};
@@ -171,6 +216,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				419B1B92A978667D8BB80CEB /* RepairOrderManager.swift in Sources */,
+				8CC692AF0F5BF07B2B9BA543 /* RepairCardView.swift in Sources */,
+				D6021666D1DD8F7B019CF918 /* ActiveRepairsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
