@@ -161,7 +161,7 @@ struct AfterSalesRepairFormView: View {
                 }
                 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Additional Parts / Labor (₹)")
+                    Text("Additional Parts (₹)")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(RSMSColors.secondaryText)
                     
@@ -216,9 +216,5 @@ struct AfterSalesRepairFormView: View {
         }
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.vertical, 24)
-        .background(
-            Color.white
-                .shadow(color: Color.black.opacity(0.05), radius: 10, y: -5)
-        )
     }
 }
