@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SalesToolbarModifier: ViewModifier {
-    let title: String
+    let title: LocalizedStringKey
     @Environment(SessionStore.self) private var sessionStore
     @State private var isProfilePresented = false
 

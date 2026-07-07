@@ -6,10 +6,11 @@
 import SwiftUI
 
 struct SectionHeaderView: View {
-    let title: String
+    let title: LocalizedStringKey
     
     var body: some View {
-        Text(title.uppercased())
+        Text(title)
+            .textCase(.uppercase)
             .font(.system(size: 15, weight: .heavy))
             .foregroundColor(RSMSColors.secondaryText)
             .padding(.horizontal, RSMSSpacing.lg)

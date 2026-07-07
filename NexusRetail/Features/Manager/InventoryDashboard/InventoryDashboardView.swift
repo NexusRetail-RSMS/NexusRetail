@@ -142,7 +142,7 @@ struct InventoryDashboardView: View {
                 }
                 
                 ForEach(InventoryCategory.allCases, id: \.self) { cat in
-                    CategoryChip(label: cat.rawValue, isSelected: viewModel.selectedCategory == cat) {
+                    CategoryChip(label: LocalizedStringKey(cat.rawValue), isSelected: viewModel.selectedCategory == cat) {
                         viewModel.selectedCategory = viewModel.selectedCategory == cat ? nil : cat
                     }
                 }
@@ -160,14 +160,14 @@ struct InventoryDashboardView: View {
                     emptyState(
                         icon: "exclamationmark.triangle",
                         title: "Couldn't load inventory",
-                        message: errorMessage
+                        message: LocalizedStringKey(errorMessage)
                     )
                     .padding(.top, 40)
                 } else {
                     emptyState(
                         icon: "shippingbox",
                         title: "No items found",
-                        message: viewModel.searchText.isEmpty ? "No inventory items match the current filter." : "No results for \"\(viewModel.searchText)\"."
+                        message: LocalizedStringKey(viewModel.searchText.isEmpty ? "No inventory items match the current filter." : "No results for \"\(viewModel.searchText)\".")
                     )
                     .padding(.top, 40)
                 }
@@ -190,15 +190,15 @@ struct InventoryDashboardView: View {
     
     // MARK: - Empty State
     
-    private func emptyState(icon: String, title: String, message: String) -> some View {
+    private func emptyState(icon: String, title: LocalizedStringKey, message: LocalizedStringKey) -> some View {
         VStack(spacing: 16) {
             Image(systemName: icon)
                 .font(.system(size: 48))
                 .foregroundColor(RSMSColors.secondaryText.opacity(0.4))
-            Text(LocalizedStringKey(title))
+            Text(title)
                 .font(RSMSFonts.headline)
                 .foregroundColor(RSMSColors.primaryText)
-            Text(LocalizedStringKey(message))
+            Text(message)
                 .font(RSMSFonts.caption)
                 .foregroundColor(RSMSColors.secondaryText)
                 .multilineTextAlignment(.center)
@@ -210,12 +210,12 @@ struct InventoryDashboardView: View {
 // MARK: - Category Chip
 
 struct CategoryChip: View {
-    let label: String
+    let label: LocalizedStringKey
     let isSelected: Bool
     let action: () -> Void
     
     var body: some View {
-        Text(LocalizedStringKey(label))
+        Text(label)
             .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
             .foregroundColor(isSelected ? .white : RSMSColors.primaryText)
             .padding(.horizontal, 14)

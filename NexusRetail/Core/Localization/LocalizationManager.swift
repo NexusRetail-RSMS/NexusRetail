@@ -125,8 +125,8 @@ final class LocalizationManager {
         
         self.currentLanguage = resolvedLanguage
         
-        // Restore persisted hasSelectedLanguage flag
-        self.hasSelectedLanguage = defaults.bool(forKey: Keys.hasSelectedLanguage)
+        // Always set to false on launch so the language picker shows on every app open
+        self.hasSelectedLanguage = false
         
         // Apply the bundle swizzle immediately on launch
         applyLanguage(resolvedLanguage)

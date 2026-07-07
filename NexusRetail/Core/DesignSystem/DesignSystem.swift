@@ -63,7 +63,7 @@ struct PrimaryButtonStyle: ButtonStyle {
 
 /// A reusable KPI card for dashboards.
 struct KPICardView: View {
-    let title: String
+    let title: LocalizedStringKey
     let value: String
     let icon: String
     let trend: String?
@@ -90,7 +90,7 @@ struct KPICardView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
                 
-                Text(LocalizedStringKey(title))
+                Text(title)
                     .font(.system(size: 13))
                     .foregroundColor(RSMSColors.secondaryText)
                     .lineLimit(2)
@@ -137,7 +137,7 @@ public struct HeaderCurve: Shape {
 /// on the right (collapses to xmark when text is present).
 struct NexusSearchBar: View {
     @Binding var text: String
-    var placeholder: String = "Search"
+    var placeholder: LocalizedStringKey = "Search"
     @FocusState private var isFocused: Bool
 
     var body: some View {

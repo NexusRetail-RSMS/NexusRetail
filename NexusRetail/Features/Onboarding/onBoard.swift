@@ -9,8 +9,8 @@ import SwiftUI
 
 struct OnboardingPageData {
     let icon: String
-    let title: String
-    let subtitle: String
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey
 }
 
 struct OnboardingView: View {

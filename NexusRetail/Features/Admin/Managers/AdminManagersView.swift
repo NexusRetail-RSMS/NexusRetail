@@ -251,7 +251,7 @@ struct AdminManagersView: View {
                             
                             Picker(selection: $selectedPerformanceSort) {
                                 ForEach(PerformanceSortOrder.allCases, id: \.self) { option in
-                                    Text(option.rawValue).tag(option)
+                                    Text(LocalizedStringKey(option.rawValue)).tag(option)
                                 }
                             } label: {
                                 Label("Performance", systemImage: "chart.bar.fill")

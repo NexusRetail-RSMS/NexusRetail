@@ -483,7 +483,7 @@ struct StoreFormView: View {
 }
 
 private struct FormSectionCard<Content: View>: View {
-    let title: String
+    let title: LocalizedStringKey
     @ViewBuilder let content: () -> Content
 
     var body: some View {
@@ -560,7 +560,7 @@ private struct PremiumTextField: View {
 
 private struct PremiumMenuRow: View {
     let icon: String
-    let title: String
+    let title: LocalizedStringKey
     let value: String
     let options: [String]
     @Binding var selection: String
@@ -612,7 +612,7 @@ private struct PremiumMenuRow: View {
 
 private struct PremiumToggleRow: View {
     let icon: String
-    let title: String
+    let title: LocalizedStringKey
     @Binding var isOn: Bool
 
     var body: some View {

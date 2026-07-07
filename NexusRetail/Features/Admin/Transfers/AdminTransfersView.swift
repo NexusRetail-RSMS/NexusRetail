@@ -3,6 +3,13 @@ import SwiftUI
 enum TransferTab: String, CaseIterable {
     case requests = "Requests"
     case waiting = "Waiting"
+    
+    var localizedName: String {
+        switch self {
+        case .requests: return String(localized: "Requests")
+        case .waiting: return String(localized: "Waiting")
+        }
+    }
 }
 
 struct AdminTransfersView: View {
@@ -23,7 +30,7 @@ struct AdminTransfersView: View {
                 // Tabs
                 Picker("Tabs", selection: $selectedTab) {
                     ForEach(TransferTab.allCases, id: \.self) { tab in
-                        Text(tab.rawValue).tag(tab)
+                        Text(LocalizedStringKey(tab.localizedName)).tag(tab)
                     }
                 }
                 .pickerStyle(.segmented)

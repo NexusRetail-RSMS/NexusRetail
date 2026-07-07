@@ -5,6 +5,7 @@
 //  Data model for payment gateway configurations stored in Supabase.
 
 import Foundation
+import SwiftUI
 
 // MARK: - Payment Provider
 
@@ -15,14 +16,14 @@ enum PaymentProvider: String, Codable, CaseIterable, Identifiable {
     
     var id: String { rawValue }
     
-    var displayName: String {
+    var displayName: LocalizedStringKey {
         switch self {
         case .razorpay: return "Razorpay"
         case .card: return "Card Payments (Stripe)"
         }
     }
     
-    var subtitle: String {
+    var subtitle: LocalizedStringKey {
         switch self {
         case .razorpay: return "Accept payments via Razorpay (UPI, Cards, Netbanking, Wallets)"
         case .card: return "Accept card payments via Stripe"
@@ -37,7 +38,7 @@ enum PaymentProvider: String, Codable, CaseIterable, Identifiable {
     }
     
     /// Label for the first credential field.
-    var credential1Label: String {
+    var credential1Label: LocalizedStringKey {
         switch self {
         case .razorpay: return "Key ID"
         case .card: return "Publishable Key"
@@ -45,7 +46,7 @@ enum PaymentProvider: String, Codable, CaseIterable, Identifiable {
     }
     
     /// Placeholder for the first credential field.
-    var credential1Placeholder: String {
+    var credential1Placeholder: LocalizedStringKey {
         switch self {
         case .razorpay: return "Enter Razorpay Key ID"
         case .card: return "Enter Publishable Key"
@@ -53,7 +54,7 @@ enum PaymentProvider: String, Codable, CaseIterable, Identifiable {
     }
     
     /// Label for the second credential field.
-    var credential2Label: String {
+    var credential2Label: LocalizedStringKey {
         switch self {
         case .razorpay: return "Key Secret"
         case .card: return "Secret Key"
@@ -61,7 +62,7 @@ enum PaymentProvider: String, Codable, CaseIterable, Identifiable {
     }
     
     /// Placeholder for the second credential field.
-    var credential2Placeholder: String {
+    var credential2Placeholder: LocalizedStringKey {
         switch self {
         case .razorpay: return "Enter Razorpay Key Secret"
         case .card: return "Enter Secret Key"
@@ -72,7 +73,7 @@ enum PaymentProvider: String, Codable, CaseIterable, Identifiable {
 // MARK: - Payment Configuration Status
 
 /// Represents the current state of a payment gateway configuration.
-enum PaymentConfigStatus: String, Codable {
+enum PaymentConfigStatus: LocalizedStringKey, Codable {
     case notConfigured = "not_configured"
     case configured = "configured"
     case invalid = "invalid"
@@ -81,7 +82,7 @@ enum PaymentConfigStatus: String, Codable {
 // MARK: - Payment Environment
 
 /// The environment mode for payment gateway credentials.
-enum PaymentEnvironment: String, Codable, CaseIterable {
+enum PaymentEnvironment: LocalizedStringKey, Codable, CaseIterable {
     case test = "test"
     case live = "live"
     

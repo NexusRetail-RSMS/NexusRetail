@@ -95,7 +95,7 @@ struct ContactRow: View {
 }
 
 struct StatCard: View {
-    let title: String
+    let title: LocalizedStringKey
     let value: String
     let icon: String
     let color: Color

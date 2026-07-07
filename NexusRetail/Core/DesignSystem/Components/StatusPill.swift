@@ -9,7 +9,7 @@ import SwiftUI
 /// A small status indicator with a colored dot and label text.
 /// Used to show payment configuration status (Configured, Not Configured, Invalid).
 struct StatusPill: View {
-    let label: String
+    let label: LocalizedStringKey
     let color: Color
     
     var body: some View {

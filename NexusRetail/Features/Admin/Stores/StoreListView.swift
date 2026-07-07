@@ -194,7 +194,7 @@ struct StoreListView: View {
                 .accessibilityLabel("Add new store")
             }
 
-            NexusSearchBar(text: $searchText, placeholder: "Search stores, city…")
+            NexusSearchBar(text: $searchText, placeholder: LocalizedStringKey("Search stores, city…"))
                 .padding(.vertical, 2)
         }
         .padding(.horizontal, RSMSSpacing.lg)

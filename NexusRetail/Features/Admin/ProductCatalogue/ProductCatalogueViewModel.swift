@@ -77,6 +77,16 @@ final class ProductCatalogueViewModel: ObservableObject {
     @Published var selectedCategory = "All"
 
     let categoryOptions = ["All", "Watches", "Bags", "Perfumes", "Clothes", "Jewellery"]
+    
+    // Extractor hints
+    private let _categoryHints = [
+        String(localized: "All"),
+        String(localized: "Watches"),
+        String(localized: "Bags"),
+        String(localized: "Perfumes"),
+        String(localized: "Clothes"),
+        String(localized: "Jewellery")
+    ]
 
     @Published private(set) var allProducts: [CatalogueProduct]
     private var timer: AnyCancellable?

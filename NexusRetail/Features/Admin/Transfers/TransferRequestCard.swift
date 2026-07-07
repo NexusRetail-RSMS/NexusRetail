@@ -129,7 +129,7 @@ struct TransferRequestCard: View {
             Button {
                 withAnimation { viewModel.approveRequest(request) }
             } label: {
-                Text("Approve")
+                Text(LocalizedStringKey("Approve"))
                     .font(.system(size: 15, weight: .semibold))
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)
@@ -141,7 +141,7 @@ struct TransferRequestCard: View {
             Button {
                 showingScheduleSheet = true
             } label: {
-                Text("Schedule")
+                Text(LocalizedStringKey("Schedule"))
                     .font(.system(size: 15, weight: .semibold))
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)
@@ -154,7 +154,7 @@ struct TransferRequestCard: View {
 }
 
 struct InfoColumn: View {
-    let title: String
+    let title: LocalizedStringKey
     let value: String
     var alignment: HorizontalAlignment = .leading
 
@@ -304,7 +304,7 @@ struct WaitingRequestCard: View {
                 // Auto Approve Badge
                 if let autoApprove = request.autoApproveAt {
                     VStack(alignment: .center, spacing: 2) {
-                        Text("Auto Approves On")
+                        Text(LocalizedStringKey("Auto Approves On"))
                             .font(.system(size: 10, weight: .semibold))
                         Text(autoApprove.formatted(date: .abbreviated, time: .omitted))
                             .font(.system(size: 12, weight: .bold))
@@ -341,7 +341,7 @@ struct WaitingRequestCard: View {
             Button {
                 showingApproveEarlyAlert = true
             } label: {
-                Text("Approve Early")
+                Text(LocalizedStringKey("Approve Early"))
                     .font(.system(size: 15, weight: .semibold))
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)
@@ -435,11 +435,11 @@ struct ApprovedRequestCard: View {
     let request: AdminStockRequest
 
     private var badgeTitle: String {
-        guard let method = request.approvalMethod else { return "Approved" }
+        guard let method = request.approvalMethod else { return String(localized: "Approved") }
         switch method {
-        case .immediate: return "Approved"
-        case .scheduled: return "Auto Approved"
-        case .early: return "Approved Early"
+        case .immediate: return String(localized: "Approved")
+        case .scheduled: return String(localized: "Auto Approved")
+        case .early: return String(localized: "Approved Early")
         }
     }
 

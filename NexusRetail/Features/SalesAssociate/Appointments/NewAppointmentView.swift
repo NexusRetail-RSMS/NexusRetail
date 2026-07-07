@@ -25,8 +25,6 @@ enum ClientDirectory {
         raw.filter(\.isNumber)
     }
 
-    /// Uses the last 10 digits as the match key so numbers with/without a
-    /// country code (e.g. "+91 98765 43210" vs "9876543210") still match.
     private static func matchKey(_ raw: String) -> String? {
         let digits = normalize(raw)
         guard digits.count >= 10 else { return nil }

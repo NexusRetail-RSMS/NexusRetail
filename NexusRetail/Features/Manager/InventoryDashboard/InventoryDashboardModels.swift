@@ -72,7 +72,14 @@ enum TransferStatus: String, Codable, CaseIterable {
     case unfulfillable
     
     var displayName: String {
-        rawValue.capitalized
+        switch self {
+        case .pending: return String(localized: "Pending")
+        case .approved: return String(localized: "Approved")
+        case .routed: return String(localized: "Routed")
+        case .dispatched: return String(localized: "Dispatched")
+        case .delivered: return String(localized: "Delivered")
+        case .unfulfillable: return String(localized: "Unfulfillable")
+        }
     }
     
     var color: Color {

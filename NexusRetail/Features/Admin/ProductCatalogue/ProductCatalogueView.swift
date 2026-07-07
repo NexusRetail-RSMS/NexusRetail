@@ -119,7 +119,7 @@ struct ProductCatalogueView: View {
     }
 
     private var searchBarRow: some View {
-        NexusSearchBar(text: $viewModel.searchText, placeholder: "Search products, SKU…")
+        NexusSearchBar(text: $viewModel.searchText, placeholder: LocalizedStringKey("Search products, SKU…"))
     }
 
 
@@ -242,9 +242,9 @@ struct ProductCatalogueView: View {
                         viewModel.selectedCategory = option
                     } label: {
                         if viewModel.selectedCategory == option {
-                            Label(option, systemImage: "checkmark")
+                            Label(LocalizedStringKey(option), systemImage: "checkmark")
                         } else {
-                            Text(option)
+                            Text(LocalizedStringKey(option))
                         }
                     }
                 }
@@ -332,7 +332,7 @@ private struct ProductRowCard: View {
                                 .foregroundStyle(RSMSColors.darkBrown)
                                 .lineLimit(2)
 
-                            Text(product.category)
+                            Text(LocalizedStringKey(product.category))
                                 .font(.system(size: 12))
                                 .foregroundStyle(RSMSColors.secondaryText)
                         }

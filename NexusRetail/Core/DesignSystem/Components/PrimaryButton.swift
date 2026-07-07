@@ -9,7 +9,7 @@ import SwiftUI
 /// A full-width primary action button styled with the RSMS brand.
 /// Supports a loading state that replaces the label with a spinner.
 struct RSMSPrimaryButton: View {
-    let title: String
+    let title: LocalizedStringKey
     var isLoading: Bool = false
     var isDisabled: Bool = false
     let action: () -> Void
@@ -39,7 +39,7 @@ struct RSMSPrimaryButton: View {
 
 /// A secondary / destructive link-style button (e.g., "Disable Razorpay").
 struct RSMSSecondaryButton: View {
-    let title: String
+    let title: LocalizedStringKey
     var color: Color = RSMSColors.burgundy
     let action: () -> Void
     

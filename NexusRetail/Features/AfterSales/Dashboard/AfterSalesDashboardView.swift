@@ -103,7 +103,7 @@ struct AfterSalesDashboardView: View {
                 Spacer()
                 Picker("Period", selection: $vm.selectedChartPeriod) {
                     ForEach(ChartPeriod.allCases) { period in
-                        Text(period.rawValue).tag(period)
+                        Text(LocalizedStringKey(period.rawValue)).tag(period)
                     }
                 }
                 .pickerStyle(.segmented)

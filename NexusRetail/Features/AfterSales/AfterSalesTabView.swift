@@ -75,14 +75,14 @@ struct AfterSalesTabView: View {
 
 /// A view modifier that applies the common After-Sales toolbar (title + profile button).
 struct AfterSalesToolbarModifier: ViewModifier {
-    let title: String
+    let title: LocalizedStringKey
     
     @Environment(SessionStore.self) private var sessionStore
     @State private var isProfilePresented = false
     
     func body(content: Content) -> some View {
         content
-            .navigationTitle(LocalizedStringKey(title))
+            .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -137,8 +137,8 @@ struct AfterSalesToolbarModifier: ViewModifier {
 
 /// A reusable placeholder view for the after-sales associate tabs.
 struct AfterSalesPlaceholderView: View {
-    let title: String
-    let message: String
+    let title: LocalizedStringKey
+    let message: LocalizedStringKey
     let icon: String
     
     var body: some View {
@@ -152,12 +152,12 @@ struct AfterSalesPlaceholderView: View {
                     .foregroundColor(RSMSColors.burgundy)
                     .accessibilityHidden(true)
                 
-                Text(LocalizedStringKey(title))
+                Text(title)
                     .font(RSMSFonts.title)
                     .fontWeight(.bold)
                     .foregroundColor(RSMSColors.primaryText)
                 
-                Text(LocalizedStringKey(message))
+                Text(message)
                     .font(RSMSFonts.body)
                     .foregroundColor(RSMSColors.secondaryText)
                     .multilineTextAlignment(.center)

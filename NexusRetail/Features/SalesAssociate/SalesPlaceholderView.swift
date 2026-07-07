@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct SalesPlaceholderView: View {
-    let title: String
-    let message: String
+    let title: LocalizedStringKey
+    let message: LocalizedStringKey
     let icon: String
     @State private var appeared = false
 

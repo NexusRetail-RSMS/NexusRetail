@@ -10,8 +10,8 @@ struct FilterSegmentControl: View {
     
     var body: some View {
         Picker("Filter", selection: $selectedFilter) {
-            Text(BOPISOrderStatus.pending.rawValue).tag(BOPISOrderStatus.pending)
-            Text(BOPISOrderStatus.waitingForCustomer.rawValue).tag(BOPISOrderStatus.waitingForCustomer)
+            Text(LocalizedStringKey(BOPISOrderStatus.pending.rawValue)).tag(BOPISOrderStatus.pending)
+            Text(LocalizedStringKey(BOPISOrderStatus.waitingForCustomer.rawValue)).tag(BOPISOrderStatus.waitingForCustomer)
         }
         .pickerStyle(.segmented)
         .padding(.horizontal, RSMSSpacing.lg)

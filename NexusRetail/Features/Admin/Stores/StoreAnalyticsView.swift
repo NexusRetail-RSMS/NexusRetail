@@ -592,7 +592,7 @@ struct StoreAnalyticsView: View {
 private struct PremiumKPICard: View {
     let icon: String
     let value: String
-    let title: String
+    let title: LocalizedStringKey
     var trend: [Double]? = nil
     var emptyCaption: String? = nil
 

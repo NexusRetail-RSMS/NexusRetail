@@ -88,13 +88,13 @@ private struct TransfersTabRoot: View {
 
 /// A view modifier that applies the common Admin toolbar (title only).
 struct AdminToolbarModifier: ViewModifier {
-    let title: String
+    let title: LocalizedStringKey
     @State private var isProfilePresented = false
     @Environment(SessionStore.self) private var sessionStore
 
     func body(content: Content) -> some View {
         content
-            .navigationTitle(LocalizedStringKey(title))
+            .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -150,8 +150,8 @@ struct AdminToolbarModifier: ViewModifier {
 
 /// A reusable placeholder view for the admin tabs.
 struct AdminPlaceholderView: View {
-    let title: String
-    let message: String
+    let title: LocalizedStringKey
+    let message: LocalizedStringKey
 
     var body: some View {
         ZStack {
@@ -169,7 +169,7 @@ struct AdminPlaceholderView: View {
                     .fontWeight(.semibold)
                     .foregroundColor(RSMSColors.primaryText)
 
-                Text(LocalizedStringKey(message))
+                Text(message)
                     .font(RSMSFonts.body)
                     .foregroundColor(RSMSColors.secondaryText)
                     .multilineTextAlignment(.center)

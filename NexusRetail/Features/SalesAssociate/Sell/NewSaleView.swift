@@ -24,7 +24,7 @@ struct NewSaleView: View {
                 // Segmented Control
                 Picker("Order Type", selection: $selectedOrderType) {
                     ForEach(OrderType.allCases, id: \.self) { type in
-                        Text(type.rawValue).tag(type)
+                        Text(LocalizedStringKey(type.rawValue)).tag(type)
                     }
                 }
                 .pickerStyle(.segmented)

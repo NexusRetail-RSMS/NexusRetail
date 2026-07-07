@@ -65,7 +65,7 @@ struct AppointmentsView: View {
 
                     Picker("Filter", selection: $selectedFilter) {
                         ForEach(FilterMode.allCases) { filter in
-                            Text(filter.rawValue).tag(filter)
+                            Text(LocalizedStringKey(filter.rawValue)).tag(filter)
                         }
                     }
                     .pickerStyle(.segmented)

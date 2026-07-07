@@ -76,13 +76,13 @@ struct RevenueCardView: View {
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
     }
     
-    private func metricView(title: String, value: String) -> some View {
+    private func metricView(title: LocalizedStringKey, value: String) -> some View {
         VStack(alignment: .center, spacing: 4) {
             Text(value)
                 .font(RSMSFonts.headline)
                 .foregroundColor(RSMSColors.primaryText)
             
-            Text(LocalizedStringKey(title))
+            Text(title)
                 .font(.system(size: 10))
                 .foregroundColor(RSMSColors.secondaryText)
                 .multilineTextAlignment(.center)

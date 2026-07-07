@@ -126,6 +126,13 @@ _SKIP_RAW: list[str] = [
 ]
 _SKIP_COMPILED: list[re.Pattern] = [re.compile(p) for p in _SKIP_RAW]
 
+# Substrings that indicate a string should not be machine-translated.
+# Swift string interpolations (\(...)) break when translated — variable names
+# get corrupted by the translator and the result is invalid Swift.
+_SKIP_SUBSTRINGS: list[str] = [
+    r"\(",   # Swift string interpolation: Text("Hello \(name)")
+]
+
 
 def should_skip(s: str) -> bool:
     """Return True if s looks like a non-UI string that should not be translated."""
@@ -133,6 +140,10 @@ def should_skip(s: str) -> bool:
         return True
     for pat in _SKIP_COMPILED:
         if pat.match(s):
+            return True
+    # Skip strings with Swift interpolations — translating them corrupts variable names.
+    for sub in _SKIP_SUBSTRINGS:
+        if sub in s:
             return True
     return False
 

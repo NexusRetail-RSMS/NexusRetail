@@ -14,10 +14,10 @@ enum UserRole: String, Codable {
     
     var displayName: String {
         switch self {
-        case .admin: return "Admin"
-        case .manager: return "Manager"
-        case .salesAssociate: return "Sales Associate"
-        case .afterSales: return "After Sales"
+        case .admin: return String(localized: "Admin")
+        case .manager: return String(localized: "Manager")
+        case .salesAssociate: return String(localized: "Sales Associate")
+        case .afterSales: return String(localized: "After Sales")
         }
     }
 }

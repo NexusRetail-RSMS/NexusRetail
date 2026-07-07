@@ -10,6 +10,7 @@ import Supabase
 struct AdminProfileSheet: View {
     @Environment(SessionStore.self) private var sessionStore
     @Environment(\.dismiss) private var dismiss
+    @Environment(LocalizationManager.self) private var localizationManager
 
     // Edit states
     @State private var isEditing = false
@@ -204,6 +205,25 @@ struct AdminProfileSheet: View {
                                 valueColor: RSMSColors.burgundy)
                     }
 
+                    // MARK: - General Settings
+                    Section("General Settings") {
+                        NavigationLink {
+                            LanguagePickerView(isInitialLaunch: false, initialLanguageCode: localizationManager.currentLanguage)
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "globe")
+                                    .foregroundColor(RSMSColors.burgundy)
+                                    .frame(width: 20)
+                                
+                                Text(String(localized: "Language"))
+                                
+                                Spacer()
+                                
+                                Text(localizationManager.currentLanguage.uppercased())
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
 
                     // MARK: - Sign Out
                     Section {
@@ -290,7 +310,7 @@ struct AdminProfileSheet: View {
     @ViewBuilder
     private func infoRow(
         icon: String,
-        label: String,
+        label: LocalizedStringKey,
         value: String,
         valueColor: Color = .secondary,
         multiline: Bool = false

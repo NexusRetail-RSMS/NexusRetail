@@ -1,0 +1,1386 @@
+{
+  "Admin": {
+    "source_file": "Core/Auth/UserRole.swift",
+    "value": "Admin"
+  },
+  "Manager": {
+    "source_file": "Core/Auth/UserRole.swift",
+    "value": "Manager"
+  },
+  "Sales Associate": {
+    "source_file": "Core/Auth/UserRole.swift",
+    "value": "Sales Associate"
+  },
+  "After Sales": {
+    "source_file": "Core/Auth/UserRole.swift",
+    "value": "After Sales"
+  },
+  "Select Language": {
+    "source_file": "Core/Localization/LanguagePickerView.swift",
+    "value": "Select Language"
+  },
+  "Choose your preferred language for the application.": {
+    "source_file": "Core/Localization/LanguagePickerView.swift",
+    "value": "Choose your preferred language for the application."
+  },
+  "Continue": {
+    "source_file": "Core/Localization/LanguagePickerView.swift",
+    "value": "Continue"
+  },
+  "Close": {
+    "source_file": "Core/Localization/LanguagePickerView.swift",
+    "value": "Close"
+  },
+  "Coming Soon": {
+    "source_file": "Features/Admin/AdminTabView.swift",
+    "value": "Coming Soon"
+  },
+  "Dashboard": {
+    "source_file": "Features/Admin/AdminTabView.swift",
+    "value": "Dashboard"
+  },
+  "Stores": {
+    "source_file": "Features/Admin/AdminTabView.swift",
+    "value": "Stores"
+  },
+  "Products": {
+    "source_file": "Features/Admin/AdminTabView.swift",
+    "value": "Products"
+  },
+  "Transfers": {
+    "source_file": "Features/Admin/AdminTabView.swift",
+    "value": "Transfers"
+  },
+  "Managers": {
+    "source_file": "Features/Admin/AdminTabView.swift",
+    "value": "Managers"
+  },
+  "Profile": {
+    "source_file": "Features/Admin/AdminTabView.swift",
+    "value": "Profile"
+  },
+  "🌍 All Global": {
+    "source_file": "Features/Admin/Dashboard/AdminDashboardView.swift",
+    "value": "🌍 All Global"
+  },
+  "🌍": {
+    "source_file": "Features/Admin/Dashboard/AdminDashboardView.swift",
+    "value": "🌍"
+  },
+  "Retry": {
+    "source_file": "Features/Admin/Dashboard/AdminDashboardView.swift",
+    "value": "Retry"
+  },
+  "Country filter": {
+    "source_file": "Features/Admin/Dashboard/AdminDashboardView.swift",
+    "value": "Country filter"
+  },
+  "Top Products": {
+    "source_file": "Features/Admin/Dashboard/ProductSalesChart.swift",
+    "value": "Top Products"
+  },
+  "No product data": {
+    "source_file": "Features/Admin/Dashboard/ProductSalesChart.swift",
+    "value": "No product data"
+  },
+  "No revenue data": {
+    "source_file": "Features/Admin/Dashboard/RevenueBarChart.swift",
+    "value": "No revenue data"
+  },
+  "Revenue in ₹ Lakhs": {
+    "source_file": "Features/Admin/Dashboard/RevenueBarChart.swift",
+    "value": "Revenue in ₹ Lakhs"
+  },
+  "Stores across all regions": {
+    "source_file": "Features/Admin/Dashboard/TopLocationsChartView.swift",
+    "value": "Stores across all regions"
+  },
+  "·": {
+    "source_file": "Features/Admin/Dashboard/TopLocationsChartView.swift",
+    "value": "·"
+  },
+  "Top Region:": {
+    "source_file": "Features/Admin/Dashboard/TopLocationsChartView.swift",
+    "value": "Top Region:"
+  },
+  "Revenue": {
+    "source_file": "Features/Admin/Dashboard/TopLocationsChartView.swift",
+    "value": "Revenue"
+  },
+  "Top Store:": {
+    "source_file": "Features/Admin/Dashboard/TopLocationsChartView.swift",
+    "value": "Top Store:"
+  },
+  "Store Locations": {
+    "source_file": "Features/Admin/Dashboard/TopLocationsChartView.swift",
+    "value": "Store Locations"
+  },
+  "All Stores": {
+    "source_file": "Features/Admin/Dashboard/TopLocationsChartView.swift",
+    "value": "All Stores"
+  },
+  "Top Customer Locations": {
+    "source_file": "Features/Admin/Dashboard/TopLocationsDetailView.swift",
+    "value": "Top Customer Locations"
+  },
+  "Worldwide": {
+    "source_file": "Features/Admin/Dashboard/TopLocationsDetailView.swift",
+    "value": "Worldwide"
+  },
+  "Tap any highlighted region for details": {
+    "source_file": "Features/Admin/Dashboard/TopLocationsDetailView.swift",
+    "value": "Tap any highlighted region for details"
+  },
+  "Location Ranking": {
+    "source_file": "Features/Admin/Dashboard/TopLocationsDetailView.swift",
+    "value": "Location Ranking"
+  },
+  "Recent Stock Requests": {
+    "source_file": "Features/Admin/Managers/AdminManagerProfileView.swift",
+    "value": "Recent Stock Requests"
+  },
+  "No recent requests": {
+    "source_file": "Features/Admin/Managers/AdminManagerProfileView.swift",
+    "value": "No recent requests"
+  },
+  "Top Performers": {
+    "source_file": "Features/Admin/Managers/AdminManagersView.swift",
+    "value": "Top Performers"
+  },
+  "All Managers": {
+    "source_file": "Features/Admin/Managers/AdminManagersView.swift",
+    "value": "All Managers"
+  },
+  "All Countries": {
+    "source_file": "Features/Admin/Managers/AdminManagersView.swift",
+    "value": "All Countries"
+  },
+  "Not Present": {
+    "source_file": "Features/Admin/Managers/AdminManagersView.swift",
+    "value": "Not Present"
+  },
+  "Are you sure you want to delete this manager? This action cannot be undone and will revoke their access.": {
+    "source_file": "Features/Admin/Managers/AdminManagersView.swift",
+    "value": "Are you sure you want to delete this manager? This action cannot be undone and will revoke their access."
+  },
+  "Edit": {
+    "source_file": "Features/Admin/Managers/AdminManagersView.swift",
+    "value": "Edit"
+  },
+  "Delete": {
+    "source_file": "Features/Admin/Managers/AdminManagersView.swift",
+    "value": "Delete"
+  },
+  "Cancel": {
+    "source_file": "Features/Admin/Managers/AdminManagersView.swift",
+    "value": "Cancel"
+  },
+  "Country": {
+    "source_file": "Features/Admin/Managers/AdminManagersView.swift",
+    "value": "Country"
+  },
+  "Performance": {
+    "source_file": "Features/Admin/Managers/AdminManagersView.swift",
+    "value": "Performance"
+  },
+  "Reset Filters": {
+    "source_file": "Features/Admin/Managers/AdminManagersView.swift",
+    "value": "Reset Filters"
+  },
+  "Add new manager": {
+    "source_file": "Features/Admin/Managers/AdminManagersView.swift",
+    "value": "Add new manager"
+  },
+  "Delete Manager": {
+    "source_file": "Features/Admin/Managers/AdminManagersView.swift",
+    "value": "Delete Manager"
+  },
+  "Manager Information": {
+    "source_file": "Features/Admin/Managers/ManagerDetailView.swift",
+    "value": "Manager Information"
+  },
+  "Store Information": {
+    "source_file": "Features/Admin/Managers/ManagerDetailView.swift",
+    "value": "Store Information"
+  },
+  "Account": {
+    "source_file": "Features/Admin/Managers/ManagerDetailView.swift",
+    "value": "Account"
+  },
+  "Reset Credentials": {
+    "source_file": "Features/Admin/Managers/ManagerDetailView.swift",
+    "value": "Reset Credentials"
+  },
+  "A link to reset credentials has been sent to the manager's registered email.": {
+    "source_file": "Features/Admin/Managers/ManagerDetailView.swift",
+    "value": "A link to reset credentials has been sent to the manager's registered email."
+  },
+  "None": {
+    "source_file": "Features/Admin/Managers/ManagerDetailView.swift",
+    "value": "None"
+  },
+  "Store Name": {
+    "source_file": "Features/Admin/Managers/ManagerDetailView.swift",
+    "value": "Store Name"
+  },
+  "OK": {
+    "source_file": "Features/Admin/Managers/ManagerDetailView.swift",
+    "value": "OK"
+  },
+  "Manager Details": {
+    "source_file": "Features/Admin/Managers/ManagerDetailView.swift",
+    "value": "Manager Details"
+  },
+  "Store Details": {
+    "source_file": "Features/Admin/Managers/ManagerDetailView.swift",
+    "value": "Store Details"
+  },
+  "Edit Manager": {
+    "source_file": "Features/Admin/Managers/ManagerDetailView.swift",
+    "value": "Edit Manager"
+  },
+  "Credentials Reset": {
+    "source_file": "Features/Admin/Managers/ManagerDetailView.swift",
+    "value": "Credentials Reset"
+  },
+  "Error Updating Manager": {
+    "source_file": "Features/Admin/Managers/ManagerDetailView.swift",
+    "value": "Error Updating Manager"
+  },
+  "The password credentials have been sent to their email.": {
+    "source_file": "Features/Admin/Managers/NewManagerSheet.swift",
+    "value": "The password credentials have been sent to their email."
+  },
+  "Add New Manager": {
+    "source_file": "Features/Admin/Managers/NewManagerSheet.swift",
+    "value": "Add New Manager"
+  },
+  "Manager Created": {
+    "source_file": "Features/Admin/Managers/NewManagerSheet.swift",
+    "value": "Manager Created"
+  },
+  "Error Creating Manager": {
+    "source_file": "Features/Admin/Managers/NewManagerSheet.swift",
+    "value": "Error Creating Manager"
+  },
+  "Card Payments (Stripe)": {
+    "source_file": "Features/Admin/PaymentConfiguration/CardGatewayConfigurationView.swift",
+    "value": "Card Payments (Stripe)"
+  },
+  "Credential Configuration": {
+    "source_file": "Features/Admin/PaymentConfiguration/CardGatewayConfigurationView.swift",
+    "value": "Credential Configuration"
+  },
+  "Enter your Stripe credentials. You can find these in your Stripe dashboard.": {
+    "source_file": "Features/Admin/PaymentConfiguration/CardGatewayConfigurationView.swift",
+    "value": "Enter your Stripe credentials. You can find these in your Stripe dashboard."
+  },
+  "Credentials": {
+    "source_file": "Features/Admin/PaymentConfiguration/CardGatewayConfigurationView.swift",
+    "value": "Credentials"
+  },
+  "Publishable Key": {
+    "source_file": "Features/Admin/PaymentConfiguration/CardGatewayConfigurationView.swift",
+    "value": "Publishable Key"
+  },
+  "Secret Key": {
+    "source_file": "Features/Admin/PaymentConfiguration/CardGatewayConfigurationView.swift",
+    "value": "Secret Key"
+  },
+  "Your credentials are encrypted and stored securely.": {
+    "source_file": "Features/Admin/PaymentConfiguration/CardGatewayConfigurationView.swift",
+    "value": "Your credentials are encrypted and stored securely."
+  },
+  "Back": {
+    "source_file": "Features/Admin/PaymentConfiguration/CardGatewayConfigurationView.swift",
+    "value": "Back"
+  },
+  "Error": {
+    "source_file": "Features/Admin/PaymentConfiguration/CardGatewayConfigurationView.swift",
+    "value": "Error"
+  },
+  "Success": {
+    "source_file": "Features/Admin/PaymentConfiguration/CardGatewayConfigurationView.swift",
+    "value": "Success"
+  },
+  "Payment Configuration": {
+    "source_file": "Features/Admin/PaymentConfiguration/PaymentConfigurationView.swift",
+    "value": "Payment Configuration"
+  },
+  "Payment Gateways": {
+    "source_file": "Features/Admin/PaymentConfiguration/PaymentConfigurationView.swift",
+    "value": "Payment Gateways"
+  },
+  "Configure payment gateways for your store so you can start accepting payments.": {
+    "source_file": "Features/Admin/PaymentConfiguration/PaymentConfigurationView.swift",
+    "value": "Configure payment gateways for your store so you can start accepting payments."
+  },
+  "Last Updated": {
+    "source_file": "Features/Admin/PaymentConfiguration/PaymentConfigurationView.swift",
+    "value": "Last Updated"
+  },
+  "At least one payment gateway is configured. You can now accept payments.": {
+    "source_file": "Features/Admin/PaymentConfiguration/PaymentConfigurationView.swift",
+    "value": "At least one payment gateway is configured. You can now accept payments."
+  },
+  "Store cannot process payments until at least one payment gateway is configured.": {
+    "source_file": "Features/Admin/PaymentConfiguration/PaymentConfigurationView.swift",
+    "value": "Store cannot process payments until at least one payment gateway is configured."
+  },
+  "Loading configurations…": {
+    "source_file": "Features/Admin/PaymentConfiguration/PaymentConfigurationView.swift",
+    "value": "Loading configurations…"
+  },
+  "Razorpay": {
+    "source_file": "Features/Admin/PaymentConfiguration/RazorpayConfigurationView.swift",
+    "value": "Razorpay"
+  },
+  "Enter your Razorpay credentials. You can find these in your Razorpay dashboard.": {
+    "source_file": "Features/Admin/PaymentConfiguration/RazorpayConfigurationView.swift",
+    "value": "Enter your Razorpay credentials. You can find these in your Razorpay dashboard."
+  },
+  "Key ID": {
+    "source_file": "Features/Admin/PaymentConfiguration/RazorpayConfigurationView.swift",
+    "value": "Key ID"
+  },
+  "Key Secret": {
+    "source_file": "Features/Admin/PaymentConfiguration/RazorpayConfigurationView.swift",
+    "value": "Key Secret"
+  },
+  "Upload Product Image": {
+    "source_file": "Features/Admin/ProductCatalogue/AddProductView.swift",
+    "value": "Upload Product Image"
+  },
+  "Tap to select an image": {
+    "source_file": "Features/Admin/ProductCatalogue/AddProductView.swift",
+    "value": "Tap to select an image"
+  },
+  "Base Price": {
+    "source_file": "Features/Admin/ProductCatalogue/AddProductView.swift",
+    "value": "Base Price"
+  },
+  "Floor Price": {
+    "source_file": "Features/Admin/ProductCatalogue/AddProductView.swift",
+    "value": "Floor Price"
+  },
+  "INR": {
+    "source_file": "Features/Admin/ProductCatalogue/AddProductView.swift",
+    "value": "INR"
+  },
+  "EUR": {
+    "source_file": "Features/Admin/ProductCatalogue/AddProductView.swift",
+    "value": "EUR"
+  },
+  "GBP": {
+    "source_file": "Features/Admin/ProductCatalogue/AddProductView.swift",
+    "value": "GBP"
+  },
+  "Product Details": {
+    "source_file": "Features/Admin/ProductCatalogue/AddProductView.swift",
+    "value": "Product Details"
+  },
+  "Stocks": {
+    "source_file": "Features/Admin/ProductCatalogue/AddProductView.swift",
+    "value": "Stocks"
+  },
+  "Pricing": {
+    "source_file": "Features/Admin/ProductCatalogue/AddProductView.swift",
+    "value": "Pricing"
+  },
+  "Launch": {
+    "source_file": "Features/Admin/ProductCatalogue/AddProductView.swift",
+    "value": "Launch"
+  },
+  "Couldn’t save product": {
+    "source_file": "Features/Admin/ProductCatalogue/AddProductView.swift",
+    "value": "Couldn’t save product"
+  },
+  "Try a different name, SKU, or category.": {
+    "source_file": "Features/Admin/ProductCatalogue/ProductCatalogueView.swift",
+    "value": "Try a different name, SKU, or category."
+  },
+  "TOP SELLING": {
+    "source_file": "Features/Admin/ProductCatalogue/ProductCatalogueView.swift",
+    "value": "TOP SELLING"
+  },
+  "Done": {
+    "source_file": "Features/Admin/ProductCatalogue/ProductCatalogueView.swift",
+    "value": "Done"
+  },
+  "Show QR Code": {
+    "source_file": "Features/Admin/ProductCatalogue/ProductCatalogueView.swift",
+    "value": "Show QR Code"
+  },
+  "Product QR": {
+    "source_file": "Features/Admin/ProductCatalogue/ProductCatalogueView.swift",
+    "value": "Product QR"
+  },
+  "Delete Product": {
+    "source_file": "Features/Admin/ProductCatalogue/ProductCatalogueView.swift",
+    "value": "Delete Product"
+  },
+  "All": {
+    "source_file": "Features/Admin/ProductCatalogue/ProductCatalogueViewModel.swift",
+    "value": "All"
+  },
+  "Watches": {
+    "source_file": "Features/Admin/ProductCatalogue/ProductCatalogueViewModel.swift",
+    "value": "Watches"
+  },
+  "Bags": {
+    "source_file": "Features/Admin/ProductCatalogue/ProductCatalogueViewModel.swift",
+    "value": "Bags"
+  },
+  "Perfumes": {
+    "source_file": "Features/Admin/ProductCatalogue/ProductCatalogueViewModel.swift",
+    "value": "Perfumes"
+  },
+  "Clothes": {
+    "source_file": "Features/Admin/ProductCatalogue/ProductCatalogueViewModel.swift",
+    "value": "Clothes"
+  },
+  "Jewellery": {
+    "source_file": "Features/Admin/ProductCatalogue/ProductCatalogueViewModel.swift",
+    "value": "Jewellery"
+  },
+  "Sign Out": {
+    "source_file": "Features/Admin/Profile/AdminProfileSheet.swift",
+    "value": "Sign Out"
+  },
+  "Admin Details": {
+    "source_file": "Features/Admin/Profile/AdminProfileSheet.swift",
+    "value": "Admin Details"
+  },
+  "Contact Details": {
+    "source_file": "Features/Admin/Profile/AdminProfileSheet.swift",
+    "value": "Contact Details"
+  },
+  "General Settings": {
+    "source_file": "Features/Admin/Profile/AdminProfileSheet.swift",
+    "value": "General Settings"
+  },
+  "Error Saving Profile": {
+    "source_file": "Features/Admin/Profile/AdminProfileSheet.swift",
+    "value": "Error Saving Profile"
+  },
+  "Language": {
+    "source_file": "Features/Admin/Profile/AdminProfileSheet.swift",
+    "value": "Language"
+  },
+  "Save Configuration": {
+    "source_file": "Features/Admin/Stores/LocalPaymentConfigView.swift",
+    "value": "Save Configuration"
+  },
+  "Sales Report": {
+    "source_file": "Features/Admin/Stores/SalesDetailView.swift",
+    "value": "Sales Report"
+  },
+  "TOTAL": {
+    "source_file": "Features/Admin/Stores/SalesDetailView.swift",
+    "value": "TOTAL"
+  },
+  "Online": {
+    "source_file": "Features/Admin/Stores/SalesDetailView.swift",
+    "value": "Online"
+  },
+  "Offline": {
+    "source_file": "Features/Admin/Stores/SalesDetailView.swift",
+    "value": "Offline"
+  },
+  "No sales this period": {
+    "source_file": "Features/Admin/Stores/SalesDetailView.swift",
+    "value": "No sales this period"
+  },
+  "Sales by Category": {
+    "source_file": "Features/Admin/Stores/SalesDetailView.swift",
+    "value": "Sales by Category"
+  },
+  "No sales data available.": {
+    "source_file": "Features/Admin/Stores/SalesDetailView.swift",
+    "value": "No sales data available."
+  },
+  "Weekly": {
+    "source_file": "Features/Admin/Stores/SalesDetailView.swift",
+    "value": "Weekly"
+  },
+  "Monthly": {
+    "source_file": "Features/Admin/Stores/SalesDetailView.swift",
+    "value": "Monthly"
+  },
+  "Yearly": {
+    "source_file": "Features/Admin/Stores/SalesDetailView.swift",
+    "value": "Yearly"
+  },
+  "Loading analytics…": {
+    "source_file": "Features/Admin/Stores/StoreAnalyticsView.swift",
+    "value": "Loading analytics…"
+  },
+  "Total Sales": {
+    "source_file": "Features/Admin/Stores/StoreAnalyticsView.swift",
+    "value": "Total Sales"
+  },
+  "No sales data for this period": {
+    "source_file": "Features/Admin/Stores/StoreAnalyticsView.swift",
+    "value": "No sales data for this period"
+  },
+  "No data": {
+    "source_file": "Features/Admin/Stores/StoreAnalyticsView.swift",
+    "value": "No data"
+  },
+  "Store Info": {
+    "source_file": "Features/Admin/Stores/StoreAnalyticsView.swift",
+    "value": "Store Info"
+  },
+  "Edit Store": {
+    "source_file": "Features/Admin/Stores/StoreAnalyticsView.swift",
+    "value": "Edit Store"
+  },
+  "More options": {
+    "source_file": "Features/Admin/Stores/StoreAnalyticsView.swift",
+    "value": "More options"
+  },
+  "No manager assigned": {
+    "source_file": "Features/Admin/Stores/StoreDetailView.swift",
+    "value": "No manager assigned"
+  },
+  "Type an address above, or tap the map to drop a pin": {
+    "source_file": "Features/Admin/Stores/StoreFormView.swift",
+    "value": "Type an address above, or tap the map to drop a pin"
+  },
+  "Saving…": {
+    "source_file": "Features/Admin/Stores/StoreFormView.swift",
+    "value": "Saving…"
+  },
+  "Tap to update photo": {
+    "source_file": "Features/Admin/Stores/StoreFormView.swift",
+    "value": "Tap to update photo"
+  },
+  "Store Image": {
+    "source_file": "Features/Admin/Stores/StoreFormView.swift",
+    "value": "Store Image"
+  },
+  "Store is Active": {
+    "source_file": "Features/Admin/Stores/StoreFormView.swift",
+    "value": "Store is Active"
+  },
+  "A store must have a manager assigned before it can be marked as active.": {
+    "source_file": "Features/Admin/Stores/StoreFormView.swift",
+    "value": "A store must have a manager assigned before it can be marked as active."
+  },
+  "No available managers": {
+    "source_file": "Features/Admin/Stores/StoreFormView.swift",
+    "value": "No available managers"
+  },
+  "Save": {
+    "source_file": "Features/Admin/Stores/StoreFormView.swift",
+    "value": "Save"
+  },
+  "Select Manager": {
+    "source_file": "Features/Admin/Stores/StoreFormView.swift",
+    "value": "Select Manager"
+  },
+  "Manager Not Assigned": {
+    "source_file": "Features/Admin/Stores/StoreFormView.swift",
+    "value": "Manager Not Assigned"
+  },
+  "No Stores Found": {
+    "source_file": "Features/Admin/Stores/StoreListView.swift",
+    "value": "No Stores Found"
+  },
+  "Tap + to add your first store.": {
+    "source_file": "Features/Admin/Stores/StoreListView.swift",
+    "value": "Tap + to add your first store."
+  },
+  "Loading stores…": {
+    "source_file": "Features/Admin/Stores/StoreListView.swift",
+    "value": "Loading stores…"
+  },
+  "Add new store": {
+    "source_file": "Features/Admin/Stores/StoreListView.swift",
+    "value": "Add new store"
+  },
+  "No products data": {
+    "source_file": "Features/Admin/Stores/TopProductsDetailView.swift",
+    "value": "No products data"
+  },
+  "Units sold": {
+    "source_file": "Features/Admin/Stores/TopProductsDetailView.swift",
+    "value": "Units sold"
+  },
+  "Product Ranking": {
+    "source_file": "Features/Admin/Stores/TopProductsDetailView.swift",
+    "value": "Product Ranking"
+  },
+  "No ranking data available": {
+    "source_file": "Features/Admin/Stores/TopProductsDetailView.swift",
+    "value": "No ranking data available"
+  },
+  "No Transfer Requests": {
+    "source_file": "Features/Admin/Transfers/AdminTransfersView.swift",
+    "value": "No Transfer Requests"
+  },
+  "New store requests will appear here.": {
+    "source_file": "Features/Admin/Transfers/AdminTransfersView.swift",
+    "value": "New store requests will appear here."
+  },
+  "No scheduled requests": {
+    "source_file": "Features/Admin/Transfers/AdminTransfersView.swift",
+    "value": "No scheduled requests"
+  },
+  "History": {
+    "source_file": "Features/Admin/Transfers/AdminTransfersView.swift",
+    "value": "History"
+  },
+  "No Transfer History": {
+    "source_file": "Features/Admin/Transfers/AdminTransfersView.swift",
+    "value": "No Transfer History"
+  },
+  "Approved transfer requests will appear here.": {
+    "source_file": "Features/Admin/Transfers/AdminTransfersView.swift",
+    "value": "Approved transfer requests will appear here."
+  },
+  "Requests": {
+    "source_file": "Features/Admin/Transfers/AdminTransfersView.swift",
+    "value": "Requests"
+  },
+  "Waiting": {
+    "source_file": "Features/Admin/Transfers/AdminTransfersView.swift",
+    "value": "Waiting"
+  },
+  "Schedule Request": {
+    "source_file": "Features/Admin/Transfers/TransferRequestCard.swift",
+    "value": "Schedule Request"
+  },
+  "Choose the date on which this request should be automatically approved. You can approve it earlier at any time from the Waiting tab.": {
+    "source_file": "Features/Admin/Transfers/TransferRequestCard.swift",
+    "value": "Choose the date on which this request should be automatically approved. You can approve it earlier at any time from the Waiting tab."
+  },
+  "Are you sure you want to approve this scheduled request early?": {
+    "source_file": "Features/Admin/Transfers/TransferRequestCard.swift",
+    "value": "Are you sure you want to approve this scheduled request early?"
+  },
+  "Approve": {
+    "source_file": "Features/Admin/Transfers/TransferRequestCard.swift",
+    "value": "Approve"
+  },
+  "Approve Early": {
+    "source_file": "Features/Admin/Transfers/TransferRequestCard.swift",
+    "value": "Approve Early"
+  },
+  "Approved": {
+    "source_file": "Features/Admin/Transfers/TransferRequestCard.swift",
+    "value": "Approved"
+  },
+  "Auto Approved": {
+    "source_file": "Features/Admin/Transfers/TransferRequestCard.swift",
+    "value": "Auto Approved"
+  },
+  "Approved Early": {
+    "source_file": "Features/Admin/Transfers/TransferRequestCard.swift",
+    "value": "Approved Early"
+  },
+  "After-Sales Specialist": {
+    "source_file": "Features/AfterSales/AfterSalesTabView.swift",
+    "value": "After-Sales Specialist"
+  },
+  "Repairs": {
+    "source_file": "Features/AfterSales/AfterSalesTabView.swift",
+    "value": "Repairs"
+  },
+  "Customers": {
+    "source_file": "Features/AfterSales/AfterSalesTabView.swift",
+    "value": "Customers"
+  },
+  "Specialist Profile": {
+    "source_file": "Features/AfterSales/AfterSalesTabView.swift",
+    "value": "Specialist Profile"
+  },
+  "Service Requests": {
+    "source_file": "Features/AfterSales/Dashboard/AfterSalesDashboardView.swift",
+    "value": "Service Requests"
+  },
+  "Service Status": {
+    "source_file": "Features/AfterSales/Dashboard/AfterSalesDashboardView.swift",
+    "value": "Service Status"
+  },
+  "Total": {
+    "source_file": "Features/AfterSales/Dashboard/AfterSalesDashboardView.swift",
+    "value": "Total"
+  },
+  "Welcome": {
+    "source_file": "Features/Auth/LoginView.swift",
+    "value": "Welcome"
+  },
+  "Sign in to continue to your account": {
+    "source_file": "Features/Auth/LoginView.swift",
+    "value": "Sign in to continue to your account"
+  },
+  "Forgot password?": {
+    "source_file": "Features/Auth/LoginView.swift",
+    "value": "Forgot password?"
+  },
+  "NexusRetail": {
+    "source_file": "Features/Auth/LoginView.swift",
+    "value": "NexusRetail"
+  },
+  "Sign In": {
+    "source_file": "Features/Auth/LoginView.swift",
+    "value": "Sign In"
+  },
+  "Email address or username": {
+    "source_file": "Features/Auth/LoginView.swift",
+    "value": "Email address or username"
+  },
+  "Password": {
+    "source_file": "Features/Auth/LoginView.swift",
+    "value": "Password"
+  },
+  "Sign in": {
+    "source_file": "Features/Auth/LoginView.swift",
+    "value": "Sign in"
+  },
+  "No revenue data available": {
+    "source_file": "Features/Manager/Aditya/Components/ManagerRevenueChartView.swift",
+    "value": "No revenue data available"
+  },
+  "TODAY'S REVENUE": {
+    "source_file": "Features/Manager/Aditya/Components/RevenueCardView.swift",
+    "value": "TODAY'S REVENUE"
+  },
+  "vs yesterday": {
+    "source_file": "Features/Manager/Aditya/Components/RevenueCardView.swift",
+    "value": "vs yesterday"
+  },
+  "Staff Performance": {
+    "source_file": "Features/Manager/Aditya/Components/StaffPerformanceChart.swift",
+    "value": "Staff Performance"
+  },
+  "No staff data available": {
+    "source_file": "Features/Manager/Aditya/Components/StaffPerformanceChart.swift",
+    "value": "No staff data available"
+  },
+  "Revenue History": {
+    "source_file": "Features/Manager/Aditya/Views/ManagerDashboardView.swift",
+    "value": "Revenue History"
+  },
+  "Low Stock": {
+    "source_file": "Features/Manager/Aditya/Views/ManagerDashboardView.swift",
+    "value": "Low Stock"
+  },
+  "Returns": {
+    "source_file": "Features/Manager/Aditya/Views/ManagerDashboardView.swift",
+    "value": "Returns"
+  },
+  "Stock Levels Healthy": {
+    "source_file": "Features/Manager/Aditya/Views/ManagerLowStockView.swift",
+    "value": "Stock Levels Healthy"
+  },
+  "No items are currently below their reorder threshold.": {
+    "source_file": "Features/Manager/Aditya/Views/ManagerLowStockView.swift",
+    "value": "No items are currently below their reorder threshold."
+  },
+  "No Pending Requests": {
+    "source_file": "Features/Manager/Aditya/Views/ManagerRequestsView.swift",
+    "value": "No Pending Requests"
+  },
+  "There are currently no store transfer requests.": {
+    "source_file": "Features/Manager/Aditya/Views/ManagerRequestsView.swift",
+    "value": "There are currently no store transfer requests."
+  },
+  "•": {
+    "source_file": "Features/Manager/Aditya/Views/ManagerRequestsView.swift",
+    "value": "•"
+  },
+  "No After-Sales Tickets": {
+    "source_file": "Features/Manager/Aditya/Views/ManagerReturnsView.swift",
+    "value": "No After-Sales Tickets"
+  },
+  "There are no returns or repairs logged for this store.": {
+    "source_file": "Features/Manager/Aditya/Views/ManagerReturnsView.swift",
+    "value": "There are no returns or repairs logged for this store."
+  },
+  "Store Settings": {
+    "source_file": "Features/Manager/Aditya/Views/ProfileView.swift",
+    "value": "Store Settings"
+  },
+  "Events": {
+    "source_file": "Features/Manager/Events/EventsView.swift",
+    "value": "Events"
+  },
+  "Pending": {
+    "source_file": "Features/Manager/InventoryDashboard/InventoryDashboardModels.swift",
+    "value": "Pending"
+  },
+  "Routed": {
+    "source_file": "Features/Manager/InventoryDashboard/InventoryDashboardModels.swift",
+    "value": "Routed"
+  },
+  "Dispatched": {
+    "source_file": "Features/Manager/InventoryDashboard/InventoryDashboardModels.swift",
+    "value": "Dispatched"
+  },
+  "Delivered": {
+    "source_file": "Features/Manager/InventoryDashboard/InventoryDashboardModels.swift",
+    "value": "Delivered"
+  },
+  "Unfulfillable": {
+    "source_file": "Features/Manager/InventoryDashboard/InventoryDashboardModels.swift",
+    "value": "Unfulfillable"
+  },
+  "Inventory": {
+    "source_file": "Features/Manager/InventoryDashboard/InventoryDashboardView.swift",
+    "value": "Inventory"
+  },
+  "Stock Requests": {
+    "source_file": "Features/Manager/InventoryDashboard/InventoryDashboardView.swift",
+    "value": "Stock Requests"
+  },
+  "Scan to Add to Cart": {
+    "source_file": "Features/Manager/InventoryDashboard/InventoryGridItemCard.swift",
+    "value": "Scan to Add to Cart"
+  },
+  "No requests": {
+    "source_file": "Features/Manager/InventoryDashboard/ManagerPendingRequestsView.swift",
+    "value": "No requests"
+  },
+  "You haven't submitted any stock transfer requests matching this filter.": {
+    "source_file": "Features/Manager/InventoryDashboard/ManagerPendingRequestsView.swift",
+    "value": "You haven't submitted any stock transfer requests matching this filter."
+  },
+  "Quantity": {
+    "source_file": "Features/Manager/InventoryDashboard/RequestStockSheet.swift",
+    "value": "Quantity"
+  },
+  "Request Sent": {
+    "source_file": "Features/Manager/InventoryDashboard/RequestStockSheet.swift",
+    "value": "Request Sent"
+  },
+  "Sending\\u{2026}": {
+    "source_file": "Features/Manager/InventoryDashboard/RequestStockSheet.swift",
+    "value": "Sending\\u{2026}"
+  },
+  "Submit Request": {
+    "source_file": "Features/Manager/InventoryDashboard/RequestStockSheet.swift",
+    "value": "Submit Request"
+  },
+  "Request Stock": {
+    "source_file": "Features/Manager/InventoryDashboard/RequestStockSheet.swift",
+    "value": "Request Stock"
+  },
+  "Store Events": {
+    "source_file": "Features/Manager/ManagerEventsView.swift",
+    "value": "Store Events"
+  },
+  "Track and organize upcoming promotional events and product launches.": {
+    "source_file": "Features/Manager/ManagerEventsView.swift",
+    "value": "Track and organize upcoming promotional events and product launches."
+  },
+  "Notify Me": {
+    "source_file": "Features/Manager/ManagerEventsView.swift",
+    "value": "Notify Me"
+  },
+  "What you can do": {
+    "source_file": "Features/Manager/ManagerEventsView.swift",
+    "value": "What you can do"
+  },
+  "Upcoming Events": {
+    "source_file": "Features/Manager/ManagerEventsView.swift",
+    "value": "Upcoming Events"
+  },
+  "View All": {
+    "source_file": "Features/Manager/ManagerEventsView.swift",
+    "value": "View All"
+  },
+  "Event Details": {
+    "source_file": "Features/Manager/ManagerEventsView.swift",
+    "value": "Event Details"
+  },
+  "Create": {
+    "source_file": "Features/Manager/ManagerEventsView.swift",
+    "value": "Create"
+  },
+  "Create new event": {
+    "source_file": "Features/Manager/ManagerEventsView.swift",
+    "value": "Create new event"
+  },
+  "Create Event": {
+    "source_file": "Features/Manager/ManagerEventsView.swift",
+    "value": "Create Event"
+  },
+  "Employees": {
+    "source_file": "Features/Manager/ManagerTabView.swift",
+    "value": "Employees"
+  },
+  "Employee Details": {
+    "source_file": "Features/Manager/Staff/EditEmployeeSheet.swift",
+    "value": "Employee Details"
+  },
+  "Role": {
+    "source_file": "Features/Manager/Staff/EditEmployeeSheet.swift",
+    "value": "Role"
+  },
+  "Edit Employee": {
+    "source_file": "Features/Manager/Staff/EditEmployeeSheet.swift",
+    "value": "Edit Employee"
+  },
+  "Customer Attraction": {
+    "source_file": "Features/Manager/Staff/EmployeeDetailView.swift",
+    "value": "Customer Attraction"
+  },
+  "Delete Employee": {
+    "source_file": "Features/Manager/Staff/EmployeeDetailView.swift",
+    "value": "Delete Employee"
+  },
+  "Are you sure you want to delete this employee? This action cannot be undone.": {
+    "source_file": "Features/Manager/Staff/EmployeeDetailView.swift",
+    "value": "Are you sure you want to delete this employee? This action cannot be undone."
+  },
+  "Employee Detail": {
+    "source_file": "Features/Manager/Staff/EmployeeDetailView.swift",
+    "value": "Employee Detail"
+  },
+  "New Employee": {
+    "source_file": "Features/Manager/Staff/NewEmployeeSheet.swift",
+    "value": "New Employee"
+  },
+  "Team Overview": {
+    "source_file": "Features/Manager/Staff/StaffView.swift",
+    "value": "Team Overview"
+  },
+  "Total Employees": {
+    "source_file": "Features/Manager/Staff/StaffView.swift",
+    "value": "Total Employees"
+  },
+  "No Employees Found": {
+    "source_file": "Features/Manager/Staff/StaffView.swift",
+    "value": "No Employees Found"
+  },
+  "No employee matches your search or role filter.": {
+    "source_file": "Features/Manager/Staff/StaffView.swift",
+    "value": "No employee matches your search or role filter."
+  },
+  "Add new employee": {
+    "source_file": "Features/Manager/Staff/StaffView.swift",
+    "value": "Add new employee"
+  },
+  "Appointments": {
+    "source_file": "Features/SalesAssociate/Appointments/AppointmentsView.swift",
+    "value": "Appointments"
+  },
+  "No upcoming appointments scheduled.": {
+    "source_file": "Features/SalesAssociate/Appointments/AppointmentsView.swift",
+    "value": "No upcoming appointments scheduled."
+  },
+  "New Appointment": {
+    "source_file": "Features/SalesAssociate/Appointments/AppointmentsView.swift",
+    "value": "New Appointment"
+  },
+  "Type": {
+    "source_file": "Features/SalesAssociate/Appointments/NewAppointmentView.swift",
+    "value": "Type"
+  },
+  "In Store": {
+    "source_file": "Features/SalesAssociate/Appointments/NewAppointmentView.swift",
+    "value": "In Store"
+  },
+  "Video": {
+    "source_file": "Features/SalesAssociate/Appointments/NewAppointmentView.swift",
+    "value": "Video"
+  },
+  "The appointment invitation has been successfully sent to the client.": {
+    "source_file": "Features/SalesAssociate/Appointments/NewAppointmentView.swift",
+    "value": "The appointment invitation has been successfully sent to the client."
+  },
+  "Client Details": {
+    "source_file": "Features/SalesAssociate/Appointments/NewAppointmentView.swift",
+    "value": "Client Details"
+  },
+  "Appointment": {
+    "source_file": "Features/SalesAssociate/Appointments/NewAppointmentView.swift",
+    "value": "Appointment"
+  },
+  "Email Sent": {
+    "source_file": "Features/SalesAssociate/Appointments/NewAppointmentView.swift",
+    "value": "Email Sent"
+  },
+  "Items": {
+    "source_file": "Features/SalesAssociate/BOPIS/Components/BOPISCardView.swift",
+    "value": "Items"
+  },
+  "Verification Code:": {
+    "source_file": "Features/SalesAssociate/BOPIS/Components/BOPISCardView.swift",
+    "value": "Verification Code:"
+  },
+  "No Completed Orders": {
+    "source_file": "Features/SalesAssociate/BOPIS/Views/BOPISHistoryView.swift",
+    "value": "No Completed Orders"
+  },
+  "Orders you mark as collected will appear here.": {
+    "source_file": "Features/SalesAssociate/BOPIS/Views/BOPISHistoryView.swift",
+    "value": "Orders you mark as collected will appear here."
+  },
+  "Mark as Packed": {
+    "source_file": "Features/SalesAssociate/BOPIS/Views/BOPISPackOrderView.swift",
+    "value": "Mark as Packed"
+  },
+  "Scan to update inventory": {
+    "source_file": "Features/SalesAssociate/BOPIS/Views/BOPISPackOrderView.swift",
+    "value": "Scan to update inventory"
+  },
+  "QR": {
+    "source_file": "Features/SalesAssociate/BOPIS/Views/BOPISPackOrderView.swift",
+    "value": "QR"
+  },
+  "Pack Items": {
+    "source_file": "Features/SalesAssociate/BOPIS/Views/BOPISPackOrderView.swift",
+    "value": "Pack Items"
+  },
+  "No pickup orders available": {
+    "source_file": "Features/SalesAssociate/BOPIS/Views/BOPISView.swift",
+    "value": "No pickup orders available"
+  },
+  "We couldn't find any orders matching\\nyour search or filter.": {
+    "source_file": "Features/SalesAssociate/BOPIS/Views/BOPISView.swift",
+    "value": "We couldn't find any orders matching\\nyour search or filter."
+  },
+  "Clear Filters": {
+    "source_file": "Features/SalesAssociate/BOPIS/Views/BOPISView.swift",
+    "value": "Clear Filters"
+  },
+  "BOPIS": {
+    "source_file": "Features/SalesAssociate/BOPIS/Views/BOPISView.swift",
+    "value": "BOPIS"
+  },
+  "Customer Notified": {
+    "source_file": "Features/SalesAssociate/BOPIS/Views/BOPISView.swift",
+    "value": "Customer Notified"
+  },
+  "Client Preferences": {
+    "source_file": "Features/SalesAssociate/Clienteling/ClientDetailView.swift",
+    "value": "Client Preferences"
+  },
+  "Purchase Pattern": {
+    "source_file": "Features/SalesAssociate/Clienteling/ClientDetailView.swift",
+    "value": "Purchase Pattern"
+  },
+  "For You": {
+    "source_file": "Features/SalesAssociate/Clienteling/ClientDetailView.swift",
+    "value": "For You"
+  },
+  "Trending": {
+    "source_file": "Features/SalesAssociate/Clienteling/ClientDetailView.swift",
+    "value": "Trending"
+  },
+  "Client Card": {
+    "source_file": "Features/SalesAssociate/Clienteling/ClientDetailView.swift",
+    "value": "Client Card"
+  },
+  "Clients": {
+    "source_file": "Features/SalesAssociate/Clienteling/ClientelingView.swift",
+    "value": "Clients"
+  },
+  "Manage and view your client information": {
+    "source_file": "Features/SalesAssociate/Clienteling/ClientelingView.swift",
+    "value": "Manage and view your client information"
+  },
+  "Add Client": {
+    "source_file": "Features/SalesAssociate/Clienteling/ClientelingView.swift",
+    "value": "Add Client"
+  },
+  "Required before saving personal details.": {
+    "source_file": "Features/SalesAssociate/Clienteling/ClientelingView.swift",
+    "value": "Required before saving personal details."
+  },
+  "Date": {
+    "source_file": "Features/SalesAssociate/Clienteling/ClientelingView.swift",
+    "value": "Date"
+  },
+  "Time": {
+    "source_file": "Features/SalesAssociate/Clienteling/ClientelingView.swift",
+    "value": "Time"
+  },
+  "Edit Client": {
+    "source_file": "Features/SalesAssociate/Clienteling/ClientelingView.swift",
+    "value": "Edit Client"
+  },
+  "View Purchase History": {
+    "source_file": "Features/SalesAssociate/Clienteling/ClientelingView.swift",
+    "value": "View Purchase History"
+  },
+  "Schedule Appointment": {
+    "source_file": "Features/SalesAssociate/Clienteling/ClientelingView.swift",
+    "value": "Schedule Appointment"
+  },
+  "Delete Client": {
+    "source_file": "Features/SalesAssociate/Clienteling/ClientelingView.swift",
+    "value": "Delete Client"
+  },
+  "Client consent received": {
+    "source_file": "Features/SalesAssociate/Clienteling/ClientelingView.swift",
+    "value": "Client consent received"
+  },
+  "Style Preferences": {
+    "source_file": "Features/SalesAssociate/Clienteling/ClientelingView.swift",
+    "value": "Style Preferences"
+  },
+  "Consent is required before saving client details.": {
+    "source_file": "Features/SalesAssociate/Clienteling/NewClientSheet.swift",
+    "value": "Consent is required before saving client details."
+  },
+  "Consented Details": {
+    "source_file": "Features/SalesAssociate/Clienteling/NewClientSheet.swift",
+    "value": "Consented Details"
+  },
+  "New Client": {
+    "source_file": "Features/SalesAssociate/Clienteling/NewClientSheet.swift",
+    "value": "New Client"
+  },
+  "Orders Hub": {
+    "source_file": "Features/SalesAssociate/Dashboard/OrdersHubView.swift",
+    "value": "Orders Hub"
+  },
+  "View All Orders": {
+    "source_file": "Features/SalesAssociate/Dashboard/SalesDashboardView.swift",
+    "value": "View All Orders"
+  },
+  "Store Revenue": {
+    "source_file": "Features/SalesAssociate/Dashboard/SalesDashboardView.swift",
+    "value": "Store Revenue"
+  },
+  "Revenue in Indian Rupees (₹)": {
+    "source_file": "Features/SalesAssociate/Dashboard/SalesDashboardView.swift",
+    "value": "Revenue in Indian Rupees (₹)"
+  },
+  "Scan QR Code": {
+    "source_file": "Features/SalesAssociate/Dashboard/SalesDashboardView.swift",
+    "value": "Scan QR Code"
+  },
+  "Search": {
+    "source_file": "Features/SalesAssociate/InventoryCatalog/InventoryCatalogView.swift",
+    "value": "Search"
+  },
+  "Maximum available stock already in cart": {
+    "source_file": "Features/SalesAssociate/Sell/BarcodeScannerView.swift",
+    "value": "Maximum available stock already in cart"
+  },
+  "Point camera at product barcode": {
+    "source_file": "Features/SalesAssociate/Sell/BarcodeScannerView.swift",
+    "value": "Point camera at product barcode"
+  },
+  "Upload QR Code Image": {
+    "source_file": "Features/SalesAssociate/Sell/BarcodeScannerView.swift",
+    "value": "Upload QR Code Image"
+  },
+  "Out of Stock": {
+    "source_file": "Features/SalesAssociate/Sell/BarcodeScannerView.swift",
+    "value": "Out of Stock"
+  },
+  "Suggested Alternatives": {
+    "source_file": "Features/SalesAssociate/Sell/BarcodeScannerView.swift",
+    "value": "Suggested Alternatives"
+  },
+  "No suitable alternatives found in stock.": {
+    "source_file": "Features/SalesAssociate/Sell/BarcodeScannerView.swift",
+    "value": "No suitable alternatives found in stock."
+  },
+  "Add": {
+    "source_file": "Features/SalesAssociate/Sell/BarcodeScannerView.swift",
+    "value": "Add"
+  },
+  "Selected Items": {
+    "source_file": "Features/SalesAssociate/Sell/CartView.swift",
+    "value": "Selected Items"
+  },
+  "Your cart is empty": {
+    "source_file": "Features/SalesAssociate/Sell/CartView.swift",
+    "value": "Your cart is empty"
+  },
+  "Subtotal": {
+    "source_file": "Features/SalesAssociate/Sell/CartView.swift",
+    "value": "Subtotal"
+  },
+  "Total Amount": {
+    "source_file": "Features/SalesAssociate/Sell/CartView.swift",
+    "value": "Total Amount"
+  },
+  "Scan Another Item": {
+    "source_file": "Features/SalesAssociate/Sell/CartView.swift",
+    "value": "Scan Another Item"
+  },
+  "Proceed to Checkout": {
+    "source_file": "Features/SalesAssociate/Sell/CartView.swift",
+    "value": "Proceed to Checkout"
+  },
+  "Shopping Cart": {
+    "source_file": "Features/SalesAssociate/Sell/CartView.swift",
+    "value": "Shopping Cart"
+  },
+  "Order Summary": {
+    "source_file": "Features/SalesAssociate/Sell/CheckoutView.swift",
+    "value": "Order Summary"
+  },
+  "Customer Link": {
+    "source_file": "Features/SalesAssociate/Sell/CheckoutView.swift",
+    "value": "Customer Link"
+  },
+  "Select Payment Method": {
+    "source_file": "Features/SalesAssociate/Sell/CheckoutView.swift",
+    "value": "Select Payment Method"
+  },
+  "Look up": {
+    "source_file": "Features/SalesAssociate/Sell/CheckoutView.swift",
+    "value": "Look up"
+  },
+  "No customer found with this number. Add a new one:": {
+    "source_file": "Features/SalesAssociate/Sell/CheckoutView.swift",
+    "value": "No customer found with this number. Add a new one:"
+  },
+  "Look up a customer by phone to attach them, or continue anonymously.": {
+    "source_file": "Features/SalesAssociate/Sell/CheckoutView.swift",
+    "value": "Look up a customer by phone to attach them, or continue anonymously."
+  },
+  "Continue as Anonymous / Skip": {
+    "source_file": "Features/SalesAssociate/Sell/CheckoutView.swift",
+    "value": "Continue as Anonymous / Skip"
+  },
+  "Checkout": {
+    "source_file": "Features/SalesAssociate/Sell/CheckoutView.swift",
+    "value": "Checkout"
+  },
+  "Finalize & Authorize Payment": {
+    "source_file": "Features/SalesAssociate/Sell/CheckoutView.swift",
+    "value": "Finalize & Authorize Payment"
+  },
+  "Change": {
+    "source_file": "Features/SalesAssociate/Sell/CheckoutView.swift",
+    "value": "Change"
+  },
+  "How would you like to add products?": {
+    "source_file": "Features/SalesAssociate/Sell/NewSaleView.swift",
+    "value": "How would you like to add products?"
+  },
+  "Order": {
+    "source_file": "Features/SalesAssociate/Sell/NewSaleView.swift",
+    "value": "Order"
+  },
+  "In-Store & BOPIS": {
+    "source_file": "Features/SalesAssociate/Sell/NewSaleView.swift",
+    "value": "In-Store & BOPIS"
+  },
+  "View Cart": {
+    "source_file": "Features/SalesAssociate/Sell/POSCartBar.swift",
+    "value": "View Cart"
+  },
+  "NEXUS RETAIL": {
+    "source_file": "Features/SalesAssociate/Sell/PaymentFlowView.swift",
+    "value": "NEXUS RETAIL"
+  },
+  "Secure payment via Razorpay": {
+    "source_file": "Features/SalesAssociate/Sell/PaymentFlowView.swift",
+    "value": "Secure payment via Razorpay"
+  },
+  "UPI (Google Pay, PhonePe, Bhim)": {
+    "source_file": "Features/SalesAssociate/Sell/PaymentFlowView.swift",
+    "value": "UPI (Google Pay, PhonePe, Bhim)"
+  },
+  "Other Payment Modes": {
+    "source_file": "Features/SalesAssociate/Sell/PaymentFlowView.swift",
+    "value": "Other Payment Modes"
+  },
+  "NEXUS PAY": {
+    "source_file": "Features/SalesAssociate/Sell/PaymentFlowView.swift",
+    "value": "NEXUS PAY"
+  },
+  "WAITING FOR CARD...": {
+    "source_file": "Features/SalesAssociate/Sell/PaymentFlowView.swift",
+    "value": "WAITING FOR CARD..."
+  },
+  "Insert, Tap, or Swipe": {
+    "source_file": "Features/SalesAssociate/Sell/PaymentFlowView.swift",
+    "value": "Insert, Tap, or Swipe"
+  },
+  "AUTHORIZING...": {
+    "source_file": "Features/SalesAssociate/Sell/PaymentFlowView.swift",
+    "value": "AUTHORIZING..."
+  },
+  "APPROVED": {
+    "source_file": "Features/SalesAssociate/Sell/PaymentFlowView.swift",
+    "value": "APPROVED"
+  },
+  "Customer Action Required": {
+    "source_file": "Features/SalesAssociate/Sell/PaymentFlowView.swift",
+    "value": "Customer Action Required"
+  },
+  "Simulate Card Tap / Swipe": {
+    "source_file": "Features/SalesAssociate/Sell/PaymentFlowView.swift",
+    "value": "Simulate Card Tap / Swipe"
+  },
+  "Authorizing transaction securely...": {
+    "source_file": "Features/SalesAssociate/Sell/PaymentFlowView.swift",
+    "value": "Authorizing transaction securely..."
+  },
+  "In Stock": {
+    "source_file": "Features/SalesAssociate/Sell/ProductSearchView.swift",
+    "value": "In Stock"
+  },
+  "Share Digital Receipt": {
+    "source_file": "Features/SalesAssociate/Sell/ReceiptView.swift",
+    "value": "Share Digital Receipt"
+  },
+  "Share Receipt": {
+    "source_file": "Features/SalesAssociate/Sell/ReceiptView.swift",
+    "value": "Share Receipt"
+  },
+  "Complete Sale & Return": {
+    "source_file": "Features/SalesAssociate/Sell/ReceiptView.swift",
+    "value": "Complete Sale & Return"
+  },
+  "Digital receipt shared successfully!": {
+    "source_file": "Features/SalesAssociate/Sell/ReceiptView.swift",
+    "value": "Digital receipt shared successfully!"
+  },
+  "Transaction Complete": {
+    "source_file": "Features/SalesAssociate/Sell/ReceiptView.swift",
+    "value": "Transaction Complete"
+  },
+  "Payment Authorized": {
+    "source_file": "Features/SalesAssociate/Sell/ReceiptView.swift",
+    "value": "Payment Authorized"
+  },
+  "Official Store Receipt": {
+    "source_file": "Features/SalesAssociate/Sell/ReceiptView.swift",
+    "value": "Official Store Receipt"
+  },
+  "GST (18% incl.)": {
+    "source_file": "Features/SalesAssociate/Sell/ReceiptView.swift",
+    "value": "GST (18% incl.)"
+  },
+  "Total Paid": {
+    "source_file": "Features/SalesAssociate/Sell/ReceiptView.swift",
+    "value": "Total Paid"
+  },
+  "Thank you for shopping at Nexus Retail": {
+    "source_file": "Features/SalesAssociate/Sell/ReceiptView.swift",
+    "value": "Thank you for shopping at Nexus Retail"
+  },
+  "For returns & exchanges visit any store within 30 days": {
+    "source_file": "Features/SalesAssociate/Sell/ReceiptView.swift",
+    "value": "For returns & exchanges visit any store within 30 days"
+  },
+  "Order History": {
+    "source_file": "Features/SalesAssociate/Sell/RecentOrdersView.swift",
+    "value": "Order History"
+  },
+  "No recent orders": {
+    "source_file": "Features/SalesAssociate/Sell/RecentOrdersView.swift",
+    "value": "No recent orders"
+  },
+  "Recent Orders": {
+    "source_file": "Features/SalesAssociate/Sell/RecentOrdersView.swift",
+    "value": "Recent Orders"
+  },
+  "POS Transaction History": {
+    "source_file": "Features/SalesAssociate/Sell/RecentOrdersView.swift",
+    "value": "POS Transaction History"
+  }
+}
