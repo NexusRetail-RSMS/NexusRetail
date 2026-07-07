@@ -38,69 +38,6 @@ struct ReceiptView: View {
 
                     VStack(spacing: 28) {
                         paperReceiptView.padding(.top, 10)
-
-                        // Digital Share
-                        VStack(alignment: .leading, spacing: 14) {
-                            Text("Share Digital Receipt")
-                                .font(.system(size: 15, weight: .bold, design: .rounded))
-                                .foregroundColor(RSMSColors.darkBrown)
-                                .padding(.horizontal, 4)
-
-                            VStack(spacing: 12) {
-                                TextField("Customer Email (optional)", text: $email)
-                                    .keyboardType(.emailAddress)
-                                    .textInputAutocapitalization(.never)
-                                    .padding(12)
-                                    .background(RSMSColors.background)
-                                    .cornerRadius(10)
-                                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(RSMSColors.cardBorder, lineWidth: 1))
-
-                                TextField("Customer Phone (optional)", text: $phone)
-                                    .keyboardType(.phonePad)
-                                    .padding(12)
-                                    .background(RSMSColors.background)
-                                    .cornerRadius(10)
-                                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(RSMSColors.cardBorder, lineWidth: 1))
-
-                                Button { shareReceipt() } label: {
-                                    HStack {
-                                        Image(systemName: "square.and.arrow.up")
-                                        Text("Share Receipt").fontWeight(.bold)
-                                    }
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 12)
-                                    .background(RSMSColors.burgundy)
-                                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                                }
-                                .buttonStyle(.plain)
-                                .disabled(email.isEmpty && phone.isEmpty)
-                                .opacity(email.isEmpty && phone.isEmpty ? 0.6 : 1.0)
-                            }
-                            .padding(16)
-                            .background(RSMSColors.cardBackground)
-                            .clipShape(RoundedRectangle(cornerRadius: 18))
-                            .overlay(RoundedRectangle(cornerRadius: 18).stroke(RSMSColors.cardBorder, lineWidth: 1))
-                        }
-
-                        // Complete Sale
-                        Button { completeSale() } label: {
-                            HStack {
-                                if isSaving {
-                                    ProgressView().tint(.white).padding(.trailing, 8)
-                                }
-                                Text("Complete Sale & Return")
-                                    .font(.system(size: 16, weight: .bold))
-                            }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(RSMSColors.burgundy)
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
-                            .shadow(color: RSMSColors.burgundy.opacity(0.25), radius: 8, x: 0, y: 4)
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(isSaving)
                     }
                     .padding(.horizontal, RSMSSpacing.lg)
                     .padding(.bottom, RSMSSpacing.xxl)
@@ -158,6 +95,21 @@ struct ReceiptView: View {
                     storeName = first.name
                 }
             }
+            
+            // Send email receipt automatically in background
+            let targetEmail = viewModel.receiptSharedEmail
+            if !targetEmail.isEmpty && !viewModel.isReceiptShared {
+                viewModel.isReceiptShared = true
+                await viewModel.sendReceiptEmail(
+                    to: targetEmail,
+                    orderId: cachedOrderId,
+                    storeName: storeName,
+                    cashierName: sessionStore.currentUser?.name ?? "Sales Associate",
+                    items: groupedCachedItems,
+                    total: cachedTotal,
+                    subtotal: cachedSubtotal
+                )
+            }
         }
         .sheet(isPresented: $showShareSheet) {
             if let image = generatedReceiptImage {
@@ -168,15 +120,45 @@ struct ReceiptView: View {
 
     // MARK: - Header
     private var customHeaderSection: some View {
-        HStack {
+        HStack(alignment: .top) {
+            // Save/Download Receipt (Left)
+            Button { shareReceipt() } label: {
+                Image(systemName: "square.and.arrow.down")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(width: 44, height: 44)
+                    .background(Color.white.opacity(0.2))
+                    .clipShape(Circle())
+            }
+            .buttonStyle(.plain)
+
             Spacer()
+            
             VStack(spacing: 2) {
                 Text("Transaction Complete")
-                    .font(.system(size: 24, weight: .bold)).foregroundColor(.white)
+                    .font(.system(size: 18, weight: .bold)).foregroundColor(.white)
                 Text("Payment Authorized")
-                    .font(.system(size: 14, weight: .medium)).foregroundColor(.white.opacity(0.8))
+                    .font(.system(size: 13, weight: .medium)).foregroundColor(.white.opacity(0.8))
             }
+            .padding(.top, 4)
+            
             Spacer()
+
+            // Complete Sale (Right)
+            Button { completeSale() } label: {
+                if isSaving {
+                    ProgressView().tint(.white).frame(width: 44, height: 44)
+                } else {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(width: 44, height: 44)
+                        .background(Color.white.opacity(0.2))
+                        .clipShape(Circle())
+                }
+            }
+            .buttonStyle(.plain)
+            .disabled(isSaving)
         }
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.top, 60)
