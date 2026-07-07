@@ -160,8 +160,8 @@ struct InvoiceItemsSelectionView: View {
     private var bottomActionBar: some View {
         VStack {
             Button {
-                if let selected = selectedItemId {
-                    path.append(POSFlowDestination.actionSelection(invoiceId: invoiceId, selectedItemIds: [selected]))
+                if let selectedId = selectedItemId, let selectedItem = items.first(where: { $0.id == selectedId }) {
+                    path.append(POSFlowDestination.actionSelection(invoiceId: invoiceId, selectedItem: selectedItem))
                 }
             } label: {
                 Text("Continue")
