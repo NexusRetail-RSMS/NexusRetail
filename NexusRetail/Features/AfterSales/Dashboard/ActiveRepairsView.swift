@@ -64,16 +64,9 @@ struct ActiveRepairsView: View {
         do {
             isLoading = true
             
-            // Ensure we use the current user's store
-            let storeID = sessionStore.currentUser?.storeID
-            
-            var query = SupabaseManager.shared.client
+            let query = SupabaseManager.shared.client
                 .from("orders")
                 .select("id, total, created_at, store_id, client(name, phone), order_line_item(id, quantity, applied_price, products(item_id, item_name, category, sku_code, price, pexels_page, image_url))")
-                
-            if let storeID = storeID {
-                query = query.eq("store_id", value: storeID)
-            }
             
             let orders: [StoreOrder] = try await query
                 .order("created_at", ascending: false)
@@ -84,22 +77,22 @@ struct ActiveRepairsView: View {
             var fetchedRepairs: [RepairOrderViewModel] = []
             
             for order in orders {
-                // Check if any order line item is a "Service"
-                let serviceItems = order.orderLineItems?.filter { item in
-                    item.products?.category == "Service" || item.products?.itemName?.hasPrefix("Repair:") == true
-                } ?? []
+                // Determine if it's a repair by checking our local manager
+                // Since processCheckout creates line items referencing the original product (and doesn't natively tag it as Service),
+                // we rely on the UUID being captured at submission time.
+                if !RepairOrderManager.shared.isRepairOrder(order.id) { continue }
                 
-                for serviceItem in serviceItems {
-                    guard let product = serviceItem.products else { continue }
-                    
-                    // Retrieve pickup date from local manager or fallback to +7 days
+                let serviceItems = order.orderLineItems ?? []
+                
+                // If it's a repair, we just grab the first item to display on the card
+                if let firstItem = serviceItems.first, let product = firstItem.products {
                     let pickupDate = RepairOrderManager.shared.getPickupDate(forOrderId: order.id) ?? fallbackPickupDate(from: order.createdAt)
                     
                     let vm = RepairOrderViewModel(
                         id: order.id,
                         customerName: order.client?.name ?? "Unknown Customer",
                         customerTier: "Luxe Luxury",
-                        itemName: product.itemName?.replacingOccurrences(of: "Repair: ", with: "") ?? "Unknown Item",
+                        itemName: product.itemName ?? "Unknown Item",
                         itemSKU: product.skuCode ?? "N/A",
                         itemImageURL: product.imageUrl,
                         pickupDate: pickupDate
