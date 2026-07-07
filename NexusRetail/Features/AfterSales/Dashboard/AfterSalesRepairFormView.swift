@@ -18,6 +18,7 @@ struct AfterSalesRepairFormView: View {
     @State private var additionalAmountText: String = ""
     @State private var isProcessing: Bool = false
     @State private var pickupDate: Date = Calendar.current.date(byAdding: .day, value: 3, to: Date()) ?? Date()
+    @State private var showDatePicker: Bool = false
     @State private var showErrorAlert: Bool = false
     @State private var errorMessage: String = ""
     
@@ -78,6 +79,41 @@ struct AfterSalesRepairFormView: View {
             }
         }
         .navigationBarHidden(true)
+        .sheet(isPresented: $showDatePicker) {
+            NavigationStack {
+                VStack {
+                    DatePicker("Select Date", selection: $pickupDate, in: Calendar.current.startOfDay(for: Date())..., displayedComponents: .date)
+                        .datePickerStyle(.graphical)
+                        .accentColor(RSMSColors.burgundy)
+                        .padding()
+                    
+                    Spacer()
+                    
+                    Button("Confirm") {
+                        showDatePicker = false
+                    }
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(RSMSColors.burgundy)
+                    .cornerRadius(12)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 24)
+                }
+                .navigationTitle("Pickup Date")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Cancel") {
+                            showDatePicker = false
+                        }
+                        .foregroundColor(RSMSColors.burgundy)
+                    }
+                }
+            }
+            .presentationDetents([.height(520)])
+        }
         .alert("Checkout Failed", isPresented: $showErrorAlert) {
             Button("OK", role: .cancel) { }
         } message: {
@@ -194,18 +230,34 @@ struct AfterSalesRepairFormView: View {
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(RSMSColors.secondaryText)
                 
-                DatePicker("Select Date", selection: $pickupDate, in: Calendar.current.startOfDay(for: Date())..., displayedComponents: .date)
-                    .datePickerStyle(.compact)
-                    .labelsHidden()
-                    .accentColor(RSMSColors.burgundy)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
+                Button {
+                    isInputFocused = false
+                    showDatePicker = true
+                } label: {
+                    HStack {
+                        Image(systemName: "calendar")
+                            .font(.system(size: 16))
+                            .foregroundColor(RSMSColors.burgundy)
+                        
+                        Text(pickupDate.formatted(date: .long, time: .omitted))
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(RSMSColors.primaryText)
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                    }
+                    .padding(16)
                     .background(Color.white)
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(RSMSColors.inputBorder, lineWidth: 1)
                     )
+                }
+                .buttonStyle(.plain)
             }
             
             Divider()
@@ -278,20 +330,39 @@ struct AfterSalesRepairFormView: View {
             Button {
                 isInputFocused = false
                 
-                let repairProduct = POSProduct(
-                    id: UUID(),
-                    itemId: selectedItem.itemId,
-                    name: "Repair: \(selectedItem.name)",
-                    sku: selectedItem.sku,
-                    category: "Service",
-                    price: totalAmount,
-                    stock: 999,
-                    size: selectedItem.size,
-                    imageUrl: selectedItem.imageUrl
-                )
-                
                 viewModel.resetFlow()
-                viewModel.cartItems.append(repairProduct)
+                
+                let baseCost = actualServiceCost
+                if baseCost > 0 || isUnderWarranty {
+                    let baseRepairProduct = POSProduct(
+                        id: UUID(),
+                        itemId: selectedItem.itemId,
+                        name: "Service Fee (\(selectedItem.name))",
+                        sku: "SRV-\(selectedItem.sku)",
+                        category: "Service",
+                        price: baseCost,
+                        stock: 999,
+                        size: selectedItem.size,
+                        imageUrl: selectedItem.imageUrl
+                    )
+                    viewModel.cartItems.append(baseRepairProduct)
+                }
+                
+                let additional = Double(additionalAmountText) ?? 0.0
+                if additional > 0 {
+                    let partsProduct = POSProduct(
+                        id: UUID(),
+                        itemId: selectedItem.itemId,
+                        name: "Parts (\(selectedItem.name))",
+                        sku: "PRT-\(selectedItem.sku)",
+                        category: "Parts",
+                        price: additional,
+                        stock: 999,
+                        size: selectedItem.size,
+                        imageUrl: selectedItem.imageUrl
+                    )
+                    viewModel.cartItems.append(partsProduct)
+                }
                 
                 let currentTotal = totalAmount
                 
