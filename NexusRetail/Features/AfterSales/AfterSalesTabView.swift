@@ -33,8 +33,7 @@ struct AfterSalesTabView: View {
                 // 2. Repairs
                 NavigationStack {
                     ActiveRepairsView()
-                        .navigationTitle("Repairs")
-                        .navigationBarTitleDisplayMode(.inline)
+                        .navigationBarHidden(true)
                 }
                 .tabItem { Label("Repairs", systemImage: "wrench.and.screwdriver.fill") }
                 .tag(1)
