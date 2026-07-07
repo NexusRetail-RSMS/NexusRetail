@@ -2,7 +2,6 @@ import SwiftUI
 
 struct RepairCardView: View {
     let customerName: String
-    let customerTier: String
     let customerImageURL: String?
     let itemImageURL: String?
     let itemName: String
@@ -17,10 +16,6 @@ struct RepairCardView: View {
                     Text(customerName)
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(RSMSColors.primaryText)
-                    
-                    Text(customerTier)
-                        .font(.system(size: 14))
-                        .foregroundColor(RSMSColors.secondaryText)
                 }
                 
                 Spacer()

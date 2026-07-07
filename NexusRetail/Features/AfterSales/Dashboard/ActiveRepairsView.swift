@@ -10,7 +10,6 @@ struct ActiveRepairsView: View {
     struct RepairOrderViewModel: Identifiable {
         let id: UUID
         let customerName: String
-        let customerTier: String
         let itemName: String
         let itemSKU: String
         let itemImageURL: String?
@@ -40,7 +39,6 @@ struct ActiveRepairsView: View {
                         ForEach(repairOrders) { repair in
                             RepairCardView(
                                 customerName: repair.customerName,
-                                customerTier: repair.customerTier,
                                 customerImageURL: nil, // Add if supported in backend later
                                 itemImageURL: repair.itemImageURL,
                                 itemName: repair.itemName,
@@ -93,7 +91,6 @@ struct ActiveRepairsView: View {
                     let vm = RepairOrderViewModel(
                         id: order.id,
                         customerName: customerName,
-                        customerTier: "Luxe Luxury",
                         itemName: product.itemName ?? "Unknown Item",
                         itemSKU: product.skuCode ?? "N/A",
                         itemImageURL: product.imageUrl,
