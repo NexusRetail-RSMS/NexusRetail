@@ -331,12 +331,14 @@ struct PaymentFlowView: View {
         
         Task {
             do {
-                try await viewModel.processRazorpayCheckout(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
+                let finalStoreID = sessionStore.currentUser?.storeID ?? UUID()
+                let finalAssociateID = sessionStore.currentUser?.id ?? UUID()
+                try await viewModel.processRazorpayCheckout(storeID: finalStoreID, associateID: finalAssociateID)
                 
                 // Refresh product stock after checkout
-                await POSProductRepository.shared.refreshStockForStore(storeID: sessionStore.currentUser?.storeID)
+                await POSProductRepository.shared.refreshStockForStore(storeID: finalStoreID)
                 
-                await viewModel.fetchRecentOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
+                await viewModel.fetchRecentOrders(storeID: finalStoreID, associateID: finalAssociateID)
                 
                 await MainActor.run {
                     withAnimation {
@@ -367,12 +369,14 @@ struct PaymentFlowView: View {
         
         Task {
             do {
-                try await viewModel.processCheckout(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
+                let finalStoreID = sessionStore.currentUser?.storeID ?? UUID()
+                let finalAssociateID = sessionStore.currentUser?.id ?? UUID()
+                try await viewModel.processCheckout(storeID: finalStoreID, associateID: finalAssociateID)
                 
                 // Refresh product stock after checkout
-                await POSProductRepository.shared.refreshStockForStore(storeID: sessionStore.currentUser?.storeID)
+                await POSProductRepository.shared.refreshStockForStore(storeID: finalStoreID)
                 
-                await viewModel.fetchRecentOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
+                await viewModel.fetchRecentOrders(storeID: finalStoreID, associateID: finalAssociateID)
                 
                 await MainActor.run {
                     withAnimation {

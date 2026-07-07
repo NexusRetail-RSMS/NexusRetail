@@ -287,10 +287,14 @@ struct AfterSalesRepairFormView: View {
                     isProcessing = true
                     Task {
                         do {
+                            // Fallback IDs for mock After-Sales users who might not have a storeID assigned
+                            let finalStoreID = sessionStore.currentUser?.storeID ?? UUID()
+                            let finalAssociateID = sessionStore.currentUser?.id ?? UUID()
+                            
                             // Automatically process the checkout without payment gateway
-                            try await viewModel.processCheckout(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
-                            await POSProductRepository.shared.refreshStockForStore(storeID: sessionStore.currentUser?.storeID)
-                            await viewModel.fetchRecentOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
+                            try await viewModel.processCheckout(storeID: finalStoreID, associateID: finalAssociateID)
+                            await POSProductRepository.shared.refreshStockForStore(storeID: finalStoreID)
+                            await viewModel.fetchRecentOrders(storeID: finalStoreID, associateID: finalAssociateID)
                             
                             await MainActor.run {
                                 isProcessing = false
