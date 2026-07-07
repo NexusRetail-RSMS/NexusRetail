@@ -9,6 +9,7 @@ import SwiftUI
 
 struct StaffView: View {
     @State private var viewModel = StaffViewModel()
+    @Environment(SessionStore.self) private var sessionStore
     @State private var isAddEmployeePresented = false
     @State private var searchText = ""
     @State private var selectedRoleFilter: EmployeeRoleFilter = .sales
@@ -202,10 +203,10 @@ struct StaffView: View {
         .background(RSMSColors.background.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .task {
-            await viewModel.loadStaff()
+            await viewModel.loadStaff(storeID: sessionStore.currentUser?.storeID)
         }
         .refreshable {
-            await viewModel.loadStaff()
+            await viewModel.loadStaff(storeID: sessionStore.currentUser?.storeID)
         }
         .sheet(isPresented: $isAddEmployeePresented) {
             NewEmployeeSheet(initialRole: selectedRoleFilter == .afterSales ? .afterSales : .salesAssociate, onCreate: { newEmployee, password in

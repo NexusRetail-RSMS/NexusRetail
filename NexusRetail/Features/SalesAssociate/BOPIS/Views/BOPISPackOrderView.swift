@@ -9,9 +9,7 @@ struct BOPISPackOrderView: View {
     @Environment(\.dismiss) var dismiss
     let order: BOPISOrder
     let onMarkAsPacked: () -> Void
-    
-    @State private var selectedQRCode: String?
-    
+
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
@@ -35,9 +33,7 @@ struct BOPISPackOrderView: View {
                         // Item List
                         VStack(spacing: RSMSSpacing.md) {
                             ForEach(order.items) { item in
-                                PackItemRow(item: item) {
-                                    selectedQRCode = item.qrCode
-                                }
+                                PackItemRow(item: item)
                             }
                         }
                         .padding(.horizontal, RSMSSpacing.lg)
@@ -76,50 +72,13 @@ struct BOPISPackOrderView: View {
                         .foregroundColor(RSMSColors.burgundy)
                 }
             }
-            .sheet(item: Binding(
-                get: { selectedQRCode.map { QRCodeWrapper(qrCode: $0) } },
-                set: { selectedQRCode = $0?.qrCode }
-            )) { wrapper in
-                NavigationStack {
-                    VStack(spacing: 24) {
-                        QRCodeView(qrCodeString: wrapper.qrCode)
-                            .frame(width: 250, height: 250)
-                            .padding()
-                            .background(Color.white)
-                            .cornerRadius(16)
-                            .shadow(radius: 4)
-                        
-                        Text("Scan to update inventory")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding()
-                    .navigationTitle("Product QR")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .topBarTrailing) {
-                            Button("Done") {
-                                selectedQRCode = nil
-                            }
-                        }
-                    }
-                }
-                .presentationDetents([.medium])
-            }
         }
     }
 }
 
-// Wrapper for Sheet
-private struct QRCodeWrapper: Identifiable {
-    var id: String { qrCode }
-    let qrCode: String
-}
-
 private struct PackItemRow: View {
     let item: BOPISOrderItem
-    let onShowQR: () -> Void
-    
+
     var body: some View {
         HStack(spacing: RSMSSpacing.md) {
             if let urlStr = item.imageUrl, let url = URL(string: urlStr) {
@@ -160,19 +119,6 @@ private struct PackItemRow: View {
             }
             
             Spacer()
-            
-            Button(action: onShowQR) {
-                VStack(spacing: 4) {
-                    Image(systemName: "qrcode")
-                        .font(.system(size: 20))
-                    Text("QR")
-                        .font(.system(size: 10, weight: .semibold))
-                }
-                .foregroundColor(RSMSColors.burgundy)
-                .padding(8)
-                .background(RSMSColors.burgundy.opacity(0.1))
-                .cornerRadius(RSMSRadius.small)
-            }
         }
         .padding(RSMSSpacing.md)
         .background(Color.white)

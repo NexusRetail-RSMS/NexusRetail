@@ -83,6 +83,7 @@ struct BarcodeScannerView: View {
             scannedProduct = nil
             isScanning = true
         }
+        .toolbar(.hidden, for: .tabBar)
         .task {
             allProducts = await POSProductRepository.shared.fetchProducts(storeID: sessionStore.currentUser?.storeID)
         }

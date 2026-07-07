@@ -78,6 +78,7 @@ struct CartView: View {
             .ignoresSafeArea(edges: .top)
         }
         .navigationBarHidden(true)
+        .toolbar(.hidden, for: .tabBar)
         .safeAreaInset(edge: .bottom) {
             if !viewModel.cartItems.isEmpty {
                 stickyCheckoutBar
