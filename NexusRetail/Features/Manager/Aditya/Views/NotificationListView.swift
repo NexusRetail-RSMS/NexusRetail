@@ -125,17 +125,6 @@ struct NotificationListView: View {
             
             // Stock count + urgency
             VStack(alignment: .trailing, spacing: 6) {
-                // Urgency pill
-                Text(notification.urgencyLabel)
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(
-                        Capsule()
-                            .fill(notification.urgencyColor)
-                    )
-                
                 // Stock count
                 HStack(spacing: 2) {
                     Image(systemName: "cube.box.fill")
