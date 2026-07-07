@@ -116,9 +116,9 @@ struct TransferRequestCard: View {
 
     private var requestInfoRow: some View {
         HStack(spacing: 0) {
-            InfoColumn(title: String(localized: "Requested"), value: "\(request.quantity)")
+            InfoColumn(title: LocalizedStringKey("Requested"), value: "\(request.quantity)")
             Spacer()
-            InfoColumn(title: String(localized: "Requested On"), value: formattedDate, alignment: .trailing)
+            InfoColumn(title: LocalizedStringKey("Requested On"), value: formattedDate, alignment: .trailing)
         }
     }
 
@@ -329,10 +329,10 @@ struct WaitingRequestCard: View {
 
             // MARK: Bottom Information
             HStack(spacing: 0) {
-                InfoColumn(title: String(localized: "Requested"), value: "\(request.quantity)")
+                InfoColumn(title: LocalizedStringKey("Requested"), value: "\(request.quantity)")
                 Spacer()
                 if let scheduledAt = request.scheduledAt {
-                    InfoColumn(title: String(localized: "Scheduled On"), value: scheduledAt.formatted(date: .abbreviated, time: .omitted), alignment: .trailing)
+                    InfoColumn(title: LocalizedStringKey("Scheduled On"), value: scheduledAt.formatted(date: .abbreviated, time: .omitted), alignment: .trailing)
                 }
             }
             .padding(.top, 18)
@@ -481,10 +481,10 @@ struct ApprovedRequestCard: View {
 
             // MARK: Bottom Information
             HStack(spacing: 0) {
-                InfoColumn(title: String(localized: "Requested"), value: "\(request.quantity)")
+                InfoColumn(title: LocalizedStringKey("Requested"), value: "\(request.quantity)")
                 Spacer()
                 if let approvedAt = request.approvedAt {
-                    InfoColumn(title: String(localized: "Approved On"), value: approvedAt.formatted(date: .abbreviated, time: .omitted), alignment: .trailing)
+                    InfoColumn(title: LocalizedStringKey("Approved On"), value: approvedAt.formatted(date: .abbreviated, time: .omitted), alignment: .trailing)
                 }
             }
             .padding(.top, 18)
