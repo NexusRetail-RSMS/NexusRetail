@@ -24,28 +24,6 @@ struct RepairCardView: View {
                 }
                 
                 Spacer()
-                
-                if let customerImageURL = customerImageURL, let url = URL(string: customerImageURL) {
-                    CachedAsyncImage(url: url) { image in
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 40, height: 40)
-                            .clipShape(Circle())
-                    } placeholder: {
-                        Circle()
-                            .fill(Color.gray.opacity(0.2))
-                            .frame(width: 40, height: 40)
-                    }
-                } else {
-                    ZStack {
-                        Circle()
-                            .fill(RSMSColors.burgundy.opacity(0.1))
-                            .frame(width: 40, height: 40)
-                        Image(systemName: "person.fill")
-                            .foregroundColor(RSMSColors.burgundy)
-                    }
-                }
             }
             
             Divider()

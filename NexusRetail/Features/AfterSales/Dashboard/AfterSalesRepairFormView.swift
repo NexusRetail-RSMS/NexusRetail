@@ -299,7 +299,7 @@ struct AfterSalesRepairFormView: View {
                             
                             // Save pickup date using the generated order ID
                             if let generatedOrderId = viewModel.lastOrderId {
-                                RepairOrderManager.shared.setPickupDate(pickupDate, forOrderId: generatedOrderId)
+                                RepairOrderManager.shared.setRepairData(date: pickupDate, invoiceId: invoiceId, forOrderId: generatedOrderId)
                             }
                             
                             await POSProductRepository.shared.refreshStockForStore(storeID: finalStoreID)
@@ -321,8 +321,7 @@ struct AfterSalesRepairFormView: View {
                     // by mapping a dummy key or handle it in PaymentFlowView. 
                     // Actually, if we just store it globally as a "pending pickup date", we can consume it.
                     // For now, let's just let PaymentFlowView handle its own order creation and rely on the lastOrderId.
-                    // A better approach is to store it globally before navigation:
-                    RepairOrderManager.shared.setPickupDate(pickupDate, forOrderId: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!) // Placeholder, we will update PaymentFlowView to link it.
+                    RepairOrderManager.shared.setPendingRepair(date: pickupDate, invoiceId: invoiceId) // Placeholder, we will update PaymentFlowView to link it.
                     path.append(POSFlowDestination.payment(storeId: storeId))
                 }
                 

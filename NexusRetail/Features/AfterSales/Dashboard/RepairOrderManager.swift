@@ -6,31 +6,71 @@ class RepairOrderManager {
     
     private let defaultsKey = "savedRepairOrders"
     
-    // In-memory mapping from Order ID to Pickup Date, initialized from UserDefaults
-    private(set) var pickupDates: [UUID: Date] = [:]
+    struct RepairOrderData: Codable {
+        let pickupDate: TimeInterval
+        let customerName: String
+    }
+    
+    // In-memory mapping from Order ID to Repair Data
+    private(set) var repairData: [UUID: RepairOrderData] = [:]
+    
+    // Temporary cache to pass customer name from Invoice scan to Repair submit
+    private var tempCustomerNameCache: [String: String] = [:]
+    
+    // Pending repair request data for PaymentFlowView to consume
+    private var pendingRepairDate: Date?
+    private var pendingInvoiceId: String?
     
     private init() {
         loadFromDefaults()
     }
     
-    func setPickupDate(_ date: Date, forOrderId orderId: UUID) {
-        pickupDates[orderId] = date
+    func cacheCustomerName(_ name: String, forInvoiceId invoiceId: String) {
+        tempCustomerNameCache[invoiceId] = name
+    }
+    
+    func setPendingRepair(date: Date, invoiceId: String) {
+        pendingRepairDate = date
+        pendingInvoiceId = invoiceId
+    }
+    
+    func commitPendingRepair(forOrderId orderId: UUID) {
+        guard let date = pendingRepairDate, let invoiceId = pendingInvoiceId else { return }
+        
+        let name = tempCustomerNameCache[invoiceId] ?? "Unknown Customer"
+        repairData[orderId] = RepairOrderData(pickupDate: date.timeIntervalSince1970, customerName: name)
+        saveToDefaults()
+        
+        // Clear pending
+        pendingRepairDate = nil
+        pendingInvoiceId = nil
+    }
+    
+    func setRepairData(date: Date, invoiceId: String, forOrderId orderId: UUID) {
+        let name = tempCustomerNameCache[invoiceId] ?? "Unknown Customer"
+        repairData[orderId] = RepairOrderData(pickupDate: date.timeIntervalSince1970, customerName: name)
         saveToDefaults()
     }
     
     func getPickupDate(forOrderId orderId: UUID) -> Date? {
-        return pickupDates[orderId]
+        if let data = repairData[orderId] {
+            return Date(timeIntervalSince1970: data.pickupDate)
+        }
+        return nil
+    }
+    
+    func getCustomerName(forOrderId orderId: UUID) -> String? {
+        return repairData[orderId]?.customerName
     }
     
     func isRepairOrder(_ orderId: UUID) -> Bool {
-        return pickupDates.keys.contains(orderId)
+        return repairData.keys.contains(orderId)
     }
     
     private func saveToDefaults() {
-        // Convert to string keys for JSON serialization
-        var dictToSave: [String: TimeInterval] = [:]
-        for (key, date) in pickupDates {
-            dictToSave[key.uuidString] = date.timeIntervalSince1970
+        var dictToSave: [String: RepairOrderData] = [:]
+        for (key, data) in repairData {
+            dictToSave[key.uuidString] = data
         }
         if let data = try? JSONEncoder().encode(dictToSave) {
             UserDefaults.standard.set(data, forKey: defaultsKey)
@@ -39,14 +79,14 @@ class RepairOrderManager {
     
     private func loadFromDefaults() {
         if let data = UserDefaults.standard.data(forKey: defaultsKey),
-           let savedDict = try? JSONDecoder().decode([String: TimeInterval].self, from: data) {
-            var loadedDates: [UUID: Date] = [:]
-            for (keyStr, timeInt) in savedDict {
+           let savedDict = try? JSONDecoder().decode([String: RepairOrderData].self, from: data) {
+            var loadedData: [UUID: RepairOrderData] = [:]
+            for (keyStr, repData) in savedDict {
                 if let uuid = UUID(uuidString: keyStr) {
-                    loadedDates[uuid] = Date(timeIntervalSince1970: timeInt)
+                    loadedData[uuid] = repData
                 }
             }
-            self.pickupDates = loadedDates
+            self.repairData = loadedData
         }
     }
 }

@@ -229,7 +229,7 @@ struct InvoiceItemsSelectionView: View {
         do {
             let fetchedOrders: [StoreOrder] = try await SupabaseManager.shared.client
                 .from("orders")
-                .select("id, store_id, total, created_at, order_line_item(id, quantity, applied_price, products(item_id, item_name, category, sku_code, price, pexels_page, image_url))")
+                .select("id, store_id, total, created_at, client_id, client(name), order_line_item(id, quantity, applied_price, products(item_id, item_name, category, sku_code, price, pexels_page, image_url))")
                 .eq("id", value: invoiceUUID)
                 .execute()
                 .value
@@ -240,6 +240,11 @@ struct InvoiceItemsSelectionView: View {
                     self.isLoading = false
                 }
                 return
+            }
+            
+            // Cache the original customer name in case they create a repair order
+            if let clientName = order.client?.name {
+                RepairOrderManager.shared.cacheCustomerName(clientName, forInvoiceId: invoiceId)
             }
             
             var mappedItems: [POSProduct] = []
