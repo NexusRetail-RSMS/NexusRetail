@@ -14,6 +14,7 @@ struct ActiveRepairsView: View {
         let itemSKU: String
         let itemImageURL: String?
         let pickupDate: Date
+        let createdAt: Date
         let problemDescription: String?
     }
     
@@ -93,6 +94,10 @@ struct ActiveRepairsView: View {
                     let customerName = order.client?.name ?? "Customer (Unlinked Invoice)"
                     let problemDesc = RepairOrderManager.shared.getProblemDescription(forOrderId: order.id)
                     
+                    let formatter = ISO8601DateFormatter()
+                    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                    let parsedCreatedAt = formatter.date(from: order.createdAt) ?? Date()
+                    
                     let vm = RepairOrderViewModel(
                         id: order.id,
                         customerName: customerName,
@@ -100,6 +105,7 @@ struct ActiveRepairsView: View {
                         itemSKU: product.skuCode ?? "N/A",
                         itemImageURL: product.imageUrl,
                         pickupDate: pickupDate,
+                        createdAt: parsedCreatedAt,
                         problemDescription: problemDesc
                     )
                     

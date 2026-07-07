@@ -46,6 +46,10 @@ struct RepairOrderDetailsView: View {
                     
                     Divider()
                     
+                    detailRow(title: "Request Generated", value: formatDate(repair.createdAt))
+                    
+                    Divider()
+                    
                     detailRow(title: "Estimated Pickup", value: formatDate(repair.pickupDate))
                     
                     if let problemDesc = repair.problemDescription, !problemDesc.isEmpty {
