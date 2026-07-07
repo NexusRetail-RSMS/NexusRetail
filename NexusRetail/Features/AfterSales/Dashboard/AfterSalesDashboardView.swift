@@ -65,12 +65,11 @@ struct AfterSalesDashboardView: View {
                     }
                 case .invoiceItemsSelection(let invoiceId):
                     InvoiceItemsSelectionView(path: $navigationPath, invoiceId: invoiceId)
-                case .actionSelection(let invoiceId, let selectedItem, let storeId):
-                    AfterSalesActionSelectionView(path: $navigationPath, invoiceId: invoiceId, selectedItem: selectedItem, storeId: storeId)
+                case .actionSelection(let invoiceId, let selectedItem, let storeId, let clientId):
+                    AfterSalesActionSelectionView(path: $navigationPath, invoiceId: invoiceId, selectedItem: selectedItem, storeId: storeId, clientId: clientId)
                         .navigationTransition(.zoom(sourceID: "scannerButton", in: namespace))
-                    
-                case .repairForm(let invoiceId, let selectedItem, let warrantyMonths, let storeId):
-                    AfterSalesRepairFormView(path: $navigationPath, invoiceId: invoiceId, selectedItem: selectedItem, remainingWarrantyMonths: warrantyMonths, storeId: storeId)
+                case .repairForm(let invoiceId, let selectedItem, let remainingWarrantyMonths, let storeId, let clientId):
+                    AfterSalesRepairFormView(path: $navigationPath, invoiceId: invoiceId, selectedItem: selectedItem, remainingWarrantyMonths: remainingWarrantyMonths, storeId: storeId, clientId: clientId)
                         .navigationTransition(.zoom(sourceID: "scannerButton", in: namespace))
                     
                 case .cart:          CartView(path: $navigationPath)

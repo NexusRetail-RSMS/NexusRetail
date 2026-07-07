@@ -10,6 +10,7 @@ struct InvoiceItemsSelectionView: View {
     @State private var isLoading: Bool = true
     @State private var errorMessage: String? = nil
     @State private var fetchedStoreId: UUID? = nil
+    @State private var fetchedClientId: UUID? = nil
     
     @State private var selectedItemId: UUID? = nil
     
@@ -198,7 +199,7 @@ struct InvoiceItemsSelectionView: View {
         VStack {
             Button {
                 if let selectedId = selectedItemId, let selectedItem = items.first(where: { $0.id == selectedId }) {
-                    path.append(POSFlowDestination.actionSelection(invoiceId: invoiceId, selectedItem: selectedItem, storeId: fetchedStoreId))
+                    path.append(POSFlowDestination.actionSelection(invoiceId: invoiceId, selectedItem: selectedItem, storeId: fetchedStoreId, clientId: fetchedClientId))
                 }
             } label: {
                 Text("Continue")
@@ -242,10 +243,8 @@ struct InvoiceItemsSelectionView: View {
                 return
             }
             
-            // Cache the original customer name in case they create a repair order
-            if let clientName = order.client?.name {
-                RepairOrderManager.shared.cacheCustomerName(clientName, forInvoiceId: invoiceId)
-            }
+            // Store the client ID to pass down the flow
+            let clientId = order.clientID
             
             var mappedItems: [POSProduct] = []
             
@@ -275,8 +274,9 @@ struct InvoiceItemsSelectionView: View {
             }
             
             await MainActor.run {
-                self.fetchedStoreId = order.storeID
                 self.items = mappedItems
+                self.fetchedStoreId = order.storeID
+                self.fetchedClientId = clientId
                 self.isLoading = false
             }
         } catch {

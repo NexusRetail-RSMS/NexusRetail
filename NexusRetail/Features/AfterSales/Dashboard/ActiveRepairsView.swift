@@ -86,7 +86,7 @@ struct ActiveRepairsView: View {
                 if let firstItem = serviceItems.first, let product = firstItem.products {
                     let pickupDate = RepairOrderManager.shared.getPickupDate(forOrderId: order.id) ?? fallbackPickupDate(from: order.createdAt)
                     
-                    let customerName = RepairOrderManager.shared.getCustomerName(forOrderId: order.id) ?? "Unknown Customer"
+                    let customerName = order.client?.name ?? "Unknown Customer"
                     
                     let vm = RepairOrderViewModel(
                         id: order.id,

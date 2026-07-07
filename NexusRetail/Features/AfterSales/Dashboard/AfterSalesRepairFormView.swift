@@ -10,6 +10,7 @@ struct AfterSalesRepairFormView: View {
     let selectedItem: POSProduct
     let remainingWarrantyMonths: Int
     let storeId: UUID?
+    let clientId: UUID?
     
     @State private var problemDescription: String = ""
     @State private var additionalAmountText: String = ""
@@ -293,6 +294,9 @@ struct AfterSalesRepairFormView: View {
                             // Fallback IDs for mock After-Sales users who might not have a storeID assigned
                             let finalStoreID = storeId ?? sessionStore.currentUser?.storeID ?? UUID()
                             let finalAssociateID = sessionStore.currentUser?.id ?? UUID()
+                            
+                            // Set the client ID before processing checkout
+                            viewModel.selectedClientId = clientId
                             
                             // Automatically process the checkout without payment gateway
                             try await viewModel.processCheckout(storeID: finalStoreID, associateID: finalAssociateID)

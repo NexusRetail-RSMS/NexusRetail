@@ -8,14 +8,10 @@ class RepairOrderManager {
     
     struct RepairOrderData: Codable {
         let pickupDate: TimeInterval
-        let customerName: String
     }
     
     // In-memory mapping from Order ID to Repair Data
     private(set) var repairData: [UUID: RepairOrderData] = [:]
-    
-    // Temporary cache to pass customer name from Invoice scan to Repair submit
-    private var tempCustomerNameCache: [String: String] = [:]
     
     // Pending repair request data for PaymentFlowView to consume
     private var pendingRepairDate: Date?
@@ -25,20 +21,15 @@ class RepairOrderManager {
         loadFromDefaults()
     }
     
-    func cacheCustomerName(_ name: String, forInvoiceId invoiceId: String) {
-        tempCustomerNameCache[invoiceId] = name
-    }
-    
     func setPendingRepair(date: Date, invoiceId: String) {
         pendingRepairDate = date
         pendingInvoiceId = invoiceId
     }
     
     func commitPendingRepair(forOrderId orderId: UUID) {
-        guard let date = pendingRepairDate, let invoiceId = pendingInvoiceId else { return }
+        guard let date = pendingRepairDate else { return }
         
-        let name = tempCustomerNameCache[invoiceId] ?? "Unknown Customer"
-        repairData[orderId] = RepairOrderData(pickupDate: date.timeIntervalSince1970, customerName: name)
+        repairData[orderId] = RepairOrderData(pickupDate: date.timeIntervalSince1970)
         saveToDefaults()
         
         // Clear pending
@@ -47,8 +38,7 @@ class RepairOrderManager {
     }
     
     func setRepairData(date: Date, invoiceId: String, forOrderId orderId: UUID) {
-        let name = tempCustomerNameCache[invoiceId] ?? "Unknown Customer"
-        repairData[orderId] = RepairOrderData(pickupDate: date.timeIntervalSince1970, customerName: name)
+        repairData[orderId] = RepairOrderData(pickupDate: date.timeIntervalSince1970)
         saveToDefaults()
     }
     
@@ -57,10 +47,6 @@ class RepairOrderManager {
             return Date(timeIntervalSince1970: data.pickupDate)
         }
         return nil
-    }
-    
-    func getCustomerName(forOrderId orderId: UUID) -> String? {
-        return repairData[orderId]?.customerName
     }
     
     func isRepairOrder(_ orderId: UUID) -> Bool {
