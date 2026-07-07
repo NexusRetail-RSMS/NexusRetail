@@ -13,11 +13,13 @@ struct AfterSalesActionSelectionView: View {
                 .ignoresSafeArea()
             
             ScrollView {
-                VStack(alignment: .leading, spacing: 32) {
+                VStack(alignment: .leading, spacing: 16) {
                     Text("Select Action")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .font(.system(size: 14, weight: .medium))
+                        .textCase(.uppercase)
+                        .foregroundColor(RSMSColors.secondaryText.opacity(0.8))
                         .padding(.horizontal, RSMSSpacing.lg)
+                        .padding(.bottom, 4)
                     
                     VStack(spacing: 20) {
                         actionCard(
@@ -42,7 +44,7 @@ struct AfterSalesActionSelectionView: View {
                     }
                     .padding(.horizontal, RSMSSpacing.lg)
                 }
-                .padding(.top, 120) // push down below header
+                .padding(.top, 150) // push down below header with more gap
             }
             .ignoresSafeArea(edges: .top)
             
@@ -91,27 +93,27 @@ struct AfterSalesActionSelectionView: View {
     // MARK: - Action Card
     private func actionCard(title: String, description: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 20) {
+            HStack(spacing: 16) {
                 // Icon Container
                 ZStack {
                     Circle()
-                        .fill(color.opacity(0.1))
-                        .frame(width: 60, height: 60)
+                        .fill(color.opacity(0.06))
+                        .frame(width: 50, height: 50)
                     
                     Image(systemName: icon)
-                        .font(.system(size: 24, weight: .semibold))
+                        .font(.system(size: 20, weight: .regular))
                         .foregroundColor(color)
                 }
                 
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(title)
-                        .font(.system(size: 18, weight: .bold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(RSMSColors.primaryText)
                     
                     Text(description)
-                        .font(.system(size: 13))
+                        .font(.system(size: 13, weight: .regular))
                         .foregroundColor(RSMSColors.secondaryText)
-                        .lineSpacing(2)
+                        .lineSpacing(3)
                         .multilineTextAlignment(.leading)
                 }
                 
@@ -119,13 +121,17 @@ struct AfterSalesActionSelectionView: View {
                 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                    .foregroundColor(RSMSColors.secondaryText.opacity(0.3))
             }
-            .padding(20)
-            .background(RSMSColors.cardBackground)
-            .cornerRadius(20)
-            .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 4)
+            .padding(16)
+            .background(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(RSMSColors.cardBorder, lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.03), radius: 12, x: 0, y: 4)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(CardPressStyle())
     }
 }

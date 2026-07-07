@@ -21,12 +21,13 @@ struct InvoiceItemsSelectionView: View {
                     .ignoresSafeArea()
                 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 16) {
                         Text("Select item to process")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .font(.system(size: 14, weight: .medium))
+                            .textCase(.uppercase)
+                            .foregroundColor(RSMSColors.secondaryText.opacity(0.8))
                             .padding(.horizontal, RSMSSpacing.lg)
-                            .padding(.top, RSMSSpacing.md)
+                            .padding(.bottom, 4)
                         
                         LazyVStack(spacing: 12) {
                             ForEach(items) { item in
@@ -36,7 +37,7 @@ struct InvoiceItemsSelectionView: View {
                         .padding(.horizontal, RSMSSpacing.lg)
                         .padding(.bottom, 120) // Give space for bottom bar
                     }
-                    .padding(.top, 120) // Give space for header
+                    .padding(.top, 150) // Give space for header
                 }
                 .ignoresSafeArea(edges: .top)
                 
