@@ -64,7 +64,7 @@ struct ActiveRepairsView: View {
             
             let query = SupabaseManager.shared.client
                 .from("orders")
-                .select("id, total, created_at, store_id, client(name, phone), order_line_item(id, quantity, applied_price, products(item_id, item_name, category, sku_code, price, pexels_page, image_url))")
+                .select("id, total, created_at, store_id, client_id, client(name, phone), order_line_item(id, quantity, applied_price, products(item_id, item_name, category, sku_code, price, pexels_page, image_url))")
             
             let orders: [StoreOrder] = try await query
                 .order("created_at", ascending: false)
@@ -86,7 +86,7 @@ struct ActiveRepairsView: View {
                 if let firstItem = serviceItems.first, let product = firstItem.products {
                     let pickupDate = RepairOrderManager.shared.getPickupDate(forOrderId: order.id) ?? fallbackPickupDate(from: order.createdAt)
                     
-                    let customerName = order.client?.name ?? "Unknown Customer"
+                    let customerName = order.client?.name ?? "Customer (Unlinked Invoice)"
                     
                     let vm = RepairOrderViewModel(
                         id: order.id,
