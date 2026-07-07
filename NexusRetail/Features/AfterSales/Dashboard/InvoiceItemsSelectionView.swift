@@ -12,7 +12,7 @@ struct InvoiceItemsSelectionView: View {
         POSProduct(id: UUID(), itemId: 3, name: "Aviator Sunglasses", sku: "SUN-892", category: "Eyewear", price: 8900, stock: 5, size: "Standard", imageUrl: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=500&auto=format&fit=crop&q=60")
     ]
     
-@State private var selectedItemIds: Set<UUID> = []
+    @State private var selectedItemId: UUID? = nil
     @State private var purchaseDate: Date = Date()
     @State private var salesAssociateName: String = "Jane Doe"
     @State private var storeName: String = "Nexus Retail — MG Road"
