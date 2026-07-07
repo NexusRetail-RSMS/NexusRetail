@@ -14,22 +14,14 @@ struct AfterSalesTabView: View {
     @State private var posViewModel = SellViewModel()
     @Namespace private var namespace
 
-    // ┌─────────────────────────────────────────────────────────────┐
-    // │ SCANNER BUTTON ALIGNMENT — tweak these to position it        │
-    // │  • scannerSize    : diameter of the circle                   │
-    // │  • scannerOffsetX : + moves RIGHT, − moves LEFT              │
-    // │  • scannerOffsetY : + moves DOWN,  − moves UP                │
-    // └─────────────────────────────────────────────────────────────┘
-    private let scannerSize: CGFloat = 64
-    private let scannerOffsetX: CGFloat = -24
-    private let scannerOffsetY: CGFloat = 20
+
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             TabView(selection: $selectedTab) {
                 // 1. Dashboard (hosts the after-sales scan/invoice/action flow)
                 NavigationStack(path: $dashboardPath) {
-                    AfterSalesDashboardView()
+                    AfterSalesDashboardView(path: $dashboardPath, namespace: namespace)
                         .navigationBarHidden(true)
                         .navigationDestination(for: POSFlowDestination.self) { dest in
                             flowDestination(dest)
@@ -48,15 +40,6 @@ struct AfterSalesTabView: View {
                 .tag(1)
             }
             .tint(RSMSColors.burgundy)
-
-            // Scanner button sits on the same line as the native tab bar, to its right.
-            // Hidden while a scan/invoice/action screen is pushed.
-            if dashboardPath.isEmpty {
-                scannerButton
-                    .padding(.trailing, 12)
-                    .padding(.bottom, 4)
-                    .offset(x: scannerOffsetX, y: scannerOffsetY)
-            }
         }
         .environment(posViewModel)
     }
@@ -90,6 +73,9 @@ struct AfterSalesTabView: View {
         case .repairForm(let invoiceId, let selectedItem, let warrantyEndDate):
             AfterSalesRepairFormView(path: $dashboardPath, invoiceId: invoiceId, selectedItem: selectedItem, warrantyEndDate: warrantyEndDate)
                 .toolbar(.hidden, for: .tabBar)
+        case .afterSalesHistory:
+            AfterSalesHistoryView(path: $dashboardPath)
+                .toolbar(.hidden, for: .tabBar)
         case .cart:          CartView(path: $dashboardPath)
         case .checkout:      CheckoutView(path: $dashboardPath)
         case .payment:       PaymentFlowView(path: $dashboardPath)
@@ -102,36 +88,7 @@ struct AfterSalesTabView: View {
         }
     }
 
-    // MARK: - Scanner button (beside the tab bar)
 
-    private var scannerButton: some View {
-        Group {
-            if #available(iOS 18.0, *) {
-                scannerButtonLabel
-                    .matchedTransitionSource(id: "scannerButton", in: namespace)
-            } else {
-                scannerButtonLabel
-            }
-        }
-    }
-
-    private var scannerButtonLabel: some View {
-        // Separate frosted circle beside the native tab bar (GitHub Copilot-style),
-        // matching the tab bar's material, height, and vertical position.
-        Button {
-            selectedTab = 0
-            dashboardPath.append(POSFlowDestination.invoiceScanner)
-        } label: {
-            Image(systemName: "qrcode.viewfinder")
-                .font(.system(size: scannerSize * 0.38, weight: .semibold))
-                .foregroundColor(.white)
-                .frame(width: scannerSize, height: scannerSize)
-                .background(RSMSColors.burgundy, in: Circle())
-                .shadow(color: RSMSColors.burgundy.opacity(0.35), radius: 8, x: 0, y: 2)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Scan bill")
-    }
 }
 
 /// A view modifier that applies the common After-Sales toolbar (title + profile button).

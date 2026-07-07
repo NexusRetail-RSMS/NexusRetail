@@ -116,7 +116,7 @@ fileprivate  struct DIQRScannerView: View {
                 
                 // Scanner Animated View
                 if showContent {
-                    ConcentricRectangle(corners: .concentric(minimum: .fixed(30)), isUniform: true)
+                    RoundedRectangle(cornerRadius: 30, style: .continuous)
                         .fill(.black)
                         .overlay {
                             GeometryReader {

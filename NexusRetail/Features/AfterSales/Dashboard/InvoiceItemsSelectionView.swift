@@ -82,6 +82,10 @@ struct InvoiceItemsSelectionView: View {
             if details.found {
                 self.items = details.items
                 self.customer = details.customer
+                
+                if self.items.count == 1 {
+                    self.expandedItemId = self.items.first?.id
+                }
             } else {
                 self.loadError = "Couldn't find this invoice. It may not exist or belongs to another store."
             }

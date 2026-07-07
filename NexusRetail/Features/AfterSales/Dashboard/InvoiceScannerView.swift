@@ -22,13 +22,14 @@ struct InvoiceScannerView: View {
                     heroSection
                         .opacity(showScanner ? 0 : 1)
 
-                    optionsCard
+                    VStack(spacing: 16) {
+                        scannerCard
+                        uploadCard
+                        enterInvoiceCard
+                    }
                         .opacity(showScanner ? 0 : 1)
 
                     Spacer(minLength: 32)
-
-                    tipFooter
-                        .opacity(showScanner ? 0 : 1)
                 }
                 .animation(.easeInOut(duration: 0.2), value: showScanner)
                 .padding(.horizontal, RSMSSpacing.lg)
@@ -117,42 +118,15 @@ struct InvoiceScannerView: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(RSMSColors.primaryText)
                     .multilineTextAlignment(.center)
-
-                Text("Choose one of the options below")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
             }
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 4)
     }
 
-    // MARK: - Options card (single grouped list, not separate floating cards)
+    // MARK: - Options cards
 
-    private var optionsCard: some View {
-        VStack(spacing: 0) {
-            scannerRow
-            rowDivider
-
-            uploadRow
-            rowDivider
-
-            enterInvoiceRow
-        }
-        .background(RSMSColors.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(RSMSColors.inputBorder.opacity(0.5), lineWidth: 1)
-        )
-    }
-
-    private var rowDivider: some View {
-        Divider()
-            .padding(.leading, 64)
-    }
-
-    private var scannerRow: some View {
+    private var scannerCard: some View {
         Button {
             showScanner = true
         } label: {
@@ -165,9 +139,15 @@ struct InvoiceScannerView: View {
             )
         }
         .buttonStyle(PremiumPressStyle())
+        .background(RSMSColors.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(RSMSColors.inputBorder.opacity(0.5), lineWidth: 1)
+        )
     }
 
-    private var uploadRow: some View {
+    private var uploadCard: some View {
         PhotosPicker(selection: $selectedPhoto, matching: .images) {
             optionRowLabel(
                 systemImage: "photo",
@@ -180,9 +160,15 @@ struct InvoiceScannerView: View {
         .onChange(of: selectedPhoto) { _, newItem in
             processSelectedPhoto(newItem)
         }
+        .background(RSMSColors.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(RSMSColors.inputBorder.opacity(0.5), lineWidth: 1)
+        )
     }
 
-    private var enterInvoiceRow: some View {
+    private var enterInvoiceCard: some View {
         VStack(alignment: .leading, spacing: 0) {
             Button {
                 toggleInvoiceEntry()
@@ -238,23 +224,12 @@ struct InvoiceScannerView: View {
                 .transition(.opacity)
             }
         }
-    }
-
-    private var tipFooter: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "lightbulb.fill")
-                .font(.system(size: 13))
-                .foregroundColor(RSMSColors.burgundy.opacity(0.7))
-
-            Text("Tip: the invoice number is usually printed at the top right of your bill.")
-                .font(.system(size: 12.5, weight: .medium))
-                .foregroundColor(RSMSColors.secondaryText)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RSMSColors.burgundy.opacity(0.05))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(RSMSColors.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(RSMSColors.inputBorder.opacity(0.5), lineWidth: 1)
+        )
     }
 
     // MARK: - Row label
@@ -273,57 +248,58 @@ struct InvoiceScannerView: View {
         tag: String,
         chevronRotation: Double = 0
     ) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 16) {
             ZStack {
                 switch iconStyle {
                 case .filled:
                     Circle()
                         .fill(Color.black)
-                        .frame(width: 36, height: 36)
+                        .frame(width: 48, height: 48)
                     Image(systemName: systemImage)
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.system(size: 20, weight: .semibold))
                         .foregroundColor(.white)
                 case .tinted:
                     Circle()
                         .fill(RSMSColors.burgundy.opacity(0.1))
-                        .frame(width: 36, height: 36)
+                        .frame(width: 48, height: 48)
                     Image(systemName: systemImage)
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.system(size: 20, weight: .semibold))
                         .foregroundColor(RSMSColors.burgundy)
                 case .outline:
                     Circle()
                         .stroke(RSMSColors.inputBorder, lineWidth: 1)
-                        .frame(width: 36, height: 36)
+                        .frame(width: 48, height: 48)
                     Image(systemName: systemImage)
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.system(size: 20, weight: .semibold))
                         .foregroundColor(RSMSColors.primaryText)
                 }
             }
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(RSMSColors.primaryText)
 
                 Text(subtitle)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundColor(RSMSColors.secondaryText)
             }
 
             Spacer()
 
             Text(tag)
-                .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                .font(.system(size: 12, weight: .semibold, design: .monospaced))
                 .tracking(0.5)
                 .foregroundColor(RSMSColors.secondaryText.opacity(0.55))
 
             Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .semibold))
+                .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
                 .rotationEffect(.degrees(chevronRotation))
                 .animation(.easeInOut(duration: 0.2), value: chevronRotation)
         }
-        .padding(14)
+        .padding(.vertical, 20)
+        .padding(.horizontal, 16)
         .contentShape(Rectangle())
     }
 
