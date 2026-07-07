@@ -1,5 +1,6 @@
 import SwiftUI
 import Supabase
+import CoreImage.CIFilterBuiltins
 
 struct ReceiptView: View {
     @Environment(SellViewModel.self) private var viewModel
@@ -17,6 +18,7 @@ struct ReceiptView: View {
     @State private var cachedTotal: Double = 0.0
     @State private var cachedSubtotal: Double = 0.0
     @State private var cachedOrderId: String = ""
+    @State private var cachedFullOrderId: String = ""   // full UUID, encoded in the QR
     @State private var cachedClientName: String? = nil
     @State private var cachedPaymentMethod: String = ""
 
@@ -135,8 +137,10 @@ struct ReceiptView: View {
                 cachedPaymentMethod = viewModel.selectedPaymentMethod.rawValue
                 if let oid = viewModel.lastOrderId {
                     cachedOrderId = "ORD-\(oid.uuidString.prefix(8).uppercased())"
+                    cachedFullOrderId = oid.uuidString
                 } else {
                     cachedOrderId = "ORD-\(Int(Date().timeIntervalSince1970))"
+                    cachedFullOrderId = ""
                 }
             }
         }
@@ -254,6 +258,22 @@ struct ReceiptView: View {
             }
             .padding(.bottom, 10)
 
+            // QR code — scanned at After Sales to pull up this order for repair/exchange.
+            if !cachedFullOrderId.isEmpty {
+                dashedDivider
+                VStack(spacing: 6) {
+                    if let qr = qrImage(for: "nexus://invoice/\(cachedFullOrderId)") {
+                        Image(uiImage: qr)
+                            .interpolation(.none)
+                            .resizable()
+                            .frame(width: 110, height: 110)
+                    }
+                    Text("Scan for service, returns & exchange")
+                        .font(.system(size: 9)).foregroundColor(RSMSColors.secondaryText)
+                }
+                .padding(.top, 6)
+            }
+
             // Footer
             VStack(spacing: 2) {
                 Text("Thank you for shopping at Nexus Retail")
@@ -276,6 +296,17 @@ struct ReceiptView: View {
             .fill(Color.gray.opacity(0.25))
             .frame(height: 1)
             .padding(.horizontal, 4)
+    }
+
+    /// Generates a QR code image for the given string (used to embed the order link).
+    private func qrImage(for string: String) -> UIImage? {
+        let context = CIContext()
+        let filter = CIFilter.qrCodeGenerator()
+        filter.message = Data(string.utf8)
+        guard let output = filter.outputImage else { return nil }
+        let scaled = output.transformed(by: CGAffineTransform(scaleX: 10, y: 10))
+        guard let cgImage = context.createCGImage(scaled, from: scaled.extent) else { return nil }
+        return UIImage(cgImage: cgImage)
     }
 
     private func receiptMetaRow(label: String, value: String) -> some View {

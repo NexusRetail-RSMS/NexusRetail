@@ -4,9 +4,10 @@ import PhotosUI
 struct CreateEventView: View {
     @Bindable var viewModel: EventsViewModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(SessionStore.self) private var sessionStore
     
     // Optional event to edit. If nil, we are creating a new event.
-    var eventToEdit: MockEvent? = nil
+    var eventToEdit: SupabaseEvent? = nil
     
     @State private var title = ""
     @State private var description = ""
@@ -18,6 +19,8 @@ struct CreateEventView: View {
     @State private var maximumGuests = 50
     @State private var selectedPhotoItem: PhotosPickerItem? = nil
     @State private var bannerImageData: Data? = nil
+    @State private var isSaving = false
+    @State private var isProcessingImage = false
     
     var body: some View {
         NavigationStack {
@@ -32,6 +35,15 @@ struct CreateEventView: View {
                                     .aspectRatio(contentMode: .fill)
                                     .frame(height: 140)
                                     .clipped()
+                            } else if let urlString = eventToEdit?.bannerImageURL, let url = URL(string: urlString) {
+                                // Show the existing banner when editing (until a new one is picked)
+                                AsyncImage(url: url) { image in
+                                    image.resizable().aspectRatio(contentMode: .fill)
+                                } placeholder: {
+                                    Color.gray.opacity(0.1)
+                                }
+                                .frame(height: 140)
+                                .clipped()
                             } else {
                                 Rectangle()
                                     .fill(Color.gray.opacity(0.1))
@@ -46,10 +58,19 @@ struct CreateEventView: View {
                                         .foregroundColor(.gray)
                                 }
                             }
+
+                            // Spinner while the picked image is being downscaled/prepared
+                            if isProcessingImage {
+                                Color.black.opacity(0.25)
+                                    .frame(height: 140)
+                                ProgressView()
+                                    .tint(.white)
+                            }
                         }
                     }
                     .listRowInsets(EdgeInsets())
                     .buttonStyle(PlainButtonStyle())
+                    .disabled(isProcessingImage || isSaving)
                 }
                 
                 // Details Section
@@ -133,66 +154,130 @@ struct CreateEventView: View {
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
-                        saveEvent()
-                        dismiss()
+                    if isSaving {
+                        ProgressView()
+                    } else {
+                        Button("Save") {
+                            Task { await saveEvent() }
+                        }
+                        .fontWeight(.bold)
+                        .foregroundColor((title.isEmpty || isProcessingImage) ? .gray : RSMSColors.burgundy)
+                        .disabled(title.isEmpty || isProcessingImage)
                     }
-                    .fontWeight(.bold)
-                    .foregroundColor(title.isEmpty ? .gray : RSMSColors.burgundy)
-                    .disabled(title.isEmpty)
                 }
             }
             .onAppear {
                 if let event = eventToEdit {
                     title = event.title
-                    description = event.description
-                    eventType = event.eventType
-                    venue = event.venue
+                    description = event.description ?? ""
+                    eventType = EventType(rawValue: event.eventType ?? "") ?? .custom
+                    venue = event.venue ?? ""
                     eventDate = event.eventDate
                     startTime = event.startTime
-                    endTime = event.endTime
+                    endTime = event.endTime ?? event.startTime
                     maximumGuests = event.maximumGuests
-                    bannerImageData = event.bannerImageData
                 }
             }
             .onChange(of: selectedPhotoItem) { _, newItem in
                 Task {
+                    isProcessingImage = true
                     if let data = try? await newItem?.loadTransferable(type: Data.self) {
-                        bannerImageData = data
+                        // Downscale + recompress before upload. Raw PhotosPicker data can be
+                        // 5-15MB, which causes the upload stream to drop (NSURLError -1005).
+                        // Run off the main thread so the UI stays responsive.
+                        let compressed = await Task.detached(priority: .userInitiated) {
+                            Self.compressForUpload(data)
+                        }.value
+                        bannerImageData = compressed
                     }
+                    isProcessingImage = false
                 }
             }
         }
     }
     
-    private func saveEvent() {
-        if let event = eventToEdit {
-            var updatedEvent = event
-            updatedEvent.title = title
-            updatedEvent.description = description
-            updatedEvent.eventType = eventType
-            updatedEvent.venue = venue
-            updatedEvent.eventDate = eventDate
-            updatedEvent.startTime = startTime
-            updatedEvent.endTime = endTime
-            updatedEvent.maximumGuests = maximumGuests
-            if let imageData = bannerImageData {
-                updatedEvent.bannerImageData = imageData
+    /// Resizes the picked image to a max dimension and recompresses it to JPEG so the
+    /// upload payload stays small (banners are wide, so we allow up to 1200px).
+    private static func compressForUpload(_ data: Data, maxDimension: CGFloat = 1200, quality: CGFloat = 0.6) -> Data {
+        guard let image = UIImage(data: data) else { return data }
+
+        let size = image.size
+        let largestSide = max(size.width, size.height)
+        let scale = largestSide > maxDimension ? maxDimension / largestSide : 1.0
+        let newSize = CGSize(width: size.width * scale, height: size.height * scale)
+
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1.0
+        let renderer = UIGraphicsImageRenderer(size: newSize, format: format)
+        let resized = renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: newSize))
+        }
+
+        return resized.jpegData(compressionQuality: quality) ?? data
+    }
+
+    @MainActor
+    private func saveEvent() async {
+        guard let storeID = sessionStore.currentUser?.storeID else { return }
+
+        isSaving = true
+        defer { isSaving = false }
+
+        var success = false
+        do {
+            if let event = eventToEdit {
+                // Combine the selected date with the start/end times so the stored
+                // scheduled_at / end_time carry both the correct day and time.
+                let calendar = Calendar.current
+                var dayComponents = calendar.dateComponents([.year, .month, .day], from: eventDate)
+                let startComponents = calendar.dateComponents([.hour, .minute, .second], from: startTime)
+                dayComponents.hour = startComponents.hour
+                dayComponents.minute = startComponents.minute
+                dayComponents.second = startComponents.second
+                let combinedStart = calendar.date(from: dayComponents) ?? startTime
+
+                var endDayComponents = calendar.dateComponents([.year, .month, .day], from: eventDate)
+                let endComponents = calendar.dateComponents([.hour, .minute, .second], from: endTime)
+                endDayComponents.hour = endComponents.hour
+                endDayComponents.minute = endComponents.minute
+                endDayComponents.second = endComponents.second
+                let combinedEnd = calendar.date(from: endDayComponents) ?? endTime
+
+                let updatedEvent = SupabaseEvent(
+                    id: event.id,
+                    storeID: event.storeID,
+                    name: title,
+                    description: description,
+                    scheduledAt: combinedStart,
+                    venue: venue,
+                    launchSkuID: event.launchSkuID,
+                    eventType: eventType.rawValue,
+                    endTime: combinedEnd,
+                    maxGuests: maximumGuests,
+                    bannerImageURL: event.bannerImageURL,
+                    eventGuests: event.eventGuests
+                )
+                
+                success = await viewModel.updateEvent(updatedEvent, newBannerData: bannerImageData)
+            } else {
+                success = await viewModel.createEvent(
+                    storeID: storeID,
+                    title: title,
+                    description: description,
+                    eventType: eventType,
+                    venue: venue,
+                    eventDate: eventDate,
+                    startTime: startTime,
+                    endTime: endTime,
+                    maximumGuests: maximumGuests,
+                    bannerImageData: bannerImageData
+                )
             }
-            
-            viewModel.updateEvent(updatedEvent)
-        } else {
-            viewModel.createEvent(
-                title: title,
-                description: description,
-                eventType: eventType,
-                venue: venue,
-                eventDate: eventDate,
-                startTime: startTime,
-                endTime: endTime,
-                maximumGuests: maximumGuests,
-                bannerImageData: bannerImageData
-            )
+        }
+
+        // Only dismiss once the upload + save have actually completed.
+        if success {
+            dismiss()
         }
     }
 }
