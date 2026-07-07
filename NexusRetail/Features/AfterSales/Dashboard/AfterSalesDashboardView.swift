@@ -67,6 +67,12 @@ struct AfterSalesDashboardView: View {
                     InvoiceItemsSelectionView(path: $navigationPath, invoiceId: invoiceId)
                 case .actionSelection(let invoiceId, let selectedItemIds):
                     AfterSalesActionSelectionView(path: $navigationPath, invoiceId: invoiceId, selectedItemIds: selectedItemIds)
+                case .exchangeProduct(let invoiceId, let selectedItemIds):
+                    ExchangeProductView(path: $navigationPath, invoiceId: invoiceId, selectedItemIds: selectedItemIds)
+                case .exchangePayment(let originalId, let replacementId, let amount):
+                    ExchangePaymentView(path: $navigationPath, originalProductId: originalId, replacementProductId: replacementId, amount: amount)
+                case .exchangeSummary(let originalId, let replacementId, let amount):
+                    ExchangeSummaryView(path: $navigationPath, originalProductId: originalId, replacementProductId: replacementId, amount: amount)
                 case .cart:          CartView(path: $navigationPath)
                 case .checkout:      CheckoutView(path: $navigationPath)
                 case .payment:       PaymentFlowView(path: $navigationPath)

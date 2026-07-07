@@ -9,8 +9,27 @@ struct AfterSalesActionSelectionView: View {
     
     var body: some View {
         ZStack(alignment: .top) {
-            RSMSColors.background
+            // Premium background
+            LinearGradient(
+                colors: [RSMSColors.background, Color(white: 0.95)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            // Decorative background blur elements
+            Circle()
+                .fill(RSMSColors.burgundy.opacity(0.15))
+                .frame(width: 300, height: 300)
+                .blur(radius: 60)
+                .position(x: 50, y: -50)
                 .ignoresSafeArea()
+                
+            Circle()
+                .fill(Color(hex: "34495E").opacity(0.1))
+                .frame(width: 250, height: 250)
+                .blur(radius: 50)
+                .position(x: UIScreen.main.bounds.width - 50, y: 300)
             
             VStack(spacing: 0) {
                 customHeaderSection
@@ -18,29 +37,27 @@ struct AfterSalesActionSelectionView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 32) {
                         Text("Select Action")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.system(size: 18, weight: .semibold, design: .rounded))
                             .foregroundColor(RSMSColors.secondaryText)
                             .padding(.horizontal, RSMSSpacing.lg)
                         
-                        VStack(spacing: 20) {
+                        VStack(spacing: 24) {
                             actionCard(
                                 title: "Exchange Product",
                                 description: "Swap the selected items for a different size, color, or a completely new product.",
                                 icon: "arrow.triangle.2.circlepath",
                                 color: RSMSColors.burgundy
                             ) {
-                                print("Exchange initiated for invoice \(invoiceId), items: \(selectedItemIds.count)")
-                                // Future navigation to exchange flow
+                                path.append(POSFlowDestination.exchangeProduct(invoiceId: invoiceId, selectedItemIds: selectedItemIds))
                             }
                             
                             actionCard(
                                 title: "Repair Product",
                                 description: "Send the selected items to our service center for expert repair and maintenance.",
                                 icon: "wrench.and.screwdriver.fill",
-                                color: Color(hex: "34495E") // A sophisticated dark blue/slate
+                                color: Color(hex: "34495E") // Sophisticated slate
                             ) {
                                 print("Repair initiated for invoice \(invoiceId), items: \(selectedItemIds.count)")
-                                // Future navigation to repair flow
                             }
                         }
                         .padding(.horizontal, RSMSSpacing.lg)
@@ -60,22 +77,27 @@ struct AfterSalesActionSelectionView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy.opacity(0.1))
-                        .frame(width: 44, height: 44)
+                        .fill(.ultraThinMaterial)
+                        .frame(width: 48, height: 48)
+                    
+                    Circle()
+                        .stroke(Color.white.opacity(0.5), lineWidth: 0.5)
+                        .frame(width: 48, height: 48)
 
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 18, weight: .bold))
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(RSMSColors.primaryText)
                 }
             }
+            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
             
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("Process Items")
-                    .font(.system(size: 24, weight: .bold))
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundColor(RSMSColors.primaryText)
                 
                 Text("\(selectedItemIds.count) item(s) selected")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 15, weight: .medium))
                     .foregroundColor(RSMSColors.secondaryText)
             }
             
@@ -84,7 +106,8 @@ struct AfterSalesActionSelectionView: View {
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.top, 60)
         .padding(.bottom, RSMSSpacing.md)
-        .background(.regularMaterial)
+        .background(.ultraThinMaterial)
+        .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
     }
     
     // MARK: - Action Card
@@ -95,36 +118,50 @@ struct AfterSalesActionSelectionView: View {
                 ZStack {
                     Circle()
                         .fill(color.opacity(0.1))
-                        .frame(width: 60, height: 60)
+                        .frame(width: 64, height: 64)
                     
                     Image(systemName: icon)
-                        .font(.system(size: 24, weight: .semibold))
+                        .font(.system(size: 26, weight: .medium))
                         .foregroundColor(color)
                 }
                 
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 8) {
                     Text(title)
-                        .font(.system(size: 18, weight: .bold))
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
                         .foregroundColor(RSMSColors.primaryText)
                     
                     Text(description)
-                        .font(.system(size: 13))
+                        .font(.system(size: 14))
                         .foregroundColor(RSMSColors.secondaryText)
-                        .lineSpacing(2)
+                        .lineSpacing(4)
                         .multilineTextAlignment(.leading)
                 }
                 
                 Spacer(minLength: 0)
                 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(RSMSColors.secondaryText.opacity(0.3))
             }
-            .padding(20)
-            .background(RSMSColors.cardBackground)
-            .cornerRadius(20)
-            .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 4)
+            .padding(24)
+            .background(.white)
+            .cornerRadius(24)
+            .overlay(
+                RoundedRectangle(cornerRadius: 24)
+                    .stroke(Color.white.opacity(0.8), lineWidth: 1)
+            )
+            .shadow(color: color.opacity(0.08), radius: 15, x: 0, y: 8)
+            .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(ScaleButtonStyle())
+    }
+}
+
+// Button style for press animation
+struct ScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
     }
 }

@@ -24,6 +24,9 @@ enum POSFlowDestination: Hashable {
     case invoiceScanner
     case invoiceItemsSelection(invoiceId: String)
     case actionSelection(invoiceId: String, selectedItemIds: Set<UUID>)
+    case exchangeProduct(invoiceId: String, selectedItemIds: Set<UUID>)
+    case exchangePayment(originalProductId: UUID, replacementProductId: UUID, amount: Double)
+    case exchangeSummary(originalProductId: UUID, replacementProductId: UUID, amount: Double)
 }
 
 // MARK: - Chart / Period
