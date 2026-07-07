@@ -60,22 +60,20 @@ struct AfterSalesActionSelectionView: View {
     // MARK: - Product Hero
     private var productHeroSection: some View {
         VStack(spacing: 0) {
-            GeometryReader { geo in
-                let width = geo.size.width
-                CachedAsyncImage(url: URL(string: selectedItem.imageUrl ?? "")) { image in
-                    image
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: width, height: width * 1.1)
-                        .clipped()
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.1))
-                        .frame(width: width, height: width * 1.1)
-                        .overlay(ProgressView())
-                }
+            CachedAsyncImage(url: URL(string: selectedItem.imageUrl ?? "")) { image in
+                image
+                    .resizable()
+                    .scaledToFill()
+                    .aspectRatio(1 / 1.1, contentMode: .fit)
+                    .frame(maxWidth: .infinity)
+                    .clipped()
+            } placeholder: {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.1))
+                    .aspectRatio(1 / 1.1, contentMode: .fit)
+                    .frame(maxWidth: .infinity)
+                    .overlay(ProgressView())
             }
-            .frame(height: UIScreen.main.bounds.width * 1.1)
             
             // Product info
             VStack(alignment: .center, spacing: 8) {

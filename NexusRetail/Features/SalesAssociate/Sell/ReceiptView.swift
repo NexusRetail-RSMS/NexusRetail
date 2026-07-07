@@ -4,6 +4,7 @@ import Supabase
 struct ReceiptView: View {
     @Environment(SellViewModel.self) private var viewModel
     @Environment(SessionStore.self) private var sessionStore
+    @Environment(\.displayScale) private var displayScale
 
     var onComplete: (() -> Void)? = nil
 
@@ -302,7 +303,7 @@ struct ReceiptView: View {
     @MainActor
     private func shareReceipt() {
         let renderer = ImageRenderer(content: paperReceiptView.frame(width: 350))
-        renderer.scale = UIScreen.main.scale
+        renderer.scale = displayScale
         if let image = renderer.uiImage {
             generatedReceiptImage = image
             showShareSheet = true
