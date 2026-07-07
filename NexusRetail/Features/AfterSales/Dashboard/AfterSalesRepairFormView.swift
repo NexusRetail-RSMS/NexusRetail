@@ -190,6 +190,8 @@ struct AfterSalesRepairFormView: View {
                 
                 DatePicker("Pickup Date", selection: $pickupDate, in: Date()..., displayedComponents: .date)
                     .datePickerStyle(.compact)
+                    .environment(\.locale, Locale.current)
+                    .id("pickupDatePicker")
                     .padding(12)
                     .background(Color.white)
                     .cornerRadius(12)
