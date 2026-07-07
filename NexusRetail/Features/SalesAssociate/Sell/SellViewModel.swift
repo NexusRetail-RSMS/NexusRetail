@@ -112,6 +112,9 @@ class SellViewModel {
             .execute()
             .value
         self.lastOrderId = orderIdResponse
+        
+        // Refresh local cache of stock so UI updates immediately
+        await POSProductRepository.shared.refreshStockForStore(storeID: storeID)
     }
     
     private func createCheckoutParams(storeID: UUID?, associateID: UUID?) throws -> CheckoutParams {
@@ -262,6 +265,10 @@ class SellViewModel {
                                 if verifyResponse.success, let dbOrderId = verifyResponse.order_id {
                                     self.lastOrderId = dbOrderId
                                     self.razorpayGateway = nil
+                                    
+                                    // Refresh local cache of stock so UI updates immediately
+                                    await POSProductRepository.shared.refreshStockForStore(storeID: storeID)
+                                    
                                     continuation.resume(returning: ())
                                 } else {
                                     self.razorpayGateway = nil
