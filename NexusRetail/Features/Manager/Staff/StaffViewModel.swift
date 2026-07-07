@@ -40,6 +40,7 @@ class StaffViewModel {
     
     private let localCacheKey = "nexus_local_staff_cache_v2"
     private let deletedIDsKey = "nexus_local_staff_deleted_ids_v1"
+    private var lastStoreID: UUID?
 
     private var deletedIDs: Set<UUID> {
         get {
@@ -74,7 +75,12 @@ class StaffViewModel {
         return decoded
     }
 
-    func loadStaff() async {
+    func loadStaff(storeID: UUID?) async {
+        if let sid = storeID {
+            self.lastStoreID = sid
+        }
+        let currentStoreID = self.lastStoreID
+        
         isLoading = true
         errorMessage = nil
         do {
@@ -88,8 +94,10 @@ class StaffViewModel {
             
             let remoteEmployees = response.compactMap { stat -> DisplayEmployee? in
                 guard !deleted.contains(stat.id) else { return nil }
+                if let managerStore = currentStoreID, stat.storeId != managerStore { return nil }
+                guard let role = stat.role?.lowercased(), !role.contains("manager"), !role.contains("admin") else { return nil }
                 
-                let isAfterSales = stat.role == "after_sales" || stat.role?.lowercased().contains("after") == true
+                let isAfterSales = role == "after_sales" || role.contains("after")
                 let roleStr = isAfterSales ? "After Sales Associate" : "Sales Associate"
                 let revVal = stat.revenue ?? 0
                 let revStr = formatIndianCurrency(revVal)
@@ -177,9 +185,9 @@ class StaffViewModel {
             }
         }
 
-        // Reload either way: on success this confirms removal, on failure it
-        // brings the still-live employee back into the list.
-        await loadStaff()
+        // brings the still-live employee back into the list. (storeID is not updated here, it relies on the View calling loadStaff directly if needed, or we just pass nil to reload all cached ones and they will be filtered by the view)
+        // Wait, if we just pass nil, it won't filter by store_id. But since it's an internal refresh, let's keep it.
+        await loadStaff(storeID: nil)
         return deleted
     }
     
@@ -283,7 +291,7 @@ class StaffViewModel {
                 _ = await sendEmployeeEmail(to: employee.email, password: password, name: employee.name, role: employee.role)
             }
             
-            await loadStaff() // Reload to get the new staff member and true ID
+            await loadStaff(storeID: nil) // Reload to get the new staff member and true ID
             return nil
             
         } catch {

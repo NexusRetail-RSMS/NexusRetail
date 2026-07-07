@@ -63,10 +63,12 @@ struct StoreOrder: Codable, Identifiable {
     let orderType: String?
     let status: String?
     let client: StoreOrderClient?
-    
+    // Pickup verification code (BOPIS). Presence + status 'open' => waiting for customer.
+    let pickupCode: String?
+
     // Nested relationship
     let orderLineItems: [OrderLineItem]?
-    
+
     enum CodingKeys: String, CodingKey {
         case id
         case clientID = "client_id"
@@ -77,10 +79,11 @@ struct StoreOrder: Codable, Identifiable {
         case orderType = "order_type"
         case status
         case client
+        case pickupCode = "pickup_code"
         case orderLineItems = "order_line_item"
     }
-    
-    init(id: UUID, clientID: UUID?, storeID: UUID?, associateID: UUID?, total: Double, createdAt: String, orderType: String?, status: String?, client: StoreOrderClient?, orderLineItems: [OrderLineItem]?) {
+
+    init(id: UUID, clientID: UUID?, storeID: UUID?, associateID: UUID?, total: Double, createdAt: String, orderType: String?, status: String?, client: StoreOrderClient?, orderLineItems: [OrderLineItem]?, pickupCode: String? = nil) {
         self.id = id
         self.clientID = clientID
         self.storeID = storeID
@@ -90,6 +93,7 @@ struct StoreOrder: Codable, Identifiable {
         self.orderType = orderType
         self.status = status
         self.client = client
+        self.pickupCode = pickupCode
         self.orderLineItems = orderLineItems
     }
 }

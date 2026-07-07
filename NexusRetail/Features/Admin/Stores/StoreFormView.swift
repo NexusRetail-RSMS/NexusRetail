@@ -52,7 +52,7 @@ struct StoreFormView: View {
             _currencyCode = State(initialValue: store.currencyCode ?? "INR")
             _timezone = State(initialValue: store.timezone ?? "Asia/Kolkata")
             _selectedManagerID = State(initialValue: store.managerID)
-            _isActive = State(initialValue: store.status == .active)
+            _isActive = State(initialValue: store.status == .active && store.managerID != nil)
             _country = State(initialValue: store.country ?? "")
             _city = State(initialValue: store.city ?? "")
             if let lat = store.latitude, let lng = store.longitude {
@@ -177,19 +177,21 @@ struct StoreFormView: View {
                         }
                     }
 
-                    FormSectionCard(title: "Payment Terminals") {
-                        PremiumToggleRow(icon: "creditcard.fill", title: "Razorpay", isOn: $includeRazorpay)
-                        if includeRazorpay {
+                    if editingStore == nil {
+                        FormSectionCard(title: "Payment Terminals") {
+                            PremiumToggleRow(icon: "creditcard.fill", title: "Razorpay", isOn: $includeRazorpay)
+                            if includeRazorpay {
+                                FormDivider()
+                                PremiumTextField(icon: "key.fill", placeholder: "Razorpay Key ID", text: $razorpayKey)
+                                FormDivider()
+                                PremiumTextField(icon: "lock.fill", placeholder: "Razorpay Key Secret", text: $razorpaySecret)
+                            }
                             FormDivider()
-                            PremiumTextField(icon: "key.fill", placeholder: "Razorpay Key ID", text: $razorpayKey)
-                            FormDivider()
-                            PremiumTextField(icon: "lock.fill", placeholder: "Razorpay Key Secret", text: $razorpaySecret)
-                        }
-                        FormDivider()
-                        PremiumToggleRow(icon: "wave.3.right.circle.fill", title: "Card Terminal", isOn: $includeCard)
-                        if includeCard {
-                            FormDivider()
-                            PremiumTextField(icon: "terminal.fill", placeholder: "Terminal ID", text: $cardTerminalID)
+                            PremiumToggleRow(icon: "wave.3.right.circle.fill", title: "Card Terminal", isOn: $includeCard)
+                            if includeCard {
+                                FormDivider()
+                                PremiumTextField(icon: "terminal.fill", placeholder: "Terminal ID", text: $cardTerminalID)
+                            }
                         }
                     }
 
@@ -372,6 +374,8 @@ struct StoreFormView: View {
                 .filter { !$0.isEmpty }
                 .joined(separator: ", ")
 
+            let finalStatus: StoreStatus = (isActive && selectedManagerID != nil) ? .active : .archived
+
             if let store = editingStore {
                 let success = await viewModel.update(
                     storeId: store.id,
@@ -382,7 +386,7 @@ struct StoreFormView: View {
                     currencyCode: currencyCode,
                     timezone: timezone,
                     managerID: selectedManagerID,
-                    status: isActive ? .active : .archived,
+                    status: finalStatus,
                     latitude: pickedCoordinate?.latitude,
                     longitude: pickedCoordinate?.longitude,
                     city: city,
@@ -399,9 +403,12 @@ struct StoreFormView: View {
                     currencyCode: currencyCode,
                     timezone: timezone,
                     managerID: selectedManagerID,
-                    status: isActive ? .active : .archived,
+                    status: finalStatus,
                     includeRazorpay: includeRazorpay,
+                    razorpayKey: razorpayKey,
+                    razorpaySecret: razorpaySecret,
                     includeCard: includeCard,
+                    cardTerminalID: cardTerminalID,
                     latitude: pickedCoordinate?.latitude,
                     longitude: pickedCoordinate?.longitude,
                     city: city,

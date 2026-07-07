@@ -28,6 +28,9 @@ class SellViewModel {
     
     // Unavailable product and alternative helper tracking
     var originalUnavailableProduct: POSProduct? = nil
+    
+    // Gateway retention
+    private var razorpayGateway: RazorpayGateway?
     var isAlternativeSuggested: Bool = false
     
     // Receipt digital share fields
@@ -103,7 +106,19 @@ class SellViewModel {
     }
     
     func processCheckout(storeID: UUID?, associateID: UUID?) async throws {
-        guard let storeID = storeID, let associateID = associateID else { return }
+        let params = try createCheckoutParams(storeID: storeID, associateID: associateID)
+        let orderIdResponse: UUID = try await SupabaseManager.shared.client
+            .rpc("process_pos_checkout", params: params)
+            .execute()
+            .value
+        self.lastOrderId = orderIdResponse
+        
+        // Refresh local cache of stock so UI updates immediately
+        await POSProductRepository.shared.refreshStockForStore(storeID: storeID)
+    }
+    
+    private func createCheckoutParams(storeID: UUID?, associateID: UUID?) throws -> CheckoutParams {
+        guard let storeID = storeID, let associateID = associateID else { throw NSError(domain: "Checkout", code: 1, userInfo: [NSLocalizedDescriptionKey: "Missing storeID or associateID"]) }
         
         // Group items by ID to handle quantities
         var itemCounts: [UUID: (POSProduct, Int)] = [:]
@@ -123,10 +138,9 @@ class SellViewModel {
             ]
         }
         
-        // Map the POS payment method to the DB payment_method enum ('razorpay' | 'card').
         let paymentMethodValue = selectedPaymentMethod == .razorpay ? "razorpay" : "card"
 
-        let params = CheckoutParams(
+        return CheckoutParams(
             p_store_id: storeID,
             p_associate_id: associateID,
             p_items: pItems,
@@ -134,12 +148,145 @@ class SellViewModel {
             p_client_id: selectedClientId,
             p_payment_method: paymentMethodValue
         )
+    }
+    
+    struct CreateOrderRequest: Encodable {
+        let action = "create_order"
+        let store_id: UUID
+        let amount: Double
+        let receipt: String
+    }
+    
+    struct VerifySignatureRequest: Encodable {
+        let action = "verify_signature"
+        let store_id: UUID
+        let razorpay_order_id: String
+        let razorpay_payment_id: String
+        let razorpay_signature: String
+        let checkout_params: CheckoutParams
+    }
+    
+    struct VerifyResponse: Decodable {
+        let success: Bool
+        let order_id: UUID?
+        let message: String?
+    }
+    
+    private func extractEdgeFunctionError(_ error: Error) -> Error {
+        if let functionsError = error as? FunctionsError,
+           case .httpError(let code, let data) = functionsError,
+           let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let errMsg = dict["error"] as? String {
+            return NSError(domain: "Checkout", code: code, userInfo: [NSLocalizedDescriptionKey: errMsg])
+        }
+        return error
+    }
+    
+    func processRazorpayCheckout(storeID: UUID?, associateID: UUID?) async throws {
+        guard let storeID = storeID else { throw NSError(domain: "Checkout", code: 1, userInfo: [NSLocalizedDescriptionKey: "Missing storeID"]) }
         
-        let orderIdResponse: UUID = try await SupabaseManager.shared.client
-            .rpc("process_pos_checkout", params: params)
-            .execute()
-            .value
-        self.lastOrderId = orderIdResponse
+        // 1. Create order on the backend edge function
+        let createRequest = CreateOrderRequest(store_id: storeID, amount: totalAmount, receipt: "rcpt_\(Int.random(in: 1000...9999))")
+        
+        struct CreateOrderResponse: Decodable {
+            let razorpay_order_id: String
+        }
+        
+        let createResponse: CreateOrderResponse
+        do {
+            createResponse = try await SupabaseManager.shared.client.functions.invoke(
+                "razorpay-checkout",
+                options: FunctionInvokeOptions(body: createRequest)
+            )
+        } catch {
+            throw extractEdgeFunctionError(error)
+        }
+        
+        let razorpayOrderID = createResponse.razorpay_order_id
+        
+        // 2. Fetch Razorpay Key configuration to open checkout
+        let configService = PaymentConfigurationService()
+        guard let terminal = try await configService.fetchConfiguration(storeID: storeID, provider: .razorpay),
+              let razorpayKey = terminal.credential1 else {
+            throw NSError(domain: "Checkout", code: 2, userInfo: [NSLocalizedDescriptionKey: "Razorpay configuration missing"])
+        }
+        
+        // 3. Open Razorpay Checkout via UI bridging
+        return try await withCheckedThrowingContinuation { continuation in
+            DispatchQueue.main.async {
+                let options: [String: Any] = [
+                    "amount": Int(self.totalAmount * 100),
+                    "currency": "INR",
+                    "description": "Nexus Retail Checkout",
+                    "order_id": razorpayOrderID,
+                    "name": "Nexus Retail",
+                    "prefill": [
+                        "contact": "9999999999",
+                        "email": "test@nexusretail.com"
+                    ]
+                ]
+                
+                let gateway = RazorpayGateway(keyID: razorpayKey.trimmingCharacters(in: .whitespacesAndNewlines))
+                self.razorpayGateway = gateway
+                
+                gateway.openCheckout(options: options) { [weak self] result in
+                    guard let self = self else { return }
+                    switch result {
+                    case .success(let data):
+                        guard let paymentId = data["razorpay_payment_id"] as? String,
+                              let signature = data["razorpay_signature"] as? String else {
+                            self.razorpayGateway = nil
+                            continuation.resume(throwing: NSError(domain: "Checkout", code: 3, userInfo: [NSLocalizedDescriptionKey: "Invalid response from Razorpay"]))
+                            return
+                        }
+                        
+                        Task {
+                            do {
+                                // 4. Verify signature on backend & create database order
+                                let checkoutParams = try self.createCheckoutParams(storeID: storeID, associateID: associateID)
+                                let verifyRequest = VerifySignatureRequest(
+                                    store_id: storeID,
+                                    razorpay_order_id: razorpayOrderID,
+                                    razorpay_payment_id: paymentId,
+                                    razorpay_signature: signature,
+                                    checkout_params: checkoutParams
+                                )
+                                
+                                let verifyResponse: VerifyResponse
+                                do {
+                                    verifyResponse = try await SupabaseManager.shared.client.functions.invoke(
+                                        "razorpay-checkout",
+                                        options: FunctionInvokeOptions(body: verifyRequest)
+                                    )
+                                } catch {
+                                    throw self.extractEdgeFunctionError(error)
+                                }
+                                
+                                if verifyResponse.success, let dbOrderId = verifyResponse.order_id {
+                                    self.lastOrderId = dbOrderId
+                                    self.razorpayGateway = nil
+                                    
+                                    // Refresh local cache of stock so UI updates immediately
+                                    await POSProductRepository.shared.refreshStockForStore(storeID: storeID)
+                                    
+                                    continuation.resume(returning: ())
+                                } else {
+                                    self.razorpayGateway = nil
+                                    continuation.resume(throwing: NSError(domain: "Checkout", code: 4, userInfo: [NSLocalizedDescriptionKey: "Signature verification failed"]))
+                                }
+                            } catch {
+                                self.razorpayGateway = nil
+                                continuation.resume(throwing: error)
+                            }
+                        }
+                        
+                    case .failure(let error):
+                        self.razorpayGateway = nil
+                        continuation.resume(throwing: error)
+                    }
+                }
+            }
+        }
     }
     
     // MARK: - Client lookup / quick-create (checkout customer linking)

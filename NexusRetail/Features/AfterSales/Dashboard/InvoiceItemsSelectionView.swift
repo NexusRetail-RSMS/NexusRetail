@@ -12,7 +12,7 @@ struct InvoiceItemsSelectionView: View {
         POSProduct(id: UUID(), itemId: 3, name: "Aviator Sunglasses", sku: "SUN-892", category: "Eyewear", price: 8900, stock: 5, size: "Standard", imageUrl: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=500&auto=format&fit=crop&q=60")
     ]
     
-    @State private var selectedItemIds: Set<UUID> = []
+@State private var selectedItemIds: Set<UUID> = []
     @State private var purchaseDate: Date = Date()
     @State private var salesAssociateName: String = "Jane Doe"
     @State private var storeName: String = "Nexus Retail — MG Road"
@@ -32,18 +32,21 @@ struct InvoiceItemsSelectionView: View {
     
     var body: some View {
         ZStack(alignment: .bottom) {
-            RSMSColors.background
-                .ignoresSafeArea()
-            
-            VStack(spacing: 0) {
-                customHeaderSection
+            ZStack(alignment: .top) {
+                RSMSColors.background
+                    .ignoresSafeArea()
                 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         // Always-visible invoice info banner in burgundy
                         invoiceInfoBanner
+
+                        Text("Select item to process")
+                            .font(.system(size: 14, weight: .medium))
+                            .textCase(.uppercase)
+                            .foregroundColor(RSMSColors.secondaryText.opacity(0.8))
                             .padding(.horizontal, RSMSSpacing.lg)
-                            .padding(.top, RSMSSpacing.md)
+                            .padding(.bottom, 4)
                         
                         Text("Select items to process")
                             .font(.system(size: 15, weight: .semibold))
@@ -59,7 +62,11 @@ struct InvoiceItemsSelectionView: View {
                         
                         Spacer(minLength: 120)
                     }
+                    .padding(.top, 150) // Give space for header
                 }
+                .ignoresSafeArea(edges: .top)
+                
+                customHeaderSection
             }
             
             bottomActionBar
@@ -167,7 +174,7 @@ struct InvoiceItemsSelectionView: View {
             }
             
             VStack(alignment: .leading, spacing: 2) {
-                Text("Invoice Items")
+                Text("Invoice Item")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(RSMSColors.primaryText)
                 
@@ -181,19 +188,20 @@ struct InvoiceItemsSelectionView: View {
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.top, 60)
         .padding(.bottom, RSMSSpacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(.regularMaterial)
+        .ignoresSafeArea(edges: .top)
     }
     
-    // MARK: - Item Row
     private func itemRow(_ item: POSProduct) -> some View {
-        let isSelected = selectedItemIds.contains(item.id)
+        let isSelected = selectedItemId == item.id
         
         return Button {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 if isSelected {
-                    selectedItemIds.remove(item.id)
+                    selectedItemId = nil
                 } else {
-                    selectedItemIds.insert(item.id)
+                    selectedItemId = item.id
                 }
             }
         } label: {
@@ -255,32 +263,22 @@ struct InvoiceItemsSelectionView: View {
     private var bottomActionBar: some View {
         VStack {
             Button {
-                path.append(POSFlowDestination.actionSelection(invoiceId: invoiceId, selectedItemIds: selectedItemIds))
-            } label: {
-                HStack {
-                    Text("Continue")
-                        .font(.system(size: 18, weight: .bold))
-                    Spacer()
-                    Text("\(selectedItemIds.count) Selected")
-                        .font(.system(size: 14, weight: .medium))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 4)
-                        .background(Color.white.opacity(0.2))
-                        .clipShape(Capsule())
+                if let selectedId = selectedItemId, let selectedItem = items.first(where: { $0.id == selectedId }) {
+                    path.append(POSFlowDestination.actionSelection(invoiceId: invoiceId, selectedItem: selectedItem))
                 }
-                .foregroundColor(.white)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 16)
-                .background(selectedItemIds.isEmpty ? RSMSColors.secondaryText.opacity(0.5) : RSMSColors.burgundy)
-                .cornerRadius(16)
+            } label: {
+                Text("Continue")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(selectedItemId == nil ? RSMSColors.secondaryText.opacity(0.5) : RSMSColors.burgundy)
+                    .cornerRadius(12)
             }
-            .disabled(selectedItemIds.isEmpty)
+            .disabled(selectedItemId == nil)
         }
         .padding(.horizontal, RSMSSpacing.lg)
-        .padding(.vertical, RSMSSpacing.lg)
-        .background(
-            Color.white
-                .shadow(color: Color.black.opacity(0.05), radius: 10, y: -5)
-        )
+        .padding(.bottom, 24)
+        .padding(.top, 16)
     }
 }

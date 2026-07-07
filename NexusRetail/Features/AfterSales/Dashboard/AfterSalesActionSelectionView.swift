@@ -5,7 +5,7 @@ struct AfterSalesActionSelectionView: View {
     @Binding var path: NavigationPath
     
     let invoiceId: String
-    let selectedItemIds: Set<UUID>
+    let selectedItem: POSProduct
     
     @State private var showExchangeDeclinedAlert = false
     
@@ -50,44 +50,52 @@ struct AfterSalesActionSelectionView: View {
                 .blur(radius: 50)
                 .position(x: UIScreen.main.bounds.width - 50, y: 300)
             
-            VStack(spacing: 0) {
-                customHeaderSection
-                
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 32) {
-                        Text("Select Action")
-                            .font(.system(size: 18, weight: .semibold, design: .rounded))
-                            .foregroundColor(RSMSColors.secondaryText)
-                            .padding(.horizontal, RSMSSpacing.lg)
-                        
-                        VStack(spacing: 24) {
-                            actionCard(
-                                title: "Exchange Product",
-                                description: "Swap the selected items for a different size, color, or a completely new product.",
-                                icon: "arrow.triangle.2.circlepath",
-                                color: RSMSColors.burgundy
-                            ) {
-                                if isInvoiceExpired {
-                                    showExchangeDeclinedAlert = true
-                                } else {
-                                    path.append(POSFlowDestination.exchangeProduct(invoiceId: invoiceId, selectedItemIds: selectedItemIds))
-                                }
-                            }
-                            
-                            actionCard(
-                                title: "Repair Product",
-                                description: "Send the selected items to our service center for expert repair and maintenance.",
-                                icon: "wrench.and.screwdriver.fill",
-                                color: Color(hex: "34495E") // Sophisticated slate
-                            ) {
-                                print("Repair initiated for invoice \(invoiceId), items: \(selectedItemIds.count)")
-                            }
-                        }
-                        .padding(.horizontal, RSMSSpacing.lg)
+VStack(spacing: 0) {
+    customHeaderSection
+
+    ScrollView(showsIndicators: false) {
+        productHeroSection
+
+        VStack(alignment: .leading, spacing: 32) {
+            Text("Select Action")
+                .font(.system(size: 18, weight: .semibold, design: .rounded))
+                .foregroundColor(RSMSColors.secondaryText)
+                .padding(.horizontal, RSMSSpacing.lg)
+
+            VStack(spacing: 24) {
+                actionCard(
+                    title: "Exchange Product",
+                    description: "Swap the selected items for a different size, color, or a completely new product.",
+                    icon: "arrow.triangle.2.circlepath",
+                    color: RSMSColors.burgundy
+                ) {
+                    if isInvoiceExpired {
+                        showExchangeDeclinedAlert = true
+                    } else {
+                        path.append(POSFlowDestination.exchangeProduct(invoiceId: invoiceId, selectedItemIds: selectedItemIds))
                     }
-                    .padding(.top, RSMSSpacing.lg)
+                }
+
+                actionCard(
+                    title: "Repair Product",
+                    description: "Send the selected items to our service center for expert repair and maintenance.",
+                    icon: "wrench.and.screwdriver.fill",
+                    color: Color(hex: "34495E") // Sophisticated slate
+                ) {
+                    print("Repair initiated for invoice \(invoiceId), items: \(selectedItemIds.count)")
                 }
             }
+            .padding(.horizontal, RSMSSpacing.lg)
+        }
+        .padding(.top, RSMSSpacing.lg)
+    }
+
+                }
+                .padding(.bottom, 60)
+            }
+            .ignoresSafeArea(edges: .top)
+            
+            customHeaderSection
         }
         .navigationBarHidden(true)
         .alert("Exchange Not Possible", isPresented: $showExchangeDeclinedAlert) {
@@ -99,50 +107,114 @@ struct AfterSalesActionSelectionView: View {
     
     // MARK: - Header
     private var customHeaderSection: some View {
-        HStack(alignment: .center, spacing: RSMSSpacing.md) {
+        HStack {
             Button {
                 dismiss()
             } label: {
                 ZStack {
                     Circle()
                         .fill(.ultraThinMaterial)
-                        .frame(width: 48, height: 48)
-                    
-                    Circle()
-                        .stroke(Color.white.opacity(0.5), lineWidth: 0.5)
-                        .frame(width: 48, height: 48)
+.frame(width: 48, height: 48)
+.shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+
+Circle()
+    .stroke(Color.white.opacity(0.5), lineWidth: 0.5)
+    .frame(width: 48, height: 48)
 
                     Image(systemName: "chevron.left")
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(RSMSColors.primaryText)
                 }
             }
-            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Process Items")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.primaryText)
-                
-                Text("\(selectedItemIds.count) item(s) selected")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
-            }
-            
+.shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+
+VStack(alignment: .leading, spacing: 4) {
+    Text("Process Items")
+        .font(.system(size: 28, weight: .bold, design: .rounded))
+        .foregroundColor(RSMSColors.primaryText)
+
+    Text("\(selectedItemIds.count) item(s) selected")
+        .font(.system(size: 15, weight: .medium))
+        .foregroundColor(RSMSColors.secondaryText)
+}
+
+
             Spacer()
         }
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.top, 60)
-        .padding(.bottom, RSMSSpacing.md)
-        .background(.ultraThinMaterial)
-        .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
+.padding(.bottom, RSMSSpacing.md)
+.background(.ultraThinMaterial)
+.shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
     }
     
-    // MARK: - Action Card
-    private func actionCard(title: String, description: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
+    // MARK: - Product Hero
+    private var productHeroSection: some View {
+        VStack(spacing: 0) {
+            GeometryReader { geo in
+                let width = geo.size.width
+                CachedAsyncImage(url: URL(string: selectedItem.imageUrl ?? "")) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: width, height: width * 1.1)
+                        .clipped()
+                } placeholder: {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.1))
+                        .frame(width: width, height: width * 1.1)
+                        .overlay(ProgressView())
+                }
+            }
+            .frame(height: UIScreen.main.bounds.width * 1.1)
+            
+            // Product info
+            VStack(alignment: .center, spacing: 8) {
+                Text(selectedItem.name)
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(RSMSColors.primaryText)
+                    .multilineTextAlignment(.center)
+                
+                Text(String(format: "₹%.0f", selectedItem.price))
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(RSMSColors.secondaryText)
+                
+                Text("\(selectedItem.category) • Size: \(selectedItem.size)")
+                    .font(.system(size: 14))
+                    .foregroundColor(RSMSColors.secondaryText.opacity(0.8))
+            }
+            .padding(.top, 32)
+            .padding(.horizontal, RSMSSpacing.lg)
+        }
+    }
+    
+    // MARK: - Action Grid
+    private var actionGridSection: some View {
+        HStack(spacing: 16) {
+            actionTile(
+                title: "Exchange",
+                icon: "arrow.triangle.2.circlepath",
+                color: RSMSColors.burgundy
+            ) {
+                print("Exchange initiated for invoice \(invoiceId), item: \(selectedItem.id)")
+                // Future navigation to exchange flow
+            }
+            
+            actionTile(
+                title: "Repair",
+                icon: "wrench.and.screwdriver.fill",
+                color: Color(hex: "34495E")
+            ) {
+                path.append(POSFlowDestination.repairForm(invoiceId: invoiceId, selectedItem: selectedItem))
+            }
+        }
+        .padding(.horizontal, RSMSSpacing.lg)
+        .padding(.top, 40)
+    }
+    
+    private func actionTile(title: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 20) {
-                // Icon Container
+            VStack(spacing: 16) {
                 ZStack {
                     Circle()
                         .fill(color.opacity(0.1))
@@ -191,5 +263,6 @@ struct ScaleButtonStyle: ButtonStyle {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
             .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
+
     }
 }

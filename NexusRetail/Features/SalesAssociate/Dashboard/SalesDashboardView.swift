@@ -70,7 +70,7 @@ struct SalesDashboardView: View {
                 case .ordersHub:
                     OrdersHubView(path: $navigationPath)
                 case .invoiceScanner, .invoiceItemsSelection, .actionSelection,
-                     .exchangeProduct, .exchangePayment, .exchangeSummary:
+                     .exchangeProduct, .exchangePayment, .exchangeSummary, .repairForm:
                     EmptyView()
                 }
             }

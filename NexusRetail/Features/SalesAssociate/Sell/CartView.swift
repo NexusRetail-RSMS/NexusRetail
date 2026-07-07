@@ -37,16 +37,6 @@ struct CartView: View {
                         // Pricing Summary
                         VStack(spacing: 12) {
                             HStack {
-                                Text("Subtotal")
-                                    .font(.system(size: 15))
-                                    .foregroundColor(RSMSColors.secondaryText)
-                                Spacer()
-                                Text(formatIndianCurrency(viewModel.subtotalAmount))
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(RSMSColors.primaryText)
-                            }
-                            Divider()
-                            HStack {
                                 Text("Total Amount")
                                     .font(.system(size: 16, weight: .bold))
                                     .foregroundColor(RSMSColors.darkBrown)
@@ -88,6 +78,7 @@ struct CartView: View {
             .ignoresSafeArea(edges: .top)
         }
         .navigationBarHidden(true)
+        .toolbar(.hidden, for: .tabBar)
         .safeAreaInset(edge: .bottom) {
             if !viewModel.cartItems.isEmpty {
                 stickyCheckoutBar
