@@ -181,24 +181,25 @@ struct AfterSalesRepairFormView: View {
                     )
             }
             
-            VStack(alignment: .leading, spacing: 8) {
+            HStack {
                 Text("Estimated Pickup Date")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(RSMSColors.primaryText)
                 
-                DatePicker("", selection: $pickupDate, displayedComponents: .date)
+                Spacer()
+                
+                DatePicker("", selection: $pickupDate, in: Date()..., displayedComponents: .date)
                     .datePickerStyle(.compact)
                     .labelsHidden()
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white)
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(RSMSColors.inputBorder, lineWidth: 1)
-                    )
+                    .accentColor(RSMSColors.burgundy)
             }
+            .padding(16)
+            .background(Color.white)
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(RSMSColors.inputBorder, lineWidth: 1)
+            )
             
             Divider()
                 .background(RSMSColors.divider)
