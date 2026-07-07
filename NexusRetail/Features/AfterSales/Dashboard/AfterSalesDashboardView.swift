@@ -8,12 +8,18 @@ import Charts
 
 struct AfterSalesDashboardView: View {
     @Environment(SessionStore.self) private var sessionStore
+    
+    // POS navigation state
+    @State private var posViewModel    = SellViewModel()
+    @State private var navigationPath  = NavigationPath()
+    @Namespace private var namespace
+
     @State private var vm = AfterSalesDashboardViewModel()
     @State private var isProfilePresented = false
     
     var body: some View {
-        NavigationStack {
-            ZStack {
+        NavigationStack(path: $navigationPath) {
+            ZStack(alignment: .bottomTrailing) {
                 RSMSColors.background.ignoresSafeArea()
                 
                 ScrollView(showsIndicators: false) {
@@ -27,12 +33,55 @@ struct AfterSalesDashboardView: View {
                     .padding(.horizontal, RSMSSpacing.lg)
                     .padding(.top, 16)
                 }
+                
+                if #available(iOS 18.0, *) {
+                    floatingQRButton
+                        .matchedTransitionSource(id: "scannerButton", in: namespace)
+                } else {
+                    floatingQRButton
+                }
             }
             .navigationBarHidden(true)
             .sheet(isPresented: $isProfilePresented) {
                 AdminProfileSheet()
             }
+            .navigationDestination(for: POSFlowDestination.self) { dest in
+                switch dest {
+                case .newSale:       NewSaleView(path: $navigationPath)
+                case .searchProduct: ProductSearchView(path: $navigationPath)
+                case .barcodeScanner: 
+                    if #available(iOS 18.0, *) {
+                        BarcodeScannerView(path: $navigationPath)
+                            .navigationTransition(.zoom(sourceID: "scannerButton", in: namespace))
+                    } else {
+                        BarcodeScannerView(path: $navigationPath)
+                    }
+                case .invoiceScanner:
+                    if #available(iOS 18.0, *) {
+                        InvoiceScannerView(path: $navigationPath)
+                            .navigationTransition(.zoom(sourceID: "scannerButton", in: namespace))
+                    } else {
+                        InvoiceScannerView(path: $navigationPath)
+                    }
+                case .invoiceItemsSelection(let invoiceId):
+                    InvoiceItemsSelectionView(path: $navigationPath, invoiceId: invoiceId)
+                case .actionSelection(let invoiceId, let selectedItem):
+                    AfterSalesActionSelectionView(path: $navigationPath, invoiceId: invoiceId, selectedItem: selectedItem)
+                case .repairForm(let invoiceId, let selectedItem):
+                    AfterSalesRepairFormView(path: $navigationPath, invoiceId: invoiceId, selectedItem: selectedItem)
+                case .cart:          CartView(path: $navigationPath)
+                case .checkout:      CheckoutView(path: $navigationPath)
+                case .payment:       PaymentFlowView(path: $navigationPath)
+                case .receipt:
+                    ReceiptView(onComplete: { navigationPath = NavigationPath() })
+                case .bopis:
+                    BOPISView()
+                case .ordersHub:
+                    OrdersHubView(path: $navigationPath)
+                }
+            }
         }
+        .environment(posViewModel)
     }
     
     // MARK: - Header
@@ -88,8 +137,6 @@ struct AfterSalesDashboardView: View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: RSMSSpacing.md) {
             KPICardView(title: "Pending Service Requests", value: "\(vm.pendingServiceRequests)", icon: "wrench.and.screwdriver.fill", trend: nil, color: RSMSColors.warning)
             KPICardView(title: "Repairs In Progress", value: "\(vm.repairsInProgress)", icon: "hammer.fill", trend: nil, color: Color(hex: "2A9D8F"))
-            KPICardView(title: "Warranty Verifications", value: "\(vm.warrantyVerifications)", icon: "shield.lefthalf.filled", trend: nil, color: RSMSColors.success)
-            KPICardView(title: "Returns Awaiting Approval", value: "\(vm.returnsAwaitingApproval)", icon: "arrow.uturn.backward.circle.fill", trend: nil, color: RSMSColors.error)
         }
     }
     
@@ -187,6 +234,30 @@ struct AfterSalesDashboardView: View {
         .background(RSMSColors.cardBackground)
         .cornerRadius(RSMSRadius.large)
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+    }
+    
+    // MARK: - Floating QR Button
+    private var floatingQRButton: some View {
+        Button {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                navigationPath.append(POSFlowDestination.invoiceScanner)
+            }
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(Color(red: 122/255, green: 22/255, blue: 34/255))
+                    .frame(width: 60, height: 60)
+                    .shadow(color: Color(red: 122/255, green: 22/255, blue: 34/255).opacity(0.5), radius: 8, x: 0, y: 4)
+                
+                Image(systemName: "qrcode.viewfinder")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
+            }
+        }
+        .buttonStyle(AnimatedFloatingButtonStyle())
+        .padding(.trailing, 20)
+        .padding(.bottom, 24)
+        .accessibilityLabel("Scan QR Code")
     }
     
 }
