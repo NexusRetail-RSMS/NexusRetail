@@ -101,29 +101,11 @@ struct TopLocationsChartView: View {
     // MARK: - Map Section
 
     private var mapSection: some View {
-        Map(position: $mapVM.cameraPosition) {
-            // Store markers / annotations
-            ForEach(mapVM.stores) { store in
-                Annotation(store.name, coordinate: store.coordinate) {
-                    StoreMarkerView(store: store, isSelected: selectedStore?.id == store.id)
-                        .onTapGesture {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                if selectedStore?.id == store.id {
-                                    selectedStore = nil
-                                } else {
-                                    selectedStore = store
-                                }
-                            }
-                        }
-                }
-                .annotationTitles(.hidden)
-            }
-        }
-        .mapStyle(.standard(elevation: .realistic, pointsOfInterest: .excludingAll))
-        .mapControls {
-            MapCompass()
-            MapScaleView()
-        }
+        NexusMapView(
+            stores: mapVM.stores,
+            selectedStore: $selectedStore,
+            cameraPosition: $mapVM.cameraPosition
+        )
         .frame(height: 260)
         .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.medium))
         .overlay(
@@ -462,57 +444,7 @@ struct TopLocationsChartView: View {
     }
 }
 
-// MARK: - Custom Store Marker View
 
-/// A branded map marker with a burgundy pin appearance.
-private struct StoreMarkerView: View {
-    let store: StoreMapItem
-    let isSelected: Bool
-
-    var body: some View {
-        VStack(spacing: 0) {
-            ZStack {
-                // Outer glow when selected
-                if isSelected {
-                    Circle()
-                        .fill(RSMSColors.burgundy.opacity(0.15))
-                        .frame(width: 40, height: 40)
-                }
-
-                // Main pin circle
-                Circle()
-                    .fill(isSelected ? RSMSColors.darkBurgundy : RSMSColors.burgundy)
-                    .frame(width: isSelected ? 28 : 22, height: isSelected ? 28 : 22)
-                    .shadow(color: RSMSColors.burgundy.opacity(0.35), radius: 4, x: 0, y: 2)
-
-                // Icon
-                Image(systemName: "building.2.fill")
-                    .font(.system(size: isSelected ? 12 : 9, weight: .bold))
-                    .foregroundColor(.white)
-            }
-
-            // Triangle pointer
-            Triangle()
-                .fill(isSelected ? RSMSColors.darkBurgundy : RSMSColors.burgundy)
-                .frame(width: 10, height: 6)
-                .offset(y: -1)
-        }
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
-    }
-}
-
-// MARK: - Triangle Shape
-
-private struct Triangle: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: CGPoint(x: rect.midX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
-        path.closeSubpath()
-        return path
-    }
-}
 
 // MARK: - Country Shape (used by TopLocationsDetailView)
 

@@ -74,21 +74,24 @@ struct ManagerRequestsView: View {
                         .multilineTextAlignment(.center)
                         .padding()
                 }
-            } else if viewModel.requests.isEmpty {
-                VStack(spacing: 12) {
-                    Image(systemName: "tray")
-                        .font(.system(size: 48))
-                        .foregroundColor(RSMSColors.secondaryText)
-                    Text("No Pending Requests")
-                        .font(.headline)
-                    Text("There are currently no store transfer requests.")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
             } else {
-                ScrollView {
-                    LazyVStack(spacing: 16) {
-                        ForEach(viewModel.requests) { request in
+                let pendingRequests = viewModel.requests.filter { ($0.status ?? "pending").lowercased() == "pending" }
+                
+                if pendingRequests.isEmpty {
+                    VStack(spacing: 12) {
+                        Image(systemName: "tray")
+                            .font(.system(size: 48))
+                            .foregroundColor(RSMSColors.secondaryText)
+                        Text("No Pending Requests")
+                            .font(.headline)
+                        Text("There are currently no store transfer requests.")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 16) {
+                            ForEach(pendingRequests) { request in
                             HStack(spacing: 16) {
                                 if let urlString = request.products?.image_url, let url = URL(string: urlString) {
                                     AsyncImage(url: url) { image in
@@ -149,6 +152,7 @@ struct ManagerRequestsView: View {
                         }
                     }
                     .padding()
+                    }
                 }
             }
         }

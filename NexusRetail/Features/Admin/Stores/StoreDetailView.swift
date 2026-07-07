@@ -29,6 +29,7 @@ struct StoreDetailView: View {
                 heroCard
                 ManagerCard(manager: manager, openURL: openURL)
                 infoCard
+                paymentConfigurationButton
             }
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.top, RSMSSpacing.lg)
@@ -217,6 +218,56 @@ struct StoreDetailView: View {
     private var callURL: URL? {
         guard let phone = store.phone, !phone.isEmpty else { return nil }
         return URL(string: "tel:\(phone.filter { $0.isNumber || $0 == "+" })")
+    }
+
+    // MARK: - Payment Configuration
+    
+    private var paymentConfigurationButton: some View {
+        NavigationLink {
+            PaymentConfigurationView(isAdmin: true, storeID: store.id)
+        } label: {
+            HStack(spacing: RSMSSpacing.md) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 11)
+                        .fill(
+                            LinearGradient(
+                                colors: [RSMSColors.burgundy.opacity(0.12), RSMSColors.burgundy.opacity(0.04)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "creditcard.fill")
+                        .font(.system(size: 18))
+                        .foregroundColor(RSMSColors.burgundy)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Payment Configuration")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(RSMSColors.primaryText)
+                    Text("Manage Razorpay & Card Terminals")
+                        .font(.system(size: 12.5))
+                        .foregroundColor(RSMSColors.secondaryText)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+            }
+            .padding(.horizontal, RSMSSpacing.lg)
+            .padding(.vertical, RSMSSpacing.md)
+            .background(RSMSColors.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.large))
+            .overlay(
+                RoundedRectangle(cornerRadius: RSMSRadius.large)
+                    .stroke(RSMSColors.cardBorder, lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.04), radius: 14, x: 0, y: 6)
+        }
+        .buttonStyle(.plain)
     }
 }
 
