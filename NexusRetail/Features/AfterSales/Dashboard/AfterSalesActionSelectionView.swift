@@ -12,42 +12,41 @@ struct AfterSalesActionSelectionView: View {
             RSMSColors.background
                 .ignoresSafeArea()
             
-            VStack(spacing: 0) {
-                customHeaderSection
-                
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 32) {
-                        Text("Select Action")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(RSMSColors.secondaryText)
-                            .padding(.horizontal, RSMSSpacing.lg)
-                        
-                        VStack(spacing: 20) {
-                            actionCard(
-                                title: "Exchange Product",
-                                description: "Swap the selected items for a different size, color, or a completely new product.",
-                                icon: "arrow.triangle.2.circlepath",
-                                color: RSMSColors.burgundy
-                            ) {
-                                print("Exchange initiated for invoice \(invoiceId), items: \(selectedItemIds.count)")
-                                // Future navigation to exchange flow
-                            }
-                            
-                            actionCard(
-                                title: "Repair Product",
-                                description: "Send the selected items to our service center for expert repair and maintenance.",
-                                icon: "wrench.and.screwdriver.fill",
-                                color: Color(hex: "34495E") // A sophisticated dark blue/slate
-                            ) {
-                                print("Repair initiated for invoice \(invoiceId), items: \(selectedItemIds.count)")
-                                // Future navigation to repair flow
-                            }
-                        }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 32) {
+                    Text("Select Action")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(RSMSColors.secondaryText)
                         .padding(.horizontal, RSMSSpacing.lg)
+                    
+                    VStack(spacing: 20) {
+                        actionCard(
+                            title: "Exchange Product",
+                            description: "Swap the selected item for a different size, color, or a completely new product.",
+                            icon: "arrow.triangle.2.circlepath",
+                            color: RSMSColors.burgundy
+                        ) {
+                            print("Exchange initiated for invoice \(invoiceId), items: \(selectedItemIds.count)")
+                            // Future navigation to exchange flow
+                        }
+                        
+                        actionCard(
+                            title: "Repair Product",
+                            description: "Send the selected item to our service center for expert repair and maintenance.",
+                            icon: "wrench.and.screwdriver.fill",
+                            color: Color(hex: "34495E") // A sophisticated dark blue/slate
+                        ) {
+                            print("Repair initiated for invoice \(invoiceId), items: \(selectedItemIds.count)")
+                            // Future navigation to repair flow
+                        }
                     }
-                    .padding(.top, RSMSSpacing.lg)
+                    .padding(.horizontal, RSMSSpacing.lg)
                 }
+                .padding(.top, 120) // push down below header
             }
+            .ignoresSafeArea(edges: .top)
+            
+            customHeaderSection
         }
         .navigationBarHidden(true)
     }
@@ -70,11 +69,11 @@ struct AfterSalesActionSelectionView: View {
             }
             
             VStack(alignment: .leading, spacing: 2) {
-                Text("Process Items")
+                Text("Process Item")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(RSMSColors.primaryText)
                 
-                Text("\(selectedItemIds.count) item(s) selected")
+                Text("1 item selected")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(RSMSColors.secondaryText)
             }
@@ -84,7 +83,9 @@ struct AfterSalesActionSelectionView: View {
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.top, 60)
         .padding(.bottom, RSMSSpacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(.regularMaterial)
+        .ignoresSafeArea(edges: .top)
     }
     
     // MARK: - Action Card
