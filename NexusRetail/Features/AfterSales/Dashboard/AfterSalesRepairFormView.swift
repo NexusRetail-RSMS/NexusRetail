@@ -7,17 +7,21 @@ struct AfterSalesRepairFormView: View {
     
     let invoiceId: String
     let selectedItem: POSProduct
+    let isUnderWarranty: Bool
     
     @State private var problemDescription: String = ""
     @State private var additionalAmountText: String = ""
     
     @FocusState private var isInputFocused: Bool
     
-    private let serviceCost: Double = 500.0
+    private let baseServiceCost: Double = 500.0
+    private var actualServiceCost: Double {
+        isUnderWarranty ? 0.0 : baseServiceCost
+    }
     
     private var totalAmount: Double {
         let additional = Double(additionalAmountText) ?? 0.0
-        return serviceCost + additional
+        return actualServiceCost + additional
     }
     
     var body: some View {
@@ -107,6 +111,17 @@ struct AfterSalesRepairFormView: View {
                 Text(selectedItem.sku)
                     .font(.system(size: 13))
                     .foregroundColor(RSMSColors.secondaryText)
+                
+                if isUnderWarranty {
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: 12))
+                        Text("Under Warranty (6 Months)")
+                            .font(.system(size: 12, weight: .bold))
+                    }
+                    .foregroundColor(.green)
+                    .padding(.top, 4)
+                }
             }
             Spacer()
         }
@@ -156,9 +171,17 @@ struct AfterSalesRepairFormView: View {
                         .font(.system(size: 15))
                         .foregroundColor(RSMSColors.secondaryText)
                     Spacer()
-                    Text(String(format: "₹%.0f", serviceCost))
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(RSMSColors.primaryText)
+                    if isUnderWarranty {
+                        Text(String(format: "₹%.0f", baseServiceCost))
+                            .font(.system(size: 15, weight: .medium))
+                            .strikethrough()
+                            .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                            .padding(.trailing, 4)
+                    }
+                    
+                    Text(String(format: "₹%.0f", actualServiceCost))
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(isUnderWarranty ? .green : RSMSColors.primaryText)
                 }
                 
                 VStack(alignment: .leading, spacing: 8) {

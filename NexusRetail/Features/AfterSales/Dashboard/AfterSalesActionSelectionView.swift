@@ -7,6 +7,13 @@ struct AfterSalesActionSelectionView: View {
     let invoiceId: String
     let selectedItem: POSProduct
     
+    private var isUnderWarranty: Bool {
+        // Mocking a purchase date 4 months ago for demonstration
+        let purchaseDate = Date().addingTimeInterval(-4 * 30 * 24 * 60 * 60)
+        let warrantyPeriod: TimeInterval = 6 * 30 * 24 * 60 * 60
+        return Date().timeIntervalSince(purchaseDate) <= warrantyPeriod
+    }
+    
     var body: some View {
         ZStack(alignment: .top) {
             RSMSColors.background
@@ -107,7 +114,7 @@ struct AfterSalesActionSelectionView: View {
                 icon: "wrench.and.screwdriver.fill",
                 color: Color(hex: "34495E")
             ) {
-                path.append(POSFlowDestination.repairForm(invoiceId: invoiceId, selectedItem: selectedItem))
+                path.append(POSFlowDestination.repairForm(invoiceId: invoiceId, selectedItem: selectedItem, isUnderWarranty: isUnderWarranty))
             }
         }
         .padding(.horizontal, RSMSSpacing.lg)
