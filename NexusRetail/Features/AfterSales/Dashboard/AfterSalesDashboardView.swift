@@ -8,86 +8,33 @@ import Charts
 
 struct AfterSalesDashboardView: View {
     @Environment(SessionStore.self) private var sessionStore
-    
-    // POS navigation state
-    @State private var posViewModel    = SellViewModel()
-    @State private var navigationPath  = NavigationPath()
-    @Namespace private var namespace
 
     @State private var vm = AfterSalesDashboardViewModel()
     @State private var isProfilePresented = false
     @State private var ticketFilter: AfterSalesTicketFilter? = nil
-    
+
+    // Content-only view. Navigation + the scanner button live in AfterSalesTabView.
     var body: some View {
-        NavigationStack(path: $navigationPath) {
-            ZStack(alignment: .bottomTrailing) {
-                RSMSColors.background.ignoresSafeArea()
-                
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 24) {
-                        headerSection
-                        kpiSection
-                        serviceTrendChartSection
-                        serviceStatusDonutSection
-                        Spacer(minLength: 80)
-                    }
-                    .padding(.horizontal, RSMSSpacing.lg)
-                    .padding(.top, 16)
-                }
-                .refreshable { await vm.fetch(storeID: sessionStore.currentUser?.storeID) }
-                .task { await vm.fetch(storeID: sessionStore.currentUser?.storeID) }
-                
-                if #available(iOS 18.0, *) {
-                    floatingQRButton
-                        .matchedTransitionSource(id: "scannerButton", in: namespace)
-                } else {
-                    floatingQRButton
-                }
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 24) {
+                headerSection
+                kpiSection
+                serviceTrendChartSection
+                serviceStatusDonutSection
+                Spacer(minLength: 110) // clears the custom bottom bar
             }
-            .navigationBarHidden(true)
-            .sheet(isPresented: $isProfilePresented) {
-                AdminProfileSheet()
-            }
-            .sheet(item: $ticketFilter) { filter in
-                AfterSalesTicketsListView(filter: filter, storeID: sessionStore.currentUser?.storeID)
-            }
-            .navigationDestination(for: POSFlowDestination.self) { dest in
-                switch dest {
-                case .newSale:       NewSaleView(path: $navigationPath)
-                case .searchProduct: ProductSearchView(path: $navigationPath)
-                case .barcodeScanner: 
-                    if #available(iOS 18.0, *) {
-                        BarcodeScannerView(path: $navigationPath)
-                            .navigationTransition(.zoom(sourceID: "scannerButton", in: namespace))
-                    } else {
-                        BarcodeScannerView(path: $navigationPath)
-                    }
-                case .invoiceScanner:
-                    if #available(iOS 18.0, *) {
-                        InvoiceScannerView(path: $navigationPath)
-                            .navigationTransition(.zoom(sourceID: "scannerButton", in: namespace))
-                    } else {
-                        InvoiceScannerView(path: $navigationPath)
-                    }
-                case .invoiceItemsSelection(let invoiceId):
-                    InvoiceItemsSelectionView(path: $navigationPath, invoiceId: invoiceId)
-                case .actionSelection(let invoiceId, let selectedItem):
-                    AfterSalesActionSelectionView(path: $navigationPath, invoiceId: invoiceId, selectedItem: selectedItem)
-                case .repairForm(let invoiceId, let selectedItem):
-                    AfterSalesRepairFormView(path: $navigationPath, invoiceId: invoiceId, selectedItem: selectedItem)
-                case .cart:          CartView(path: $navigationPath)
-                case .checkout:      CheckoutView(path: $navigationPath)
-                case .payment:       PaymentFlowView(path: $navigationPath)
-                case .receipt:
-                    ReceiptView(onComplete: { navigationPath = NavigationPath() })
-                case .bopis:
-                    BOPISView()
-                case .ordersHub:
-                    OrdersHubView(path: $navigationPath)
-                }
-            }
+            .padding(.horizontal, RSMSSpacing.lg)
+            .padding(.top, 16)
         }
-        .environment(posViewModel)
+        .background(RSMSColors.background.ignoresSafeArea())
+        .refreshable { await vm.fetch(storeID: sessionStore.currentUser?.storeID) }
+        .task { await vm.fetch(storeID: sessionStore.currentUser?.storeID) }
+        .sheet(isPresented: $isProfilePresented) {
+            AdminProfileSheet()
+        }
+        .sheet(item: $ticketFilter) { filter in
+            AfterSalesTicketsListView(filter: filter, storeID: sessionStore.currentUser?.storeID)
+        }
     }
     
     // MARK: - Header
@@ -271,30 +218,6 @@ struct AfterSalesDashboardView: View {
         .background(RSMSColors.cardBackground)
         .cornerRadius(RSMSRadius.large)
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
-    }
-    
-    // MARK: - Floating QR Button
-    private var floatingQRButton: some View {
-        Button {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                navigationPath.append(POSFlowDestination.invoiceScanner)
-            }
-        } label: {
-            ZStack {
-                Circle()
-                    .fill(Color(red: 122/255, green: 22/255, blue: 34/255))
-                    .frame(width: 60, height: 60)
-                    .shadow(color: Color(red: 122/255, green: 22/255, blue: 34/255).opacity(0.5), radius: 8, x: 0, y: 4)
-                
-                Image(systemName: "qrcode.viewfinder")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.white)
-            }
-        }
-        .buttonStyle(AnimatedFloatingButtonStyle())
-        .padding(.trailing, 20)
-        .padding(.bottom, 24)
-        .accessibilityLabel("Scan QR Code")
     }
     
 }
