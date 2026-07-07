@@ -114,14 +114,16 @@ struct BarcodeScannerView: View {
             .accessibilityLabel("Back")
             
             VStack(alignment: .leading, spacing: 2) {
-                Text(scannedProduct == nil ? "Scan Barcode" : scannedProduct!.name)
+                Text(scannedProduct == nil ? "Scan QR Code" : scannedProduct!.name)
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(RSMSColors.primaryText)
                     .lineLimit(1)
                 
-                Text(scannedProduct == nil ? "Barcode Scanner" : scannedProduct!.sku)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
+                if let product = scannedProduct {
+                    Text(product.sku)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(RSMSColors.secondaryText)
+                }
             }
             
             Spacer()
@@ -136,11 +138,6 @@ struct BarcodeScannerView: View {
     
     private var scannerViewSection: some View {
         VStack(spacing: 32) {
-            Text("Point camera at product barcode")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(RSMSColors.secondaryText)
-                .multilineTextAlignment(.center)
-            
             // Live Camera Viewfinder
             ZStack {
                 CameraScannerView { scannedCode in
