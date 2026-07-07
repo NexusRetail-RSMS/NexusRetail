@@ -102,9 +102,17 @@ struct CreateEventView: View {
                 
                 // Date & Time Section
                 Section(header: Text("Date & Time")) {
-                    DatePicker("Date", selection: $eventDate, displayedComponents: .date)
-                    DatePicker("Start Time", selection: $startTime, displayedComponents: .hourAndMinute)
-                    DatePicker("End Time", selection: $endTime, displayedComponents: .hourAndMinute)
+                    if eventToEdit == nil {
+                        DatePicker("Date", selection: $eventDate, in: Date()..., displayedComponents: .date)
+                    } else {
+                        DatePicker("Date", selection: $eventDate, displayedComponents: .date)
+                    }
+                    
+                    if eventToEdit == nil && Calendar.current.isDateInToday(eventDate) {
+                        DatePicker("Start Time", selection: $startTime, in: Date()..., displayedComponents: .hourAndMinute)
+                    } else {
+                        DatePicker("Start Time", selection: $startTime, displayedComponents: .hourAndMinute)
+                    }
                 }
                 
                 // Capacity Section
@@ -236,12 +244,8 @@ struct CreateEventView: View {
                 dayComponents.second = startComponents.second
                 let combinedStart = calendar.date(from: dayComponents) ?? startTime
 
-                var endDayComponents = calendar.dateComponents([.year, .month, .day], from: eventDate)
-                let endComponents = calendar.dateComponents([.hour, .minute, .second], from: endTime)
-                endDayComponents.hour = endComponents.hour
-                endDayComponents.minute = endComponents.minute
-                endDayComponents.second = endComponents.second
-                let combinedEnd = calendar.date(from: endDayComponents) ?? endTime
+                // Automatically set the end time to 2 hours after the start time since the UI picker was removed.
+                let combinedEnd = combinedStart.addingTimeInterval(3600 * 2)
 
                 let updatedEvent = SupabaseEvent(
                     id: event.id,
@@ -268,7 +272,7 @@ struct CreateEventView: View {
                     venue: venue,
                     eventDate: eventDate,
                     startTime: startTime,
-                    endTime: endTime,
+                    endTime: startTime.addingTimeInterval(3600 * 2),
                     maximumGuests: maximumGuests,
                     bannerImageData: bannerImageData
                 )
