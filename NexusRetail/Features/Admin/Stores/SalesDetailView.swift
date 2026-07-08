@@ -42,6 +42,10 @@ struct SalesDetailView: View {
         dataPoints.reduce(0) { $0 + $1.online + $1.offline }
     }
 
+    private var peakPoint: SalesPeriodResult? {
+        dataPoints.max { ($0.online + $0.offline) < ($1.online + $1.offline) }
+    }
+
     private var maxValue: Double {
         let m = dataPoints.map { $0.online + $0.offline }.max() ?? 0
         return m > 0 ? m * 1.15 : 100   // Show a reasonable scale even when empty
@@ -226,6 +230,16 @@ struct SalesDetailView: View {
                 .frame(height: 300)
             }
 
+            // Total + Peak cards (matching the Sales Associate detail view)
+            HStack(spacing: 12) {
+                summaryTile(title: "Total", value: shortCurrency(totalSales), caption: periodLabel)
+                summaryTile(title: "Peak",
+                            value: shortCurrency(peakPoint.map { $0.online + $0.offline } ?? 0),
+                            caption: (peakPoint.map { $0.online + $0.offline } ?? 0) > 0 ? peakPoint?.label : "—")
+            }
+            .padding(.horizontal, RSMSSpacing.lg)
+            .padding(.top, RSMSSpacing.lg)
+
             // Ranked Category list
             VStack(alignment: .leading, spacing: 0) {
                 Text("Sales by Category")
@@ -366,6 +380,20 @@ struct SalesDetailView: View {
     }
 
     // MARK: - Helpers
+
+    private func summaryTile(title: String, value: String, caption: String?) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title).font(.system(size: 12, weight: .medium)).foregroundColor(RSMSColors.secondaryText)
+            Text(value).font(.system(size: 18, weight: .bold)).foregroundColor(RSMSColors.burgundy).lineLimit(1).minimumScaleFactor(0.6)
+            Text(caption ?? " ")
+                .font(.system(size: 11)).foregroundColor(RSMSColors.secondaryText).lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(RSMSColors.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(RSMSColors.cardBorder.opacity(0.6), lineWidth: 1))
+    }
 
     private func formatNumber(_ value: Int) -> String {
         let f = NumberFormatter()

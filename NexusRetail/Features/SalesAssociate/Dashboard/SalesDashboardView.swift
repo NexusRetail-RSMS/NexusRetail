@@ -505,13 +505,11 @@ struct SalesRevenueDetailView: View {
                 // Swipeable calendar strip
                 calendarStrip
 
-                // Chart inside a card
-                cardContainer {
-                    chartOnBackground
-                        .frame(height: 250)
-                        .contentShape(Rectangle())
-                        .gesture(timelineSwipe)
-                }
+                // Chart directly on the background (no card box)
+                chartOnBackground
+                    .frame(height: 250)
+                    .contentShape(Rectangle())
+                    .gesture(timelineSwipe)
 
                 // Total + Peak tiles (equal size)
                 HStack(spacing: 12) {
@@ -530,17 +528,6 @@ struct SalesRevenueDetailView: View {
         .navigationBarHidden(true)
         .onChange(of: vm.chartOffset) { _, _ in selectedLabel = nil }
         .onChange(of: vm.selectedChartPeriod) { _, _ in selectedLabel = nil }
-    }
-
-    // Reusable white card wrapper
-    private func cardContainer<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
-        content()
-            .padding(RSMSSpacing.lg)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(cardFill)
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-            .overlay(RoundedRectangle(cornerRadius: 20).stroke(RSMSColors.cardBorder.opacity(0.6), lineWidth: 1))
-            .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 3)
     }
 
     // MARK: Swipeable calendar strip (weekday/month picker)
