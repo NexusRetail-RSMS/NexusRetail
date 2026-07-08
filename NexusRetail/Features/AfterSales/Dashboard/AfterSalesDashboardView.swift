@@ -8,27 +8,38 @@ import Charts
 
 struct AfterSalesDashboardView: View {
     @Environment(SessionStore.self) private var sessionStore
+    @Binding var path: NavigationPath
+    var namespace: Namespace.ID
 
     @State private var vm = AfterSalesDashboardViewModel()
     @State private var isProfilePresented = false
     @State private var ticketFilter: AfterSalesTicketFilter? = nil
 
-    // Content-only view. Navigation + the scanner button live in AfterSalesTabView.
+    // Content-only view. Navigation lives in AfterSalesTabView.
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 24) {
-                headerSection
-                kpiSection
-                serviceTrendChartSection
-                serviceStatusDonutSection
-                Spacer(minLength: 110) // clears the custom bottom bar
+        ZStack(alignment: .bottomTrailing) {
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 24) {
+                    headerSection
+                    kpiSection
+                    serviceTrendChartSection
+                    serviceStatusDonutSection
+                    Spacer(minLength: 110) // clears the custom bottom bar
+                }
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, 16)
             }
-            .padding(.horizontal, RSMSSpacing.lg)
-            .padding(.top, 16)
+            .background(RSMSColors.background.ignoresSafeArea())
+            .refreshable { await vm.fetch(storeID: sessionStore.currentUser?.storeID) }
+            .task { await vm.fetch(storeID: sessionStore.currentUser?.storeID) }
+            
+            if #available(iOS 18.0, *) {
+                floatingQRButton
+                    .matchedTransitionSource(id: "scannerButton", in: namespace)
+            } else {
+                floatingQRButton
+            }
         }
-        .background(RSMSColors.background.ignoresSafeArea())
-        .refreshable { await vm.fetch(storeID: sessionStore.currentUser?.storeID) }
-        .task { await vm.fetch(storeID: sessionStore.currentUser?.storeID) }
         .sheet(isPresented: $isProfilePresented) {
             AdminProfileSheet()
         }
@@ -45,6 +56,20 @@ struct AfterSalesDashboardView: View {
                 .fontWeight(.bold)
                 .foregroundColor(RSMSColors.primaryText)
             Spacer()
+            
+            Button {
+                path.append(POSFlowDestination.afterSalesHistory)
+            } label: {
+                ZStack {
+                    Circle().fill(RSMSColors.burgundy.opacity(0.1)).frame(width: 44, height: 44)
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(RSMSColors.burgundy)
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("History")
+
             Button { isProfilePresented = true } label: {
                 ZStack {
                     Circle().fill(RSMSColors.burgundy).frame(width: 44, height: 44)
@@ -220,4 +245,28 @@ struct AfterSalesDashboardView: View {
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
     }
     
+    // MARK: - Floating QR Button
+    private var floatingQRButton: some View {
+        Button {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                path.append(POSFlowDestination.invoiceScanner)
+            }
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(Color(red: 122/255, green: 22/255, blue: 34/255))
+                    .frame(width: 60, height: 60)
+                    .shadow(color: Color(red: 122/255, green: 22/255, blue: 34/255).opacity(0.5), radius: 8, x: 0, y: 4)
+                
+                Image(systemName: "qrcode.viewfinder")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
+            }
+        }
+        .buttonStyle(AnimatedFloatingButtonStyle())
+        .padding(.trailing, 20)
+        .padding(.bottom, 24)
+        .accessibilityLabel("Scan QR Code")
+    }
 }
+

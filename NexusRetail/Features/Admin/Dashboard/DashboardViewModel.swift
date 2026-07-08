@@ -65,6 +65,10 @@ class DashboardViewModel {
     var isLoading = false
     var errorMessage: String?
     
+    // MARK: - Product Count State
+    var totalProducts: Int = 0
+    private var realtimeChannel: RealtimeChannelV2?
+    
     // MARK: - Filter State
     // nil means "All Global"
     var selectedCountry: String? = nil {
@@ -103,8 +107,8 @@ class DashboardViewModel {
         "\(kpis?.pendingTransfers ?? 0)"
     }
     
-    var lowStockText: String {
-        "\(kpis?.lowStockAlerts ?? 0)"
+    var totalProductsText: String {
+        "\(totalProducts)"
     }
     
     // MARK: - Chart Data Adapters
@@ -203,12 +207,15 @@ class DashboardViewModel {
             async let topMonthlyTask: [DashboardTopProduct] = SupabaseManager.shared.client
                 .rpc("top_products", params: monthParams).execute().value
                 
+            async let productsCountTask = fetchTotalProducts()
+                
             self.kpis = try await kpisTask
             self.monthly = try await monthlyTask
             self.weekly = try await weeklyTask
             self.byCountry = try await countryTask
             self.topProductsWeekly = try await topWeeklyTask
             self.topProductsMonthly = try await topMonthlyTask
+            self.totalProducts = try await productsCountTask
             
         } catch {
             self.errorMessage = "Failed to load dashboard data: \(error.localizedDescription)"
@@ -216,5 +223,62 @@ class DashboardViewModel {
         }
         
         isLoading = false
+    }
+    
+    // MARK: - Realtime and Product Count
+    
+    private func fetchTotalProducts() async throws -> Int {
+        let response = try await SupabaseManager.shared.client
+            .from("products")
+            .select("item_id", head: true, count: .exact)
+            .execute()
+        return response.count ?? 0
+    }
+    
+    func startListening() {
+        if realtimeChannel != nil { return }
+        
+        realtimeChannel = SupabaseManager.shared.client.channel("admin_dashboard_products")
+        
+        let insertions = realtimeChannel?.postgresChange(
+            InsertAction.self,
+            schema: "public",
+            table: "products"
+        )
+        let deletions = realtimeChannel?.postgresChange(
+            DeleteAction.self,
+            schema: "public",
+            table: "products"
+        )
+        
+        Task {
+            if let insertions = insertions {
+                for await _ in insertions {
+                    if let count = try? await fetchTotalProducts() {
+                        await MainActor.run { self.totalProducts = count }
+                    }
+                }
+            }
+        }
+        
+        Task {
+            if let deletions = deletions {
+                for await _ in deletions {
+                    if let count = try? await fetchTotalProducts() {
+                        await MainActor.run { self.totalProducts = count }
+                    }
+                }
+            }
+        }
+        
+        Task {
+            await realtimeChannel?.subscribe()
+        }
+    }
+    
+    deinit {
+        Task { [channel = realtimeChannel] in
+            await channel?.unsubscribe()
+        }
     }
 }

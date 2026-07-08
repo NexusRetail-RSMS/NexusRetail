@@ -140,6 +140,7 @@ struct AfterSalesInvoiceLine: Decodable, Identifiable, Hashable {
         case warrantyEnd = "warranty_end"
         case inWarranty = "in_warranty"
         case exchangeAllowed = "exchange_allowed"
+        case products
     }
 
     init(from decoder: Decoder) throws {
@@ -155,8 +156,19 @@ struct AfterSalesInvoiceLine: Decodable, Identifiable, Hashable {
         else { price = 0 }
         quantity = (try? c.decode(Int.self, forKey: .quantity)) ?? 1
 
-        let rawImage = (try? c.decodeIfPresent(String.self, forKey: .imageUrl)) ?? nil
-        let pexels = (try? c.decodeIfPresent(String.self, forKey: .pexelsPage)) ?? nil
+        // Try flat image_url/pexels_page first, then fall back to nested products object
+        var rawImage = (try? c.decodeIfPresent(String.self, forKey: .imageUrl)) ?? nil
+        var pexels = (try? c.decodeIfPresent(String.self, forKey: .pexelsPage)) ?? nil
+        if rawImage == nil && pexels == nil {
+            struct ProductsNested: Decodable {
+                var image_url: String?
+                var pexels_page: String?
+            }
+            if let products = try? c.decodeIfPresent(ProductsNested.self, forKey: .products) {
+                rawImage = products.image_url
+                pexels = products.pexels_page
+            }
+        }
         imageUrl = POSProductRepository.shared.extractPexelsImageUrl(from: pexels ?? "") ?? rawImage
 
         let purchasedStr = (try? c.decodeIfPresent(String.self, forKey: .purchasedAt)) ?? nil
