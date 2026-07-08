@@ -16,6 +16,8 @@ struct RootView: View {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(RSMSColors.background.ignoresSafeArea())
+            } else if sessionStore.currentUser != nil && sessionStore.needsOTPVerification {
+                OTPVerificationView()
             } else if let role = sessionStore.currentRole {
                 switch role {
                 case .admin:
