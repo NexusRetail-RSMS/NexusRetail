@@ -9,6 +9,18 @@ enum POSPaymentMethod: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+/// Exchange context that needs post-payment finalization: process the exchange
+/// on the backend, then generate a new invoice for the replacement products
+/// via the standard Sales Associate checkout flow.
+struct PendingExchange {
+    let invoiceId: String
+    let originalProduct: POSProduct
+    let originalQuantity: Int
+    let replacementItems: [ExchangeReplacementItem]
+    let customer: RequestCustomer?
+    let amountPayable: Double
+}
+
 @Observable
 class SellViewModel {
     // Current cart items
@@ -40,6 +52,9 @@ class SellViewModel {
     
     // Last completed order ID (from DB after processCheckout)
     var lastOrderId: UUID? = nil
+    
+    // Pending exchange awaiting post-payment finalization
+    var pendingExchange: PendingExchange? = nil
     
     var totalAmount: Double {
         // Sum price for each cart item — duplicates are intentional (qty × price)
@@ -289,6 +304,45 @@ class SellViewModel {
         }
     }
     
+    // MARK: - Exchange Finalization
+
+    /// Processes the pending exchange on the backend (restocks original product,
+    /// creates exchange ticket) then generates a new invoice for the replacement
+    /// products using the standard `process_pos_checkout` RPC.
+    func finalizeExchange(storeID: UUID?, associateID: UUID?) async throws {
+        guard let exchange = pendingExchange else { return }
+
+        let result = try await AfterSalesService.process(
+            orderId: exchange.invoiceId,
+            itemId: exchange.originalProduct.itemId,
+            type: "exchange",
+            issue: "Exchange — \(exchange.replacementItems.count) replacement(s)",
+            partsCost: exchange.amountPayable
+        )
+
+        guard result.success else {
+            throw NSError(domain: "Exchange", code: 1,
+                         userInfo: [NSLocalizedDescriptionKey: result.message ?? "Exchange processing failed on backend"])
+        }
+
+        // Replace cart with the exchange replacement products for invoice generation
+        cartItems = exchange.replacementItems.flatMap { item in
+            Array(repeating: item.product, count: item.quantity)
+        }
+
+        // Set customer info from the exchange
+        if let customer = exchange.customer {
+            selectedClient = customer.name
+            receiptSharedEmail = customer.email
+            receiptSharedPhone = customer.phone
+        }
+
+        // Generate a new invoice via the standard checkout RPC
+        try await processCheckout(storeID: storeID, associateID: associateID)
+
+        pendingExchange = nil
+    }
+
     // MARK: - Client lookup / quick-create (checkout customer linking)
 
     /// Normalizes a phone string to its last 10 digits for tolerant matching

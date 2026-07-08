@@ -47,10 +47,10 @@ struct AfterSalesRepairFormView: View {
                     isInputFocused = false
                 }
             
-            VStack(spacing: 0) {
-                customHeaderSection
-                
-                ScrollView {
+            ScrollView {
+                VStack(spacing: 0) {
+                    customHeaderSection
+                    
                     VStack(alignment: .leading, spacing: 32) {
                         productSummaryCard
                         
@@ -61,9 +61,8 @@ struct AfterSalesRepairFormView: View {
                 .onTapGesture {
                     isInputFocused = false
                 }
-                
-                bottomActionBar
             }
+            .ignoresSafeArea(edges: .top)
 
             if isProcessing {
                 Color.black.opacity(0.25).ignoresSafeArea()
@@ -77,6 +76,10 @@ struct AfterSalesRepairFormView: View {
             }
         }
         .navigationBarHidden(true)
+        .safeAreaInset(edge: .bottom) {
+            bottomActionBar
+                .background(RSMSColors.background)
+        }
         .task { await runWarrantyAnimation() }
         .alert(resultTitle, isPresented: $showResult) {
             Button("OK") {
@@ -199,36 +202,47 @@ struct AfterSalesRepairFormView: View {
     
     // MARK: - Header
     private var customHeaderSection: some View {
-        HStack {
+        HStack(alignment: .center, spacing: RSMSSpacing.md) {
             Button {
                 dismiss()
             } label: {
                 ZStack {
                     Circle()
-                        .fill(Color.white)
+                        .fill(Color.white.opacity(0.2))
                         .frame(width: 44, height: 44)
-                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
 
                     Image(systemName: "chevron.left")
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(.white)
                 }
             }
-            
+            .accessibilityLabel("Back")
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Repair Request")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
+
+                Text("Submit a repair request for the selected product")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.8))
+                    .lineLimit(1)
+            }
+
             Spacer()
-            
-            Text("Repair Request")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(RSMSColors.primaryText)
-            
-            Spacer()
-            
-            // Dummy view for alignment
-            Color.clear.frame(width: 44, height: 44)
         }
         .padding(.horizontal, RSMSSpacing.lg)
-        .padding(.bottom, RSMSSpacing.sm)
-        .background(RSMSColors.background)
+        .padding(.top, 60)
+        .padding(.bottom, RSMSSpacing.xxxl)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            LinearGradient(
+                colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .clipShape(HeaderCurve())
     }
     
     // MARK: - Product Summary

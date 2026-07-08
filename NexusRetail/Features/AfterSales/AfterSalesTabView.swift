@@ -72,6 +72,18 @@ struct AfterSalesTabView: View {
         case .repairForm(let invoiceId, let selectedItem, let warrantyEndDate):
             AfterSalesRepairFormView(path: $dashboardPath, invoiceId: invoiceId, selectedItem: selectedItem, warrantyEndDate: warrantyEndDate)
                 .toolbar(.hidden, for: .tabBar)
+                
+        // MARK: - Exchange Flow
+        case .exchangeWarrantyCheck(let invoiceId, let selectedItem, let purchaseDate, let warrantyEndDate, let customer):
+            ExchangeWarrantyCheckView(path: $dashboardPath, invoiceId: invoiceId, selectedItem: selectedItem, purchaseDate: purchaseDate, warrantyEndDate: warrantyEndDate, customer: customer)
+                .toolbar(.hidden, for: .tabBar)
+        case .exchangeSelection(let invoiceId, let selectedItem, let purchaseDate, let warrantyEndDate, let customer):
+            ExchangeSelectionView(path: $dashboardPath, invoiceId: invoiceId, selectedItem: selectedItem, purchaseDate: purchaseDate, warrantyEndDate: warrantyEndDate, customer: customer)
+                .toolbar(.hidden, for: .tabBar)
+        case .exchangeSuccess(let transaction):
+            ExchangeSuccessView(path: $dashboardPath, transaction: transaction)
+                .toolbar(.hidden, for: .tabBar)
+                
         case .afterSalesHistory:
             AfterSalesHistoryView(path: $dashboardPath)
                 .toolbar(.hidden, for: .tabBar)
