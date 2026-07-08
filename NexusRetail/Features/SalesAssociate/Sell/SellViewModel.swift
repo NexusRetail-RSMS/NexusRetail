@@ -10,13 +10,13 @@ enum POSPaymentMethod: String, CaseIterable, Identifiable {
 }
 
 /// Exchange context that needs post-payment finalization: process the exchange
-/// on the backend, then generate a new invoice for the replacement products
+/// on the backend, then generate a new invoice for the replacement product
 /// via the standard Sales Associate checkout flow.
 struct PendingExchange {
     let invoiceId: String
     let originalProduct: POSProduct
     let originalQuantity: Int
-    let replacementItems: [ExchangeReplacementItem]
+    let replacementItem: ExchangeReplacementItem
     let customer: RequestCustomer?
     let amountPayable: Double
 }
@@ -308,7 +308,7 @@ class SellViewModel {
 
     /// Processes the pending exchange on the backend (restocks original product,
     /// creates exchange ticket) then generates a new invoice for the replacement
-    /// products using the standard `process_pos_checkout` RPC.
+    /// product using the standard `process_pos_checkout` RPC.
     func finalizeExchange(storeID: UUID?, associateID: UUID?) async throws {
         guard let exchange = pendingExchange else { return }
 
@@ -316,7 +316,7 @@ class SellViewModel {
             orderId: exchange.invoiceId,
             itemId: exchange.originalProduct.itemId,
             type: "exchange",
-            issue: "Exchange — \(exchange.replacementItems.count) replacement(s)",
+            issue: "Exchange — \(exchange.replacementItem.product.name)",
             partsCost: exchange.amountPayable
         )
 
@@ -325,10 +325,8 @@ class SellViewModel {
                          userInfo: [NSLocalizedDescriptionKey: result.message ?? "Exchange processing failed on backend"])
         }
 
-        // Replace cart with the exchange replacement products for invoice generation
-        cartItems = exchange.replacementItems.flatMap { item in
-            Array(repeating: item.product, count: item.quantity)
-        }
+        // Set cart to the single replacement product for invoice generation
+        cartItems = [exchange.replacementItem.product]
 
         // Set customer info from the exchange
         if let customer = exchange.customer {

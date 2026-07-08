@@ -52,11 +52,11 @@ struct ExchangeTransaction: Hashable {
     let invoiceId: String
     let originalProduct: POSProduct
     let originalQuantity: Int
-    let replacementItems: [ExchangeReplacementItem]
+    let replacementItem: ExchangeReplacementItem
     let amountPaid: Double
     let date: Date
 
     var replacementTotal: Double {
-        replacementItems.reduce(0) { $0 + $1.lineTotal }
+        replacementItem.lineTotal
     }
 }

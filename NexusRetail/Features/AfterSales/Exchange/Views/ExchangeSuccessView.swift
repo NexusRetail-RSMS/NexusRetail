@@ -139,41 +139,39 @@ struct ExchangeSuccessView: View {
             
             Divider()
             
-            // Replacement Products
-            Text("REPLACEMENT PRODUCT(S)")
+            // Replacement Product
+            Text("REPLACEMENT PRODUCT")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundColor(RSMSColors.secondaryText)
-            
-            ForEach(transaction.replacementItems) { item in
-                HStack(spacing: 12) {
-                    CachedAsyncImage(url: URL(string: item.product.imageUrl ?? "")) { image in
-                        image.resizable().aspectRatio(contentMode: .fill)
-                    } placeholder: {
-                        Color.gray.opacity(0.1)
-                    }
-                    .frame(width: 50, height: 50)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(item.product.name)
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(RSMSColors.primaryText)
-                            .lineLimit(1)
-                        Text(item.product.sku)
-                            .font(.system(size: 12))
-                            .foregroundColor(RSMSColors.secondaryText)
-                    }
-                    
-                    Spacer()
-                    
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text(formatIndianCurrency(item.lineTotal))
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(RSMSColors.burgundy)
-                        Text("Qty: \(item.quantity)")
-                            .font(.system(size: 12))
-                            .foregroundColor(RSMSColors.secondaryText)
-                    }
+
+            HStack(spacing: 12) {
+                CachedAsyncImage(url: URL(string: transaction.replacementItem.product.imageUrl ?? "")) { image in
+                    image.resizable().aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    Color.gray.opacity(0.1)
+                }
+                .frame(width: 50, height: 50)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(transaction.replacementItem.product.name)
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(RSMSColors.primaryText)
+                        .lineLimit(1)
+                    Text(transaction.replacementItem.product.sku)
+                        .font(.system(size: 12))
+                        .foregroundColor(RSMSColors.secondaryText)
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text(formatIndianCurrency(transaction.replacementItem.lineTotal))
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(RSMSColors.burgundy)
+                    Text("Qty: \(transaction.replacementItem.quantity)")
+                        .font(.system(size: 12))
+                        .foregroundColor(RSMSColors.secondaryText)
                 }
             }
             
