@@ -55,6 +55,7 @@ struct AfterSalesDashboardView: View {
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .foregroundColor(RSMSColors.primaryText)
+                .accessibilityAddTraits(.isHeader)
             Spacer()
             
             Button {
@@ -136,6 +137,7 @@ struct AfterSalesDashboardView: View {
                 Text("Service Requests")
                     .font(RSMSFonts.headline)
                     .foregroundColor(RSMSColors.primaryText)
+                    .accessibilityAddTraits(.isHeader)
                 Spacer()
                 Picker("Period", selection: $vm.selectedChartPeriod) {
                     ForEach(ChartPeriod.allCases) { period in
@@ -144,6 +146,7 @@ struct AfterSalesDashboardView: View {
                 }
                 .pickerStyle(.segmented)
                 .fixedSize()
+                .accessibilityLabel("Chart Period")
             }
             
             if vm.serviceRequestChartData.allSatisfy({ $0.value == 0 }) {
@@ -201,6 +204,7 @@ struct AfterSalesDashboardView: View {
             Text("Service Status")
                 .font(RSMSFonts.headline)
                 .foregroundColor(RSMSColors.primaryText)
+                .accessibilityAddTraits(.isHeader)
             
             if vm.totalServiceRequests == 0 {
                 emptyChartPlaceholder(text: "No service tickets yet")

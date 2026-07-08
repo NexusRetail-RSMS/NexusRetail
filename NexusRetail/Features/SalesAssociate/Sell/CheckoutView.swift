@@ -65,13 +65,17 @@ struct CheckoutView: View {
                             .overlay(RoundedRectangle(cornerRadius: 16).stroke(RSMSColors.cardBorder, lineWidth: 1))
                         }
 
-                        // 2. Customer Link (phone-first)
+                        // 2. Customer Link (phone-first or pre-filled from exchange)
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Customer Link")
                                 .font(.system(size: 16, weight: .bold, design: .rounded))
                                 .foregroundColor(RSMSColors.darkBrown)
 
-                            customerLinkCard
+                            if let clientName = viewModel.selectedClient {
+                                preFilledCustomerCard(name: clientName)
+                            } else {
+                                customerLinkCard
+                            }
                         }
 
                         // 3. Payment Method
@@ -227,6 +231,44 @@ struct CheckoutView: View {
                 }
                 .buttonStyle(.plain)
             }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RSMSColors.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(RSMSColors.cardBorder, lineWidth: 1))
+    }
+
+    // MARK: - Pre-filled Customer (from Exchange)
+    private func preFilledCustomerCard(name: String) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "person.crop.circle.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(RSMSColors.burgundy)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(name)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(RSMSColors.primaryText)
+                    if !viewModel.receiptSharedPhone.isEmpty {
+                        Text(viewModel.receiptSharedPhone)
+                            .font(.system(size: 13))
+                            .foregroundColor(RSMSColors.secondaryText)
+                    }
+                    if !viewModel.receiptSharedEmail.isEmpty {
+                        Text(viewModel.receiptSharedEmail)
+                            .font(.system(size: 13))
+                            .foregroundColor(RSMSColors.secondaryText)
+                    }
+                }
+                Spacer()
+                Image(systemName: "checkmark.seal.fill")
+                    .foregroundColor(RSMSColors.success)
+            }
+
+            Text("Customer information from scanned invoice")
+                .font(.system(size: 11))
+                .foregroundColor(RSMSColors.secondaryText)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)

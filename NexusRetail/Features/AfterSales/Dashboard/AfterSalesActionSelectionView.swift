@@ -26,11 +26,6 @@ struct ActionSelectionView: View {
 
     // Backend / processing state
     @State private var isProcessing = false
-    @State private var showExchangeConfirm = false
-    @State private var resultTitle = ""
-    @State private var resultMessage = ""
-    @State private var showResult = false
-    @State private var resultWasSuccess = false
 
     private let heroImageHeight: CGFloat = 380
     private let cardCornerRadius: CGFloat = 28
@@ -112,16 +107,6 @@ struct ActionSelectionView: View {
         }
         .sheet(item: $shareURL) { wrapped in
             ShareSheet(items: [wrapped.url])
-        }
-        .sheet(isPresented: $showExchangeConfirm) {
-            exchangeConfirmSheet
-                .presentationDetents([.height(420)])
-                .presentationDragIndicator(.visible)
-        }
-        .alert(resultTitle, isPresented: $showResult) {
-            Button("OK") { if resultWasSuccess { path = NavigationPath() } }
-        } message: {
-            Text(resultMessage)
         }
     }
 
@@ -326,7 +311,15 @@ struct ActionSelectionView: View {
     private var actionsSection: some View {
         VStack(spacing: 6) {
             HStack(spacing: 12) {
-                Button(action: { showExchangeConfirm = true }) {
+                Button(action: {
+                    path.append(POSFlowDestination.exchangeWarrantyCheck(
+                        invoiceId: invoiceId,
+                        selectedItem: selectedItem,
+                        purchaseDate: purchaseDate,
+                        warrantyEndDate: warrantyEndDate,
+                        customer: customer
+                    ))
+                }) {
                     Label("Exchange", systemImage: "arrow.triangle.2.circlepath")
                         .font(.system(size: 16, weight: .semibold))
                         .frame(maxWidth: .infinity)
@@ -356,81 +349,7 @@ struct ActionSelectionView: View {
         }
     }
 
-    // MARK: - Exchange confirmation sheet + processing
 
-    private var exchangeConfirmSheet: some View {
-        VStack(spacing: 0) {
-            VStack(spacing: 10) {
-                ZStack {
-                    Circle().fill(RSMSColors.burgundy.opacity(0.1)).frame(width: 64, height: 64)
-                    Image(systemName: "arrow.triangle.2.circlepath")
-                        .font(.system(size: 28, weight: .semibold))
-                        .foregroundColor(RSMSColors.burgundy)
-                }
-                Text("Confirm Exchange")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundColor(RSMSColors.primaryText)
-            }
-            .padding(.top, 28)
-
-            Text("This will record an exchange for \(selectedItem.name) and restock the returned unit into inventory.")
-                .font(.system(size: 14))
-                .foregroundColor(RSMSColors.secondaryText)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, RSMSSpacing.lg)
-                .padding(.top, 16)
-
-            Spacer()
-
-            VStack(spacing: 12) {
-                Button {
-                    Task {
-                        showExchangeConfirm = false
-                        await processExchange()
-                    }
-                } label: {
-                    Text("Process Exchange")
-                        .font(.system(size: 17, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(RSMSColors.burgundy)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
-                }
-                Button("Cancel") { showExchangeConfirm = false }
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
-            }
-            .padding(.horizontal, RSMSSpacing.lg)
-            .padding(.bottom, 28)
-        }
-        .background(RSMSColors.background.ignoresSafeArea())
-    }
-
-    private func processExchange() async {
-        isProcessing = true
-        defer { isProcessing = false }
-        do {
-            let result = try await AfterSalesService.process(
-                orderId: invoiceId, itemId: selectedItem.itemId,
-                type: "exchange", issue: "Exchange requested", partsCost: 0)
-            if result.success {
-                resultWasSuccess = true
-                resultTitle = "Exchange Approved"
-                resultMessage = "The exchange for \(selectedItem.name) has been recorded and the unit restocked."
-            } else {
-                resultWasSuccess = false
-                resultTitle = "Exchange Not Allowed"
-                resultMessage = result.message ?? "This item is no longer eligible for exchange."
-            }
-            showResult = true
-        } catch {
-            resultWasSuccess = false
-            resultTitle = "Something went wrong"
-            resultMessage = "Couldn't process the exchange. Please try again."
-            showResult = true
-        }
-    }
 
     // MARK: - Customer sheet
 
