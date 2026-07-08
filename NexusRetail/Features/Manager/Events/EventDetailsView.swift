@@ -265,7 +265,7 @@ struct StatBox: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white)
+        .background(theme.cardBackground)
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
     }
@@ -316,6 +316,6 @@ struct GuestRow: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 12)
-        .background(Color.white)
+        .background(theme.cardBackground)
     }
 }

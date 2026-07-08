@@ -53,7 +53,7 @@ struct TransferRequestCard: View {
             }
         }
         .padding(20)
-        .background(Color.white)
+        .background(theme.cardBackground)
         .cornerRadius(24)
         .shadow(color: Color.black.opacity(0.04), radius: 15, x: 0, y: 8)
         .task {
@@ -400,7 +400,7 @@ struct WaitingRequestCard: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 24)
-                .fill(Color.white)
+                .fill(theme.cardBackground)
                 .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
         )
         .alert("Approve Early", isPresented: $showingApproveEarlyAlert) {
@@ -539,7 +539,7 @@ struct ApprovedRequestCard: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 24)
-                .fill(Color.white)
+                .fill(theme.cardBackground)
                 .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
         )
     }

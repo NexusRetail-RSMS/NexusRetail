@@ -81,7 +81,7 @@ struct RepairCardView: View {
             .cornerRadius(8)
         }
         .padding(16)
-        .background(Color.white)
+        .background(theme.cardBackground)
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)

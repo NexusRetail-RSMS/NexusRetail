@@ -60,7 +60,7 @@ struct ManagerRevenueChartView: View {
                             }
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
-                            .background(Color.white)
+                            .background(theme.cardBackground)
                             .cornerRadius(12)
                             .shadow(color: Color.black.opacity(0.12), radius: 10, y: 4)
                             .overlay(

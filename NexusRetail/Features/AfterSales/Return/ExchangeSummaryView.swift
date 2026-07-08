@@ -250,7 +250,7 @@ struct ExchangeSummaryView: View {
             .padding(.top, 4)
         }
         .padding(24)
-        .background(Color.white)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.2), lineWidth: 1))
         .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)

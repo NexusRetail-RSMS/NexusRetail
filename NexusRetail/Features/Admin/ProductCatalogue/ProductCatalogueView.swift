@@ -226,7 +226,7 @@ struct ProductCatalogueView: View {
             .padding(18)
         }
         .frame(height: 210)
-        .background(Color.white)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 4)
     }
@@ -416,7 +416,7 @@ private struct ProductRowCard: View {
                             QRCodeView(qrCodeString: qr)
                                 .frame(width: 250, height: 250)
                                 .padding()
-                                .background(Color.white)
+                                .background(theme.cardBackground)
                                 .cornerRadius(16)
                                 .shadow(radius: 4)
                             

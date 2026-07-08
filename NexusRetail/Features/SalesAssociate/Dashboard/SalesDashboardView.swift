@@ -721,7 +721,7 @@ struct SalesRevenueDetailView: View {
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundColor(theme.primaryText)
                                 .padding(.horizontal, 9).padding(.vertical, 4)
-                                .background(Color.white, in: Capsule())
+                                .background(theme.cardBackground, in: Capsule())
                                 .overlay(Capsule().stroke(theme.cardBorder.opacity(0.6), lineWidth: 1))
                                 .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
                         }

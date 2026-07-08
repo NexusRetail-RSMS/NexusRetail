@@ -660,9 +660,7 @@ private extension View {
     func analyticsCard() -> some View {
         self
             .padding(RSMSSpacing.lg)
-            .background(Color.white)
-            .cornerRadius(RSMSRadius.large)
-            .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 4)
+            .standardCard(cornerRadius: RSMSRadius.large, shadowRadius: 10, shadowY: 4)
             .overlay(RoundedRectangle(cornerRadius: RSMSRadius.large).stroke(Color.gray.opacity(0.15), lineWidth: 1))
     }
 }

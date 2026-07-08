@@ -55,7 +55,7 @@ struct ProfileView: View {
                             }
                             .padding(RSMSSpacing.lg)
                         }
-                        .background(Color.white)
+                        .background(theme.cardBackground)
                         .cornerRadius(RSMSRadius.large)
                         .padding(.horizontal, RSMSSpacing.lg)
                         .padding(.top, RSMSSpacing.lg)
@@ -85,7 +85,7 @@ struct ProfileView: View {
                                         .padding()
                                     }
                                 }
-                                .background(Color.white)
+                                .background(theme.cardBackground)
                                 .cornerRadius(RSMSRadius.large)
                                 .padding(.horizontal, RSMSSpacing.lg)
                             }
@@ -94,7 +94,7 @@ struct ProfileView: View {
                         // Language preference
                         LanguageSettingsButton()
                             .padding()
-                            .background(Color.white)
+                            .background(theme.cardBackground)
                             .cornerRadius(RSMSRadius.large)
                             .padding(.horizontal, RSMSSpacing.lg)
                             .padding(.top, RSMSSpacing.md)
@@ -113,7 +113,7 @@ struct ProfileView: View {
                                 .foregroundColor(theme.error)
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(Color.white)
+                                .background(theme.cardBackground)
                                 .cornerRadius(RSMSRadius.large)
                         }
                         .padding(.horizontal, RSMSSpacing.lg)

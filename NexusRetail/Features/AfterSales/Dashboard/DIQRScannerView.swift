@@ -376,7 +376,7 @@ fileprivate struct DIQRScannerView: View {
     @ViewBuilder
     private func ScannerAnimation(_ height: CGFloat) -> some View {
         Rectangle()
-            .fill(Color.white)
+            .fill(theme.cardBackground)
             .frame(height: 2.5)
             .phaseAnimator([false, true], content: { content, isScanning in
                 content

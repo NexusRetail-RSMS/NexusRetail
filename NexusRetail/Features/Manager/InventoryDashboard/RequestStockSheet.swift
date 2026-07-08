@@ -62,7 +62,7 @@ struct RequestStockSheet: View {
                         Spacer()
                     }
                     .padding(16)
-                    .background(Color.white)
+                    .background(theme.cardBackground)
                     .cornerRadius(24)
 
                     // Quantity
@@ -91,7 +91,7 @@ struct RequestStockSheet: View {
                     }
                     .padding(16)
                     .frame(maxWidth: .infinity)
-                    .background(Color.white)
+                    .background(theme.cardBackground)
                     .cornerRadius(24)
 
                     // Submit button — reflects the real DB result, not a timer.

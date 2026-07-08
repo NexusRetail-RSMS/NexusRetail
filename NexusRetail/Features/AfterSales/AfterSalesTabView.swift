@@ -248,7 +248,7 @@ struct AfterSalesProfileSheet: View {
 
                     LanguageSettingsButton()
                         .padding()
-                        .background(Color.white)
+                        .background(theme.cardBackground)
                         .cornerRadius(RSMSRadius.large)
                         .padding(.horizontal, RSMSSpacing.lg)
                         .padding(.top, RSMSSpacing.md)

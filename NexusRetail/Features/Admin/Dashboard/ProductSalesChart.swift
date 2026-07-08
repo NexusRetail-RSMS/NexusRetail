@@ -161,7 +161,7 @@ struct ProductRankRow: View {
                 }
             }
             .padding(10)
-            .background(Color.white)
+            .background(theme.cardBackground)
         }
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
