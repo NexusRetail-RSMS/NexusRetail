@@ -272,9 +272,11 @@ class AdminTransfersViewModel {
         var closestStoreId: UUID? = nil
         var minDistance: CLLocationDistance = .infinity
         
-        // 5. Find the closest store with sufficient stock (requested + 10 safety threshold)
-        let safetyThreshold = 10
-        let requiredStock = request.quantity + safetyThreshold
+        // 5. Find the closest store with sufficient stock
+        // The source store must retain at least 3 units after the transfer
+        // to avoid draining its own inventory for small inter-store moves.
+        let minimumRetainStock = 3
+        let requiredStock = request.quantity + minimumRetainStock
         
         for store in allStores {
             guard store.id != request.requestingStoreId else { continue }
@@ -285,18 +287,24 @@ class AdminTransfersViewModel {
                 let loc = CLLocation(latitude: lat, longitude: lon)
                 let dist = reqLocation.distance(from: loc)
                 
+                print("[Routing] Store \(store.name) has \(stock) units (need \(requiredStock)), dist=\(String(format: "%.1f", dist / 1000))km")
+                
                 if dist < minDistance {
                     minDistance = dist
                     closestStoreId = store.id
                 }
+            } else {
+                print("[Routing] Store \(store.name) skipped: \(stock) units < \(requiredStock) required")
             }
         }
         
         // 6. If the closest valid store is closer than the warehouse, use it! Otherwise, warehouse.
         if minDistance < distToWarehouse {
+            print("[Routing] ✅ Using nearby store (dist=\(String(format: "%.1f", minDistance / 1000))km vs warehouse=\(String(format: "%.1f", distToWarehouse / 1000))km)")
             return closestStoreId
         }
         
+        print("[Routing] ⚠️ No qualifying nearby store — falling back to warehouse (closest was \(String(format: "%.1f", minDistance / 1000))km vs warehouse \(String(format: "%.1f", distToWarehouse / 1000))km)")
         return nil
     }
 }

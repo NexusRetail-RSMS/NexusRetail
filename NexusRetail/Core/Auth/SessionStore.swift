@@ -18,8 +18,14 @@ class SessionStore {
     
     let authService = AuthService()
     
-    func signIn(email: String, password: String) async throws {
-        let user = try await authService.signIn(email: email, password: password)
+    func signInInitial(email: String, password: String) async throws {
+        try await authService.signInInitial(email: email, password: password)
+        // Note: We do NOT set `currentUser` yet. The LoginViewModel will handle MFA.
+    }
+    
+    /// Called after MFA is verified (or if MFA is somehow bypassed safely).
+    func completeLogin() async throws {
+        let user = try await authService.fetchCurrentUserProfile()
         await MainActor.run {
             self.currentUser = user
         }

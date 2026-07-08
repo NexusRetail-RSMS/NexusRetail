@@ -22,7 +22,7 @@ struct LoginView: View {
     }
 
     private enum Field {
-        case email, password
+        case email, password, mfaCode
     }
 
     var body: some View {
@@ -89,89 +89,17 @@ struct LoginView: View {
 
     private var card: some View {
         VStack(spacing: 0) {
-            VStack(spacing: RSMSSpacing.xl) {
-                VStack(alignment: .leading, spacing: RSMSSpacing.xs) {
-                    Text("Welcome")
-                        .font(RSMSFonts.largeTitle)
-                        .fontWeight(.heavy)
-                        .tracking(-0.4)
-                        .foregroundColor(RSMSColors.primaryText)
-
-                    Text("Sign in to continue to your account")
-                        .font(RSMSFonts.subheadline)
-                        .foregroundColor(RSMSColors.secondaryText.opacity(0.85))
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.top, RSMSSpacing.sm)
-
-                VStack(spacing: RSMSSpacing.lg) {
-                    PremiumField(
-                        icon: "envelope.fill",
-                        isFocused: focusedField == .email
-                    ) {
-                        TextField("Email or Username", text: $viewModel.email)
-                            .keyboardType(.emailAddress)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                            .textContentType(.username)
-                            .font(RSMSFonts.body)
-                            .focused($focusedField, equals: .email)
-                            .accessibilityLabel("Email address or username")
-                    }
-
-                    PremiumField(
-                        icon: "lock.fill",
-                        isFocused: focusedField == .password
-                    ) {
-                        HStack(spacing: RSMSSpacing.sm) {
-                            Group {
-                                if showPassword {
-                                    TextField("Password", text: $viewModel.password)
-                                        .textContentType(.password)
-                                } else {
-                                    SecureField("Password", text: $viewModel.password)
-                                        .textContentType(.password)
-                                }
-                            }
-                            .font(RSMSFonts.body)
-                            .focused($focusedField, equals: .password)
-                            .accessibilityLabel("Password")
-
-                            Button {
-                                withAnimation(.easeOut(duration: 0.15)) {
-                                    showPassword.toggle()
-                                }
-                            } label: {
-                                Image(systemName: showPassword ? "eye.slash.fill" : "eye.fill")
-                                    .foregroundColor(RSMSColors.secondaryText)
-                                    .imageScale(.medium)
-                                    .frame(width: 24, height: 24)
-                                    .contentTransition(.symbolEffect(.replace))
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-
-                    HStack {
-                        Spacer()
-                        Button(action: {}) {
-                            Text("Forgot password?")
-                                .font(RSMSFonts.subheadline)
-                                .foregroundColor(RSMSColors.burgundy)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-
-                errorLabel
-
-                signInButton
+            switch viewModel.loginState {
+            case .credentials:
+                credentialsForm
+            case .mfaSetup(_, let uri, let secret):
+                mfaSetupForm(uri: uri, secret: secret)
+            case .mfaVerify:
+                mfaVerifyForm
             }
-            .padding(.horizontal, RSMSSpacing.lg)
-            .padding(.bottom, 26)
         }
         .frame(maxWidth: 480)
-        .frame(maxHeight: 400)
+        // Removed fixed maxHeight to accommodate the QR code in setup flow
         .background(cardShape.fill(.regularMaterial))
         .background(
             LinearGradient(
@@ -326,6 +254,242 @@ struct LoginView: View {
         .animation(.easeOut(duration: 0.2), value: viewModel.isLoginButtonEnabled)
         .accessibilityLabel("Sign in")
         .accessibilityValue(viewModel.isLoading ? "Authenticating" : "")
+    }
+
+    private var credentialsForm: some View {
+        VStack(spacing: RSMSSpacing.xl) {
+            VStack(alignment: .leading, spacing: RSMSSpacing.xs) {
+                Text("Welcome")
+                    .font(RSMSFonts.largeTitle)
+                    .fontWeight(.heavy)
+                    .tracking(-0.4)
+                    .foregroundColor(RSMSColors.primaryText)
+
+                Text("Sign in to continue to your account")
+                    .font(RSMSFonts.subheadline)
+                    .foregroundColor(RSMSColors.secondaryText.opacity(0.85))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, RSMSSpacing.sm)
+
+            VStack(spacing: RSMSSpacing.lg) {
+                PremiumField(
+                    icon: "envelope.fill",
+                    isFocused: focusedField == .email
+                ) {
+                    TextField("Email or Username", text: $viewModel.email)
+                        .keyboardType(.emailAddress)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .textContentType(.username)
+                        .font(RSMSFonts.body)
+                        .focused($focusedField, equals: .email)
+                        .accessibilityLabel("Email address or username")
+                }
+
+                PremiumField(
+                    icon: "lock.fill",
+                    isFocused: focusedField == .password
+                ) {
+                    HStack(spacing: RSMSSpacing.sm) {
+                        Group {
+                            if showPassword {
+                                TextField("Password", text: $viewModel.password)
+                                    .textContentType(.password)
+                            } else {
+                                SecureField("Password", text: $viewModel.password)
+                                    .textContentType(.password)
+                            }
+                        }
+                        .font(RSMSFonts.body)
+                        .focused($focusedField, equals: .password)
+                        .accessibilityLabel("Password")
+
+                        Button {
+                            withAnimation(.easeOut(duration: 0.15)) {
+                                showPassword.toggle()
+                            }
+                        } label: {
+                            Image(systemName: showPassword ? "eye.slash.fill" : "eye.fill")
+                                .foregroundColor(RSMSColors.secondaryText)
+                                .imageScale(.medium)
+                                .frame(width: 24, height: 24)
+                                .contentTransition(.symbolEffect(.replace))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
+                HStack {
+                    Spacer()
+                    Button(action: {}) {
+                        Text("Forgot password?")
+                            .font(RSMSFonts.subheadline)
+                            .foregroundColor(RSMSColors.burgundy)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            errorLabel
+
+            signInButton
+        }
+        .padding(.horizontal, RSMSSpacing.lg)
+        .padding(.bottom, 26)
+    }
+
+    private func mfaSetupForm(uri: String, secret: String) -> some View {
+        VStack(spacing: RSMSSpacing.lg) {
+            VStack(alignment: .leading, spacing: RSMSSpacing.xs) {
+                Text("Setup 2FA")
+                    .font(RSMSFonts.largeTitle)
+                    .fontWeight(.heavy)
+                    .tracking(-0.4)
+                    .foregroundColor(RSMSColors.primaryText)
+
+                Text("Scan the QR code with your authenticator app.")
+                    .font(RSMSFonts.subheadline)
+                    .foregroundColor(RSMSColors.secondaryText.opacity(0.85))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, RSMSSpacing.sm)
+
+            if let image = QRCodeGenerator.generate(from: uri) {
+                Image(uiImage: image)
+                    .resizable()
+                    .interpolation(.none)
+                    .scaledToFit()
+                    .frame(width: 150, height: 150)
+                    .cornerRadius(12)
+            }
+
+            Text("Secret: \(secret)")
+                .font(.caption)
+                .foregroundColor(RSMSColors.secondaryText)
+
+            PremiumField(
+                icon: "lock.shield.fill",
+                isFocused: focusedField == .mfaCode
+            ) {
+                TextField("6-digit code", text: $viewModel.mfaCode)
+                    .keyboardType(.numberPad)
+                    .font(RSMSFonts.body)
+                    .focused($focusedField, equals: .mfaCode)
+                    .accessibilityLabel("MFA Code")
+            }
+
+            errorLabel
+
+            mfaVerifyButton
+
+            Button("Cancel") {
+                viewModel.cancelMFA(using: sessionStore)
+            }
+            .font(RSMSFonts.subheadline)
+            .foregroundColor(RSMSColors.burgundy)
+        }
+        .padding(.horizontal, RSMSSpacing.lg)
+        .padding(.bottom, 26)
+    }
+
+    private var mfaVerifyForm: some View {
+        VStack(spacing: RSMSSpacing.lg) {
+            VStack(alignment: .leading, spacing: RSMSSpacing.xs) {
+                Text("Two-Factor Auth")
+                    .font(RSMSFonts.largeTitle)
+                    .fontWeight(.heavy)
+                    .tracking(-0.4)
+                    .foregroundColor(RSMSColors.primaryText)
+
+                Text("Enter the 6-digit code from your authenticator app.")
+                    .font(RSMSFonts.subheadline)
+                    .foregroundColor(RSMSColors.secondaryText.opacity(0.85))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, RSMSSpacing.sm)
+
+            PremiumField(
+                icon: "lock.shield.fill",
+                isFocused: focusedField == .mfaCode
+            ) {
+                TextField("6-digit code", text: $viewModel.mfaCode)
+                    .keyboardType(.numberPad)
+                    .font(RSMSFonts.body)
+                    .focused($focusedField, equals: .mfaCode)
+                    .accessibilityLabel("MFA Code")
+            }
+
+            errorLabel
+
+            mfaVerifyButton
+
+            Button("Cancel") {
+                viewModel.cancelMFA(using: sessionStore)
+            }
+            .font(RSMSFonts.subheadline)
+            .foregroundColor(RSMSColors.burgundy)
+        }
+        .padding(.horizontal, RSMSSpacing.lg)
+        .padding(.bottom, 26)
+    }
+
+    private var mfaVerifyButton: some View {
+        Button {
+            withAnimation(.easeOut(duration: 0.15)) {
+                focusedField = nil
+            }
+            Task { await viewModel.verifyMFA(using: sessionStore) }
+        } label: {
+            HStack(spacing: 8) {
+                ZStack {
+                    Text("Verify")
+                        .font(RSMSFonts.headline)
+                        .tracking(0.2)
+                        .opacity(viewModel.isLoading ? 0 : 1)
+
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .tint(.white)
+                    }
+                }
+
+                if !viewModel.isLoading {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(
+                LinearGradient(
+                    colors: viewModel.isVerifyButtonEnabled
+                        ? [RSMSColors.burgundy, RSMSColors.burgundy.opacity(0.82)]
+                        : [RSMSColors.disabled, RSMSColors.disabled],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .overlay(
+                LinearGradient(
+                    colors: [Color.white.opacity(0.28), Color.white.opacity(0.0)],
+                    startPoint: .top,
+                    endPoint: .center
+                )
+            )
+            .foregroundColor(.white)
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .stroke(Color.white.opacity(0.18), lineWidth: 1)
+            )
+            .shadow(color: viewModel.isVerifyButtonEnabled ? RSMSColors.burgundy.opacity(0.35) : .clear, radius: 18, x: 0, y: 10)
+        }
+        .buttonStyle(SpringPressStyle())
+        .disabled(!viewModel.isVerifyButtonEnabled)
+        .animation(.easeOut(duration: 0.2), value: viewModel.isVerifyButtonEnabled)
+        .accessibilityLabel("Verify Code")
+        .accessibilityValue(viewModel.isLoading ? "Verifying" : "")
     }
 }
 

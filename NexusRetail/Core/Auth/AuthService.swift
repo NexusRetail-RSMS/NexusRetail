@@ -14,10 +14,16 @@ struct AuthService {
         SupabaseManager.shared.client
     }
     
-    /// Calls Supabase auth.signIn, then queries app_user for the logged-in user's row and returns it.
-    func signIn(email: String, password: String) async throws -> AppUser {
-        let authResponse = try await client.auth.signIn(email: email, password: password)
-        return try await fetchAppUser(for: authResponse.user.id)
+    /// Calls Supabase auth.signIn for the initial step.
+    /// Does NOT fetch AppUser automatically because MFA might be required before proceeding.
+    func signInInitial(email: String, password: String) async throws {
+        _ = try await client.auth.signIn(email: email, password: password)
+    }
+    
+    /// Fetches the user's profile row from the app_user table.
+    func fetchCurrentUserProfile() async throws -> AppUser {
+        let session = try await client.auth.session
+        return try await fetchAppUser(for: session.user.id)
     }
     
     func signOut() async throws {
