@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct DashboardHeaderView: View {
+    @Environment(AppTheme.self) private var theme
     let name: String
     @Environment(SessionStore.self) private var sessionStore
     @State private var showProfile = false
@@ -14,7 +15,7 @@ struct DashboardHeaderView: View {
         HStack(alignment: .center) {
             Text("Dashboard")
                 .font(.system(size: 32, weight: .bold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
             
             Spacer()
             

@@ -8,6 +8,7 @@ import Charts
 
 struct AfterSalesDashboardView: View {
     @Environment(SessionStore.self) private var sessionStore
+    @Environment(AppTheme.self) private var theme
     @Binding var path: NavigationPath
     var namespace: Namespace.ID
 
@@ -42,6 +43,7 @@ struct AfterSalesDashboardView: View {
         }
         .sheet(isPresented: $isProfilePresented) {
             AdminProfileSheet()
+                .environment(theme)
         }
         .sheet(item: $ticketFilter) { filter in
             AfterSalesTicketsListView(filter: filter, storeID: sessionStore.currentUser?.storeID)

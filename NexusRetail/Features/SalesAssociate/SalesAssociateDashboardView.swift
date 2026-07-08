@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SalesAssociateDashboardView: View {
     @Environment(SessionStore.self) private var sessionStore
+    @Environment(AppTheme.self) private var theme
 
     @State private var searchText = ""
     @State private var clientName = ""
@@ -56,7 +57,7 @@ struct SalesAssociateDashboardView: View {
             }
         }
         .sheet(isPresented: $isNewClientPresented) { newClientSheet }
-        .sheet(isPresented: $isProfilePresented) { AdminProfileSheet() }
+        .sheet(isPresented: $isProfilePresented) { AdminProfileSheet().environment(theme) }
     }
 
     private var headerBar: some View {

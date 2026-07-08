@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct RevenueCardView: View {
+    @Environment(AppTheme.self) private var theme
     let revenue: String
     let trend: String
     let transactions: String
@@ -20,11 +21,11 @@ struct RevenueCardView: View {
                 VStack(alignment: .leading, spacing: RSMSSpacing.xs) {
                     Text("TODAY'S REVENUE")
                         .font(RSMSFonts.subheadline)
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                     
                     Text(revenue)
                         .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                 }
                 
                 Spacer()
@@ -44,7 +45,7 @@ struct RevenueCardView: View {
                     
                     Text("vs yesterday")
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
             }
             
@@ -71,7 +72,7 @@ struct RevenueCardView: View {
             }
         }
         .padding(RSMSSpacing.lg)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .cornerRadius(RSMSRadius.large)
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
     }
@@ -80,11 +81,11 @@ struct RevenueCardView: View {
         VStack(alignment: .center, spacing: 4) {
             Text(value)
                 .font(RSMSFonts.headline)
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
             
             Text(title)
                 .font(.system(size: 10))
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)

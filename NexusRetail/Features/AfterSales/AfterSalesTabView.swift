@@ -13,6 +13,7 @@ struct AfterSalesTabView: View {
     @State private var dashboardPath = NavigationPath()
     @State private var posViewModel = SellViewModel()
     @Namespace private var namespace
+    @Environment(AppTheme.self) private var theme
 
 
 
@@ -38,8 +39,10 @@ struct AfterSalesTabView: View {
                 .tabItem { Label("Repairs", systemImage: "wrench.and.screwdriver.fill") }
                 .tag(1)
             }
-            .tint(RSMSColors.burgundy)
+            .tint(theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
+            .preferredColorScheme(theme.isDarkMode ? .dark : .light)
         }
+        .environment(theme)
         .environment(posViewModel)
     }
 

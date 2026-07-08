@@ -97,6 +97,7 @@ enum PerformanceTier {
 
 struct AdminProfileSheet: View {
     @Environment(SessionStore.self) private var sessionStore
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
 
     // Edit states
@@ -144,7 +145,7 @@ struct AdminProfileSheet: View {
             List {
                 // MARK: - Avatar Header Section
                 Section {
-                    VStack(spacing: 14) {
+                    VStack(spacing: 12) {
                         // Avatar with performance ring
                         ZStack {
                             if effectivePerformanceTier != .none {
@@ -172,15 +173,17 @@ struct AdminProfileSheet: View {
                                 }
                             }
                             
-                            // White gap ring
+                            // Gap ring — adapts to dark mode
                             Circle()
-                                .stroke(Color.white, lineWidth: 4)
+                                .stroke(theme.isDarkMode ? Color(hex: "1C1C1C") : Color.white, lineWidth: 4)
                                 .frame(width: 118, height: 118)
                             
                             // Profile photo
                             ZStack {
                                 Circle()
-                                    .fill(RSMSColors.burgundy.opacity(0.15))
+                                    .fill(theme.isDarkMode
+                                          ? Color(hex: "2C0000")
+                                          : RSMSColors.burgundy.opacity(0.15))
                                     .frame(width: 110, height: 110)
 
                                 if isEditing {
@@ -199,7 +202,7 @@ struct AdminProfileSheet: View {
                                         Image(systemName: "person.fill")
                                             .resizable().scaledToFit()
                                             .frame(width: 58, height: 58)
-                                            .foregroundColor(RSMSColors.burgundy)
+                                            .foregroundColor(theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
                                     }
                                 } else {
                                     if let image = selectedImage {
@@ -217,7 +220,7 @@ struct AdminProfileSheet: View {
                                         Image(systemName: "person.fill")
                                             .resizable().scaledToFit()
                                             .frame(width: 58, height: 58)
-                                            .foregroundColor(RSMSColors.burgundy)
+                                            .foregroundColor(theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
                                     }
                                 }
                             }
@@ -229,7 +232,7 @@ struct AdminProfileSheet: View {
                             } else {
                                 Text(sessionStore.currentUser?.name ?? "Admin User")
                                     .font(.system(size: 22, weight: .bold))
-                                    .foregroundColor(RSMSColors.primaryText)
+                                    .foregroundColor(theme.isDarkMode ? RSMSColors.antiqueGold : theme.primaryText)
                                 
                                 // Performance tier badge
                                 if effectivePerformanceTier != .none {
@@ -238,9 +241,17 @@ struct AdminProfileSheet: View {
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 20)
+                        .padding(.vertical, 28)
                 }
-                .listRowBackground(Color.clear)
+                .listRowBackground(
+                    // Gradient fills behind the avatar — no more floating dark void
+                    LinearGradient(
+                        colors: theme.isDarkMode
+                            ? [Color(hex: "3D0000"), Color(hex: "1C1007"), Color(hex: "1C1C1C")]
+                            : [RSMSColors.burgundy.opacity(0.12), RSMSColors.cream.opacity(0.6)],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                )
                 .listRowInsets(EdgeInsets())
 
                 if isEditing {
@@ -278,7 +289,7 @@ struct AdminProfileSheet: View {
                         infoRow(icon: "person.badge.shield.checkmark.fill",
                                 label: "Role",
                                 value: sessionStore.currentRole?.displayName ?? "Admin",
-                                valueColor: RSMSColors.burgundy)
+                                valueColor: theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
 
                         infoRow(icon: "phone.fill",
                                 label: "Phone",
@@ -299,9 +310,38 @@ struct AdminProfileSheet: View {
                         infoRow(icon: "globe",
                                 label: "Country",
                                 value: country(from: sessionStore.currentUser?.address),
-                                valueColor: RSMSColors.burgundy)
+                                valueColor: theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
                     }
 
+
+                    // MARK: - Dark Mode Toggle
+                    Section {
+                        HStack {
+                            ZStack {
+                                Circle()
+                                    .fill(theme.isDarkMode
+                                          ? RSMSColors.antiqueGold.opacity(0.15)
+                                          : RSMSColors.burgundy.opacity(0.10))
+                                    .frame(width: 32, height: 32)
+                                Image(systemName: theme.isDarkMode ? "moon.stars.fill" : "sun.max.fill")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
+                            }
+                            Text("Dark Mode")
+                                .font(.system(size: 15))
+                                .foregroundColor(theme.primaryText)
+                            Spacer()
+                            Toggle("", isOn: Binding(
+                                get: { theme.isDarkMode },
+                                set: { theme.isDarkMode = $0 }
+                            ))
+                            .tint(RSMSColors.antiqueGold)
+                        }
+                    } footer: {
+                        Text("Switch between midnight black and warm cream themes.")
+                            .font(.system(size: 12))
+                            .foregroundColor(theme.secondaryText)
+                    }
 
                     // MARK: - Sign Out
                     Section {
@@ -339,20 +379,18 @@ struct AdminProfileSheet: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     if isEditing {
-                        // Cancel → xmark icon (IMG5)
                         Button {
                             isEditing = false
                         } label: {
                             Image(systemName: "xmark")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(RSMSColors.burgundy)
+                                .foregroundColor(theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
                         }
                     } else {
-                        // Dismiss sheet (non-edit mode)
                         Button { dismiss() } label: {
                             Image(systemName: "xmark")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(RSMSColors.burgundy)
+                                .foregroundColor(theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
                         }
                     }
                 }
@@ -361,23 +399,23 @@ struct AdminProfileSheet: View {
                         if isSaving {
                             ProgressView()
                         } else {
-                            // Save → checkmark icon (IMG5)
                             Button {
                                 saveChanges()
                             } label: {
                                 Image(systemName: "checkmark")
                                     .font(.system(size: 15, weight: .semibold))
-                                    .foregroundColor(isFormValid ? RSMSColors.burgundy : Color.secondary)
+                                    .foregroundColor(isFormValid
+                                                     ? (theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
+                                                     : Color.secondary)
                             }
                             .disabled(!isFormValid)
                         }
                     } else {
-                        // Edit button on right (non-edit mode)
                         Button("Edit") {
                             startEditing()
                         }
                         .font(.system(.body).weight(.semibold))
-                        .tint(RSMSColors.burgundy)
+                        .tint(theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
                     }
                 }
             }
@@ -387,13 +425,14 @@ struct AdminProfileSheet: View {
     // MARK: - Edit Photo Button (extracted to avoid compiler timeout)
     private var editPhotoButton: some View {
         let labelText = (selectedImage == nil && currentImageUrl == nil) ? "Add Photo" : "Change Photo"
+        let accentColor = theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy
         return PhotosPicker(selection: $photoPickerItem, matching: .images) {
             Text(labelText)
                 .font(RSMSFonts.subheadline.weight(.medium))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(accentColor)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 6)
-                .background(RSMSColors.burgundy.opacity(0.1))
+                .background(accentColor.opacity(0.12))
                 .clipShape(Capsule())
         }
         .buttonStyle(.plain)
@@ -460,7 +499,7 @@ struct AdminProfileSheet: View {
     ) -> some View {
         HStack(alignment: multiline ? .top : .center, spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(RSMSColors.burgundy)
+                .foregroundColor(theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
                 .frame(width: 20)
 
             Text(label)
