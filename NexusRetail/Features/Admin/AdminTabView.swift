@@ -11,6 +11,7 @@ struct AdminTabView: View {
     @State private var isAddManagerPresented = false
     @State private var navStore = AdminNavigationStore()
     @State private var transfersVM = AdminTransfersViewModel()
+    @Environment(AppTheme.self) private var theme
     
     var body: some View {
         TabView(selection: $navStore.selectedTab) {
@@ -61,7 +62,8 @@ struct AdminTabView: View {
             }
             .tag(AdminTab.managers)
         }
-        .tint(RSMSColors.burgundy)
+        .tint(theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
+        .preferredColorScheme(theme.isDarkMode ? .dark : .light)
         .environment(navStore)
         .environment(transfersVM)
     }
@@ -91,6 +93,7 @@ struct AdminToolbarModifier: ViewModifier {
     let title: String
     @State private var isProfilePresented = false
     @Environment(SessionStore.self) private var sessionStore
+    @Environment(AppTheme.self) private var theme
 
     func body(content: Content) -> some View {
         content
@@ -130,6 +133,7 @@ struct AdminToolbarModifier: ViewModifier {
             }
             .sheet(isPresented: $isProfilePresented) {
                 AdminProfileSheet()
+                    .environment(theme)
             }
     }
     

@@ -72,6 +72,7 @@ enum ClientDirectory {
 }
 
 struct NewAppointmentView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     @Environment(SessionStore.self) private var sessionStore
 
@@ -170,7 +171,7 @@ struct NewAppointmentView: View {
                     }
                 }
             }
-            .tint(RSMSColors.burgundy)
+            .tint(theme.burgundy)
             .disabled(isSendingEmail)
             .alert("Email Sent", isPresented: $showingSuccessAlert) {
                 Button("OK", role: .cancel) {

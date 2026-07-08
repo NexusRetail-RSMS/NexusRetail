@@ -16,7 +16,9 @@ import SwiftUI
 import Supabase
 
 struct AdminDashboardView: View {
+    @Environment(AdminNavigationStore.self) private var navStore
     @Environment(SessionStore.self) private var sessionStore
+    @Environment(AppTheme.self) private var theme
     @State private var viewModel = DashboardViewModel()
     @State private var isProfilePresented = false
     
@@ -132,6 +134,7 @@ struct AdminDashboardView: View {
         }
         .sheet(isPresented: $isProfilePresented) {
             AdminProfileSheet()
+                .environment(theme)
         }
         .fullScreenCover(isPresented: $isShowingSalesDetail) {
             NavigationStack {

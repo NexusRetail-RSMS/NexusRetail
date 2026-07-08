@@ -7,8 +7,97 @@ import SwiftUI
 import PhotosUI
 import Supabase
 
+// MARK: - Performance Tier
+enum PerformanceTier {
+    case gold, silver, bronze, none
+    
+    var label: String {
+        switch self {
+        case .gold:   return "Top Performer"
+        case .silver: return "Silver Tier"
+        case .bronze: return "Bronze Tier"
+        case .none:   return ""
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .gold:   return "crown.fill"
+        case .silver: return "medal.fill"
+        case .bronze: return "medal"
+        case .none:   return ""
+        }
+    }
+    
+    var ringColors: [Color] {
+        switch self {
+        case .gold:
+            return [
+                Color(red: 1.0,  green: 0.84, blue: 0.0),
+                Color(red: 1.0,  green: 0.65, blue: 0.0),
+                Color(red: 1.0,  green: 0.90, blue: 0.4),
+                Color(red: 0.85, green: 0.65, blue: 0.13),
+                Color(red: 1.0,  green: 0.84, blue: 0.0)
+            ]
+        case .silver:
+            return [
+                Color(red: 0.85, green: 0.85, blue: 0.88),
+                Color(red: 0.60, green: 0.60, blue: 0.65),
+                Color(red: 0.95, green: 0.95, blue: 1.0),
+                Color(red: 0.70, green: 0.70, blue: 0.75),
+                Color(red: 0.85, green: 0.85, blue: 0.88)
+            ]
+        case .bronze:
+            return [
+                Color(red: 0.80, green: 0.50, blue: 0.20),
+                Color(red: 0.55, green: 0.27, blue: 0.07),
+                Color(red: 0.93, green: 0.64, blue: 0.33),
+                Color(red: 0.65, green: 0.37, blue: 0.12),
+                Color(red: 0.80, green: 0.50, blue: 0.20)
+            ]
+        case .none:
+            return [Color.gray.opacity(0.3)]
+        }
+    }
+    
+    var backgroundGradient: [Color] {
+        switch self {
+        case .gold:
+            return [
+                Color(red: 1.0,  green: 0.95, blue: 0.70),
+                Color(red: 1.0,  green: 0.88, blue: 0.40),
+                Color(red: 0.95, green: 0.78, blue: 0.20)
+            ]
+        case .silver:
+            return [
+                Color(red: 0.94, green: 0.94, blue: 0.97),
+                Color(red: 0.82, green: 0.82, blue: 0.88),
+                Color(red: 0.70, green: 0.70, blue: 0.78)
+            ]
+        case .bronze:
+            return [
+                Color(red: 1.0,  green: 0.90, blue: 0.75),
+                Color(red: 0.93, green: 0.70, blue: 0.40),
+                Color(red: 0.78, green: 0.52, blue: 0.20)
+            ]
+        case .none:
+            return [RSMSColors.background]
+        }
+    }
+    
+    var textColor: Color {
+        switch self {
+        case .gold:   return Color(red: 0.6,  green: 0.45, blue: 0.0)
+        case .silver: return Color(red: 0.35, green: 0.35, blue: 0.45)
+        case .bronze: return Color(red: 0.50, green: 0.28, blue: 0.06)
+        case .none:   return .clear
+        }
+    }
+}
+
 struct AdminProfileSheet: View {
     @Environment(SessionStore.self) private var sessionStore
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
 
     // Edit states
@@ -27,6 +116,18 @@ struct AdminProfileSheet: View {
     @State private var selectedImage: UIImage? = nil
     @State private var currentImageUrl: String? = nil
 
+    // Performance tier — in production, derive from store revenue ranking
+    // Gold = rank 1, Silver = rank 2, Bronze = rank 3
+    @State private var performanceTier: PerformanceTier = .gold
+    @State private var ringRotation: Double = 0
+    
+    private var effectivePerformanceTier: PerformanceTier {
+        if sessionStore.currentRole == .manager || sessionStore.currentUser?.role == .manager {
+            return performanceTier
+        }
+        return .none
+    }
+
     private let countries = [
         "United States", "United Kingdom", "Canada", "Australia",
         "India", "Germany", "France", "Japan", "United Arab Emirates",
@@ -44,105 +145,113 @@ struct AdminProfileSheet: View {
             List {
                 // MARK: - Avatar Header Section
                 Section {
-                    VStack(spacing: 14) {
-                        if isEditing {
-                            PhotosPicker(selection: $photoPickerItem, matching: .images) {
-                                ZStack {
-                                    Circle()
-                                        .fill(RSMSColors.burgundy.opacity(0.15))
-                                        .frame(width: 110, height: 110)
+                    VStack(spacing: 12) {
+                        // Avatar with performance ring
+                        ZStack {
+                            if effectivePerformanceTier != .none {
+                                // Outer rotating shiny ring
+                                Circle()
+                                    .stroke(
+                                        AngularGradient(
+                                            colors: effectivePerformanceTier.ringColors,
+                                            center: .center,
+                                            angle: .degrees(ringRotation)
+                                        ),
+                                        lineWidth: 5
+                                    )
+                                    .frame(width: 126, height: 126)
+                                    .blur(radius: 0.5)
+                                    .onAppear {
+                                        withAnimation(.linear(duration: 4).repeatForever(autoreverses: false)) {
+                                            ringRotation = 360
+                                        }
+                                    }
+                                
+                                // Glittery sparkle dots
+                                ForEach(0..<8, id: \.self) { i in
+                                    sparkleDot(index: i)
+                                }
+                            }
+                            
+                            // Gap ring — adapts to dark mode
+                            Circle()
+                                .stroke(theme.isDarkMode ? Color(hex: "1C1C1C") : Color.white, lineWidth: 4)
+                                .frame(width: 118, height: 118)
+                            
+                            // Profile photo
+                            ZStack {
+                                Circle()
+                                    .fill(theme.isDarkMode
+                                          ? Color(hex: "2C0000")
+                                          : RSMSColors.burgundy.opacity(0.15))
+                                    .frame(width: 110, height: 110)
 
+                                if isEditing {
                                     if let image = selectedImage {
                                         Image(uiImage: image)
-                                            .resizable()
-                                            .scaledToFill()
+                                            .resizable().scaledToFill()
                                             .frame(width: 110, height: 110)
                                             .clipShape(Circle())
                                     } else if let urlString = currentImageUrl, let url = URL(string: urlString) {
                                         CachedAsyncImage(url: url) { image in
-                                            image
-                                                .resizable()
-                                                .scaledToFill()
+                                            image.resizable().scaledToFill()
                                                 .frame(width: 110, height: 110)
                                                 .clipShape(Circle())
-                                        } placeholder: {
-                                            ProgressView()
-                                                .frame(width: 110, height: 110)
-                                        }
+                                        } placeholder: { ProgressView().frame(width: 110, height: 110) }
                                     } else {
                                         Image(systemName: "person.fill")
-                                            .resizable()
-                                            .scaledToFit()
+                                            .resizable().scaledToFit()
                                             .frame(width: 58, height: 58)
-                                            .foregroundColor(RSMSColors.burgundy)
-                                    }
-                                }
-                            }
-                            .buttonStyle(.plain)
-                            .onChange(of: photoPickerItem) { _, newItem in
-                                Task {
-                                    if let data = try? await newItem?.loadTransferable(type: Data.self),
-                                       let uiImage = UIImage(data: data) {
-                                        await MainActor.run {
-                                            self.selectedImageData = data
-                                            self.selectedImage = uiImage
-                                        }
-                                    }
-                                }
-                            }
-
-
-                            PhotosPicker(selection: $photoPickerItem, matching: .images) {
-                                Text(selectedImage == nil && currentImageUrl == nil ? "Add Photo" : "Change Photo")
-                                    .font(RSMSFonts.subheadline.weight(.medium))
-                                    .foregroundColor(RSMSColors.primaryText)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 6)
-                                    .background(RSMSColors.burgundy.opacity(0.1))
-                                    .clipShape(Capsule())
-                            }
-                            .buttonStyle(.plain)
-                        } else {
-                            ZStack {
-                                Circle()
-                                    .fill(RSMSColors.burgundy.opacity(0.15))
-                                    .frame(width: 110, height: 110)
-
-                                if let image = selectedImage {
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(width: 110, height: 110)
-                                        .clipShape(Circle())
-                                } else if let urlString = sessionStore.currentUser?.imageUrl, let url = URL(string: urlString) {
-                                    CachedAsyncImage(url: url) { image in
-                                        image
-                                            .resizable()
-                                            .scaledToFill()
-                                            .frame(width: 110, height: 110)
-                                            .clipShape(Circle())
-                                    } placeholder: {
-                                        ProgressView()
-                                            .frame(width: 110, height: 110)
+                                            .foregroundColor(theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
                                     }
                                 } else {
-                                    Image(systemName: "person.fill")
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 58, height: 58)
-                                        .foregroundColor(RSMSColors.burgundy)
+                                    if let image = selectedImage {
+                                        Image(uiImage: image)
+                                            .resizable().scaledToFill()
+                                            .frame(width: 110, height: 110)
+                                            .clipShape(Circle())
+                                    } else if let urlString = sessionStore.currentUser?.imageUrl, let url = URL(string: urlString) {
+                                        CachedAsyncImage(url: url) { image in
+                                            image.resizable().scaledToFill()
+                                                .frame(width: 110, height: 110)
+                                                .clipShape(Circle())
+                                        } placeholder: { ProgressView().frame(width: 110, height: 110) }
+                                    } else {
+                                        Image(systemName: "person.fill")
+                                            .resizable().scaledToFit()
+                                            .frame(width: 58, height: 58)
+                                            .foregroundColor(theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
+                                    }
                                 }
                             }
-                            Text(sessionStore.currentUser?.name ?? "Admin User")
-                                .font(.system(size: 22, weight: .bold))
-                                .foregroundColor(RSMSColors.primaryText)
                         }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 20)
-
+                            
+                            // Name
+                            if isEditing {
+                                editPhotoButton
+                            } else {
+                                Text(sessionStore.currentUser?.name ?? "Admin User")
+                                    .font(.system(size: 22, weight: .bold))
+                                    .foregroundColor(theme.isDarkMode ? RSMSColors.antiqueGold : theme.primaryText)
+                                
+                                // Performance tier badge
+                                if effectivePerformanceTier != .none {
+                                    tierBadgeView
+                                }
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 28)
                 }
-                .listRowBackground(Color.clear)
+                .listRowBackground(
+                    // Gradient fills behind the avatar — no more floating dark void
+                    LinearGradient(
+                        colors: theme.isDarkMode
+                            ? [Color(hex: "3D0000"), Color(hex: "1C1007"), Color(hex: "1C1C1C")]
+                            : [RSMSColors.burgundy.opacity(0.12), RSMSColors.cream.opacity(0.6)],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                )
                 .listRowInsets(EdgeInsets())
 
                 if isEditing {
@@ -180,7 +289,7 @@ struct AdminProfileSheet: View {
                         infoRow(icon: "person.badge.shield.checkmark.fill",
                                 label: "Role",
                                 value: sessionStore.currentRole?.displayName ?? "Admin",
-                                valueColor: RSMSColors.burgundy)
+                                valueColor: theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
 
                         infoRow(icon: "phone.fill",
                                 label: "Phone",
@@ -201,7 +310,7 @@ struct AdminProfileSheet: View {
                         infoRow(icon: "globe",
                                 label: "Country",
                                 value: country(from: sessionStore.currentUser?.address),
-                                valueColor: RSMSColors.burgundy)
+                                valueColor: theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
                     }
 
 
@@ -210,6 +319,34 @@ struct AdminProfileSheet: View {
                         LanguageSettingsButton()
                     }
 
+                    // MARK: - Dark Mode Toggle
+                    Section {
+                        HStack {
+                            ZStack {
+                                Circle()
+                                    .fill(theme.isDarkMode
+                                          ? RSMSColors.antiqueGold.opacity(0.15)
+                                          : RSMSColors.burgundy.opacity(0.10))
+                                    .frame(width: 32, height: 32)
+                                Image(systemName: theme.isDarkMode ? "moon.stars.fill" : "sun.max.fill")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
+                            }
+                            Text("Dark Mode")
+                                .font(.system(size: 15))
+                                .foregroundColor(theme.primaryText)
+                            Spacer()
+                            Toggle("", isOn: Binding(
+                                get: { theme.isDarkMode },
+                                set: { theme.isDarkMode = $0 }
+                            ))
+                            .tint(RSMSColors.antiqueGold)
+                        }
+                    } footer: {
+                        Text("Switch between midnight black and warm cream themes.")
+                            .font(.system(size: 12))
+                            .foregroundColor(theme.secondaryText)
+                    }
 
                     // MARK: - Sign Out
                     Section {
@@ -247,20 +384,18 @@ struct AdminProfileSheet: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     if isEditing {
-                        // Cancel → xmark icon (IMG5)
                         Button {
                             isEditing = false
                         } label: {
                             Image(systemName: "xmark")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(RSMSColors.burgundy)
+                                .foregroundColor(theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
                         }
                     } else {
-                        // Dismiss sheet (non-edit mode)
                         Button { dismiss() } label: {
                             Image(systemName: "xmark")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(RSMSColors.burgundy)
+                                .foregroundColor(theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
                         }
                     }
                 }
@@ -269,27 +404,93 @@ struct AdminProfileSheet: View {
                         if isSaving {
                             ProgressView()
                         } else {
-                            // Save → checkmark icon (IMG5)
                             Button {
                                 saveChanges()
                             } label: {
                                 Image(systemName: "checkmark")
                                     .font(.system(size: 15, weight: .semibold))
-                                    .foregroundColor(isFormValid ? RSMSColors.burgundy : Color.secondary)
+                                    .foregroundColor(isFormValid
+                                                     ? (theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
+                                                     : Color.secondary)
                             }
                             .disabled(!isFormValid)
                         }
                     } else {
-                        // Edit button on right (non-edit mode)
                         Button("Edit") {
                             startEditing()
                         }
                         .font(.system(.body).weight(.semibold))
-                        .tint(RSMSColors.burgundy)
+                        .tint(theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
                     }
                 }
             }
         }
+    }
+
+    // MARK: - Edit Photo Button (extracted to avoid compiler timeout)
+    private var editPhotoButton: some View {
+        let labelText = (selectedImage == nil && currentImageUrl == nil) ? "Add Photo" : "Change Photo"
+        let accentColor = theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy
+        return PhotosPicker(selection: $photoPickerItem, matching: .images) {
+            Text(labelText)
+                .font(RSMSFonts.subheadline.weight(.medium))
+                .foregroundColor(accentColor)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 6)
+                .background(accentColor.opacity(0.12))
+                .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .onChange(of: photoPickerItem) { _, newItem in
+            Task {
+                if let data = try? await newItem?.loadTransferable(type: Data.self),
+                   let uiImage = UIImage(data: data) {
+                    await MainActor.run {
+                        self.selectedImageData = data
+                        self.selectedImage = uiImage
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Tier Badge (extracted to avoid compiler timeout)
+    private var tierBadgeView: some View {
+        let bgColors: [Color] = Array(effectivePerformanceTier.ringColors.prefix(3)).map { $0.opacity(0.25) }
+        let strokeColors: [Color] = Array(effectivePerformanceTier.ringColors.prefix(3))
+        return HStack(spacing: 6) {
+            Image(systemName: effectivePerformanceTier.icon)
+                .font(.system(size: 11, weight: .bold))
+            Text(effectivePerformanceTier.label)
+                .font(.system(size: 12, weight: .bold))
+        }
+        .foregroundColor(effectivePerformanceTier.textColor)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 6)
+        .background(
+            Capsule()
+                .fill(LinearGradient(colors: bgColors, startPoint: .leading, endPoint: .trailing))
+        )
+        .overlay(
+            Capsule()
+                .stroke(LinearGradient(colors: strokeColors, startPoint: .leading, endPoint: .trailing), lineWidth: 1.2)
+        )
+    }
+
+    // MARK: - Sparkle dot helper (extracted to avoid compiler timeout)
+    private func sparkleDot(index i: Int) -> some View {
+        let angle = Double(i) * 45.0
+        let radians = angle * .pi / 180
+        let size: CGFloat = i % 2 == 0 ? 5 : 3
+        let color = effectivePerformanceTier.ringColors.first ?? .yellow
+        let xOffset = cos(radians) * 66
+        let yOffset = sin(radians) * 66
+        return Circle()
+            .fill(color)
+            .frame(width: size, height: size)
+            .offset(x: xOffset, y: yOffset)
+            .opacity(0.85)
+            .blur(radius: 0.3)
     }
 
     // MARK: - Native Info Row
@@ -303,7 +504,7 @@ struct AdminProfileSheet: View {
     ) -> some View {
         HStack(alignment: multiline ? .top : .center, spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(RSMSColors.burgundy)
+                .foregroundColor(theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
                 .frame(width: 20)
 
             Text(label)

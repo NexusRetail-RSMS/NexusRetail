@@ -8,6 +8,7 @@ import SwiftUI
 struct ManagerDashboardView: View {
     @State private var viewModel = ManagerDashboardViewModel()
     @Environment(SessionStore.self) private var sessionStore
+    @Environment(AppTheme.self) private var theme
     
     // Notification ViewModel
     @State private var notificationVM = LowStockNotificationViewModel()
@@ -47,7 +48,7 @@ struct ManagerDashboardView: View {
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.bottom, RSMSSpacing.xxxl)
         }
-        .background(RSMSColors.background.ignoresSafeArea())
+        .background(theme.background.ignoresSafeArea())
         .navigationBarHidden(true)
         .refreshable {
             // Pick up any store reassignment made by an admin without needing re-login.
@@ -76,6 +77,7 @@ struct ManagerDashboardView: View {
         }
         .sheet(isPresented: $isProfilePresented) {
             AdminProfileSheet()
+                .environment(theme)
         }
         .sheet(isPresented: $isNotificationPresented) {
             NotificationListView(viewModel: notificationVM)
@@ -83,7 +85,7 @@ struct ManagerDashboardView: View {
         .fullScreenCover(isPresented: $isShowingRevenueDetail) {
             NavigationStack {
                 ZStack {
-                    RSMSColors.background.ignoresSafeArea()
+                    theme.background.ignoresSafeArea()
                     VStack {
                         HStack(alignment: .top) {
                             VStack(alignment: .leading, spacing: 4) {
@@ -181,7 +183,7 @@ struct ManagerDashboardView: View {
         .fullScreenCover(isPresented: $isShowingRequestsDetail) {
             NavigationStack {
                 ZStack {
-                    RSMSColors.background.ignoresSafeArea()
+                    theme.background.ignoresSafeArea()
                     VStack {
                         ManagerRequestsView()
                     }
@@ -201,7 +203,7 @@ struct ManagerDashboardView: View {
         .fullScreenCover(isPresented: $isShowingLowStockDetail) {
             NavigationStack {
                 ZStack {
-                    RSMSColors.background.ignoresSafeArea()
+                    theme.background.ignoresSafeArea()
                     VStack {
                         ManagerLowStockView()
                     }
@@ -221,7 +223,7 @@ struct ManagerDashboardView: View {
         .fullScreenCover(isPresented: $isShowingReturnsDetail) {
             NavigationStack {
                 ZStack {
-                    RSMSColors.background.ignoresSafeArea()
+                    theme.background.ignoresSafeArea()
                     VStack {
                         ManagerReturnsView()
                     }

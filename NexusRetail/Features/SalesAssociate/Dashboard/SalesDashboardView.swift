@@ -11,6 +11,7 @@ import Charts
 
 struct SalesDashboardView: View {
     @Environment(SessionStore.self) private var sessionStore
+    @Environment(AppTheme.self) private var theme
 
     // POS navigation state
     @State private var posViewModel    = SellViewModel()
@@ -27,7 +28,7 @@ struct SalesDashboardView: View {
     var body: some View {
         NavigationStack(path: $navigationPath) {
             ZStack(alignment: .bottomTrailing) {
-                RSMSColors.background.ignoresSafeArea()
+                theme.background.ignoresSafeArea()
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
@@ -48,7 +49,7 @@ struct SalesDashboardView: View {
                 }
             }
             .navigationBarHidden(true)
-            .sheet(isPresented: $isProfilePresented) { AdminProfileSheet() }
+            .sheet(isPresented: $isProfilePresented) { AdminProfileSheet().environment(theme) }
             .navigationDestination(for: POSFlowDestination.self) { dest in
                 switch dest {
                 case .newSale:       NewSaleView(path: $navigationPath)
@@ -73,6 +74,8 @@ struct SalesDashboardView: View {
                     EmptyView()
                 case .afterSalesHistory:
                     AfterSalesHistoryView(path: $navigationPath)
+                case .exchangeProduct, .exchangePayment, .exchangeSummary:
+                    EmptyView()
                 }
             }
             .navigationDestination(for: RevenueDetailRoute.self) { _ in
@@ -107,11 +110,11 @@ struct SalesDashboardView: View {
             Text("Dashboard")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
             Spacer()
             Button { isProfilePresented = true } label: {
                 ZStack {
-                    Circle().fill(RSMSColors.burgundy).frame(width: 44, height: 44)
+                    Circle().fill(theme.isDarkMode ? Color(hex: "2C0000") : RSMSColors.burgundy).frame(width: 44, height: 44)
                     if let urlString = sessionStore.currentUser?.imageUrl, let url = URL(string: urlString) {
                         CachedAsyncImage(url: url) { image in
                             image
@@ -142,10 +145,50 @@ struct SalesDashboardView: View {
             startOrderCard
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: RSMSSpacing.md) {
-                KPICardView(title: "Orders Completed",  value: "\(vm.ordersCompletedCount)",  icon: "bag.fill",                    trend: nil, color: RSMSColors.burgundy)
-                KPICardView(title: "Items Sold",        value: "\(vm.itemsSoldCount)",         icon: "shippingbox.fill",            trend: nil, color: Color(hex: "E76F51"))
+                themedKPICard(title: "Orders Completed", value: "\(vm.ordersCompletedCount)", icon: "bag.fill",       color: theme.burgundy)
+                themedKPICard(title: "Items Sold",       value: "\(vm.itemsSoldCount)",        icon: "shippingbox.fill", color: theme.isDarkMode ? RSMSColors.antiqueGold : Color(hex: "C0763A"))
             }
         }
+    }
+
+    /// KPI card that respects AppTheme for background and text
+    private func themedKPICard(title: String, value: String, icon: String, color: Color) -> some View {
+        HStack(spacing: RSMSSpacing.sm) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.18))
+                    .frame(width: 48, height: 48)
+                Image(systemName: icon)
+                    .foregroundColor(color)
+                    .font(.system(size: 20, weight: .semibold))
+            }
+            VStack(alignment: .leading, spacing: 3) {
+                Text(value)
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(theme.primaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                Text(title)
+                    .font(.system(size: 13))
+                    .foregroundColor(theme.secondaryText)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .minimumScaleFactor(0.8)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, RSMSSpacing.md)
+        .frame(height: 94)
+        .background(
+            theme.isDarkMode
+                ? color.opacity(0.08)
+                : color.opacity(0.04)
+        )
+        .cornerRadius(RSMSRadius.medium)
+        .overlay(
+            RoundedRectangle(cornerRadius: RSMSRadius.medium)
+                .stroke(color.opacity(theme.isDarkMode ? 0.25 : 0.12), lineWidth: 1)
+        )
     }
     
     private var startOrderCard: some View {
@@ -166,23 +209,29 @@ struct SalesDashboardView: View {
             .padding(.horizontal, 18)
             .padding(.vertical, 16)
             .background(LinearGradient(
-                colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
+                colors: [theme.burgundy, theme.darkBurgundy],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             ))
             .clipShape(RoundedRectangle(cornerRadius: 18))
-            .shadow(color: RSMSColors.darkBurgundy.opacity(0.18), radius: 10, x: 0, y: 5)
+            .shadow(color: theme.darkBurgundy.opacity(0.18), radius: 10, x: 0, y: 5)
         }
         .buttonStyle(.plain)
     }
 
     // MARK: - Revenue Chart (line, no inline period control — tap expand for detail)
     private var revenueChartSection: some View {
-        VStack(alignment: .leading, spacing: RSMSSpacing.md) {
+        let accentColor = theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy
+        let cardBg: Color = theme.isDarkMode ? Color(hex: "1A0A0A") : Color.white
+        let barGradient: [Color] = theme.isDarkMode
+            ? [RSMSColors.antiqueGold.opacity(0.55), RSMSColors.antiqueGold]
+            : [RSMSColors.burgundy.opacity(0.6), RSMSColors.burgundy]
+
+        return VStack(alignment: .leading, spacing: RSMSSpacing.md) {
             HStack {
                 Text("Store Revenue")
                     .font(RSMSFonts.headline)
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                 Spacer()
                 expandButton
             }
@@ -191,14 +240,61 @@ struct SalesDashboardView: View {
                 .frame(height: 200)
 
             HStack(spacing: RSMSSpacing.sm) {
-                RoundedRectangle(cornerRadius: 2).fill(RSMSColors.burgundy).frame(width: 16, height: 8)
-                Text("Revenue in Indian Rupees (₹)").font(.system(size: 10)).foregroundColor(RSMSColors.secondaryText)
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(accentColor)
+                    .frame(width: 16, height: 8)
+                Text("Revenue in Indian Rupees (₹)")
+                    .font(.system(size: 10))
+                    .foregroundColor(theme.secondaryText)
             }
         }
         .padding(RSMSSpacing.lg)
-        .background(RSMSColors.cardBackground)
+        .background(cardBg)
         .cornerRadius(RSMSRadius.large)
-        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+        .overlay(
+            RoundedRectangle(cornerRadius: RSMSRadius.large)
+                .strokeBorder(accentColor.opacity(theme.isDarkMode ? 0.22 : 0.0), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(theme.isDarkMode ? 0.35 : 0.05), radius: 8, x: 0, y: 4)
+    }
+
+    /// Pill-style Weekly / Monthly toggle that replaces the segmented Picker.
+    private func periodToggle(accentColor: Color) -> some View {
+        HStack(spacing: 0) {
+            ForEach(ChartPeriod.allCases) { period in
+                let isSelected = vm.selectedChartPeriod == period
+                Button {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.72)) {
+                        vm.selectedChartPeriod = period
+                    }
+                } label: {
+                    Text(period.rawValue)
+                        .font(.system(size: 12, weight: isSelected ? .bold : .medium))
+                        .foregroundColor(
+                            isSelected
+                                ? (theme.isDarkMode ? Color(hex: "1A0A0A") : .white)
+                                : theme.secondaryText
+                        )
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 6)
+                        .background(
+                            isSelected
+                                ? accentColor
+                                : Color.clear
+                        )
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .animation(.spring(response: 0.3, dampingFraction: 0.72), value: vm.selectedChartPeriod)
+            }
+        }
+        .padding(3)
+        .background(
+            theme.isDarkMode
+                ? Color.white.opacity(0.07)
+                : RSMSColors.burgundy.opacity(0.08)
+        )
+        .clipShape(Capsule())
     }
 
     private var expandButton: some View {

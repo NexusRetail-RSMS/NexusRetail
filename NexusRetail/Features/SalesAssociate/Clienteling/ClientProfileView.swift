@@ -2,6 +2,7 @@ import SwiftUI
 import Supabase
 
 struct ClientProfileView: View {
+    @Environment(AppTheme.self) private var theme
     let client: AssociateClient
     @Environment(SessionStore.self) private var sessionStore
     
@@ -52,7 +53,7 @@ struct ClientProfileView: View {
         }
         .navigationTitle(client.name)
         .navigationBarTitleDisplayMode(.inline)
-        .background(RSMSColors.background.ignoresSafeArea())
+        .background(theme.background.ignoresSafeArea())
         .task {
             await loadRecommendations()
         }
@@ -62,22 +63,22 @@ struct ClientProfileView: View {
         VStack(spacing: 16) {
             ZStack {
                 Circle()
-                    .fill(RSMSColors.burgundy.opacity(0.1))
+                    .fill(theme.burgundy.opacity(0.1))
                     .frame(width: 80, height: 80)
                 Text(String(client.name.prefix(1)))
                     .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .foregroundStyle(RSMSColors.burgundy)
+                    .foregroundStyle(theme.burgundy)
             }
             .padding(.top, 24)
             
             VStack(spacing: 4) {
                 Text(client.phone)
                     .font(.system(size: 15))
-                    .foregroundStyle(RSMSColors.secondaryText)
+                    .foregroundStyle(theme.secondaryText)
                 
                 Text(client.preferences)
                     .font(.system(size: 14))
-                    .foregroundStyle(RSMSColors.darkBrown)
+                    .foregroundStyle(theme.darkBrown)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
                     .padding(.top, 8)
@@ -169,6 +170,7 @@ struct ClientProfileView: View {
 }
 
 fileprivate struct ProductCardView: View {
+    @Environment(AppTheme.self) private var theme
     let product: POSProduct
     
     var body: some View {
@@ -199,12 +201,12 @@ fileprivate struct ProductCardView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(product.name)
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(RSMSColors.primaryText)
+                    .foregroundStyle(theme.primaryText)
                     .lineLimit(2)
                 
                 Text(String(format: "$%.2f", product.price))
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(RSMSColors.burgundy)
+                    .foregroundStyle(theme.burgundy)
             }
             .padding(.horizontal, 4)
         }
