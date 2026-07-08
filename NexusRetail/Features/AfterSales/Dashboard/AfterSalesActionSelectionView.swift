@@ -463,24 +463,7 @@ struct ActionSelectionView: View {
                     detailRow(icon: "envelope", label: "Email", value: customer.email.isEmpty ? "—" : customer.email) {
                         if !customer.email.isEmpty { emailCustomer(customer.email) }
                     }
-
-    private func actionCard(title: String, description: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 16) {
-                ZStack {
-                    Circle()
-                        .fill(color.opacity(0.1))
-                        .frame(width: 64, height: 64)
-                    
-                    Image(systemName: icon)
-                        .font(.system(size: 26, weight: .medium))
-                        .foregroundColor(color)
                 }
-                .padding(20)
-                .background(RSMSColors.background)
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .padding(.horizontal, RSMSSpacing.lg)
-                .padding(.top, 8)
             } else {
                 Spacer()
                 Text("No customer information available for this invoice.")
@@ -493,6 +476,26 @@ struct ActionSelectionView: View {
             Spacer()
         }
         .padding(.bottom, 12)
+    }
+
+    private func actionCard(title: String, description: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(color.opacity(0.1))
+                        .frame(width: 64, height: 64)
+                    Image(systemName: icon)
+                        .font(.system(size: 26, weight: .medium))
+                        .foregroundColor(color)
+                }
+                .padding(20)
+                .background(RSMSColors.background)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, 8)
+            }
+        }
     }
 
     private func initials(for name: String) -> String {
@@ -581,5 +584,4 @@ struct ScaleButtonStyle: ButtonStyle {
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
             .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
     }
-}
 }

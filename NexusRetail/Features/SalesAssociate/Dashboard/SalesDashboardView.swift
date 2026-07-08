@@ -73,7 +73,7 @@ struct SalesDashboardView: View {
                     EmptyView()
                 case .afterSalesHistory:
                     AfterSalesHistoryView(path: $navigationPath)
-                case .exchangePayment, .exchangeSummary:
+                case .exchangeProduct, .exchangePayment, .exchangeSummary:
                     EmptyView()
                 }
             }

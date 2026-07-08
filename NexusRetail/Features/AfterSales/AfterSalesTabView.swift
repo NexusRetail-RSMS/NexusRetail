@@ -84,6 +84,8 @@ struct AfterSalesTabView: View {
             BOPISView()
         case .ordersHub:
             OrdersHubView(path: $dashboardPath)
+        case .exchangeProduct(let invoiceId, let selectedItemIds):
+            ExchangeProductView(path: $dashboardPath, invoiceId: invoiceId, selectedItemIds: selectedItemIds)
         case .exchangePayment(let originalProductId, let replacementProductId, let amount):
             ExchangePaymentView(path: $dashboardPath, originalProductId: originalProductId, replacementProductId: replacementProductId, amount: amount)
         case .exchangeSummary(let originalProductId, let replacementProductId, let amount):

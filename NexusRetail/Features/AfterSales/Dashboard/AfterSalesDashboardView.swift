@@ -29,53 +29,15 @@ struct AfterSalesDashboardView: View {
                 .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.top, 16)
             }
-            .navigationBarHidden(true)
-            .sheet(isPresented: $isProfilePresented) {
-                AdminProfileSheet()
-            }
-            .navigationDestination(for: POSFlowDestination.self) { dest in
-                switch dest {
-                case .newSale:       NewSaleView(path: $navigationPath)
-                case .searchProduct: ProductSearchView(path: $navigationPath)
-                case .barcodeScanner: 
-                    if #available(iOS 18.0, *) {
-                        BarcodeScannerView(path: $navigationPath)
-                            .navigationTransition(.zoom(sourceID: "scannerButton", in: namespace))
-                    } else {
-                        BarcodeScannerView(path: $navigationPath)
-                    }
-                case .invoiceScanner:
-                    if #available(iOS 18.0, *) {
-                        InvoiceScannerView(path: $navigationPath)
-                            .navigationTransition(.zoom(sourceID: "scannerButton", in: namespace))
-                    } else {
-                        InvoiceScannerView(path: $navigationPath)
-                    }
-                case .invoiceItemsSelection(let invoiceId):
-                    InvoiceItemsSelectionView(path: $navigationPath, invoiceId: invoiceId)
-                case .actionSelection(let invoiceId, let selectedItem):
-                    AfterSalesActionSelectionView(path: $navigationPath, invoiceId: invoiceId, selectedItem: selectedItem)
-                case .repairForm(let invoiceId, let selectedItem):
-                    AfterSalesRepairFormView(path: $navigationPath, invoiceId: invoiceId, selectedItem: selectedItem)
-                case .exchangeProduct(let invoiceId, let selectedItemIds):
-                    ExchangeProductView(path: $navigationPath, invoiceId: invoiceId, selectedItemIds: selectedItemIds)
-                case .exchangePayment(let originalId, let replacementId, let amount):
-                    ExchangePaymentView(path: $navigationPath, originalProductId: originalId, replacementProductId: replacementId, amount: amount)
-                case .exchangeSummary(let originalId, let replacementId, let amount):
-                    ExchangeSummaryView(path: $navigationPath, originalProductId: originalId, replacementProductId: replacementId, amount: amount)
-                case .cart:          CartView(path: $navigationPath)
-                case .checkout:      CheckoutView(path: $navigationPath)
-                case .payment:       PaymentFlowView(path: $navigationPath)
-                case .receipt:
-                    ReceiptView(onComplete: { navigationPath = NavigationPath() })
-                case .bopis:
-                    BOPISView()
-                case .ordersHub:
-                    OrdersHubView(path: $navigationPath)
-                case .afterSalesHistory:
-                    AfterSalesHistoryView(path: $navigationPath)
-                }
-            }
+            .background(RSMSColors.background.ignoresSafeArea())
+            .refreshable { await vm.fetch(storeID: sessionStore.currentUser?.storeID) }
+            .task { await vm.fetch(storeID: sessionStore.currentUser?.storeID) }
+            
+            if #available(iOS 18.0, *) {
+                floatingQRButton
+                    .matchedTransitionSource(id: "scannerButton", in: namespace)
+            } else {
+                floatingQRButton
             }
         }
         .sheet(isPresented: $isProfilePresented) {
@@ -307,4 +269,3 @@ struct AfterSalesDashboardView: View {
         .accessibilityLabel("Scan QR Code")
     }
 }
-
