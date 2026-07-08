@@ -276,7 +276,7 @@ struct ExchangeProductView: View {
                     guard isNextEnabled else { return }
                     if diff > 0 {
                         path.append(POSFlowDestination.exchangePayment(originalProductId: originalProduct.id, replacementProductId: replacement.id, amount: diff))
-                    } else {
+                    } else { 
                         path.append(POSFlowDestination.exchangeSummary(originalProductId: originalProduct.id, replacementProductId: replacement.id, amount: 0))
                     }
                 } label: {

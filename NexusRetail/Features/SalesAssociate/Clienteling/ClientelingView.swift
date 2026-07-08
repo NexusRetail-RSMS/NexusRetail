@@ -99,7 +99,7 @@ struct ClientelingView: View {
                 Circle()
                     .fill(Color(hex: "F9EFEF")) // light maroon/pink
                     .frame(width: 52, height: 52)
-                Text(String(client.name.prefix(1)))
+                Text(String(client.name.prefix(1)).uppercased())
                     .font(.system(size: 20, weight: .bold))
                     .foregroundStyle(maroon)
             }
@@ -121,10 +121,11 @@ struct ClientelingView: View {
                 .foregroundStyle(Color.gray.opacity(0.6))
                 .padding(.leading, 4)
         }
-        .padding(16)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
         .background(Color.white)
-        .cornerRadius(20)
-        .shadow(color: Color.black.opacity(0.02), radius: 6, x: 0, y: 3)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 4)
     }
     
     private func statusBadge(for pattern: String) -> some View {

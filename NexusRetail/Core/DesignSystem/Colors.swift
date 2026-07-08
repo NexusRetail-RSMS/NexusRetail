@@ -16,6 +16,9 @@ enum RSMSColors {
     /// Burgundy — headers, primary actions (#8B0000)
     static let burgundy = Color(hex: "8B0000")
     
+    /// Gold — premium accents (#D4AF37)
+    static let gold = Color(hex: "D4AF37")
+    
     /// Dark burgundy — emphasis, active states (#5B0202)
     static let darkBurgundy = Color(hex: "5B0202")
     
