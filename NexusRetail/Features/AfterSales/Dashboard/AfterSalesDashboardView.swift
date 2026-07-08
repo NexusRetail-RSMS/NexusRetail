@@ -10,6 +10,7 @@ struct AfterSalesDashboardView: View {
     @Environment(SessionStore.self) private var sessionStore
     @Binding var path: NavigationPath
     var namespace: Namespace.ID
+    @Binding var showScanner: Bool
 
     @State private var vm = AfterSalesDashboardViewModel()
     @State private var isProfilePresented = false
@@ -248,9 +249,7 @@ struct AfterSalesDashboardView: View {
     // MARK: - Floating QR Button
     private var floatingQRButton: some View {
         Button {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                path.append(POSFlowDestination.invoiceScanner)
-            }
+            showScanner = true
         } label: {
             ZStack {
                 Circle()

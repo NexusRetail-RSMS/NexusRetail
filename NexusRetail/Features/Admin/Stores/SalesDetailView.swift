@@ -124,15 +124,9 @@ struct SalesDetailView: View {
                 .padding(.top, RSMSSpacing.xs)
 
             // Legend
-            HStack(spacing: RSMSSpacing.lg) {
-                HStack(spacing: 6) {
-                    Circle().fill(RSMSColors.burgundy).frame(width: 8, height: 8)
-                    Text("Online").font(.system(size: 12)).foregroundColor(RSMSColors.secondaryText)
-                }
-                HStack(spacing: 6) {
-                    Circle().fill(Color(hex: "2A9D8F")).frame(width: 8, height: 8)
-                    Text("Offline").font(.system(size: 12)).foregroundColor(RSMSColors.secondaryText)
-                }
+            HStack(spacing: RSMSSpacing.sm) {
+                RoundedRectangle(cornerRadius: 2).fill(RSMSColors.burgundy).frame(width: 16, height: 8)
+                Text("Revenue (₹)").font(.system(size: 12)).foregroundColor(RSMSColors.secondaryText)
             }
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.top, RSMSSpacing.md)
@@ -151,56 +145,52 @@ struct SalesDetailView: View {
                     let hasData = dataPoints.contains { $0.online + $0.offline > 0 }
                     
                     if hasData {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            Chart(dataPoints) { point in
-                                BarMark(
-                                    x: .value("Period", point.label),
-                                    y: .value("Sales", point.online)
-                                )
-                                .foregroundStyle(RSMSColors.burgundy)
-                                .cornerRadius(4)
-                                .position(by: .value("Type", "Online"))
+                        Chart(dataPoints) { point in
+                            AreaMark(
+                                x: .value("Period", point.label),
+                                y: .value("Revenue", point.online + point.offline)
+                            )
+                            .interpolationMethod(.catmullRom)
+                            .foregroundStyle(LinearGradient(colors: [RSMSColors.burgundy.opacity(0.22), RSMSColors.burgundy.opacity(0.02)], startPoint: .top, endPoint: .bottom))
 
-                                BarMark(
-                                    x: .value("Period", point.label),
-                                    y: .value("Sales", point.offline)
-                                )
-                                .foregroundStyle(Color(hex: "2A9D8F"))
-                                .cornerRadius(4)
-                                .position(by: .value("Type", "Offline"))
-                            }
-                            .chartYScale(domain: 0...maxValue)
-                            .chartYAxis {
-                                AxisMarks(position: .leading) { value in
-                                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
-                                        .foregroundStyle(RSMSColors.divider)
-                                    AxisValueLabel {
-                                        if let v = value.as(Double.self) {
-                                            Text(shortCurrency(v))
-                                                .font(.system(size: 10))
-                                                .foregroundStyle(RSMSColors.secondaryText)
-                                        }
+                            LineMark(
+                                x: .value("Period", point.label),
+                                y: .value("Revenue", point.online + point.offline)
+                            )
+                            .interpolationMethod(.catmullRom)
+                            .lineStyle(StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+                            .foregroundStyle(RSMSColors.burgundy)
+                        }
+                        .chartYScale(domain: 0...maxValue)
+                        .chartYAxis {
+                            AxisMarks(position: .leading) { value in
+                                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
+                                    .foregroundStyle(RSMSColors.divider)
+                                AxisValueLabel {
+                                    if let v = value.as(Double.self) {
+                                        Text(shortCurrency(v))
+                                            .font(.system(size: 10))
+                                            .foregroundStyle(RSMSColors.secondaryText)
                                     }
                                 }
                             }
-                            .chartXAxis {
-                                AxisMarks { _ in
-                                    AxisValueLabel()
-                                        .font(.system(size: 10))
-                                        .foregroundStyle(RSMSColors.secondaryText)
-                                }
+                        }
+                        .chartXAxis {
+                            AxisMarks { _ in
+                                AxisValueLabel()
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(RSMSColors.secondaryText)
                             }
-                            .frame(width: max(geo.size.width, CGFloat(dataPoints.count * 30)))
                         }
                     } else {
-                        // Empty state: show faint placeholder bars
+                        // Empty state: faint flat placeholder line
                         Chart(dataPoints) { point in
-                            BarMark(
+                            LineMark(
                                 x: .value("Period", point.label),
-                                y: .value("Sales", 8.0)
+                                y: .value("Revenue", 8.0)
                             )
                             .foregroundStyle(RSMSColors.burgundy.opacity(0.15))
-                            .cornerRadius(4)
+                            .lineStyle(StrokeStyle(lineWidth: 2))
                         }
                         .chartYScale(domain: 0...100)
                         .chartYAxis {
@@ -257,32 +247,42 @@ struct SalesDetailView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, RSMSSpacing.xl)
                 } else {
+                    let maxRev = categorySales.map(\.revenue).max() ?? 0
+                    let totalRev = categorySales.reduce(0) { $0 + $1.revenue }
                     ForEach(Array(categorySales.enumerated()), id: \.element.id) { index, cat in
-                        HStack(spacing: RSMSSpacing.md) {
-                            Text("#\(index + 1)")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.white)
-                                .frame(width: 32, height: 32)
-                                .background(getColor(for: index))
-                                .clipShape(Circle())
-                                
-                            Text(cat.category)
-                            .font(RSMSFonts.body)
-                            .foregroundColor(RSMSColors.primaryText)
-                            
-                        Spacer()
-                        
-                        Text("₹\(formatNumber(Int(cat.revenue)))")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(RSMSColors.primaryText)
+                        let frac  = maxRev > 0 ? CGFloat(cat.revenue / maxRev) : 0
+                        let share = totalRev > 0 ? Int((cat.revenue / totalRev) * 100) : 0
+                        VStack(spacing: 8) {
+                            HStack {
+                                Text(cat.category)
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundColor(RSMSColors.primaryText)
+                                    .lineLimit(1)
+                                Spacer()
+                                Text("₹\(formatNumber(Int(cat.revenue)))")
+                                    .font(.system(size: 15, weight: .bold))
+                                    .foregroundColor(RSMSColors.burgundy)
+                            }
+                            GeometryReader { geo in
+                                ZStack(alignment: .leading) {
+                                    Capsule().fill(RSMSColors.cardBorder.opacity(0.35)).frame(height: 8)
+                                    Capsule().fill(RSMSColors.burgundy).frame(width: max(6, geo.size.width * frac), height: 8)
+                                }
+                            }
+                            .frame(height: 8)
+                            HStack {
+                                Spacer()
+                                Text("\(share)%")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(RSMSColors.secondaryText)
+                            }
+                        }
+                        .padding(.vertical, RSMSSpacing.md)
+
+                        if index < categorySales.count - 1 {
+                            Divider().foregroundColor(RSMSColors.divider)
+                        }
                     }
-                    .padding(.vertical, RSMSSpacing.md)
-                    
-                    if index < categorySales.count - 1 {
-                        Divider()
-                            .foregroundColor(RSMSColors.divider)
-                    }
-                }
                 }
             }
             .padding(RSMSSpacing.lg)
