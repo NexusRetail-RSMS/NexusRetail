@@ -19,8 +19,8 @@ class ExchangeViewModel {
     let warrantyEndDate: Date?
     let customer: RequestCustomer?
 
-    // Replacement selections
-    var replacementItems: [ExchangeReplacementItem] = []
+    // Replacement selection (single product)
+    var selectedReplacement: ExchangeReplacementItem? = nil
 
     // Search & filter
     var searchText: String = ""
@@ -57,7 +57,7 @@ class ExchangeViewModel {
     }
 
     var replacementTotal: Double {
-        replacementItems.reduce(0) { $0 + $1.lineTotal }
+        selectedReplacement?.product.price ?? 0
     }
 
     var difference: Double {
@@ -69,7 +69,7 @@ class ExchangeViewModel {
     }
 
     var isExchangeValid: Bool {
-        !replacementItems.isEmpty
+        selectedReplacement != nil
     }
 
     var requiresPayment: Bool {
@@ -113,25 +113,26 @@ class ExchangeViewModel {
     // MARK: - Replacement Management
 
     func isProductSelected(_ product: POSProduct) -> Bool {
-        replacementItems.contains { $0.product.id == product.id }
+        selectedReplacement?.product.id == product.id
     }
 
     func toggleReplacement(_ product: POSProduct) {
         guard product.stock > 0 else { return }
-        if let index = replacementItems.firstIndex(where: { $0.product.id == product.id }) {
-            replacementItems.remove(at: index)
+        if let selected = selectedReplacement, selected.product.id == product.id {
+            selectedReplacement = nil
         } else {
-            replacementItems = [ExchangeReplacementItem(product: product, quantity: 1)]
+            selectedReplacement = ExchangeReplacementItem(product: product, quantity: 1)
         }
     }
 
-    func removeReplacement(_ product: POSProduct) {
-        replacementItems.removeAll { $0.product.id == product.id }
+    func removeReplacement() {
+        selectedReplacement = nil
     }
 
     // MARK: - Exchange Processing
 
     func processExchange() async -> ExchangeTransaction? {
+        guard let replacement = selectedReplacement else { return nil }
         isProcessing = true
         defer { isProcessing = false }
 
@@ -140,7 +141,7 @@ class ExchangeViewModel {
                 orderId: invoiceId,
                 itemId: originalProduct.itemId,
                 type: "exchange",
-                issue: "Exchange requested — \(replacementItems.count) replacement(s)",
+                issue: "Exchange — \(replacement.product.name)",
                 partsCost: amountPayable
             )
 
@@ -150,7 +151,7 @@ class ExchangeViewModel {
                     invoiceId: invoiceId,
                     originalProduct: originalProduct,
                     originalQuantity: originalQuantity,
-                    replacementItems: replacementItems,
+                    replacementItem: replacement,
                     amountPaid: amountPayable,
                     date: Date()
                 )
@@ -164,18 +165,5 @@ class ExchangeViewModel {
             print("ExchangeViewModel: Exchange processing error — \(error)")
             return nil
         }
-    }
-
-    /// Creates a mock transaction for when no payment is required (direct exchange).
-    func createDirectExchangeTransaction() -> ExchangeTransaction {
-        ExchangeTransaction(
-            transactionId: "EXC-\(UUID().uuidString.prefix(8).uppercased())",
-            invoiceId: invoiceId,
-            originalProduct: originalProduct,
-            originalQuantity: originalQuantity,
-            replacementItems: replacementItems,
-            amountPaid: 0,
-            date: Date()
-        )
     }
 }

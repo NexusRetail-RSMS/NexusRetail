@@ -61,8 +61,8 @@ struct ExchangeSelectionView: View {
                         // Original product card
                         originalProductSection
 
-                        // Selected replacements
-                        if !viewModel.replacementItems.isEmpty {
+                        // Selected replacement
+                        if let _ = viewModel.selectedReplacement {
                             selectedReplacementsSection
                         }
 
@@ -225,7 +225,7 @@ struct ExchangeSelectionView: View {
                     .foregroundColor(RSMSColors.success)
             }
 
-            ForEach(viewModel.replacementItems) { item in
+            if let item = viewModel.selectedReplacement {
                 replacementItemRow(item)
             }
         }
@@ -264,7 +264,7 @@ struct ExchangeSelectionView: View {
 
             Button {
                 withAnimation(.easeOut(duration: 0.2)) {
-                    viewModel.removeReplacement(item.product)
+                    viewModel.removeReplacement()
                 }
             } label: {
                 Image(systemName: "trash")
@@ -476,7 +476,7 @@ struct ExchangeSelectionView: View {
 
     private var bottomSummaryBar: some View {
         VStack(spacing: 0) {
-            if !viewModel.replacementItems.isEmpty {
+            if viewModel.isExchangeValid {
                 VStack(spacing: 12) {
                     // Pricing breakdown
                     HStack {
@@ -490,13 +490,25 @@ struct ExchangeSelectionView: View {
                     }
 
                     HStack {
-                        Text("Replacement Total")
+                        Text("Replacement Price")
                             .font(.system(size: 13))
                             .foregroundColor(RSMSColors.secondaryText)
                         Spacer()
                         Text(formatIndianCurrency(viewModel.replacementTotal))
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(RSMSColors.primaryText)
+                    }
+
+                    if viewModel.difference > 0 {
+                        HStack {
+                            Text("Price Difference")
+                                .font(.system(size: 13))
+                                .foregroundColor(RSMSColors.secondaryText)
+                            Spacer()
+                            Text(formatIndianCurrency(viewModel.difference))
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(RSMSColors.burgundy)
+                        }
                     }
 
                     Divider()
@@ -552,7 +564,7 @@ struct ExchangeSelectionView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: viewModel.replacementItems.isEmpty)
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: viewModel.isExchangeValid)
     }
 
     private var ctaButtonText: String {
@@ -566,7 +578,7 @@ struct ExchangeSelectionView: View {
     // MARK: - Actions
 
     private func handleProceed() async {
-        guard viewModel.isExchangeValid else { return }
+        guard viewModel.isExchangeValid, let replacement = viewModel.selectedReplacement else { return }
         isProcessing = true
 
         // Store exchange context on SellViewModel for post-processing
@@ -574,7 +586,7 @@ struct ExchangeSelectionView: View {
             invoiceId: invoiceId,
             originalProduct: selectedItem,
             originalQuantity: viewModel.originalQuantity,
-            replacementItems: viewModel.replacementItems,
+            replacementItem: replacement,
             customer: customer,
             amountPayable: viewModel.amountPayable
         )
