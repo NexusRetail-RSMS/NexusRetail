@@ -14,7 +14,7 @@ struct ManagerTabView: View {
                 ManagerDashboardView()
             }
             .tabItem {
-                Label("Dashboard", systemImage: "house")
+                Label("Dashboard", systemImage: "squareshape.split.2x2")
             }
 
             // 1. Inventory

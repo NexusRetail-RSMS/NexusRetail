@@ -19,15 +19,14 @@ class LoginViewModel {
     }
     
     func login(using sessionStore: SessionStore) async {
-        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedEmail = email.trimmingCharacters(in: .whitespaces)
         
         guard trimmedEmail.contains("@") else {
             errorMessage = "Please enter a valid email address."
             return
         }
         
-        guard trimmedPassword.count >= 6 else {
+        guard password.count >= 6 else {
             errorMessage = "Password must be at least 6 characters."
             return
         }
@@ -36,7 +35,7 @@ class LoginViewModel {
         isLoading = true
         
         do {
-            try await sessionStore.signIn(email: trimmedEmail, password: trimmedPassword)
+            try await sessionStore.signIn(email: trimmedEmail, password: password)
             // On complete success, the SessionStore updates and RootView routes automatically.
         } catch {
             errorMessage = error.localizedDescription

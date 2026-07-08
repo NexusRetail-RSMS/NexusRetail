@@ -9,21 +9,21 @@ struct ProductSearchView: View {
     var initialSearch: String = ""
     
     @State private var searchText = ""
-
+    @State private var allProducts: [POSProduct] = []
     @State private var isLoading = false
     
     // Track selected product to display its details/alternatives
     @State private var selectedProduct: POSProduct? = nil
     
-    private var filteredProducts: [POSProduct] {
-        if searchText.isEmpty {
-            return POSProductRepository.shared.products
-        } else {
-            return POSProductRepository.shared.products.filter {
-                $0.name.localizedCaseInsensitiveContains(searchText) ||
-                $0.sku.localizedCaseInsensitiveContains(searchText) ||
-                $0.category.localizedCaseInsensitiveContains(searchText)
-            }
+    var filteredProducts: [POSProduct] {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if query.isEmpty {
+            return allProducts
+        }
+        return allProducts.filter {
+            $0.name.localizedCaseInsensitiveContains(query) ||
+            $0.sku.localizedCaseInsensitiveContains(query) ||
+            $0.category.localizedCaseInsensitiveContains(query)
         }
     }
     
@@ -66,7 +66,7 @@ struct ProductSearchView: View {
         }
         .task {
             isLoading = true
-            _ = await POSProductRepository.shared.fetchProducts(storeID: sessionStore.currentUser?.storeID)
+            allProducts = await POSProductRepository.shared.fetchProducts(storeID: sessionStore.currentUser?.storeID)
             isLoading = false
         }
         .onAppear {
@@ -445,7 +445,7 @@ struct ProductSearchView: View {
         // Try ML-powered recommendations first
         let mlRecommendations = RecommendationService.shared.getRecommendedProducts(
             for: product,
-            from: POSProductRepository.shared.products,
+            from: allProducts,
             count: 5
         )
         
@@ -456,7 +456,7 @@ struct ProductSearchView: View {
         
         // Fallback: same category, stock > 0, not itself, similar price (within 30% difference)
         print("ProductSearchView: ML returned no results, falling back to category match for \(product.name)")
-        return POSProductRepository.shared.products.filter { item in
+        return allProducts.filter { item in
             item.id != product.id &&
             item.category == product.category &&
             item.stock > 0 &&
