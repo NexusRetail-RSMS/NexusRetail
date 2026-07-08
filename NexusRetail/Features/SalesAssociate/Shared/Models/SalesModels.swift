@@ -33,6 +33,11 @@ enum POSFlowDestination: Hashable {
     case actionSelection(invoiceId: String, selectedItem: POSProduct, purchaseDate: Date?, warrantyEndDate: Date?, customer: RequestCustomer?)
     case repairForm(invoiceId: String, selectedItem: POSProduct, warrantyEndDate: Date?)
     case afterSalesHistory
+    
+    // Exchange Flow
+    case exchangeWarrantyCheck(invoiceId: String, selectedItem: POSProduct, purchaseDate: Date?, warrantyEndDate: Date?, customer: RequestCustomer?)
+    case exchangeSelection(invoiceId: String, selectedItem: POSProduct, purchaseDate: Date?, warrantyEndDate: Date?, customer: RequestCustomer?)
+    case exchangeSuccess(transaction: ExchangeTransaction)
 }
 
 // MARK: - Chart / Period
