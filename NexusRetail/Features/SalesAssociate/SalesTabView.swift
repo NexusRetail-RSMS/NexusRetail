@@ -26,7 +26,7 @@ struct SalesTabView: View {
     
     var body: some View {
         TabView {
-            Tab("Dashboard", systemImage: "square.grid.2x2") {
+            Tab("Dashboard", systemImage: "house") {
                 SalesDashboardView()
             }
             

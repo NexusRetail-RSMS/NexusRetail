@@ -8,30 +8,43 @@ import Charts
 
 struct AfterSalesDashboardView: View {
     @Environment(SessionStore.self) private var sessionStore
+    @Binding var path: NavigationPath
+    var namespace: Namespace.ID
+
     @State private var vm = AfterSalesDashboardViewModel()
     @State private var isProfilePresented = false
-    
+    @State private var ticketFilter: AfterSalesTicketFilter? = nil
+
+    // Content-only view. Navigation lives in AfterSalesTabView.
     var body: some View {
-        NavigationStack {
-            ZStack {
-                RSMSColors.background.ignoresSafeArea()
-                
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 24) {
-                        headerSection
-                        kpiSection
-                        serviceTrendChartSection
-                        serviceStatusDonutSection
-                        Spacer(minLength: 80)
-                    }
-                    .padding(.horizontal, RSMSSpacing.lg)
-                    .padding(.top, 16)
+        ZStack(alignment: .bottomTrailing) {
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 24) {
+                    headerSection
+                    kpiSection
+                    serviceTrendChartSection
+                    serviceStatusDonutSection
+                    Spacer(minLength: 110) // clears the custom bottom bar
                 }
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, 16)
             }
-            .navigationBarHidden(true)
-            .sheet(isPresented: $isProfilePresented) {
-                AdminProfileSheet()
+            .background(RSMSColors.background.ignoresSafeArea())
+            .refreshable { await vm.fetch(storeID: sessionStore.currentUser?.storeID) }
+            .task { await vm.fetch(storeID: sessionStore.currentUser?.storeID) }
+            
+            if #available(iOS 18.0, *) {
+                floatingQRButton
+                    .matchedTransitionSource(id: "scannerButton", in: namespace)
+            } else {
+                floatingQRButton
             }
+        }
+        .sheet(isPresented: $isProfilePresented) {
+            AdminProfileSheet()
+        }
+        .sheet(item: $ticketFilter) { filter in
+            AfterSalesTicketsListView(filter: filter, storeID: sessionStore.currentUser?.storeID)
         }
     }
     
@@ -42,7 +55,22 @@ struct AfterSalesDashboardView: View {
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .foregroundColor(RSMSColors.primaryText)
+                .accessibilityAddTraits(.isHeader)
             Spacer()
+            
+            Button {
+                path.append(POSFlowDestination.afterSalesHistory)
+            } label: {
+                ZStack {
+                    Circle().fill(RSMSColors.burgundy.opacity(0.1)).frame(width: 44, height: 44)
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(RSMSColors.burgundy)
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("History")
+
             Button { isProfilePresented = true } label: {
                 ZStack {
                     Circle().fill(RSMSColors.burgundy).frame(width: 44, height: 44)
@@ -86,10 +114,19 @@ struct AfterSalesDashboardView: View {
     // MARK: - KPI Section
     private var kpiSection: some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: RSMSSpacing.md) {
-            KPICardView(title: "Pending Service Requests", value: "\(vm.pendingServiceRequests)", icon: "wrench.and.screwdriver.fill", trend: nil, color: RSMSColors.warning)
-            KPICardView(title: "Repairs In Progress", value: "\(vm.repairsInProgress)", icon: "hammer.fill", trend: nil, color: Color(hex: "2A9D8F"))
-            KPICardView(title: "Warranty Verifications", value: "\(vm.warrantyVerifications)", icon: "shield.lefthalf.filled", trend: nil, color: RSMSColors.success)
-            KPICardView(title: "Returns Awaiting Approval", value: "\(vm.returnsAwaitingApproval)", icon: "arrow.uturn.backward.circle.fill", trend: nil, color: RSMSColors.error)
+            Button {
+                ticketFilter = .pending
+            } label: {
+                KPICardView(title: "Pending Service Requests", value: "\(vm.pendingServiceRequests)", icon: "wrench.and.screwdriver.fill", trend: nil, color: RSMSColors.warning)
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                ticketFilter = .inProgress
+            } label: {
+                KPICardView(title: "Repairs In Progress", value: "\(vm.repairsInProgress)", icon: "hammer.fill", trend: nil, color: Color(hex: "2A9D8F"))
+            }
+            .buttonStyle(.plain)
         }
     }
     
@@ -100,6 +137,7 @@ struct AfterSalesDashboardView: View {
                 Text("Service Requests")
                     .font(RSMSFonts.headline)
                     .foregroundColor(RSMSColors.primaryText)
+                    .accessibilityAddTraits(.isHeader)
                 Spacer()
                 Picker("Period", selection: $vm.selectedChartPeriod) {
                     ForEach(ChartPeriod.allCases) { period in
@@ -108,8 +146,12 @@ struct AfterSalesDashboardView: View {
                 }
                 .pickerStyle(.segmented)
                 .fixedSize()
+                .accessibilityLabel("Chart Period")
             }
             
+            if vm.serviceRequestChartData.allSatisfy({ $0.value == 0 }) {
+                emptyChartPlaceholder(text: "No service requests in this period")
+            } else {
             Chart(vm.serviceRequestChartData) { point in
                 BarMark(x: .value("Period", point.label), y: .value("Requests", point.value), width: .ratio(0.45))
                     .foregroundStyle(LinearGradient(colors: [RSMSColors.burgundy.opacity(0.8), RSMSColors.burgundy], startPoint: .top, endPoint: .bottom))
@@ -136,11 +178,24 @@ struct AfterSalesDashboardView: View {
                 }
             }
             .frame(height: 200)
+            }
         }
         .padding(RSMSSpacing.lg)
         .background(RSMSColors.cardBackground)
         .cornerRadius(RSMSRadius.large)
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+    }
+
+    private func emptyChartPlaceholder(text: String) -> some View {
+        VStack(spacing: 8) {
+            Image(systemName: "chart.bar.xaxis")
+                .font(.system(size: 32))
+                .foregroundColor(RSMSColors.secondaryText.opacity(0.4))
+            Text(text)
+                .font(.system(size: 13))
+                .foregroundColor(RSMSColors.secondaryText)
+        }
+        .frame(maxWidth: .infinity, minHeight: 180)
     }
     
     // MARK: - Service Status Donut Chart
@@ -149,7 +204,11 @@ struct AfterSalesDashboardView: View {
             Text("Service Status")
                 .font(RSMSFonts.headline)
                 .foregroundColor(RSMSColors.primaryText)
+                .accessibilityAddTraits(.isHeader)
             
+            if vm.totalServiceRequests == 0 {
+                emptyChartPlaceholder(text: "No service tickets yet")
+            } else {
             Chart(vm.serviceStatusChartData) { point in
                 SectorMark(
                     angle: .value("Requests", point.value),
@@ -182,6 +241,7 @@ struct AfterSalesDashboardView: View {
                 }
             }
             .frame(height: 220)
+            }
         }
         .padding(RSMSSpacing.lg)
         .background(RSMSColors.cardBackground)
@@ -189,4 +249,28 @@ struct AfterSalesDashboardView: View {
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
     }
     
+    // MARK: - Floating QR Button
+    private var floatingQRButton: some View {
+        Button {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                path.append(POSFlowDestination.invoiceScanner)
+            }
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(Color(red: 122/255, green: 22/255, blue: 34/255))
+                    .frame(width: 60, height: 60)
+                    .shadow(color: Color(red: 122/255, green: 22/255, blue: 34/255).opacity(0.5), radius: 8, x: 0, y: 4)
+                
+                Image(systemName: "qrcode.viewfinder")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
+            }
+        }
+        .buttonStyle(AnimatedFloatingButtonStyle())
+        .padding(.trailing, 20)
+        .padding(.bottom, 24)
+        .accessibilityLabel("Scan QR Code")
+    }
 }
+

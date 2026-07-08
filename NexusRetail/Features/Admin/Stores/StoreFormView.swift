@@ -52,7 +52,7 @@ struct StoreFormView: View {
             _currencyCode = State(initialValue: store.currencyCode ?? "INR")
             _timezone = State(initialValue: store.timezone ?? "Asia/Kolkata")
             _selectedManagerID = State(initialValue: store.managerID)
-            _isActive = State(initialValue: store.status == .active)
+            _isActive = State(initialValue: store.status == .active && store.managerID != nil)
             _country = State(initialValue: store.country ?? "")
             _city = State(initialValue: store.city ?? "")
             if let lat = store.latitude, let lng = store.longitude {
@@ -135,6 +135,8 @@ struct StoreFormView: View {
                                     RoundedRectangle(cornerRadius: 16)
                                         .stroke(RSMSColors.cardBorder, lineWidth: 1)
                                 )
+                                .accessibilityLabel("Store Location Map")
+                                .accessibilityHint("Double tap to drop a pin on the selected location")
                             }
 
                             HStack(spacing: 6) {
@@ -170,26 +172,20 @@ struct StoreFormView: View {
                                 }
                                 Spacer()
                             }
-                            .padding(.horizontal, RSMSSpacing.lg)
                             .padding(.vertical, RSMSSpacing.md)
+                            .accessibilityElement(children: .combine)
+                            .accessibilityLabel("Manager, \(selectedManager?.name ?? "None assigned")")
+                            .accessibilityHint("Double tap to change manager")
 
 
                         }
                     }
 
-                    FormSectionCard(title: "Payment Terminals") {
-                        PremiumToggleRow(icon: "creditcard.fill", title: "Razorpay", isOn: $includeRazorpay)
-                        if includeRazorpay {
+                    if editingStore == nil {
+                        FormSectionCard(title: "Payment Terminals") {
+                            PremiumToggleRow(icon: "creditcard.fill", title: "Razorpay", isOn: $includeRazorpay)
                             FormDivider()
-                            PremiumTextField(icon: "key.fill", placeholder: "Razorpay Key ID", text: $razorpayKey)
-                            FormDivider()
-                            PremiumTextField(icon: "lock.fill", placeholder: "Razorpay Key Secret", text: $razorpaySecret)
-                        }
-                        FormDivider()
-                        PremiumToggleRow(icon: "wave.3.right.circle.fill", title: "Card Terminal", isOn: $includeCard)
-                        if includeCard {
-                            FormDivider()
-                            PremiumTextField(icon: "terminal.fill", placeholder: "Terminal ID", text: $cardTerminalID)
+                            PremiumToggleRow(icon: "wave.3.right.circle.fill", title: "Card Terminal", isOn: $includeCard)
                         }
                     }
 
@@ -209,6 +205,7 @@ struct StoreFormView: View {
                             RoundedRectangle(cornerRadius: RSMSRadius.large)
                                 .stroke(RSMSColors.error.opacity(0.2), lineWidth: 1)
                         )
+                        .accessibilityElement(children: .combine)
                     }
                 }
                 .padding(.horizontal, RSMSSpacing.lg)
@@ -228,6 +225,7 @@ struct StoreFormView: View {
                         .bold()
                         .tint(RSMSColors.burgundy)
                         .disabled(name.isEmpty || viewModel.isLoading)
+                        .accessibilityHint("Double tap to save store details")
                 }
             }
             .overlay {
@@ -243,9 +241,9 @@ struct StoreFormView: View {
                     .padding(24)
                     .background(
                         RoundedRectangle(cornerRadius: 18)
-                            .fill(Color(uiColor: .systemBackground))
                             .shadow(color: Color.black.opacity(0.15), radius: 20, x: 0, y: 10)
                     )
+                    .accessibilityLabel("Saving store details")
                 }
             }
             .onChange(of: selectedPhotoItem) { _, newItem in
@@ -307,6 +305,9 @@ struct StoreFormView: View {
                 RoundedRectangle(cornerRadius: 28)
                     .stroke(RSMSColors.cardBorder, lineWidth: 1)
             )
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Store Image")
+            .accessibilityHint("Double tap to update photo")
         }
         .buttonStyle(.plain)
     }
@@ -355,6 +356,7 @@ struct StoreFormView: View {
                 ))
                     .labelsHidden()
                     .tint(RSMSColors.burgundy)
+                    .accessibilityLabel("Store Active Status")
             }
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.vertical, RSMSSpacing.md)
@@ -372,6 +374,8 @@ struct StoreFormView: View {
                 .filter { !$0.isEmpty }
                 .joined(separator: ", ")
 
+            let finalStatus: StoreStatus = (isActive && selectedManagerID != nil) ? .active : .archived
+
             if let store = editingStore {
                 let success = await viewModel.update(
                     storeId: store.id,
@@ -382,7 +386,7 @@ struct StoreFormView: View {
                     currencyCode: currencyCode,
                     timezone: timezone,
                     managerID: selectedManagerID,
-                    status: isActive ? .active : .archived,
+                    status: finalStatus,
                     latitude: pickedCoordinate?.latitude,
                     longitude: pickedCoordinate?.longitude,
                     city: city,
@@ -399,7 +403,7 @@ struct StoreFormView: View {
                     currencyCode: currencyCode,
                     timezone: timezone,
                     managerID: selectedManagerID,
-                    status: isActive ? .active : .archived,
+                    status: finalStatus,
                     includeRazorpay: includeRazorpay,
                     includeCard: includeCard,
                     latitude: pickedCoordinate?.latitude,
@@ -495,6 +499,7 @@ private struct FormSectionCard<Content: View>: View {
                 Text(title)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(RSMSColors.primaryText)
+                    .accessibilityAddTraits(.isHeader)
                 Spacer()
             }
             .padding(.horizontal, RSMSSpacing.lg)
@@ -552,6 +557,7 @@ private struct PremiumTextField: View {
                 .foregroundColor(RSMSColors.primaryText)
                 .keyboardType(keyboardType)
                 .autocorrectionDisabled(keyboardType == .phonePad)
+                .accessibilityLabel(placeholder)
         }
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.vertical, RSMSSpacing.md)
@@ -640,6 +646,7 @@ private struct PremiumToggleRow: View {
             Toggle("", isOn: $isOn)
                 .labelsHidden()
                 .tint(RSMSColors.burgundy)
+                .accessibilityLabel(title)
         }
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.vertical, RSMSSpacing.md)

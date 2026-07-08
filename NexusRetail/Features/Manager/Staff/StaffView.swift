@@ -9,6 +9,7 @@ import SwiftUI
 
 struct StaffView: View {
     @State private var viewModel = StaffViewModel()
+    @Environment(SessionStore.self) private var sessionStore
     @State private var isAddEmployeePresented = false
     @State private var searchText = ""
     @State private var selectedRoleFilter: EmployeeRoleFilter = .sales
@@ -46,6 +47,7 @@ struct StaffView: View {
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundColor(RSMSColors.primaryText)
+                    .accessibilityAddTraits(.isHeader)
                 
                 Spacer()
                 
@@ -60,6 +62,7 @@ struct StaffView: View {
                         .clipShape(Circle())
                 }
                 .accessibilityLabel("Add new employee")
+                .accessibilityHint("Double tap to add a new employee")
             }
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.top, RSMSSpacing.sm)
@@ -77,6 +80,7 @@ struct StaffView: View {
                 }
             }
             .pickerStyle(.segmented)
+            .accessibilityLabel("Filter by Role")
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.bottom, RSMSSpacing.md)
             
@@ -88,6 +92,7 @@ struct StaffView: View {
                         Text("Team Overview")
                             .font(.system(size: 20, weight: .semibold))
                             .foregroundColor(RSMSColors.primaryText)
+                            .accessibilityAddTraits(.isHeader)
                         
                         HStack(spacing: 0) {
                             // Left column
@@ -143,6 +148,8 @@ struct StaffView: View {
                             RoundedRectangle(cornerRadius: RSMSRadius.extraLarge)
                                 .stroke(RSMSColors.cardBorder, lineWidth: 1)
                         )
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("Team metrics: \(currentRoleEmployees.count) total employees, \(formattedTotalProducts) \(selectedRoleFilter == .afterSales ? "product aftercare" : "products sold")")
                     }
                     .padding(.bottom, RSMSSpacing.xs)
                     
@@ -202,10 +209,10 @@ struct StaffView: View {
         .background(RSMSColors.background.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .task {
-            await viewModel.loadStaff()
+            await viewModel.loadStaff(storeID: sessionStore.currentUser?.storeID)
         }
         .refreshable {
-            await viewModel.loadStaff()
+            await viewModel.loadStaff(storeID: sessionStore.currentUser?.storeID)
         }
         .sheet(isPresented: $isAddEmployeePresented) {
             NewEmployeeSheet(initialRole: selectedRoleFilter == .afterSales ? .afterSales : .salesAssociate, onCreate: { newEmployee, password in

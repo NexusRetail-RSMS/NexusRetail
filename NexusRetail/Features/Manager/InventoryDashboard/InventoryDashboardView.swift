@@ -77,6 +77,7 @@ struct InventoryDashboardView: View {
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .foregroundColor(RSMSColors.primaryText)
+                .accessibilityAddTraits(.isHeader)
             
             Spacer()
             
@@ -128,6 +129,7 @@ struct InventoryDashboardView: View {
                             .foregroundColor(RSMSColors.burgundy)
                     }
             }
+            .accessibilityLabel("Sort order")
         }
         .padding(.horizontal, RSMSSpacing.lg)
     }
@@ -230,6 +232,8 @@ struct CategoryChip: View {
             .highPriorityGesture(
                 TapGesture().onEnded { action() }
             )
+            .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
+            .accessibilityLabel(label)
     }
 }
 
@@ -273,6 +277,7 @@ struct ManagerTransferRequestCard: View {
         .background(Color.white)
         .cornerRadius(RSMSRadius.medium)
         .shadow(color: Color.black.opacity(0.04), radius: 6, y: 2)
+        .accessibilityElement(children: .combine)
     }
 }
 

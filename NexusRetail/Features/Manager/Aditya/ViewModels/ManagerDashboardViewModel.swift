@@ -64,7 +64,7 @@ final class ManagerDashboardViewModel {
     var todayRevenue = "₹0"
     var pendingRequests = "0"
     var lowStockItems = "0"
-    var todayReturns = "0" // Mocked to 0 for now
+    var afterServiceCount = "0" // total after-sales tickets for this store
     
     // Detail Chart Data (Revenue History)
     var sixMonthTotal: String = "₹0"
@@ -134,11 +134,21 @@ final class ManagerDashboardViewModel {
                 .execute()
                 .value
                 
+            // After-sales tickets for this store (all types/stages)
+            struct PartialTicket: Decodable { let id: UUID }
+            async let ticketsTask: [PartialTicket] = SupabaseManager.shared.client
+                .from("after_sales_ticket")
+                .select("id")
+                .eq("store_id", value: storeID.uuidString)
+                .execute()
+                .value
+
             // Wait for basic info
             let store = try? await storeTask
             let orders = try? await ordersTask
             let requests = try? await requestsTask
             let inventory = try? await inventoryTask
+            let tickets = try? await ticketsTask
             
             // 4. Fetch Charts (Top Products & Revenue)
             // Map every period, not just W/M — the RPC supports a Y: prefix, and
@@ -168,7 +178,7 @@ final class ManagerDashboardViewModel {
             let topProds = try? await topProductsTask
             
             // Fetch real staff data
-            let staffStatsTask: [StaffStatsRPC] = try await SupabaseManager.shared.client
+            let staffStatsTask: [StaffStatsRPC]? = try? await SupabaseManager.shared.client
                 .rpc("get_staff_stats")
                 .execute()
                 .value
@@ -185,6 +195,8 @@ final class ManagerDashboardViewModel {
                 
                 let lowStock = (inventory ?? []).filter { $0.onHand <= $0.reorderThreshold }.count
                 self.lowStockItems = "\(lowStock)"
+
+                self.afterServiceCount = "\(tickets?.count ?? 0)"
                 
                 // Top Products Chart
                 if let prods = topProds {
@@ -199,7 +211,7 @@ final class ManagerDashboardViewModel {
                 // Wait for independent fetch
 
                 // Calculate performance
-                let storeStaff = staffStatsTask.filter { $0.storeId == storeID }
+                let storeStaff = (staffStatsTask ?? []).filter { $0.storeId == storeID }
                 
                 let maxRev = storeStaff.compactMap { $0.revenue }.max() ?? 1.0
                 let maxRevSafe = maxRev > 0 ? maxRev : 1.0

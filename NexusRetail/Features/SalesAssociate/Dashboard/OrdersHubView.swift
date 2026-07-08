@@ -10,19 +10,19 @@ struct OrdersHubView: View {
 
     // BOPIS pack/collect flow (pulled up from BOPISView so the hub is self-contained)
     @State private var orderToPack: BOPISOrder?
+    @State private var orderToCollect: BOPISOrder?
     @State private var showNotifiedAlert = false
-    @State private var notifiedCustomerName = ""
+    @State private var notifiedMessage = ""
 
     enum Segment: String, CaseIterable, Identifiable {
-        case all = "All"
         case instore = "In-Store"
         case bopis = "BOPIS"
         var id: String { rawValue }
     }
-    @State private var segment: Segment = .all
+    @State private var segment: Segment = .instore
 
-    private var showInStore: Bool { segment == .all || segment == .instore }
-    private var showBOPIS: Bool { segment == .all || segment == .bopis }
+    private var showInStore: Bool { segment == .instore }
+    private var showBOPIS: Bool { segment == .bopis }
 
     var body: some View {
         ZStack {
@@ -49,15 +49,29 @@ struct OrdersHubView: View {
         .task { await reloadAll() }
         .sheet(item: $orderToPack) { order in
             BOPISPackOrderView(order: order) {
-                bopisVM.packAndNotify(id: order.id, associateID: sessionStore.currentUser?.id)
-                notifiedCustomerName = order.customerName
-                showNotifiedAlert = true
+                Task {
+                    let outcome = await bopisVM.packAndNotify(id: order.id, associateID: sessionStore.currentUser?.id)
+                    switch outcome {
+                    case .emailed:
+                        notifiedMessage = "A pickup code has been emailed to \(order.customerName)."
+                    case .noEmail:
+                        notifiedMessage = "Order packed, but no email is on file for \(order.customerName). Ask them for their code another way."
+                    case .sendFailed:
+                        notifiedMessage = "Order packed, but the pickup email couldn't be sent right now. Please try resending or check the email setup."
+                    }
+                    showNotifiedAlert = true
+                }
             }
         }
-        .alert("Customer Notified", isPresented: $showNotifiedAlert) {
+        .sheet(item: $orderToCollect) { order in
+            CollectVerifyView(order: order) { code in
+                await bopisVM.verifyAndCollect(id: order.id, code: code)
+            }
+        }
+        .alert("Ready for Pickup", isPresented: $showNotifiedAlert) {
             Button("OK", role: .cancel) { }
         } message: {
-            Text("\(notifiedCustomerName) has been sent a verification code for pickup.")
+            Text(notifiedMessage)
         }
     }
 
@@ -75,14 +89,9 @@ struct OrdersHubView: View {
 
             Text("Orders Hub")
                 .font(.system(size: 24, weight: .bold)).foregroundColor(RSMSColors.primaryText)
-
+                
             Spacer()
 
-            ZStack {
-                Circle().fill(RSMSColors.burgundy).frame(width: 40, height: 40)
-                Text(initials(for: sessionStore.currentUser?.name))
-                    .font(.system(size: 15, weight: .semibold)).foregroundColor(.white)
-            }
         }
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.top, 60)
@@ -119,25 +128,6 @@ struct OrdersHubView: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: RSMSSpacing.lg) {
                 switch segment {
-                case .all:
-                    if mergedEntries.isEmpty {
-                        emptyRow(icon: "bag", text: "No orders yet")
-                    } else {
-                        ForEach(mergedEntries) { entry in
-                            switch entry {
-                            case .pos(let order):
-                                VStack(alignment: .leading, spacing: 6) {
-                                    typeBadge("In-Store", systemImage: "bag.fill")
-                                    posOrderRow(order)
-                                }
-                            case .bopis(let order):
-                                VStack(alignment: .leading, spacing: 6) {
-                                    typeBadge("BOPIS", systemImage: "shippingbox.fill")
-                                    BOPISCardView(order: order) { handleBOPISAction(order) }
-                                }
-                            }
-                        }
-                    }
                 case .instore:
                     inStoreContent
                 case .bopis:
@@ -233,7 +223,7 @@ struct OrdersHubView: View {
         withAnimation {
             switch order.status {
             case .pending:            orderToPack = order
-            case .waitingForCustomer: bopisVM.markCollected(id: order.id)
+            case .waitingForCustomer: orderToCollect = order
             case .collected:          break
             }
         }

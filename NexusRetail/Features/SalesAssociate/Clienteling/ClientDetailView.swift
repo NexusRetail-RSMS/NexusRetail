@@ -12,10 +12,20 @@ struct ClientDetailView: View {
     let client: AssociateClient
     @Environment(SessionStore.self) private var sessionStore
     
+    @State private var isEditingClient = false
+    @State private var clientName = ""
+    @State private var clientPhone = ""
+    @State private var stylePreferences = ""
+    @State private var hasConsent = true
+    @State private var isNewClientPresented = false
+    
     @State private var selectedTab = 0
     @State private var forYouProducts: [POSProduct] = []
     @State private var trendingProducts: [POSProduct] = []
     @State private var isLoading = true
+    
+    @State private var dynamicPreferences: String?
+    @State private var dynamicPurchasePattern: String?
     
     private struct TopProductsRPCParams: Encodable {
         let p_period: String
@@ -73,7 +83,7 @@ struct ClientDetailView: View {
                             Text("Client Preferences")
                                 .font(.system(size: 15, weight: .semibold))
                                 .foregroundStyle(RSMSColors.primaryText)
-                            Text(client.preferences)
+                            Text(dynamicPreferences ?? "Analyzing shopping history...")
                                 .font(RSMSFonts.subheadline)
                                 .foregroundStyle(RSMSColors.secondaryText)
                             
@@ -82,7 +92,7 @@ struct ClientDetailView: View {
                             Text("Purchase Pattern")
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundStyle(RSMSColors.primaryText)
-                            Text(client.purchasePattern)
+                            Text(dynamicPurchasePattern ?? "Loading pattern...")
                                 .font(RSMSFonts.subheadline)
                                 .foregroundStyle(RSMSColors.secondaryText)
                         }
@@ -116,7 +126,23 @@ struct ClientDetailView: View {
         .background(RSMSColors.background.ignoresSafeArea())
         .navigationTitle("Client Card")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Edit") {
+                    clientName = client.name
+                    clientPhone = client.phone
+                    stylePreferences = client.preferences
+                    hasConsent = true
+                    isEditingClient = true
+                    isNewClientPresented = true
+                }
+                .foregroundStyle(RSMSColors.burgundy)
+                .bold()
+            }
+        }
+        .sheet(isPresented: $isNewClientPresented) { newClientSheet }
         .task {
+            await loadClientInsights()
             await loadRecommendations()
         }
     }
@@ -126,6 +152,72 @@ struct ClientDetailView: View {
             ForEach(products) { product in
                 ProductCardView(product: product)
             }
+        }
+    }
+    
+    // MARK: - Dynamic Insights
+    
+    private func loadClientInsights() async {
+        guard let dbId = client.dbId else {
+            dynamicPreferences = client.preferences
+            dynamicPurchasePattern = client.purchasePattern
+            return
+        }
+        
+        do {
+            struct ClientOrderLine: Decodable {
+                let quantity: Int
+                let products: InsightProduct?
+            }
+            struct InsightProduct: Decodable {
+                let category: String?
+                let attributes: String?
+            }
+            struct ClientOrder: Decodable {
+                let total: Double
+                let order_line_item: [ClientOrderLine]
+            }
+            
+            let orders: [ClientOrder] = try await SupabaseManager.shared.client
+                .from("orders")
+                .select("total, order_line_item(quantity, products(category, attributes))")
+                .eq("client_id", value: dbId.uuidString)
+                .execute()
+                .value
+            
+            if orders.isEmpty {
+                dynamicPreferences = "No purchases yet. \(client.preferences)"
+                dynamicPurchasePattern = "New client. Pattern will appear after assisted selling history is available."
+                return
+            }
+            
+            let totalSpend = orders.reduce(0) { $0 + $1.total }
+            let avgSpend = totalSpend / Double(orders.count)
+            let formattedAvg = String(format: "₹%.0f", avgSpend)
+            
+            dynamicPurchasePattern = "Frequent buyer (\(orders.count) orders) averaging \(formattedAvg) per visit."
+            
+            var categoryCounts: [String: Int] = [:]
+            for order in orders {
+                for line in order.order_line_item {
+                    if let cat = line.products?.category {
+                        categoryCounts[cat, default: 0] += line.quantity
+                    }
+                }
+            }
+            
+            let topCategories = categoryCounts.sorted { $0.value > $1.value }.prefix(2).map { $0.key }
+            if !topCategories.isEmpty {
+                let catString = topCategories.joined(separator: " and ")
+                dynamicPreferences = "Prefers \(catString)"
+            } else {
+                dynamicPreferences = "Exploring various categories."
+            }
+            
+        } catch {
+            print("Failed to fetch client insights: \(error)")
+            dynamicPreferences = client.preferences
+            dynamicPurchasePattern = client.purchasePattern
         }
     }
     
@@ -193,6 +285,81 @@ struct ClientDetailView: View {
             print("Error fetching top products for profile: \(error)")
             trendingProducts = Array(allProducts.shuffled().prefix(6))
         }
+    }
+    
+    // MARK: - Edit Client Sheet
+    private var newClientSheet: some View {
+        NavigationStack {
+            Form {
+                Section("Client Details") {
+                    TextField("Full Name", text: $clientName)
+                        .textContentType(.name)
+                        .autocorrectionDisabled()
+                    TextField("Phone Number", text: $clientPhone)
+                        .textContentType(.telephoneNumber)
+                        .keyboardType(.phonePad)
+                }
+
+                Section("Style Preferences") {
+                    TextField("Colors, fits, fabrics, occasions…", text: $stylePreferences, axis: .vertical)
+                        .lineLimit(3...6)
+                }
+
+                Section {
+                    Toggle("Client consent received", isOn: $hasConsent)
+                        .tint(RSMSColors.burgundy)
+                } footer: {
+                    Text("Required before saving personal details.")
+                }
+            }
+            .navigationTitle("Edit Client")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { isNewClientPresented = false }
+                        .foregroundColor(RSMSColors.burgundy)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Save") { saveClientCard() }
+                        .bold()
+                        .foregroundColor(canCreateClient ? RSMSColors.burgundy : .gray)
+                        .disabled(!canCreateClient)
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+    }
+    
+    private var canCreateClient: Bool {
+        !clientName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !clientPhone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        hasConsent
+    }
+
+    private func saveClientCard() {
+        let name = clientName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let phone = clientPhone.trimmingCharacters(in: .whitespacesAndNewlines)
+        let editingId = client.dbId
+
+        Task {
+            do {
+                if let editingId {
+                    struct UpdateClient: Encodable {
+                        let name: String
+                        let phone: String
+                    }
+                    try await SupabaseManager.shared.client
+                        .from("client")
+                        .update(UpdateClient(name: name, phone: phone))
+                        .eq("id", value: editingId)
+                        .execute()
+                }
+            } catch {
+                print("Error saving client: \(error)")
+            }
+        }
+        isNewClientPresented = false
     }
 }
 

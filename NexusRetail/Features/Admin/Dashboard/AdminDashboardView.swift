@@ -1,3 +1,17 @@
+//
+//  AdminDashboardView.swift
+//  NexusRetail
+//
+//  Admin Dashboard — the central command view for corporate retail ops.
+//
+//  Layout (top → bottom):
+//    1. Inline header with greeting, country filter, and profile avatar
+//    2. KPI overview cards (Revenue, Active Stores, Pending Transfers, Low-Stock)
+//    3. Store Revenue chart (Weekly/Monthly toggle)
+//    4. Top Product Sales chart (Weekly/Monthly toggle)
+//    5. Top Locations chart
+//
+
 import SwiftUI
 import Supabase
 
@@ -5,11 +19,12 @@ struct AdminDashboardView: View {
     @Environment(SessionStore.self) private var sessionStore
     @State private var viewModel = DashboardViewModel()
     @State private var isProfilePresented = false
-
+    
+    // Drill-down states
     @State private var isShowingSalesDetail = false
     @State private var isShowingProductsDetail = false
-    @State private var isShowingActiveStoresDetail = false
-
+    
+    // Dummy store for global drill-downs
     private var globalStore: Store {
         Store(
             id: UUID(uuidString: "00000000-0000-0000-0000-000000000000") ?? UUID(),
@@ -21,6 +36,8 @@ struct AdminDashboardView: View {
         )
     }
 
+
+
     var body: some View {
         ZStack {
             RSMSColors.background
@@ -28,9 +45,12 @@ struct AdminDashboardView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
+
+                    // MARK: - Header (scrolls with content)
                     headerSection
                         .padding(.top, 16)
 
+                    // MARK: - Error Banner
                     if let errorMessage = viewModel.errorMessage {
                         HStack {
                             Image(systemName: "exclamationmark.triangle.fill")
@@ -44,6 +64,7 @@ struct AdminDashboardView: View {
                             }
                             .foregroundColor(.white)
                             .font(RSMSFonts.caption.bold())
+                            .accessibilityHint("Double tap to reload dashboard data")
                         }
                         .padding()
                         .background(Color(hex: "FF3B30"))
@@ -62,25 +83,41 @@ struct AdminDashboardView: View {
                         }
                         .frame(maxWidth: .infinity, minHeight: 300)
                     } else {
+                        // MARK: - Content
                         VStack(alignment: .leading, spacing: RSMSSpacing.xl) {
+
+                            // MARK: - KPI Cards
                             kpiSection
 
+                            // MARK: - Store Revenue
                             RevenueBarChart(
                                 data: viewModel.revenueChartData,
                                 maxValue: viewModel.revenueMaxValue,
                                 timeRange: $viewModel.revenueTimeRange
                             )
                             .contentShape(Rectangle())
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel("Store Revenue Chart")
+                            .accessibilityValue("Total Revenue: \(viewModel.formattedRevenue)")
+                            .accessibilityHint("Double tap to view detailed sales analytics")
+                            .accessibilityAddTraits(.isButton)
                             .onTapGesture { isShowingSalesDetail = true }
 
+                            // MARK: - Top Product Sales
                             ProductSalesChart(
                                 data: viewModel.productChartData,
                                 maxValue: viewModel.productMaxValue,
                                 timeRange: $viewModel.productTimeRange
                             )
                             .contentShape(Rectangle())
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel("Top Product Sales Chart")
+                            .accessibilityValue("Highest selling product is at \(viewModel.productMaxValue) units")
+                            .accessibilityHint("Double tap to view product sales details")
+                            .accessibilityAddTraits(.isButton)
                             .onTapGesture { isShowingProductsDetail = true }
 
+                            // MARK: - Top Locations
                             TopLocationsChartView(revenueByCountry: viewModel.byCountry, selectedCountry: viewModel.selectedCountry)
                         }
                         .padding(.horizontal, RSMSSpacing.lg)
@@ -93,6 +130,7 @@ struct AdminDashboardView: View {
                 await viewModel.load()
             }
             .onAppear {
+                // Refresh when view appears (e.g., after navigation from other screens)
                 Task { await viewModel.load() }
             }
         }
@@ -101,6 +139,7 @@ struct AdminDashboardView: View {
             if viewModel.kpis == nil {
                 await viewModel.load()
             }
+            viewModel.startListening()
         }
         .sheet(isPresented: $isProfilePresented) {
             AdminProfileSheet()
@@ -115,29 +154,29 @@ struct AdminDashboardView: View {
                 TopProductsDetailView(store: globalStore)
             }
         }
-        .fullScreenCover(isPresented: $isShowingActiveStoresDetail) {
-            NavigationStack {
-                storeDashView()
-            }
-        }
     }
 
+    // MARK: - Header
+    //
+    // Single row: "Dashboard" title on left, country flag button + profile avatar on right.
     private var headerSection: some View {
         HStack(alignment: .center) {
             Text("Dashboard")
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .foregroundColor(RSMSColors.primaryText)
+                .accessibilityAddTraits(.isHeader)
 
             Spacer()
 
+            // Country filter — shows flag or globe
             Menu {
                 Button {
                     withAnimation(.easeInOut(duration: 0.25)) {
                         viewModel.selectedCountry = nil
                     }
                 } label: {
-                    Text("🌍 All Global")
+                    Text("All Global")
                 }
                 ForEach(viewModel.countries, id: \.self) { country in
                     Button {
@@ -145,7 +184,7 @@ struct AdminDashboardView: View {
                             viewModel.selectedCountry = country
                         }
                     } label: {
-                        Text("\(countryFlag(for: country)) \(country)")
+                        Text(country)
                     }
                 }
             } label: {
@@ -155,16 +194,20 @@ struct AdminDashboardView: View {
                         .frame(width: 44, height: 44)
 
                     if let selected = viewModel.selectedCountry {
-                        Text(countryFlag(for: selected))
-                            .font(.system(size: 22))
+                        Text(countryCode(for: selected))
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(RSMSColors.burgundy)
                     } else {
-                        Text("🌍")
-                            .font(.system(size: 22))
+                        Text("ALL")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(RSMSColors.burgundy)
                     }
                 }
             }
-            .accessibilityLabel("Country filter")
+            .accessibilityLabel(viewModel.selectedCountry == nil ? "Country filter: All Global" : "Country filter: \(viewModel.selectedCountry!)")
+            .accessibilityHint("Double tap to change country filter")
 
+            // Profile avatar
             Button {
                 isProfilePresented = true
             } label: {
@@ -173,9 +216,23 @@ struct AdminDashboardView: View {
                         .fill(RSMSColors.burgundy)
                         .frame(width: 44, height: 44)
 
-                    Text(initials(for: sessionStore.currentUser?.name))
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white)
+                    if let urlString = sessionStore.currentUser?.imageUrl, let url = URL(string: urlString) {
+                        CachedAsyncImage(url: url) { image in
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 44, height: 44)
+                                .clipShape(Circle())
+                        } placeholder: {
+                            Text(initials(for: sessionStore.currentUser?.name))
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                    } else {
+                        Text(initials(for: sessionStore.currentUser?.name))
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                    }
                 }
             }
             .accessibilityLabel("Profile")
@@ -197,62 +254,65 @@ struct AdminDashboardView: View {
         return "AD"
     }
 
-    private func countryFlag(for country: String) -> String {
+    private func countryCode(for country: String) -> String {
         let map: [String: String] = [
-            "United States":        "🇺🇸",
-            "USA":                  "🇺🇸",
-            "United Kingdom":       "🇬🇧",
-            "UK":                   "🇬🇧",
-            "Canada":               "🇨🇦",
-            "Australia":            "🇦🇺",
-            "Germany":              "🇩🇪",
-            "France":               "🇫🇷",
-            "Japan":                "🇯🇵",
-            "India":                "🇮🇳",
-            "Singapore":            "🇸🇬",
-            "United Arab Emirates": "🇦🇪",
-            "UAE":                  "🇦🇪",
+            "United States":        "US",
+            "USA":                  "US",
+            "United Kingdom":       "UK",
+            "UK":                   "UK",
+            "Canada":               "CA",
+            "Australia":            "AU",
+            "Germany":              "DE",
+            "France":               "FR",
+            "Japan":                "JP",
+            "India":                "IN",
+            "Singapore":            "SG",
+            "United Arab Emirates": "AE",
+            "UAE":                  "AE",
         ]
-        return map[country] ?? "🌍"
+        return map[country] ?? "ALL"
     }
 
+    // MARK: - KPI Cards
+    //
+    // Four cards — no separate heading needed, the cards are self-explanatory.
+    // The country filter is now in the header.
     private var kpiSection: some View {
-        VStack(spacing: RSMSSpacing.md) {
-            HeroRevenueCard(
-                title: "This Year Revenue",
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: RSMSSpacing.md) {
+            KPICardView(
+                title: "Total Revenue",
                 value: viewModel.formattedRevenue,
-                trend: viewModel.yearlyRevenueTrendText,
-                sparklineValues: viewModel.yearlyRevenuePoints
-            ) {
-                isShowingSalesDetail = true
-            }
-
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: RSMSSpacing.sm) {
-                FlatKPICard(
-                    title: "Store Leaderboard",
-                    value: viewModel.activeStoresText,
-                    icon: "building.2.fill",
-                    color: RSMSColors.burgundy
-                ){
-                    isShowingActiveStoresDetail = true
-                }
-                FlatKPICard(
-                    title: "Pending Transfers",
-                    value: viewModel.pendingTransfersText,
-                    icon: "arrow.left.arrow.right.circle.fill",
-                    color: Color(hex: "E76F51")
-                )
-                FlatKPICard(
-                    title: "Low-Stock Alerts",
-                    value: viewModel.lowStockText,
-                    icon: "exclamationmark.triangle.fill",
-                    color: Color(hex: "D4A017")
-                )
-            }
+                icon: "indianrupeesign.circle.fill",
+                trend: nil,
+                color: Color(hex: "2A9D8F") // Teal
+            )
+            KPICardView(
+                title: "Active Stores",
+                value: viewModel.activeStoresText,
+                icon: "building.2.fill",
+                trend: nil,
+                color: RSMSColors.burgundy
+            )
+            KPICardView(
+                title: "Pending Transfers",
+                value: viewModel.pendingTransfersText,
+                icon: "arrow.left.arrow.right.circle.fill",
+                trend: nil,
+                color: Color(hex: "E76F51") // Warm orange
+            )
+            KPICardView(
+                title: "Total Products",
+                value: viewModel.totalProductsText,
+                icon: "tag.fill",
+                trend: nil,
+                color: Color(hex: "D4A017") // Gold
+            )
         }
         .animation(.easeInOut(duration: 0.3), value: viewModel.selectedCountry)
     }
 }
+
+
 
 #Preview {
     NavigationStack {
