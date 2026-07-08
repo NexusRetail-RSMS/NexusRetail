@@ -22,6 +22,7 @@ struct RepairOrderDetailsView: View {
                                 .scaledToFill()
                                 .frame(width: 120, height: 120)
                                 .clipShape(RoundedRectangle(cornerRadius: 16))
+                                .accessibilityHidden(true)
                         } placeholder: {
                             placeholderImage
                         }
@@ -75,6 +76,7 @@ struct RepairOrderDetailsView: View {
                                 .cornerRadius(12)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
+                        .accessibilityElement(children: .combine)
                     }
                 }
                 .padding(20)
@@ -108,6 +110,7 @@ struct RepairOrderDetailsView: View {
                 }
             }
             .accessibilityLabel("Back")
+            .accessibilityHint("Go back")
             
             Spacer()
             
@@ -115,6 +118,7 @@ struct RepairOrderDetailsView: View {
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .foregroundColor(RSMSColors.primaryText)
+                .accessibilityAddTraits(.isHeader)
             
             Spacer()
             
@@ -135,6 +139,7 @@ struct RepairOrderDetailsView: View {
                     .font(.system(size: 40))
                     .foregroundColor(RSMSColors.secondaryText)
             )
+            .accessibilityHidden(true)
     }
     
     private func detailRow(title: String, value: String) -> some View {
@@ -148,6 +153,7 @@ struct RepairOrderDetailsView: View {
                 .foregroundColor(RSMSColors.primaryText)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
     }
     
     private func formatDate(_ date: Date) -> String {

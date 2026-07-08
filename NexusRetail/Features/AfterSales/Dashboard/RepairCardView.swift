@@ -45,6 +45,7 @@ struct RepairCardView: View {
                         .overlay(Image(systemName: "photo").foregroundColor(RSMSColors.secondaryText))
                 }
                 
+                
                 VStack(alignment: .leading, spacing: 4) {
                     Text(itemName)
                         .font(.system(size: 16, weight: .semibold))
@@ -87,6 +88,8 @@ struct RepairCardView: View {
                 .strokeBorder(Color.gray.opacity(0.15), lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("Double tap to view repair details")
     }
     
     private func formatDate(_ date: Date) -> String {

@@ -87,6 +87,7 @@ struct TopLocationsChartView: View {
                 Text(selectedCountry != nil ? "\(CountryMapRegion.flags[selectedCountry ?? ""] ?? "📍") \(selectedCountry ?? "")" : "Store Locations")
                     .font(RSMSFonts.headline)
                     .foregroundColor(RSMSColors.primaryText)
+                    .accessibilityAddTraits(.isHeader)
             }
 
         }
@@ -123,6 +124,7 @@ struct TopLocationsChartView: View {
                     .background(.ultraThinMaterial)
                     .clipShape(Circle())
                     .padding(RSMSSpacing.sm)
+                    .accessibilityLabel("Loading map data")
             }
         }
         .animation(.easeInOut(duration: 0.3), value: selectedStore?.id)
@@ -180,7 +182,9 @@ struct TopLocationsChartView: View {
                     .font(.system(size: 18))
                     .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
             }
+            .accessibilityLabel("Close Store Callout")
         }
+        .accessibilityElement(children: .combine)
         .padding(.horizontal, RSMSSpacing.md)
         .padding(.vertical, RSMSSpacing.sm)
         .background(.ultraThinMaterial)
@@ -271,6 +275,7 @@ struct TopLocationsChartView: View {
                 .padding(.vertical, 8)
                 .background(Color(hex: "F4A261").opacity(0.08))
                 .cornerRadius(RSMSRadius.small)
+                .accessibilityElement(children: .combine)
             }
         }
     }
@@ -335,6 +340,7 @@ struct TopLocationsChartView: View {
                 .padding(.vertical, 8)
                 .background(Color(hex: "F4A261").opacity(0.08))
                 .cornerRadius(RSMSRadius.small)
+                .accessibilityElement(children: .combine)
             }
         }
     }
@@ -403,6 +409,8 @@ struct TopLocationsChartView: View {
                 .clipShape(Capsule())
             }
             .disabled(mapVM.stores.isEmpty)
+            .accessibilityLabel("Select store")
+            .accessibilityHint(mapVM.stores.isEmpty ? "No stores available" : "Double tap to filter by a specific store")
         }
     }
 
@@ -423,6 +431,7 @@ struct TopLocationsChartView: View {
                 .foregroundColor(RSMSColors.secondaryText)
         }
         .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
     }
 
     private func statChip(icon: String, value: String, label: String) -> some View {
@@ -443,6 +452,7 @@ struct TopLocationsChartView: View {
         .padding(.vertical, 6)
         .background(RSMSColors.burgundy.opacity(0.05))
         .clipShape(Capsule())
+        .accessibilityElement(children: .combine)
     }
 }
 

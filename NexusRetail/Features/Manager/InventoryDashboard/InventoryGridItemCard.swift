@@ -31,6 +31,7 @@ struct InventoryGridItemCard: View {
                         }
                     )
                     .clipShape(TopCorners(radius: 12))
+                    .accessibilityHidden(true)
                 
             }
             
@@ -65,6 +66,9 @@ struct InventoryGridItemCard: View {
         .background(Color.white)
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.05), radius: 6, y: 2)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("Double tap to request restock")
+        .accessibilityAction(named: "Show QR Code") { showQR = true }
         .contextMenu {
             Button(action: { showQR = true }) {
                 Label("Show QR Code", systemImage: "qrcode")
@@ -95,6 +99,7 @@ struct InventoryQRCodeSheet: View {
                     .background(Color.white)
                     .cornerRadius(12)
                     .shadow(radius: 5)
+                    .accessibilityLabel("QR Code for \(item.name)")
                 
                 VStack(spacing: 8) {
                     Text(item.name)

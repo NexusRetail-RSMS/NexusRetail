@@ -102,6 +102,7 @@ struct AfterSalesHistoryView: View {
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .foregroundColor(RSMSColors.primaryText)
+                .accessibilityAddTraits(.isHeader)
             
             Spacer()
             
@@ -167,6 +168,7 @@ struct AfterSalesHistoryView: View {
                 .stroke(RSMSColors.cardBorder, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+        .accessibilityElement(children: .combine)
     }
     
     private func repairCard(_ item: RepairHistoryItem) -> some View {
@@ -209,6 +211,7 @@ struct AfterSalesHistoryView: View {
                 .stroke(RSMSColors.cardBorder, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+        .accessibilityElement(children: .combine)
     }
     
     private func statusBadge(_ status: String) -> some View {
