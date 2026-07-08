@@ -187,7 +187,7 @@ class AdminTransfersViewModel {
         do {
             let reqStore: Store = try await SupabaseManager.shared.client
                 .from("store")
-                .select("country")
+                .select()
                 .eq("id", value: request.requestingStoreId)
                 .single()
                 .execute()
@@ -199,6 +199,7 @@ class AdminTransfersViewModel {
             if country.lowercased().contains("usa") || country.lowercased().contains("united states") { warehouseName = "Kansas City Warehouse" }
             
             if request.quantity > 3 {
+                print("[Routing] Quantity \(request.quantity) > 3 — warehouse only")
                 return warehouseName
             }
             
@@ -206,7 +207,7 @@ class AdminTransfersViewModel {
             if let sourceId = sourceId {
                 let sourceStore: Store = try await SupabaseManager.shared.client
                     .from("store")
-                    .select("name")
+                    .select()
                     .eq("id", value: sourceId)
                     .single()
                     .execute()
@@ -215,6 +216,7 @@ class AdminTransfersViewModel {
             }
             return warehouseName
         } catch {
+            print("[Routing] ❌ predictSourceString failed: \(error)")
             return "Central Warehouse"
         }
     }
