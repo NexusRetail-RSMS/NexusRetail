@@ -146,43 +146,18 @@ struct InventoryCatalogView: View {
     // MARK: - Data Loading
     private func loadProducts() async {
         isLoading = true
-        do {
-            struct ProductResponse: Codable {
-                let item_id: Int64
-                let item_name: String
-                let category: String
-                let price: Double
-                let pexels_page: String?
-                let image_url: String?
-            }
-            
-            let response: [ProductResponse] = try await SupabaseManager.shared.client
-                .from("products")
-                .select("item_id, item_name, category, price, pexels_page, image_url")
-                .execute()
-                .value
-            
-            var mapped: [POSProduct] = []
-            for product in response {
-                let uuid = UUID(uuidString: String(format: "00000000-0000-0000-0000-%012d", product.item_id)) ?? UUID()
-                let pexelsImageUrl = POSProductRepository.shared.extractPexelsImageUrl(from: product.pexels_page ?? "") ?? product.image_url
-                
-                mapped.append(POSProduct(
-                    id: uuid,
-                    itemId: product.item_id,
-                    name: product.item_name,
-                    sku: "SKU-\(product.item_id)",
-                    category: product.category,
-                    price: product.price,
-                    stock: Int.random(in: 1...50), // Random stock for now or join with inventory
-                    size: "M",
-                    imageUrl: pexelsImageUrl
-                ))
-            }
-            self.products = mapped
-        } catch {
-            print("Error fetching from Supabase products table: \(error)")
-        }
+        // Use the shared repository which joins real per-store inventory (on_hand),
+        // real sku_code, and store-specific pricing. Stock is scoped to THIS associate's
+        // store, so the search results match the actual backend inventory.
+        //
+        // Run the fetch in a detached task so it isn't torn down by SwiftUI cancelling the
+        // view's `.task` (which the searchable field / tab switches can trigger, surfacing
+        // as CancellationError and leaving stale/empty stock).
+        let storeID = sessionStore.currentUser?.storeID
+        let fetched = await Task.detached(priority: .userInitiated) {
+            await POSProductRepository.shared.fetchProducts(storeID: storeID)
+        }.value
+        self.products = fetched
         isLoading = false
     }
 }

@@ -4,152 +4,100 @@ struct InvoiceItemsSelectionView: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var path: NavigationPath
     let invoiceId: String
-    
-    // Mocked data for demonstration
-    @State private var items: [POSProduct] = [
-        POSProduct(id: UUID(), itemId: 1, name: "Signature Leather Tote", sku: "TOTE-001", category: "Bags", price: 14500, stock: 10, size: "One Size", imageUrl: "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=500&auto=format&fit=crop&q=60"),
-        POSProduct(id: UUID(), itemId: 2, name: "Classic Silk Scarf", sku: "SCRF-045", category: "Accessories", price: 4200, stock: 25, size: "M", imageUrl: "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=500&auto=format&fit=crop&q=60"),
-        POSProduct(id: UUID(), itemId: 3, name: "Aviator Sunglasses", sku: "SUN-892", category: "Eyewear", price: 8900, stock: 5, size: "Standard", imageUrl: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=500&auto=format&fit=crop&q=60")
-    ]
-    
-    @State private var selectedItemIds: Set<UUID> = []
-    @State private var purchaseDate: Date = Date()
-    @State private var salesAssociateName: String = "Jane Doe"
-    @State private var storeName: String = "Nexus Retail — MG Road"
-    // isExpired is derived from the mock but passed forward for action screen to use
-    var isExpired: Bool {
-        let days = Calendar.current.dateComponents([.day], from: purchaseDate, to: Date()).day ?? 0
-        return days > 7
-    }
-    
-    private var daysSincePurchase: Int {
-        Calendar.current.dateComponents([.day], from: purchaseDate, to: Date()).day ?? 0
-    }
-    
-    private var daysRemaining: Int {
-        max(0, 7 - daysSincePurchase)
-    }
-    
+
+    // Real, DB-backed invoice data.
+    @State private var items: [AfterSalesInvoiceLine] = []
+    @State private var customer: RequestCustomer? = nil
+    @State private var isLoading = true
+    @State private var loadError: String? = nil
+    @State private var expandedItemId: UUID? = nil
+
+    private static let displayDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d MMM yyyy"
+        return formatter
+    }()
+
     var body: some View {
-        ZStack(alignment: .bottom) {
+        ZStack(alignment: .top) {
             RSMSColors.background
                 .ignoresSafeArea()
-            
-            VStack(spacing: 0) {
-                customHeaderSection
-                
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        // Always-visible invoice info banner in burgundy
-                        invoiceInfoBanner
-                            .padding(.horizontal, RSMSSpacing.lg)
-                            .padding(.top, RSMSSpacing.md)
-                        
-                        Text("Select items to process")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(RSMSColors.secondaryText)
-                            .padding(.horizontal, RSMSSpacing.lg)
-                        
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Select item to process")
+                        .font(.system(size: 14, weight: .medium))
+                        .textCase(.uppercase)
+                        .foregroundColor(RSMSColors.secondaryText.opacity(0.8))
+                        .padding(.horizontal, RSMSSpacing.lg)
+                        .padding(.bottom, 4)
+
+                    if isLoading {
+                        HStack { Spacer(); ProgressView("Loading invoice...").tint(RSMSColors.burgundy); Spacer() }
+                            .padding(.top, 40)
+                    } else if let loadError {
+                        emptyState(message: loadError, icon: "exclamationmark.triangle")
+                    } else if items.isEmpty {
+                        emptyState(message: "No items found for this invoice. Check the invoice number and try again.", icon: "doc.text.magnifyingglass")
+                    } else {
                         LazyVStack(spacing: 12) {
                             ForEach(items) { item in
-                                itemRow(item)
+                                itemCard(item)
                             }
                         }
                         .padding(.horizontal, RSMSSpacing.lg)
-                        
-                        Spacer(minLength: 120)
+                        .padding(.bottom, 40)
                     }
                 }
+                .padding(.top, 150)
             }
-            
-            bottomActionBar
+            .ignoresSafeArea(edges: .top)
+
+            customHeaderSection
         }
         .navigationBarHidden(true)
-        .onAppear {
-            setupMockInvoice()
-        }
+        .task { await loadItems() }
     }
-    
-    // MARK: - Invoice Info Banner (always burgundy)
-    private var invoiceInfoBanner: some View {
-        VStack(spacing: 0) {
-            // Top header strip — always burgundy
-            HStack {
-                Image(systemName: "doc.text.fill")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(.white)
+
+    private func emptyState(message: String, icon: String) -> some View {
+        VStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 40))
+                .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+            Text(message)
+                .font(.system(size: 14))
+                .foregroundColor(RSMSColors.secondaryText)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, RSMSSpacing.lg)
+        .padding(.top, 40)
+    }
+
+    private func loadItems() async {
+        isLoading = true
+        loadError = nil
+        do {
+            let details = try await AfterSalesService.fetchInvoiceDetails(orderId: invoiceId)
+            if details.found {
+                self.items = details.items
+                self.customer = details.customer
                 
-                Text("Bill Information")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(.white)
-                
-                Spacer()
-                
-                Text("\(daysSincePurchase) day\(daysSincePurchase == 1 ? "" : "s") ago")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.9))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(Color.white.opacity(0.2))
-                    .clipShape(Capsule())
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(RSMSColors.burgundy)
-            
-            // Details grid
-            VStack(spacing: 0) {
-                HStack(spacing: 0) {
-                    invoiceDetailCell(icon: "doc.text.fill", label: "Invoice ID", value: invoiceId, isLeft: true)
-                    Divider().frame(width: 1)
-                    invoiceDetailCell(icon: "calendar", label: "Purchase Date", value: purchaseDate.formatted(date: .abbreviated, time: .omitted), isLeft: false)
+                if self.items.count == 1 {
+                    self.expandedItemId = self.items.first?.id
                 }
-                
-                Divider()
-                
-                HStack(spacing: 0) {
-                    invoiceDetailCell(icon: "person.fill", label: "Sales Associate", value: salesAssociateName, isLeft: true)
-                    Divider().frame(width: 1)
-                    invoiceDetailCell(icon: "storefront.fill", label: "Store", value: storeName, isLeft: false)
-                }
+            } else {
+                self.loadError = "Couldn't find this invoice. It may not exist or belongs to another store."
             }
-            .background(Color.white)
+        } catch {
+            self.loadError = "Couldn't load this invoice. Please try again."
+            print("After Sales invoice fetch error: \(error)")
         }
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(RSMSColors.burgundy.opacity(0.3), lineWidth: 1.5))
-        .shadow(color: RSMSColors.burgundy.opacity(0.12), radius: 10, x: 0, y: 4)
+        isLoading = false
     }
-    
-    private func invoiceDetailCell(icon: String, label: String, value: String, isLeft: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 6) {
-                Image(systemName: icon)
-                    .font(.system(size: 10))
-                    .foregroundColor(RSMSColors.secondaryText)
-                Text(label)
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(RSMSColors.secondaryText)
-            }
-            Text(value)
-                .font(.system(size: 13, weight: .bold))
-                .foregroundColor(RSMSColors.primaryText)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-    
-    // MARK: - Mock Data Setup
-    private func setupMockInvoice() {
-        if invoiceId.lowercased().contains("old") || invoiceId.lowercased().contains("expired") {
-            purchaseDate = Calendar.current.date(byAdding: .day, value: -12, to: Date()) ?? Date()
-        } else {
-            purchaseDate = Calendar.current.date(byAdding: .day, value: -3, to: Date()) ?? Date()
-        }
-    }
-    
+
     // MARK: - Header
+
     private var customHeaderSection: some View {
         HStack(alignment: .center, spacing: RSMSSpacing.md) {
             Button {
@@ -165,122 +113,151 @@ struct InvoiceItemsSelectionView: View {
                         .foregroundColor(RSMSColors.primaryText)
                 }
             }
-            
+
             VStack(alignment: .leading, spacing: 2) {
-                Text("Invoice Items")
+                Text("Invoice Item")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(RSMSColors.primaryText)
-                
+
                 Text(invoiceId)
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(RSMSColors.secondaryText)
+                    .lineLimit(1)
             }
-            
+
             Spacer()
         }
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.top, 60)
         .padding(.bottom, RSMSSpacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(.regularMaterial)
+        .ignoresSafeArea(edges: .top)
     }
-    
-    // MARK: - Item Row
-    private func itemRow(_ item: POSProduct) -> some View {
-        let isSelected = selectedItemIds.contains(item.id)
-        
-        return Button {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                if isSelected {
-                    selectedItemIds.remove(item.id)
-                } else {
-                    selectedItemIds.insert(item.id)
+
+    // MARK: - Expandable item card
+
+    private func itemCard(_ item: AfterSalesInvoiceLine) -> some View {
+        let isExpanded = expandedItemId == item.id
+        let isExpired = !item.inWarranty
+
+        return VStack(alignment: .leading, spacing: 0) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    expandedItemId = isExpanded ? nil : item.id
                 }
-            }
-        } label: {
-            HStack(spacing: 16) {
-                ZStack {
-                    Circle()
-                        .stroke(isSelected ? RSMSColors.burgundy : RSMSColors.secondaryText.opacity(0.3), lineWidth: 2)
-                        .frame(width: 24, height: 24)
-                    
-                    if isSelected {
-                        Circle()
-                            .fill(RSMSColors.burgundy)
-                            .frame(width: 14, height: 14)
+            } label: {
+                HStack(spacing: 16) {
+                    AsyncImage(url: URL(string: item.imageUrl ?? "")) { phase in
+                        if let image = phase.image {
+                            image.resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } else {
+                            RSMSColors.secondaryText.opacity(0.08)
+                        }
                     }
-                }
-                
-                AsyncImage(url: URL(string: item.imageUrl ?? "")) { phase in
-                    if let image = phase.image {
-                        image.resizable()
-                            .aspectRatio(contentMode: .fill)
-                    } else {
-                        Color.gray.opacity(0.1)
-                            .overlay(Image(systemName: "shippingbox").foregroundColor(.gray))
+                    .frame(width: 56, height: 56)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(item.name)
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(RSMSColors.primaryText)
+                            .lineLimit(1)
+
+                        Text("\(item.category) \u{00B7} Qty: \(item.quantity)")
+                            .font(.system(size: 12))
+                            .foregroundColor(RSMSColors.secondaryText)
                     }
-                }
-                .frame(width: 60, height: 60)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(item.name)
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
-                        .foregroundColor(RSMSColors.primaryText)
-                        .lineLimit(1)
-                    
-                    Text("\(item.category) • Size: \(item.size)")
-                        .font(.system(size: 12))
-                        .foregroundColor(RSMSColors.secondaryText)
-                    
+
+                    Spacer()
+
                     Text(formatIndianCurrency(item.price))
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(RSMSColors.burgundy)
                 }
-                
-                Spacer()
+                .contentShape(Rectangle())
             }
-            .padding(16)
-            .background(RSMSColors.cardBackground)
-            .cornerRadius(16)
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(isSelected ? RSMSColors.burgundy : RSMSColors.cardBorder, lineWidth: isSelected ? 2 : 1)
-            )
-            .shadow(color: Color.black.opacity(isSelected ? 0.08 : 0.02), radius: 8, x: 0, y: 4)
-        }
-        .buttonStyle(.plain)
-    }
-    
-    // MARK: - Bottom Action Bar
-    private var bottomActionBar: some View {
-        VStack {
-            Button {
-                path.append(POSFlowDestination.actionSelection(invoiceId: invoiceId, selectedItemIds: selectedItemIds))
-            } label: {
-                HStack {
-                    Text("Continue")
-                        .font(.system(size: 18, weight: .bold))
-                    Spacer()
-                    Text("\(selectedItemIds.count) Selected")
-                        .font(.system(size: 14, weight: .medium))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 4)
-                        .background(Color.white.opacity(0.2))
-                        .clipShape(Capsule())
+            .buttonStyle(.plain)
+
+            if isExpanded {
+                VStack(alignment: .leading, spacing: 0) {
+                    Divider()
+                        .padding(.vertical, 12)
+
+                    if let purchase = item.purchaseDate {
+                        detailRow(label: "Date of purchase",
+                                  value: Self.displayDateFormatter.string(from: purchase))
+                    }
+
+                    detailRow(label: "Cost", value: formatIndianCurrency(item.price))
+
+                    if let warranty = item.warrantyEndDate {
+                        detailRow(
+                            label: isExpired ? "Warranty expired on" : "Warranty valid until",
+                            value: Self.displayDateFormatter.string(from: warranty),
+                            isWarning: isExpired
+                        )
+                    }
+
+                    Button {
+                        // Map to POSProduct for the shared downstream views; carry real dates + customer.
+                        let posProduct = POSProduct(
+                            id: item.lineId,
+                            itemId: item.itemId,
+                            name: item.name,
+                            sku: item.sku,
+                            category: item.category,
+                            price: item.price,
+                            stock: item.quantity,
+                            size: "—",
+                            imageUrl: item.imageUrl
+                        )
+                        path.append(
+                            POSFlowDestination.actionSelection(
+                                invoiceId: invoiceId,
+                                selectedItem: posProduct,
+                                purchaseDate: item.purchaseDate,
+                                warrantyEndDate: item.warrantyEndDate,
+                                customer: customer
+                            )
+                        )
+                    } label: {
+                        Text("Proceed")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(RSMSColors.burgundy)
+                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 14)
                 }
-                .foregroundColor(.white)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 16)
-                .background(selectedItemIds.isEmpty ? RSMSColors.secondaryText.opacity(0.5) : RSMSColors.burgundy)
-                .cornerRadius(16)
+                .transition(.opacity)
             }
-            .disabled(selectedItemIds.isEmpty)
         }
-        .padding(.horizontal, RSMSSpacing.lg)
-        .padding(.vertical, RSMSSpacing.lg)
-        .background(
-            Color.white
-                .shadow(color: Color.black.opacity(0.05), radius: 10, y: -5)
+        .padding(16)
+        .background(RSMSColors.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(isExpanded ? RSMSColors.burgundy : RSMSColors.cardBorder, lineWidth: isExpanded ? 1.5 : 1)
         )
+    }
+
+    private func detailRow(label: String, value: String, isWarning: Bool = false) -> some View {
+        HStack {
+            Text(label)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(RSMSColors.secondaryText)
+
+            Spacer()
+
+            Text(value)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(isWarning ? RSMSColors.burgundy : RSMSColors.primaryText)
+        }
+        .padding(.vertical, 5)
     }
 }

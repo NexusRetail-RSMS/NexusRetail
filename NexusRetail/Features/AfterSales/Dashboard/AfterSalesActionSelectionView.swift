@@ -1,195 +1,565 @@
+//
+//  AfterSalesActionSelectionView.swift
+//  NexusRetail
+//
+//  Redesigned action screen (hero carousel + item details + customer contact +
+//  PDF export). Exchange/Repair are wired to the real after-sales backend.
+//
 import SwiftUI
+import UIKit
 
-struct AfterSalesActionSelectionView: View {
+struct ActionSelectionView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @Binding var path: NavigationPath
-    
+
     let invoiceId: String
-    let selectedItemIds: Set<UUID>
-    
-    @State private var showExchangeDeclinedAlert = false
-    
-    // Mirrors the same mock logic from InvoiceItemsSelectionView
-    private var isInvoiceExpired: Bool {
-        invoiceId.lowercased().contains("old") || invoiceId.lowercased().contains("expired")
+    let selectedItem: POSProduct
+    let purchaseDate: Date?
+    let warrantyEndDate: Date?
+    let customer: RequestCustomer?
+    let imageUrls: [String]
+
+    @State private var currentImageIndex: Int = 0
+    @State private var showCustomerSheet: Bool = false
+    @State private var shareURL: IdentifiableURL?
+
+    // Backend / processing state
+    @State private var isProcessing = false
+    @State private var showExchangeConfirm = false
+    @State private var resultTitle = ""
+    @State private var resultMessage = ""
+    @State private var showResult = false
+    @State private var resultWasSuccess = false
+
+    private let heroImageHeight: CGFloat = 380
+    private let cardCornerRadius: CGFloat = 28
+
+    private static let displayDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d MMM yyyy"
+        return formatter
+    }()
+
+    init(
+        path: Binding<NavigationPath>,
+        invoiceId: String,
+        selectedItem: POSProduct,
+        purchaseDate: Date? = nil,
+        warrantyEndDate: Date? = nil,
+        customer: RequestCustomer? = nil,
+        imageUrls: [String]? = nil
+    ) {
+        self._path = path
+        self.invoiceId = invoiceId
+        self.selectedItem = selectedItem
+        self.purchaseDate = purchaseDate
+        self.warrantyEndDate = warrantyEndDate
+        self.customer = customer
+        self.imageUrls = imageUrls ?? [selectedItem.imageUrl].compactMap { $0 }
     }
-    
-    private var purchaseDate: Date {
-        if isInvoiceExpired {
-            return Calendar.current.date(byAdding: .day, value: -12, to: Date()) ?? Date()
-        } else {
-            return Calendar.current.date(byAdding: .day, value: -3, to: Date()) ?? Date()
-        }
+
+    private var isWarrantyExpired: Bool {
+        guard let warrantyEndDate else { return false }
+        return warrantyEndDate < Date()
     }
-    
-    private var daysSincePurchase: Int {
-        Calendar.current.dateComponents([.day], from: purchaseDate, to: Date()).day ?? 0
+
+    /// Exchange is allowed within 15 days of purchase (mirrors the server policy).
+    private var isExchangeAllowed: Bool {
+        guard let purchaseDate else { return false }
+        guard let deadline = Calendar.current.date(byAdding: .day, value: 15, to: purchaseDate) else { return false }
+        return Date() <= deadline
     }
-    
+
     var body: some View {
         ZStack(alignment: .top) {
-            // Premium background
-            LinearGradient(
-                colors: [RSMSColors.background, Color(white: 0.95)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-            
-            // Decorative background blur elements
-            Circle()
-                .fill(RSMSColors.burgundy.opacity(0.15))
-                .frame(width: 300, height: 300)
-                .blur(radius: 60)
-                .position(x: 50, y: -50)
+            RSMSColors.background
                 .ignoresSafeArea()
-                
-            Circle()
-                .fill(Color(hex: "34495E").opacity(0.1))
-                .frame(width: 250, height: 250)
-                .blur(radius: 50)
-                .position(x: UIScreen.main.bounds.width - 50, y: 300)
-            
-            VStack(spacing: 0) {
-                customHeaderSection
-                
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 32) {
-                        Text("Select Action")
-                            .font(.system(size: 18, weight: .semibold, design: .rounded))
-                            .foregroundColor(RSMSColors.secondaryText)
-                            .padding(.horizontal, RSMSSpacing.lg)
-                        
-                        VStack(spacing: 24) {
-                            actionCard(
-                                title: "Exchange Product",
-                                description: "Swap the selected items for a different size, color, or a completely new product.",
-                                icon: "arrow.triangle.2.circlepath",
-                                color: RSMSColors.burgundy
-                            ) {
-                                if isInvoiceExpired {
-                                    showExchangeDeclinedAlert = true
-                                } else {
-                                    path.append(POSFlowDestination.exchangeProduct(invoiceId: invoiceId, selectedItemIds: selectedItemIds))
-                                }
-                            }
-                            
-                            actionCard(
-                                title: "Repair Product",
-                                description: "Send the selected items to our service center for expert repair and maintenance.",
-                                icon: "wrench.and.screwdriver.fill",
-                                color: Color(hex: "34495E") // Sophisticated slate
-                            ) {
-                                print("Repair initiated for invoice \(invoiceId), items: \(selectedItemIds.count)")
-                            }
-                        }
-                        .padding(.horizontal, RSMSSpacing.lg)
+
+            ScrollView {
+                VStack(spacing: 16) {
+                    VStack(spacing: 0) {
+                        heroImageSection
+                        cardSection
+                            .padding(.top, -cardCornerRadius)
                     }
-                    .padding(.top, RSMSSpacing.lg)
+
+                    detailsSection
+                        .padding(.horizontal, RSMSSpacing.lg)
                 }
+                .padding(.bottom, 24)
+            }
+            .ignoresSafeArea(edges: .top)
+            // Exchange / Repair stay fixed at the bottom even while scrolling.
+            .safeAreaInset(edge: .bottom) {
+                actionsSection
+                    .padding(.horizontal, RSMSSpacing.lg)
+                    .padding(.top, 10)
+                    .padding(.bottom, 8)
+            }
+
+            floatingHeader
+
+            if isProcessing {
+                Color.black.opacity(0.25).ignoresSafeArea()
+                ProgressView().tint(.white)
             }
         }
         .navigationBarHidden(true)
-        .alert("Exchange Not Possible", isPresented: $showExchangeDeclinedAlert) {
-            Button("OK", role: .cancel) {}
+        .sheet(isPresented: $showCustomerSheet) {
+            customerSheetContent
+                .presentationDetents([.height(320)])
+        }
+        .sheet(item: $shareURL) { wrapped in
+            ShareSheet(items: [wrapped.url])
+        }
+        .sheet(isPresented: $showExchangeConfirm) {
+            exchangeConfirmSheet
+                .presentationDetents([.height(420)])
+                .presentationDragIndicator(.visible)
+        }
+        .alert(resultTitle, isPresented: $showResult) {
+            Button("OK") { if resultWasSuccess { path = NavigationPath() } }
         } message: {
-            Text("This invoice was purchased \(daysSincePurchase) days ago. Exchanges are only allowed within 7 days of purchase. The exchange window for Invoice #\(invoiceId) has closed.")
+            Text(resultMessage)
         }
     }
-    
-    // MARK: - Header
-    private var customHeaderSection: some View {
-        HStack(alignment: .center, spacing: RSMSSpacing.md) {
-            Button {
-                dismiss()
-            } label: {
-                ZStack {
-                    Circle()
-                        .fill(.ultraThinMaterial)
-                        .frame(width: 48, height: 48)
-                    
-                    Circle()
-                        .stroke(Color.white.opacity(0.5), lineWidth: 0.5)
-                        .frame(width: 48, height: 48)
 
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(RSMSColors.primaryText)
+    // MARK: - Hero image carousel
+
+    private var heroImageSection: some View {
+        ZStack(alignment: .trailing) {
+            TabView(selection: $currentImageIndex) {
+                ForEach(Array(imageUrls.enumerated()), id: \.offset) { index, url in
+                    AsyncImage(url: URL(string: url)) { phase in
+                        if let image = phase.image {
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } else {
+                            RSMSColors.secondaryText.opacity(0.08)
+                        }
+                    }
+                    .frame(height: heroImageHeight)
+                    .frame(maxWidth: .infinity)
+                    .clipped()
+                    .tag(index)
                 }
             }
-            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Process Items")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .frame(height: heroImageHeight)
+
+            if imageUrls.count > 1 {
+                pageDots
+                    .padding(.trailing, 14)
+            }
+        }
+    }
+
+    private var pageDots: some View {
+        VStack(spacing: 6) {
+            ForEach(imageUrls.indices, id: \.self) { index in
+                Circle()
+                    .fill(index == currentImageIndex ? RSMSColors.primaryText : RSMSColors.primaryText.opacity(0.25))
+                    .frame(width: 6, height: 6)
+            }
+        }
+    }
+
+    // MARK: - Floating header
+
+    private var floatingHeader: some View {
+        HStack {
+            floatingIconButton(systemImage: "chevron.left") { dismiss() }
+            Spacer()
+            HStack(spacing: 10) {
+                floatingIconButton(systemImage: "square.and.arrow.up") { exportInvoicePDF() }
+                floatingIconButton(systemImage: "person") { showCustomerSheet = true }
+            }
+        }
+        .padding(.horizontal, RSMSSpacing.lg)
+        .padding(.top, 10)
+    }
+
+    private func floatingIconButton(systemImage: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            ZStack {
+                Circle()
+                    .fill(.white)
+                    .frame(width: 44, height: 44)
+                    .shadow(color: .black.opacity(0.12), radius: 6, y: 3)
+
+                Image(systemName: systemImage)
+                    .font(.system(size: 20, weight: .semibold))
                     .foregroundColor(RSMSColors.primaryText)
-                
-                Text("\(selectedItemIds.count) item(s) selected")
+            }
+        }
+    }
+
+    // MARK: - Card
+
+    private var cardSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(selectedItem.name)
+                .font(.system(size: 28, weight: .heavy))
+                .foregroundColor(RSMSColors.primaryText)
+
+            Text("\(selectedItem.category) \u{00B7} Size: \(selectedItem.size)")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(RSMSColors.secondaryText.opacity(0.8))
+                .padding(.top, 2)
+
+            Text(formatIndianCurrency(selectedItem.price))
+                .font(.system(size: 28, weight: .heavy))
+                .foregroundColor(RSMSColors.burgundy)
+                .padding(.top, 8)
+        }
+        .padding(20)
+        .padding(.top, cardCornerRadius + 4)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RSMSColors.cardBackground)
+        .clipShape(
+            UnevenRoundedRectangle(
+                topLeadingRadius: cardCornerRadius,
+                bottomLeadingRadius: 0,
+                bottomTrailingRadius: 0,
+                topTrailingRadius: cardCornerRadius,
+                style: .continuous
+            )
+        )
+    }
+
+    // MARK: - Item details
+
+    private var detailsSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Item Details")
+                .font(.system(size: 12, weight: .semibold))
+                .textCase(.uppercase)
+                .tracking(0.6)
+                .foregroundColor(RSMSColors.secondaryText.opacity(0.7))
+                .padding(.bottom, 14)
+
+            detailRow(icon: "number", label: "SKU", value: selectedItem.sku)
+
+            Divider().padding(.vertical, 12)
+
+            detailRow(icon: "doc.text", label: "Invoice", value: invoiceId)
+
+            if let purchaseDate {
+                Divider().padding(.vertical, 12)
+                detailRow(icon: "calendar", label: "Purchased on",
+                          value: Self.displayDateFormatter.string(from: purchaseDate))
+            }
+
+            if let warrantyEndDate {
+                Divider().padding(.vertical, 12)
+                warrantyRow(warrantyEndDate)
+            }
+        }
+        .padding(20)
+        .background(RSMSColors.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+        )
+    }
+
+    private func detailRow(icon: String, label: String, value: String, action: (() -> Void)? = nil) -> some View {
+        let row = HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(RSMSColors.secondaryText.opacity(0.08))
+                    .frame(width: 32, height: 32)
+                Image(systemName: icon)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(RSMSColors.secondaryText)
+            }
+            Text(label)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(RSMSColors.secondaryText)
+            Spacer()
+            Text(value)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(RSMSColors.primaryText)
+        }
+
+        if let action {
+            return AnyView(Button(action: action) { row }.buttonStyle(.plain))
+        } else {
+            return AnyView(row)
+        }
+    }
+
+    private func warrantyRow(_ endDate: Date) -> some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill((isWarrantyExpired ? RSMSColors.burgundy : Color.green).opacity(0.1))
+                    .frame(width: 32, height: 32)
+                Image(systemName: isWarrantyExpired ? "shield.slash" : "checkmark.shield")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(isWarrantyExpired ? RSMSColors.burgundy : .green)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Warranty")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(RSMSColors.secondaryText)
+                Text(Self.displayDateFormatter.string(from: endDate))
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(RSMSColors.secondaryText.opacity(0.7))
+            }
+            Spacer()
+            Text(isWarrantyExpired ? "Expired" : "Valid")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(isWarrantyExpired ? RSMSColors.burgundy : .green)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background((isWarrantyExpired ? RSMSColors.burgundy : Color.green).opacity(0.1))
+                .clipShape(Capsule())
+        }
+    }
+
+    // MARK: - Actions (wired to real backend)
+
+    private var actionsSection: some View {
+        VStack(spacing: 6) {
+            HStack(spacing: 12) {
+                Button(action: { showExchangeConfirm = true }) {
+                    Label("Exchange", systemImage: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 16, weight: .semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 4)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(RSMSColors.burgundy)
+                .controlSize(.large)
+                .disabled(!isExchangeAllowed)
+
+                Button(action: { path.append(POSFlowDestination.repairForm(invoiceId: invoiceId, selectedItem: selectedItem, warrantyEndDate: warrantyEndDate)) }) {
+                    Label("Repair", systemImage: "wrench.and.screwdriver")
+                        .font(.system(size: 16, weight: .semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 4)
+                }
+                .buttonStyle(.bordered)
+                .tint(RSMSColors.burgundy)
+                .controlSize(.large)
+            }
+
+            if !isExchangeAllowed {
+                Text("Exchange window (15 days) has passed for this item.")
+                    .font(.system(size: 11))
+                    .foregroundColor(RSMSColors.secondaryText)
+            }
+        }
+    }
+
+    // MARK: - Exchange confirmation sheet + processing
+
+    private var exchangeConfirmSheet: some View {
+        VStack(spacing: 0) {
+            VStack(spacing: 10) {
+                ZStack {
+                    Circle().fill(RSMSColors.burgundy.opacity(0.1)).frame(width: 64, height: 64)
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 28, weight: .semibold))
+                        .foregroundColor(RSMSColors.burgundy)
+                }
+                Text("Confirm Exchange")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundColor(RSMSColors.primaryText)
+            }
+            .padding(.top, 28)
+
+            Text("This will record an exchange for \(selectedItem.name) and restock the returned unit into inventory.")
+                .font(.system(size: 14))
+                .foregroundColor(RSMSColors.secondaryText)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, 16)
+
+            Spacer()
+
+            VStack(spacing: 12) {
+                Button {
+                    Task {
+                        showExchangeConfirm = false
+                        await processExchange()
+                    }
+                } label: {
+                    Text("Process Exchange")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(RSMSColors.burgundy)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
+                Button("Cancel") { showExchangeConfirm = false }
                     .font(.system(size: 15, weight: .medium))
                     .foregroundColor(RSMSColors.secondaryText)
             }
-            
-            Spacer()
+            .padding(.horizontal, RSMSSpacing.lg)
+            .padding(.bottom, 28)
         }
-        .padding(.horizontal, RSMSSpacing.lg)
-        .padding(.top, 60)
-        .padding(.bottom, RSMSSpacing.md)
-        .background(.ultraThinMaterial)
-        .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
+        .background(RSMSColors.background.ignoresSafeArea())
     }
-    
-    // MARK: - Action Card
-    private func actionCard(title: String, description: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 20) {
-                // Icon Container
+
+    private func processExchange() async {
+        isProcessing = true
+        defer { isProcessing = false }
+        do {
+            let result = try await AfterSalesService.process(
+                orderId: invoiceId, itemId: selectedItem.itemId,
+                type: "exchange", issue: "Exchange requested", partsCost: 0)
+            if result.success {
+                resultWasSuccess = true
+                resultTitle = "Exchange Approved"
+                resultMessage = "The exchange for \(selectedItem.name) has been recorded and the unit restocked."
+            } else {
+                resultWasSuccess = false
+                resultTitle = "Exchange Not Allowed"
+                resultMessage = result.message ?? "This item is no longer eligible for exchange."
+            }
+            showResult = true
+        } catch {
+            resultWasSuccess = false
+            resultTitle = "Something went wrong"
+            resultMessage = "Couldn't process the exchange. Please try again."
+            showResult = true
+        }
+    }
+
+    // MARK: - Customer sheet
+
+    private var customerSheetContent: some View {
+        VStack(spacing: 20) {
+            Capsule()
+                .fill(RSMSColors.secondaryText.opacity(0.25))
+                .frame(width: 40, height: 5)
+                .padding(.top, 8)
+
+            if let customer {
                 ZStack {
                     Circle()
-                        .fill(color.opacity(0.1))
+                        .fill(RSMSColors.burgundy.opacity(0.1))
                         .frame(width: 64, height: 64)
-                    
-                    Image(systemName: icon)
-                        .font(.system(size: 26, weight: .medium))
-                        .foregroundColor(color)
+                    Text(initials(for: customer.name))
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundColor(RSMSColors.burgundy)
                 }
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(title)
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundColor(RSMSColors.primaryText)
-                    
-                    Text(description)
-                        .font(.system(size: 14))
-                        .foregroundColor(RSMSColors.secondaryText)
-                        .lineSpacing(4)
-                        .multilineTextAlignment(.leading)
+                Text(customer.name)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(RSMSColors.primaryText)
+                Text("Raised this request on invoice \(invoiceId)")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(RSMSColors.secondaryText)
+
+                VStack(spacing: 0) {
+                    detailRow(icon: "phone", label: "Phone", value: customer.phone.isEmpty ? "—" : customer.phone) {
+                        if !customer.phone.isEmpty { callCustomer(customer.phone) }
+                    }
+                    Divider().padding(.vertical, 12)
+                    detailRow(icon: "envelope", label: "Email", value: customer.email.isEmpty ? "—" : customer.email) {
+                        if !customer.email.isEmpty { emailCustomer(customer.email) }
+                    }
                 }
-                
-                Spacer(minLength: 0)
-                
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(RSMSColors.secondaryText.opacity(0.3))
+                .padding(20)
+                .background(RSMSColors.background)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, 8)
+            } else {
+                Spacer()
+                Text("No customer information available for this invoice.")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(RSMSColors.secondaryText)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, RSMSSpacing.lg)
             }
-            .padding(24)
-            .background(.white)
-            .cornerRadius(24)
-            .overlay(
-                RoundedRectangle(cornerRadius: 24)
-                    .stroke(Color.white.opacity(0.8), lineWidth: 1)
-            )
-            .shadow(color: color.opacity(0.08), radius: 15, x: 0, y: 8)
-            .shadow(color: Color.black.opacity(0.02), radius: 5, x: 0, y: 2)
+
+            Spacer()
         }
-        .buttonStyle(ScaleButtonStyle())
+        .padding(.bottom, 12)
+    }
+
+    private func initials(for name: String) -> String {
+        let parts = name.split(separator: " ")
+        let letters = parts.prefix(2).compactMap { $0.first }
+        return String(letters).uppercased()
+    }
+
+    private func callCustomer(_ phone: String) {
+        let digits = phone.filter { $0.isNumber || $0 == "+" }
+        guard let url = URL(string: "tel://\(digits)") else { return }
+        openURL(url)
+    }
+
+    private func emailCustomer(_ email: String) {
+        let supportAddress = "nexus.support@nexus.com"
+        let subject = "Regarding Invoice \(invoiceId)"
+        let ccEncoded = supportAddress.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? supportAddress
+        let subjectEncoded = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? subject
+        let urlString = "mailto:\(email)?cc=\(ccEncoded)&subject=\(subjectEncoded)"
+        guard let url = URL(string: urlString) else { return }
+        openURL(url)
+    }
+
+    // MARK: - PDF export
+
+    private func exportInvoicePDF() {
+        let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792)
+        let renderer = UIGraphicsPDFRenderer(bounds: pageRect)
+        let data = renderer.pdfData { context in
+            context.beginPage()
+            var y: CGFloat = 48
+            let leftMargin: CGFloat = 48
+            func draw(_ text: String, font: UIFont, color: UIColor = .black, spacingAfter: CGFloat = 10) {
+                let attrs: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: color]
+                text.draw(at: CGPoint(x: leftMargin, y: y), withAttributes: attrs)
+                y += font.lineHeight + spacingAfter
+            }
+            draw("Invoice Item Summary", font: .boldSystemFont(ofSize: 22), spacingAfter: 24)
+            draw("Invoice", font: .systemFont(ofSize: 11, weight: .semibold), color: .darkGray, spacingAfter: 2)
+            draw(invoiceId, font: .systemFont(ofSize: 14), spacingAfter: 16)
+            draw("Item", font: .systemFont(ofSize: 11, weight: .semibold), color: .darkGray, spacingAfter: 2)
+            draw(selectedItem.name, font: .systemFont(ofSize: 14), spacingAfter: 16)
+            draw("SKU", font: .systemFont(ofSize: 11, weight: .semibold), color: .darkGray, spacingAfter: 2)
+            draw(selectedItem.sku, font: .systemFont(ofSize: 14), spacingAfter: 16)
+            draw("Price", font: .systemFont(ofSize: 11, weight: .semibold), color: .darkGray, spacingAfter: 2)
+            draw(formatIndianCurrency(selectedItem.price), font: .systemFont(ofSize: 14), spacingAfter: 16)
+            if let purchaseDate {
+                draw("Purchased On", font: .systemFont(ofSize: 11, weight: .semibold), color: .darkGray, spacingAfter: 2)
+                draw(Self.displayDateFormatter.string(from: purchaseDate), font: .systemFont(ofSize: 14), spacingAfter: 16)
+            }
+            if let warrantyEndDate {
+                draw("Warranty", font: .systemFont(ofSize: 11, weight: .semibold), color: .darkGray, spacingAfter: 2)
+                let status = isWarrantyExpired ? "Expired" : "Valid"
+                draw("\(Self.displayDateFormatter.string(from: warrantyEndDate)) (\(status))", font: .systemFont(ofSize: 14), spacingAfter: 16)
+            }
+            if let customer {
+                draw("Customer", font: .systemFont(ofSize: 11, weight: .semibold), color: .darkGray, spacingAfter: 2)
+                draw(customer.name, font: .systemFont(ofSize: 14), spacingAfter: 2)
+                draw(customer.phone, font: .systemFont(ofSize: 14), spacingAfter: 2)
+                draw(customer.email, font: .systemFont(ofSize: 14), spacingAfter: 16)
+            }
+        }
+        let fileName = "Invoice_\(invoiceId)_\(selectedItem.sku).pdf"
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+        do {
+            try data.write(to: url)
+            shareURL = IdentifiableURL(url: url)
+        } catch {
+            print("Failed to write invoice PDF: \(error)")
+        }
     }
 }
 
-// Button style for press animation
-struct ScaleButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.98 : 1)
-            .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
-    }
+// MARK: - Share sheet wrapper
+
+private struct IdentifiableURL: Identifiable {
+    let url: URL
+    var id: String { url.absoluteString }
 }

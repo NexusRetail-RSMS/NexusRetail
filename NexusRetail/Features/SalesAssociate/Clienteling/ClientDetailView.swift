@@ -12,6 +12,13 @@ struct ClientDetailView: View {
     let client: AssociateClient
     @Environment(SessionStore.self) private var sessionStore
     
+    @State private var isEditingClient = false
+    @State private var clientName = ""
+    @State private var clientPhone = ""
+    @State private var stylePreferences = ""
+    @State private var hasConsent = true
+    @State private var isNewClientPresented = false
+    
     @State private var selectedTab = 0
     @State private var forYouProducts: [POSProduct] = []
     @State private var trendingProducts: [POSProduct] = []
@@ -29,95 +36,178 @@ struct ClientDetailView: View {
     }
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 20) {
-                // Hero card with avatar, name, phone, email
-                HStack(spacing: 16) {
-                    Circle()
-                        .fill(RSMSColors.burgundy)
-                        .frame(width: 68, height: 68)
-                        .overlay {
-                            Text(client.initials)
-                                .font(.system(size: 22, weight: .bold, design: .rounded))
-                                .foregroundStyle(.white)
-                        }
-
-                    VStack(alignment: .leading, spacing: 4) {
+        ZStack(alignment: .top) {
+            RSMSColors.background.ignoresSafeArea()
+            
+            ScrollView(showsIndicators: false) {
+                ZStack(alignment: .top) {
+                    // Top Curvy Background - Now inside ScrollView so it scrolls up
+                    TopWaveShape()
+                        .fill(RSMSColors.burgundy.opacity(0.85))
+                        .frame(height: 260)
+                    
+                    VStack(spacing: 0) {
+                        // Spacer to align avatar over the curve edge
+                        Spacer().frame(height: 140)
+                        
+                        // Avatar
+                        Circle()
+                            .fill(LinearGradient(colors: [RSMSColors.gold, RSMSColors.gold.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .frame(width: 120, height: 120)
+                            .overlay(
+                                Circle().stroke(Color.white, lineWidth: 6)
+                            )
+                            .shadow(color: .black.opacity(0.15), radius: 15, x: 0, y: 8)
+                            .overlay {
+                                Text(client.initials)
+                                    .font(.system(size: 46, weight: .bold, design: .rounded))
+                                    .foregroundStyle(.white)
+                                    .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 2)
+                            }
+                            .padding(.bottom, 16)
+                        
+                        // Profile Info
                         Text(client.name)
-                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .font(.system(size: 26, weight: .bold, design: .rounded))
                             .foregroundStyle(RSMSColors.primaryText)
+                            .padding(.bottom, 4)
                         
-                        Text(client.phone)
-                            .font(RSMSFonts.body)
-                            .foregroundStyle(RSMSColors.secondaryText)
+                        HStack(spacing: 12) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "envelope.fill")
+                                    .font(.system(size: 13))
+                                Text(client.email.isEmpty ? "No Email" : client.email)
+                                    .font(.system(size: 14))
+                            }
                             
-                        Text(client.email)
-                            .font(RSMSFonts.body)
-                            .foregroundStyle(RSMSColors.secondaryText)
-                    }
-                    Spacer()
-                }
-                .padding(20)
-                .luxuryCard()
-
-                // Unified Card for Style Preferences and Purchase Pattern
-                VStack(alignment: .leading, spacing: 16) {
-                    HStack(alignment: .top, spacing: 14) {
-                        Image(systemName: "sparkles")
-                            .foregroundStyle(RSMSColors.burgundy)
-                            .frame(width: 42, height: 42)
-                            .background(RSMSColors.burgundy.opacity(0.08))
-                            .clipShape(Circle())
-                        
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Client Preferences")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundStyle(RSMSColors.primaryText)
-                            Text(client.preferences)
-                                .font(RSMSFonts.subheadline)
-                                .foregroundStyle(RSMSColors.secondaryText)
+                            Text("|")
+                                .foregroundStyle(Color.gray.opacity(0.5))
                             
-                            Divider().padding(.vertical, 8)
-                            
-                            Text("Purchase Pattern")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(RSMSColors.primaryText)
-                            Text(client.purchasePattern)
-                                .font(RSMSFonts.subheadline)
-                                .foregroundStyle(RSMSColors.secondaryText)
+                            HStack(spacing: 4) {
+                                Image(systemName: "phone.fill")
+                                    .font(.system(size: 13))
+                                Text(client.phone.isEmpty ? "No Phone" : client.phone)
+                                    .font(.system(size: 14))
+                            }
                         }
-                    }
-                }
-                .padding(18)
-                .luxuryCard()
-                
-                // ML Recommendations Tabs
-                Picker("Recommendations", selection: $selectedTab) {
-                    Text("For You").tag(0)
-                    Text("Trending").tag(1)
-                }
-                .pickerStyle(.segmented)
-                .padding(.top, 8)
-                
-                if isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 40)
-                } else {
-                    if selectedTab == 0 {
-                        recommendationsGrid(forYouProducts)
-                    } else {
-                        recommendationsGrid(trendingProducts)
+                        .foregroundStyle(RSMSColors.secondaryText)
+                        .padding(.bottom, 24)
+                        
+                        // Style Preferences & Purchase Pattern Card
+                        HStack(alignment: .top, spacing: 20) {
+                            VStack(spacing: 8) {
+                                Text(client.preferences.isEmpty ? "None specified" : client.preferences)
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundStyle(RSMSColors.burgundy)
+                                    .multilineTextAlignment(.center)
+                                    .lineLimit(2)
+                                
+                                Text("Style Preferences")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(RSMSColors.secondaryText)
+                            }
+                            .frame(maxWidth: .infinity)
+                            
+                            Divider()
+                            
+                            VStack(spacing: 8) {
+                                Text("N/A")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundStyle(RSMSColors.burgundy)
+                                    .multilineTextAlignment(.center)
+                                
+                                Text("Purchase Pattern")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(RSMSColors.secondaryText)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                        .padding(20)
+                        .background(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                .stroke(RSMSColors.burgundy.opacity(0.6), lineWidth: 1.5)
+                        )
+                        .shadow(color: RSMSColors.burgundy.opacity(0.15), radius: 12, x: 0, y: 6)
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 32)
+                        
+                        // Custom Tabs
+                        HStack(spacing: 32) {
+                            customTab(title: "For You", index: 0)
+                            customTab(title: "Trending", index: 1)
+                            Spacer()
+                        }
+                        .padding(.horizontal, 24)
+                        
+                        Divider()
+                            .padding(.horizontal, 24)
+                            .padding(.bottom, 24)
+                        
+                        // Recommendations Grid
+                        if isLoading {
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                                .padding(.top, 40)
+                        } else {
+                            if selectedTab == 0 {
+                                recommendationsGrid(forYouProducts)
+                                    .padding(.horizontal, 24)
+                            } else {
+                                recommendationsGrid(trendingProducts)
+                                    .padding(.horizontal, 24)
+                            }
+                        }
+                        
+                        Spacer().frame(height: 60)
                     }
                 }
             }
-            .screenPadding()
+            .ignoresSafeArea(edges: .top)
         }
-        .background(RSMSColors.background.ignoresSafeArea())
-        .navigationTitle("Client Card")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Edit") {
+                    startEditing()
+                }
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(.white)
+            }
+        }
+        .sheet(isPresented: $isNewClientPresented) { newClientSheet }
         .task {
             await loadRecommendations()
+        }
+    }
+
+    private func startEditing() {
+        clientName = client.name
+        clientPhone = client.phone
+        stylePreferences = client.preferences
+        hasConsent = true
+        isEditingClient = true
+        isNewClientPresented = true
+    }
+    
+    private func customTab(title: String, index: Int) -> some View {
+        Button {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                selectedTab = index
+            }
+        } label: {
+            VStack(spacing: 8) {
+                Text(title)
+                    .font(.system(size: 16, weight: selectedTab == index ? .bold : .medium))
+                    .foregroundStyle(selectedTab == index ? RSMSColors.burgundy : RSMSColors.secondaryText)
+                
+                Rectangle()
+                    .fill(selectedTab == index ? RSMSColors.burgundy : Color.clear)
+                    .frame(height: 3)
+                    .cornerRadius(1.5)
+            }
         }
     }
     
@@ -194,6 +284,81 @@ struct ClientDetailView: View {
             trendingProducts = Array(allProducts.shuffled().prefix(6))
         }
     }
+    
+    // MARK: - Edit Client Sheet
+    private var newClientSheet: some View {
+        NavigationStack {
+            Form {
+                Section("Client Details") {
+                    TextField("Full Name", text: $clientName)
+                        .textContentType(.name)
+                        .autocorrectionDisabled()
+                    TextField("Phone Number", text: $clientPhone)
+                        .textContentType(.telephoneNumber)
+                        .keyboardType(.phonePad)
+                }
+
+                Section("Style Preferences") {
+                    TextField("Colors, fits, fabrics, occasions…", text: $stylePreferences, axis: .vertical)
+                        .lineLimit(3...6)
+                }
+
+                Section {
+                    Toggle("Client consent received", isOn: $hasConsent)
+                        .tint(RSMSColors.burgundy)
+                } footer: {
+                    Text("Required before saving personal details.")
+                }
+            }
+            .navigationTitle("Edit Client")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { isNewClientPresented = false }
+                        .foregroundColor(RSMSColors.burgundy)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Save") { saveClientCard() }
+                        .bold()
+                        .foregroundColor(canCreateClient ? RSMSColors.burgundy : .gray)
+                        .disabled(!canCreateClient)
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+    }
+    
+    private var canCreateClient: Bool {
+        !clientName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !clientPhone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        hasConsent
+    }
+
+    private func saveClientCard() {
+        let name = clientName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let phone = clientPhone.trimmingCharacters(in: .whitespacesAndNewlines)
+        let editingId = client.dbId
+
+        Task {
+            do {
+                if let editingId {
+                    struct UpdateClient: Encodable {
+                        let name: String
+                        let phone: String
+                    }
+                    try await SupabaseManager.shared.client
+                        .from("client")
+                        .update(UpdateClient(name: name, phone: phone))
+                        .eq("id", value: editingId)
+                        .execute()
+                }
+            } catch {
+                print("Error saving client: \(error)")
+            }
+        }
+        isNewClientPresented = false
+    }
 }
 
 fileprivate struct ProductCardView: View {
@@ -220,7 +385,11 @@ fileprivate struct ProductCardView: View {
                     }
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(RSMSColors.gold.opacity(0.3), lineWidth: 0.5)
+                )
+                .shadow(color: RSMSColors.gold.opacity(0.1), radius: 8, x: 0, y: 4)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(product.name)
@@ -234,5 +403,29 @@ fileprivate struct ProductCardView: View {
             }
             .padding(.horizontal, 4)
         }
+    }
+}
+
+fileprivate struct TopWaveShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: 0, y: 0))
+        path.addLine(to: CGPoint(x: rect.width, y: 0))
+        
+        // Right side going down
+        path.addLine(to: CGPoint(x: rect.width, y: rect.height * 0.7))
+        
+        // Curving across to the left
+        path.addCurve(
+            to: CGPoint(x: 0, y: rect.height * 0.9),
+            control1: CGPoint(x: rect.width * 0.75, y: rect.height + 40),
+            control2: CGPoint(x: rect.width * 0.25, y: rect.height * 0.6)
+        )
+        
+        // Left side going up
+        path.addLine(to: CGPoint(x: 0, y: 0))
+        
+        path.closeSubpath()
+        return path
     }
 }

@@ -8,7 +8,7 @@ struct BarcodeScannerView: View {
     @Environment(SessionStore.self) private var sessionStore
     @Binding var path: NavigationPath
     
-    @State private var allProducts: [POSProduct] = []
+
     @State private var scannedProduct: POSProduct? = nil   // set only for out-of-stock (alternatives)
     @State private var isScanning = true
     @State private var selectedPhoto: PhotosPickerItem? = nil
@@ -84,8 +84,9 @@ struct BarcodeScannerView: View {
             scannedProduct = nil
             isScanning = true
         }
+        .toolbar(.hidden, for: .tabBar)
         .task {
-            allProducts = await POSProductRepository.shared.fetchProducts(storeID: sessionStore.currentUser?.storeID)
+            _ = await POSProductRepository.shared.fetchProducts(storeID: sessionStore.currentUser?.storeID)
         }
     }
     
@@ -115,14 +116,16 @@ struct BarcodeScannerView: View {
             .accessibilityLabel("Back")
             
             VStack(alignment: .leading, spacing: 2) {
-                Text(scannedProduct == nil ? "Scan Barcode" : scannedProduct!.name)
+                Text(scannedProduct == nil ? "Scan QR Code" : scannedProduct!.name)
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(RSMSColors.primaryText)
                     .lineLimit(1)
                 
-                Text(scannedProduct == nil ? "Barcode Scanner" : scannedProduct!.sku)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
+                if let product = scannedProduct {
+                    Text(product.sku)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(RSMSColors.secondaryText)
+                }
             }
             
             Spacer()
@@ -137,11 +140,6 @@ struct BarcodeScannerView: View {
     
     private var scannerViewSection: some View {
         VStack(spacing: 32) {
-            Text("Point camera at product barcode")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(RSMSColors.secondaryText)
-                .multilineTextAlignment(.center)
-            
             // Live Camera Viewfinder
             ZStack {
                 CameraScannerView { scannedCode in
@@ -219,7 +217,7 @@ struct BarcodeScannerView: View {
     }
     
     private func simulateScan(forSku sku: String) {
-        guard let match = allProducts.first(where: { $0.sku == sku }) else { return }
+        guard let match = POSProductRepository.shared.products.first(where: { $0.sku == sku }) else { return }
 
         // Out of stock — show detail so the associate can pick an alternative.
         if match.stock == 0 {
@@ -247,6 +245,9 @@ struct BarcodeScannerView: View {
         viewModel.addToCart(product: match)
         showToast(alreadyInCart ? "Quantity increased in cart" : "Added to cart")
         UINotificationFeedbackGenerator().notificationOccurred(.success)
+        
+        // Automatically move to the next screen (Cart) after scanning
+        path.append(POSFlowDestination.cart)
     }
 
     /// Shows a brief confirmation toast, auto-dismissing after 1.5s.
@@ -442,7 +443,7 @@ struct BarcodeScannerView: View {
         // Try ML-powered recommendations first
         let mlRecommendations = RecommendationService.shared.getRecommendedProducts(
             for: product,
-            from: allProducts,
+            from: POSProductRepository.shared.products,
             count: 5
         )
         
@@ -451,7 +452,7 @@ struct BarcodeScannerView: View {
         }
         
         // Fallback: same category, stock > 0, not itself, similar price
-        return allProducts.filter { item in
+        return POSProductRepository.shared.products.filter { item in
             item.id != product.id &&
             item.category == product.category &&
             item.stock > 0 &&
@@ -467,6 +468,7 @@ struct CameraScannerView: UIViewControllerRepresentable {
     
     class Coordinator: NSObject, AVCaptureMetadataOutputObjectsDelegate {
         var parent: CameraScannerView
+        var lastScanTime: Date = Date.distantPast
         
         init(parent: CameraScannerView) {
             self.parent = parent
@@ -476,6 +478,12 @@ struct CameraScannerView: UIViewControllerRepresentable {
             if let metadataObject = metadataObjects.first {
                 guard let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject else { return }
                 guard let stringValue = readableObject.stringValue else { return }
+                
+                // Debounce scans by 1.5 seconds to prevent runaway cart additions
+                if Date().timeIntervalSince(lastScanTime) < 1.5 {
+                    return
+                }
+                lastScanTime = Date()
                 
                 // Vibrate on successful scan
                 AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
