@@ -16,11 +16,23 @@ enum RSMSColors {
     /// Burgundy — headers, primary actions (#8B0000)
     static let burgundy = Color(hex: "8B0000")
     
+    /// Gold — premium accents (#D4AF37)
+    static let gold = Color(hex: "D4AF37")
+    
     /// Dark burgundy — emphasis, active states (#5B0202)
     static let darkBurgundy = Color(hex: "5B0202")
     
     /// Dark brown — text on light backgrounds (#200E01)
     static let darkBrown = Color(hex: "200E01")
+    
+    /// Midnight black — dark mode background (#1A1A1A)
+    static let midnightBlack = Color(hex: "1A1A1A")
+    
+    /// Antique gold — premium dark mode accent (#C9A84C)
+    static let antiqueGold = Color(hex: "C9A84C")
+    
+    /// Dark wood brown — deep brown for dark mode text/accents (#3E2723)
+    static let darkWoodBrown = Color(hex: "3E2723")
     
     // MARK: Semantic Colors
     

@@ -153,8 +153,6 @@ struct StoreDetailView: View {
                 )
         )
         .shadow(color: Color.black.opacity(0.06), radius: 20, x: 0, y: 10)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(store.name), \(store.isWarehouse == true ? "Warehouse" : "Retail Store"), Status: \(statusLabel)")
     }
 
     // MARK: - Info card
@@ -168,7 +166,6 @@ struct StoreDetailView: View {
                 Text("Store Information")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(RSMSColors.primaryText)
-                    .accessibilityAddTraits(.isHeader)
                 Spacer()
             }
             .padding(.horizontal, RSMSSpacing.lg)
@@ -271,7 +268,6 @@ struct StoreDetailView: View {
             .shadow(color: Color.black.opacity(0.04), radius: 14, x: 0, y: 6)
         }
         .buttonStyle(.plain)
-        .accessibilityHint("Double tap to manage payment configurations")
     }
 }
 
@@ -305,7 +301,6 @@ private struct ManagerCard: View {
                 Text("Manager")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(RSMSColors.primaryText)
-                    .accessibilityAddTraits(.isHeader)
                 Spacer()
             }
             .padding(.horizontal, RSMSSpacing.lg)
@@ -413,7 +408,6 @@ private struct ManagerIconButton: View {
                 .background(RSMSColors.burgundy.opacity(0.1), in: Circle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(icon == "phone.fill" ? "Call Manager" : "Email Manager")
     }
 }
 
@@ -465,7 +459,6 @@ private struct InfoRow: View {
                         .background(RSMSColors.burgundy.opacity(0.1), in: Circle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(title == "Address" ? "Get Directions" : "Call Store")
             }
         }
         .padding(.horizontal, RSMSSpacing.lg)

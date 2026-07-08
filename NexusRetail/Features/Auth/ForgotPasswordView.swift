@@ -61,19 +61,9 @@ struct ForgotPasswordView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Close") { dismiss() }
-                        .foregroundColor(RSMSColors.burgundy)
-                        .accessibilityHint("Double tap to cancel password reset")
+                    Button("Close") { dismiss() }.foregroundColor(RSMSColors.burgundy)
                 }
             }
-        }
-        .onChange(of: errorMessage) { _, newValue in
-            guard !newValue.isEmpty else { return }
-            UIAccessibility.post(notification: .announcement, argument: "Error: \(newValue)")
-        }
-        .onChange(of: infoMessage) { _, newValue in
-            guard !newValue.isEmpty else { return }
-            UIAccessibility.post(notification: .announcement, argument: newValue)
         }
     }
 
@@ -85,13 +75,10 @@ struct ForgotPasswordView: View {
                     .font(.system(size: 30))
                     .foregroundColor(step == .done ? RSMSColors.success : RSMSColors.burgundy)
             }
-            .accessibilityHidden(true)
-            
             Text(headerText)
                 .font(.system(size: 14))
                 .foregroundColor(RSMSColors.secondaryText)
                 .multilineTextAlignment(.center)
-                .accessibilityAddTraits(.isHeader)
         }
     }
 
@@ -128,8 +115,6 @@ struct ForgotPasswordView: View {
                 .background(RSMSColors.cardBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .overlay(RoundedRectangle(cornerRadius: 12).stroke(RSMSColors.cardBorder, lineWidth: 1))
-                .accessibilityLabel("Verification code")
-                .accessibilityHint("Enter the 6-digit code sent to your email")
                 .onChange(of: code) { _, v in
                     let f = String(v.filter(\.isNumber).prefix(6)); if f != v { code = f }; errorMessage = ""
                 }
@@ -169,7 +154,6 @@ struct ForgotPasswordView: View {
             .background(RSMSColors.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(RSMSColors.cardBorder, lineWidth: 1))
-            .accessibilityLabel(placeholder)
     }
 
     private func secureField(_ placeholder: String, text: Binding<String>) -> some View {
@@ -178,7 +162,6 @@ struct ForgotPasswordView: View {
             .background(RSMSColors.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(RSMSColors.cardBorder, lineWidth: 1))
-            .accessibilityLabel(placeholder)
     }
 
     private func primaryButton(_ title: String, enabled: Bool, action: @escaping () -> Void) -> some View {
@@ -194,7 +177,6 @@ struct ForgotPasswordView: View {
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .disabled(!enabled || isBusy)
-        .accessibilityValue(isBusy ? "Processing" : "")
     }
 
     // MARK: - Actions

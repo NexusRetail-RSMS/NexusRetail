@@ -27,10 +27,7 @@ class SessionStore {
     private let verifiedUserKey = "otpVerifiedUserId"
 
     func signIn(email: String, password: String) async throws {
-        // Step 1: Authenticate with Supabase (password only — MFA comes next)
-        try await authService.signInInitial(email: email, password: password)
-        // Step 2: Fetch the app_user profile row
-        let user = try await authService.fetchCurrentUserProfile()
+        let user = try await authService.signIn(email: email, password: password)
         // Fresh password login always requires a new OTP. Clear any prior marker.
         UserDefaults.standard.removeObject(forKey: verifiedUserKey)
         await MainActor.run {

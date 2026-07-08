@@ -13,6 +13,7 @@ struct AfterSalesTabView: View {
     @State private var dashboardPath = NavigationPath()
     @State private var posViewModel = SellViewModel()
     @Namespace private var namespace
+    @Environment(AppTheme.self) private var theme
 
 
 
@@ -38,8 +39,10 @@ struct AfterSalesTabView: View {
                 .tabItem { Label("Repairs", systemImage: "wrench.and.screwdriver.fill") }
                 .tag(1)
             }
-            .tint(RSMSColors.burgundy)
+            .tint(theme.isDarkMode ? RSMSColors.antiqueGold : theme.burgundy)
+            .preferredColorScheme(theme.isDarkMode ? .dark : .light)
         }
+        .environment(theme)
         .environment(posViewModel)
     }
 
@@ -72,18 +75,6 @@ struct AfterSalesTabView: View {
         case .repairForm(let invoiceId, let selectedItem, let warrantyEndDate):
             AfterSalesRepairFormView(path: $dashboardPath, invoiceId: invoiceId, selectedItem: selectedItem, warrantyEndDate: warrantyEndDate)
                 .toolbar(.hidden, for: .tabBar)
-                
-        // MARK: - Exchange Flow
-        case .exchangeWarrantyCheck(let invoiceId, let selectedItem, let purchaseDate, let warrantyEndDate, let customer):
-            ExchangeWarrantyCheckView(path: $dashboardPath, invoiceId: invoiceId, selectedItem: selectedItem, purchaseDate: purchaseDate, warrantyEndDate: warrantyEndDate, customer: customer)
-                .toolbar(.hidden, for: .tabBar)
-        case .exchangeSelection(let invoiceId, let selectedItem, let purchaseDate, let warrantyEndDate, let customer):
-            ExchangeSelectionView(path: $dashboardPath, invoiceId: invoiceId, selectedItem: selectedItem, purchaseDate: purchaseDate, warrantyEndDate: warrantyEndDate, customer: customer)
-                .toolbar(.hidden, for: .tabBar)
-        case .exchangeSuccess(let transaction):
-            ExchangeSuccessView(path: $dashboardPath, transaction: transaction)
-                .toolbar(.hidden, for: .tabBar)
-                
         case .afterSalesHistory:
             AfterSalesHistoryView(path: $dashboardPath)
                 .toolbar(.hidden, for: .tabBar)
@@ -96,6 +87,12 @@ struct AfterSalesTabView: View {
             BOPISView()
         case .ordersHub:
             OrdersHubView(path: $dashboardPath)
+        case .exchangeProduct(let invoiceId, let selectedItemIds):
+            ExchangeProductView(path: $dashboardPath, invoiceId: invoiceId, selectedItemIds: selectedItemIds)
+        case .exchangePayment(let originalProductId, let replacementProductId, let amount):
+            ExchangePaymentView(path: $dashboardPath, originalProductId: originalProductId, replacementProductId: replacementProductId, amount: amount)
+        case .exchangeSummary(let originalProductId, let replacementProductId, let amount):
+            ExchangeSummaryView(path: $dashboardPath, originalProductId: originalProductId, replacementProductId: replacementProductId, amount: amount)
         }
     }
 
@@ -106,6 +103,7 @@ struct AfterSalesTabView: View {
 struct AfterSalesToolbarModifier: ViewModifier {
     let title: String
     
+    @Environment(AppTheme.self) private var theme
     @Environment(SessionStore.self) private var sessionStore
     @State private var isProfilePresented = false
     
@@ -120,7 +118,7 @@ struct AfterSalesToolbarModifier: ViewModifier {
                     } label: {
                         ZStack {
                             Circle()
-                                .fill(RSMSColors.burgundy)
+                                .fill(theme.burgundy)
                                 .frame(width: 32, height: 32)
                             
                             if let urlString = sessionStore.currentUser?.imageUrl, let url = URL(string: urlString) {
@@ -166,29 +164,30 @@ struct AfterSalesToolbarModifier: ViewModifier {
 
 /// A reusable placeholder view for the after-sales associate tabs.
 struct AfterSalesPlaceholderView: View {
+    @Environment(AppTheme.self) private var theme
     let title: String
     let message: String
     let icon: String
     
     var body: some View {
         ZStack {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
             
             VStack(spacing: 24) {
                 Image(systemName: icon)
                     .font(.system(size: 60))
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
                     .accessibilityHidden(true)
                 
                 Text(title)
                     .font(RSMSFonts.title)
                     .fontWeight(.bold)
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                 
                 Text(message)
                     .font(RSMSFonts.body)
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
                 
@@ -198,7 +197,7 @@ struct AfterSalesPlaceholderView: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(RSMSColors.burgundy)
+                    .background(theme.burgundy)
                     .cornerRadius(RSMSRadius.small)
             }
         }
@@ -207,29 +206,30 @@ struct AfterSalesPlaceholderView: View {
 
 /// Simple sheet to allow After-Sales Associate to Sign Out
 struct AfterSalesProfileSheet: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     @Environment(SessionStore.self) private var sessionStore
     
     var body: some View {
         NavigationStack {
             ZStack {
-                RSMSColors.background
+                theme.background
                     .ignoresSafeArea()
                 
                 VStack(spacing: RSMSSpacing.xl) {
                     VStack(spacing: RSMSSpacing.sm) {
                         Image(systemName: "person.crop.circle.fill")
                             .font(.system(size: 80))
-                            .foregroundColor(RSMSColors.burgundy)
+                            .foregroundColor(theme.burgundy)
                         
                         Text(sessionStore.currentUser?.name ?? "After-Sales Specialist")
                             .font(RSMSFonts.title)
                             .fontWeight(.bold)
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                         
                         Text("After-Sales Specialist")
                             .font(RSMSFonts.subheadline)
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                     }
                     .padding(.top, RSMSSpacing.xxl)
                     
@@ -244,7 +244,7 @@ struct AfterSalesProfileSheet: View {
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
-                            .background(RSMSColors.error)
+                            .background(theme.error)
                             .cornerRadius(RSMSRadius.medium)
                     }
                     .buttonStyle(.plain)
@@ -259,7 +259,7 @@ struct AfterSalesProfileSheet: View {
                     Button("Close") {
                         dismiss()
                     }
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
                 }
             }
         }

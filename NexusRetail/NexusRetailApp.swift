@@ -9,11 +9,14 @@ import SwiftUI
 @main
 struct NexusRetailApp: App {
     @State private var sessionStore = SessionStore()
+    @State private var theme = AppTheme()
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environment(sessionStore)
+                .environment(theme)
+                .preferredColorScheme(theme.isDarkMode ? .dark : .light)
                 .task {
                     // Attempt to restore session on app launch
                     await sessionStore.restore()

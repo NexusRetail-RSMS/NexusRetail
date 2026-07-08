@@ -25,8 +25,6 @@ class ClusterAnnotationView: MKAnnotationView {
     private func setup() {
         canShowCallout = false
         backgroundColor = .clear
-        isAccessibilityElement = true
-        accessibilityHint = "Double tap to zoom into this cluster of stores"
         
         heatmapLayer.type = .radial
         // Warm heatmap colors: deep red center -> orange -> yellow -> transparent
@@ -62,8 +60,6 @@ class ClusterAnnotationView: MKAnnotationView {
             // Adjust opacity and color intensity slightly based on density
             let maxOpacity = min(1.0, 0.6 + (CGFloat(count) / 20.0))
             heatmapLayer.opacity = Float(maxOpacity)
-            
-            accessibilityLabel = "Cluster of \(count) stores"
         }
     }
 }

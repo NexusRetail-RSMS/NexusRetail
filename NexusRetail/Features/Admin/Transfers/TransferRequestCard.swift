@@ -79,7 +79,6 @@ struct TransferRequestCard: View {
                 .foregroundColor(.secondary)
                 .lineLimit(1)
         }
-        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Product Image
@@ -96,7 +95,6 @@ struct TransferRequestCard: View {
             }
             .frame(width: 70, height: 70)
             .clipShape(RoundedRectangle(cornerRadius: 16))
-            .accessibilityHidden(true)
         } else {
             RoundedRectangle(cornerRadius: 16)
                 .fill(RSMSColors.burgundy.opacity(0.05))
@@ -106,7 +104,6 @@ struct TransferRequestCard: View {
                         .font(.system(size: 24))
                         .foregroundColor(RSMSColors.burgundy.opacity(0.25))
                 )
-                .accessibilityHidden(true)
         }
     }
 
@@ -125,7 +122,6 @@ struct TransferRequestCard: View {
                 .foregroundColor(.secondary)
                 .lineLimit(1)
         }
-        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Request Info Row
@@ -166,8 +162,6 @@ struct TransferRequestCard: View {
         .padding(12)
         .background(Color.nexusRed.opacity(0.06))
         .cornerRadius(12)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(predictedSource == nil ? "Predicting smart routing source" : "Smart routing from \(predictedSource!)")
     }
 
     // MARK: - Actions
@@ -185,7 +179,6 @@ struct TransferRequestCard: View {
                     .foregroundColor(.white)
                     .cornerRadius(20)
             }
-            .accessibilityHint("Double tap to approve this transfer request")
 
             Button {
                 showingScheduleSheet = true
@@ -198,7 +191,6 @@ struct TransferRequestCard: View {
                     .foregroundColor(Color.nexusRed)
                     .cornerRadius(20)
             }
-            .accessibilityHint("Double tap to schedule this transfer request")
         }
     }
 }
@@ -226,7 +218,6 @@ struct InfoColumn: View {
                 .multilineTextAlignment(textAlignment)
         }
         .frame(maxWidth: .infinity, alignment: Alignment(horizontal: alignment, vertical: .center))
-        .accessibilityElement(children: .combine)
     }
 }
 
@@ -308,7 +299,6 @@ struct ScheduleSheet: View {
                         .foregroundColor(.white)
                         .cornerRadius(20)
                 }
-                .accessibilityHint("Double tap to schedule")
 
                 Button {
                     dismiss()
@@ -321,7 +311,6 @@ struct ScheduleSheet: View {
                         .foregroundColor(Color.nexusRed)
                         .cornerRadius(20)
                 }
-                .accessibilityHint("Double tap to cancel")
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 32)
@@ -402,7 +391,6 @@ struct WaitingRequestCard: View {
                     .foregroundColor(.white)
                     .cornerRadius(20)
             }
-            .accessibilityHint("Double tap to approve this scheduled request early")
             .padding(.top, 20)
         }
         .padding(20)
@@ -441,7 +429,6 @@ struct WaitingRequestCard: View {
                 .foregroundColor(.secondary)
                 .lineLimit(1)
         }
-        .accessibilityElement(children: .combine)
     }
 
     @ViewBuilder
@@ -456,7 +443,6 @@ struct WaitingRequestCard: View {
             }
             .frame(width: 70, height: 70)
             .clipShape(RoundedRectangle(cornerRadius: 16))
-            .accessibilityHidden(true)
         } else {
             RoundedRectangle(cornerRadius: 16)
                 .fill(RSMSColors.burgundy.opacity(0.05))
@@ -466,7 +452,6 @@ struct WaitingRequestCard: View {
                         .font(.system(size: 24))
                         .foregroundColor(RSMSColors.burgundy.opacity(0.25))
                 )
-                .accessibilityHidden(true)
         }
     }
 
@@ -483,7 +468,6 @@ struct WaitingRequestCard: View {
                 .foregroundColor(.secondary)
                 .lineLimit(1)
         }
-        .accessibilityElement(children: .combine)
     }
 }
 
@@ -569,7 +553,6 @@ struct ApprovedRequestCard: View {
                 .foregroundColor(.secondary)
                 .lineLimit(1)
         }
-        .accessibilityElement(children: .combine)
     }
 
     @ViewBuilder
@@ -584,7 +567,6 @@ struct ApprovedRequestCard: View {
             }
             .frame(width: 70, height: 70)
             .clipShape(RoundedRectangle(cornerRadius: 16))
-            .accessibilityHidden(true)
         } else {
             RoundedRectangle(cornerRadius: 16)
                 .fill(RSMSColors.burgundy.opacity(0.05))
@@ -594,7 +576,6 @@ struct ApprovedRequestCard: View {
                         .font(.system(size: 24))
                         .foregroundColor(RSMSColors.burgundy.opacity(0.25))
                 )
-                .accessibilityHidden(true)
         }
     }
 
@@ -611,7 +592,6 @@ struct ApprovedRequestCard: View {
                 .foregroundColor(.secondary)
                 .lineLimit(1)
         }
-        .accessibilityElement(children: .combine)
     }
 }
 

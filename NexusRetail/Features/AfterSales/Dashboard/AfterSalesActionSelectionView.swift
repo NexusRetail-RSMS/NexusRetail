@@ -9,6 +9,7 @@ import SwiftUI
 import UIKit
 
 struct ActionSelectionView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
     @Binding var path: NavigationPath
@@ -26,6 +27,11 @@ struct ActionSelectionView: View {
 
     // Backend / processing state
     @State private var isProcessing = false
+    @State private var showExchangeConfirm = false
+    @State private var resultTitle = ""
+    @State private var resultMessage = ""
+    @State private var showResult = false
+    @State private var resultWasSuccess = false
 
     private let heroImageHeight: CGFloat = 380
     private let cardCornerRadius: CGFloat = 28
@@ -68,9 +74,8 @@ struct ActionSelectionView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
-
             ScrollView {
                 VStack(spacing: 16) {
                     VStack(spacing: 0) {
@@ -108,6 +113,16 @@ struct ActionSelectionView: View {
         .sheet(item: $shareURL) { wrapped in
             ShareSheet(items: [wrapped.url])
         }
+        .sheet(isPresented: $showExchangeConfirm) {
+            exchangeConfirmSheet
+                .presentationDetents([.height(420)])
+                .presentationDragIndicator(.visible)
+        }
+        .alert(resultTitle, isPresented: $showResult) {
+            Button("OK") { if resultWasSuccess { path = NavigationPath() } }
+        } message: {
+            Text(resultMessage)
+        }
     }
 
     // MARK: - Hero image carousel
@@ -122,7 +137,7 @@ struct ActionSelectionView: View {
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
                         } else {
-                            RSMSColors.secondaryText.opacity(0.08)
+                            theme.secondaryText.opacity(0.08)
                         }
                     }
                     .frame(height: heroImageHeight)
@@ -145,7 +160,7 @@ struct ActionSelectionView: View {
         VStack(spacing: 6) {
             ForEach(imageUrls.indices, id: \.self) { index in
                 Circle()
-                    .fill(index == currentImageIndex ? RSMSColors.primaryText : RSMSColors.primaryText.opacity(0.25))
+                    .fill(index == currentImageIndex ? theme.primaryText : theme.primaryText.opacity(0.25))
                     .frame(width: 6, height: 6)
             }
         }
@@ -176,7 +191,7 @@ struct ActionSelectionView: View {
 
                 Image(systemName: systemImage)
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
             }
         }
     }
@@ -187,22 +202,22 @@ struct ActionSelectionView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(selectedItem.name)
                 .font(.system(size: 28, weight: .heavy))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
 
             Text("\(selectedItem.category) \u{00B7} Size: \(selectedItem.size)")
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(RSMSColors.secondaryText.opacity(0.8))
+                .foregroundColor(theme.secondaryText.opacity(0.8))
                 .padding(.top, 2)
 
             Text(formatIndianCurrency(selectedItem.price))
                 .font(.system(size: 28, weight: .heavy))
-                .foregroundColor(RSMSColors.burgundy)
+                .foregroundColor(theme.burgundy)
                 .padding(.top, 8)
         }
         .padding(20)
         .padding(.top, cardCornerRadius + 4)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(
             UnevenRoundedRectangle(
                 topLeadingRadius: cardCornerRadius,
@@ -222,7 +237,7 @@ struct ActionSelectionView: View {
                 .font(.system(size: 12, weight: .semibold))
                 .textCase(.uppercase)
                 .tracking(0.6)
-                .foregroundColor(RSMSColors.secondaryText.opacity(0.7))
+                .foregroundColor(theme.secondaryText.opacity(0.7))
                 .padding(.bottom, 14)
 
             detailRow(icon: "number", label: "SKU", value: selectedItem.sku)
@@ -243,11 +258,11 @@ struct ActionSelectionView: View {
             }
         }
         .padding(20)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
     }
 
@@ -255,19 +270,19 @@ struct ActionSelectionView: View {
         let row = HStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(RSMSColors.secondaryText.opacity(0.08))
+                    .fill(theme.secondaryText.opacity(0.08))
                     .frame(width: 32, height: 32)
                 Image(systemName: icon)
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             }
             Text(label)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
             Spacer()
             Text(value)
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
         }
 
         if let action {
@@ -281,27 +296,27 @@ struct ActionSelectionView: View {
         HStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill((isWarrantyExpired ? RSMSColors.burgundy : Color.green).opacity(0.1))
+                    .fill((isWarrantyExpired ? theme.burgundy : Color.green).opacity(0.1))
                     .frame(width: 32, height: 32)
                 Image(systemName: isWarrantyExpired ? "shield.slash" : "checkmark.shield")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(isWarrantyExpired ? RSMSColors.burgundy : .green)
+                    .foregroundColor(isWarrantyExpired ? theme.burgundy : .green)
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text("Warranty")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
                 Text(Self.displayDateFormatter.string(from: endDate))
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText.opacity(0.7))
+                    .foregroundColor(theme.secondaryText.opacity(0.7))
             }
             Spacer()
             Text(isWarrantyExpired ? "Expired" : "Valid")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(isWarrantyExpired ? RSMSColors.burgundy : .green)
+                .foregroundColor(isWarrantyExpired ? theme.burgundy : .green)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
-                .background((isWarrantyExpired ? RSMSColors.burgundy : Color.green).opacity(0.1))
+                .background((isWarrantyExpired ? theme.burgundy : Color.green).opacity(0.1))
                 .clipShape(Capsule())
         }
     }
@@ -311,22 +326,14 @@ struct ActionSelectionView: View {
     private var actionsSection: some View {
         VStack(spacing: 6) {
             HStack(spacing: 12) {
-                Button(action: {
-                    path.append(POSFlowDestination.exchangeWarrantyCheck(
-                        invoiceId: invoiceId,
-                        selectedItem: selectedItem,
-                        purchaseDate: purchaseDate,
-                        warrantyEndDate: warrantyEndDate,
-                        customer: customer
-                    ))
-                }) {
+                Button(action: { showExchangeConfirm = true }) {
                     Label("Exchange", systemImage: "arrow.triangle.2.circlepath")
                         .font(.system(size: 16, weight: .semibold))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 4)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(RSMSColors.burgundy)
+                .tint(theme.burgundy)
                 .controlSize(.large)
                 .disabled(!isExchangeAllowed)
 
@@ -337,44 +344,117 @@ struct ActionSelectionView: View {
                         .padding(.vertical, 4)
                 }
                 .buttonStyle(.bordered)
-                .tint(RSMSColors.burgundy)
+                .tint(theme.burgundy)
                 .controlSize(.large)
             }
 
             if !isExchangeAllowed {
                 Text("Exchange window (15 days) has passed for this item.")
                     .font(.system(size: 11))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             }
         }
     }
 
+    // MARK: - Exchange confirmation sheet + processing
 
+    private var exchangeConfirmSheet: some View {
+        VStack(spacing: 0) {
+            VStack(spacing: 10) {
+                ZStack {
+                    Circle().fill(theme.burgundy.opacity(0.1)).frame(width: 64, height: 64)
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 28, weight: .semibold))
+                        .foregroundColor(theme.burgundy)
+                }
+                Text("Confirm Exchange")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundColor(theme.primaryText)
+            }
+            .padding(.top, 28)
 
+            Text("This will record an exchange for \(selectedItem.name) and restock the returned unit into inventory.")
+                .font(.system(size: 14))
+                .foregroundColor(theme.secondaryText)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, 16)
+
+            Spacer()
+
+            VStack(spacing: 12) {
+                Button {
+                    Task {
+                        showExchangeConfirm = false
+                        await processExchange()
+                    }
+                } label: {
+                    Text("Process Exchange")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(theme.burgundy)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
+                Button("Cancel") { showExchangeConfirm = false }
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(theme.secondaryText)
+            }
+            .padding(.horizontal, RSMSSpacing.lg)
+            .padding(.bottom, 28)
+        }
+        .background(theme.background.ignoresSafeArea())
+    }
+
+    private func processExchange() async {
+        isProcessing = true
+        defer { isProcessing = false }
+        do {
+            let result = try await AfterSalesService.process(
+                orderId: invoiceId, itemId: selectedItem.itemId,
+                type: "exchange", issue: "Exchange requested", partsCost: 0)
+            if result.success {
+                resultWasSuccess = true
+                resultTitle = "Exchange Approved"
+                resultMessage = "The exchange for \(selectedItem.name) has been recorded and the unit restocked."
+            } else {
+                resultWasSuccess = false
+                resultTitle = "Exchange Not Allowed"
+                resultMessage = result.message ?? "This item is no longer eligible for exchange."
+            }
+            showResult = true
+        } catch {
+            resultWasSuccess = false
+            resultTitle = "Something went wrong"
+            resultMessage = "Couldn't process the exchange. Please try again."
+            showResult = true
+        }
+    }
     // MARK: - Customer sheet
 
     private var customerSheetContent: some View {
         VStack(spacing: 20) {
             Capsule()
-                .fill(RSMSColors.secondaryText.opacity(0.25))
+                .fill(theme.secondaryText.opacity(0.25))
                 .frame(width: 40, height: 5)
                 .padding(.top, 8)
 
             if let customer {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy.opacity(0.1))
+                        .fill(theme.burgundy.opacity(0.1))
                         .frame(width: 64, height: 64)
                     Text(initials(for: customer.name))
                         .font(.system(size: 22, weight: .bold))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                 }
                 Text(customer.name)
                     .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                 Text("Raised this request on invoice \(invoiceId)")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
 
                 VStack(spacing: 0) {
                     detailRow(icon: "phone", label: "Phone", value: customer.phone.isEmpty ? "—" : customer.phone) {
@@ -385,16 +465,11 @@ struct ActionSelectionView: View {
                         if !customer.email.isEmpty { emailCustomer(customer.email) }
                     }
                 }
-                .padding(20)
-                .background(RSMSColors.background)
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .padding(.horizontal, RSMSSpacing.lg)
-                .padding(.top, 8)
             } else {
                 Spacer()
                 Text("No customer information available for this invoice.")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, RSMSSpacing.lg)
             }
@@ -402,6 +477,26 @@ struct ActionSelectionView: View {
             Spacer()
         }
         .padding(.bottom, 12)
+    }
+
+    private func actionCard(title: String, description: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(color.opacity(0.1))
+                        .frame(width: 64, height: 64)
+                    Image(systemName: icon)
+                        .font(.system(size: 26, weight: .medium))
+                        .foregroundColor(color)
+                }
+                .padding(20)
+                .background(theme.background)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, 8)
+            }
+        }
     }
 
     private func initials(for name: String) -> String {
@@ -481,4 +576,13 @@ struct ActionSelectionView: View {
 private struct IdentifiableURL: Identifiable {
     let url: URL
     var id: String { url.absoluteString }
+}
+
+// Button style for press animation
+struct ScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
+    }
 }

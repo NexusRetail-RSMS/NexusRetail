@@ -8,6 +8,7 @@ import SwiftUI
 struct ManagerDashboardView: View {
     @State private var viewModel = ManagerDashboardViewModel()
     @Environment(SessionStore.self) private var sessionStore
+    @Environment(AppTheme.self) private var theme
     
     // Notification ViewModel
     @State private var notificationVM = LowStockNotificationViewModel()
@@ -47,7 +48,7 @@ struct ManagerDashboardView: View {
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.bottom, RSMSSpacing.xxxl)
         }
-        .background(RSMSColors.background.ignoresSafeArea())
+        .background(theme.background.ignoresSafeArea())
         .navigationBarHidden(true)
         .refreshable {
             await viewModel.fetchData(storeID: sessionStore.currentUser?.storeID)
@@ -73,6 +74,7 @@ struct ManagerDashboardView: View {
         }
         .sheet(isPresented: $isProfilePresented) {
             AdminProfileSheet()
+                .environment(theme)
         }
         .sheet(isPresented: $isNotificationPresented) {
             NotificationListView(viewModel: notificationVM)
@@ -80,7 +82,7 @@ struct ManagerDashboardView: View {
         .fullScreenCover(isPresented: $isShowingRevenueDetail) {
             NavigationStack {
                 ZStack {
-                    RSMSColors.background.ignoresSafeArea()
+                    theme.background.ignoresSafeArea()
                     VStack {
                         HStack(alignment: .top) {
                             VStack(alignment: .leading, spacing: 4) {
@@ -121,7 +123,6 @@ struct ManagerDashboardView: View {
                                 .cornerRadius(16)
                                 .foregroundColor(RSMSColors.primaryText)
                             }
-                            .accessibilityLabel("Select Sales Report Time Range")
                         }
                         .padding(.horizontal, RSMSSpacing.lg)
                         .padding(.top, RSMSSpacing.lg)
@@ -179,7 +180,7 @@ struct ManagerDashboardView: View {
         .fullScreenCover(isPresented: $isShowingRequestsDetail) {
             NavigationStack {
                 ZStack {
-                    RSMSColors.background.ignoresSafeArea()
+                    theme.background.ignoresSafeArea()
                     VStack {
                         ManagerRequestsView()
                     }
@@ -199,7 +200,7 @@ struct ManagerDashboardView: View {
         .fullScreenCover(isPresented: $isShowingLowStockDetail) {
             NavigationStack {
                 ZStack {
-                    RSMSColors.background.ignoresSafeArea()
+                    theme.background.ignoresSafeArea()
                     VStack {
                         ManagerLowStockView()
                     }
@@ -219,7 +220,7 @@ struct ManagerDashboardView: View {
         .fullScreenCover(isPresented: $isShowingReturnsDetail) {
             NavigationStack {
                 ZStack {
-                    RSMSColors.background.ignoresSafeArea()
+                    theme.background.ignoresSafeArea()
                     VStack {
                         ManagerReturnsView()
                     }
@@ -245,7 +246,6 @@ struct ManagerDashboardView: View {
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .foregroundColor(RSMSColors.primaryText)
-                .accessibilityAddTraits(.isHeader)
 
             Spacer()
 
@@ -292,22 +292,18 @@ struct ManagerDashboardView: View {
             KPICardView(title: "Today's Revenue", value: viewModel.todayRevenue, icon: "indianrupeesign", trend: nil, color: Color(hex: "2A9D8F"))
                 .contentShape(Rectangle())
                 .onTapGesture { isShowingRevenueDetail = true }
-                .accessibilityHint("Double tap to view revenue details")
             
             KPICardView(title: "Pending Requests", value: viewModel.pendingRequests, icon: "doc.text.fill", trend: nil, color: RSMSColors.burgundy)
                 .contentShape(Rectangle())
                 .onTapGesture { isShowingRequestsDetail = true }
-                .accessibilityHint("Double tap to view pending requests")
             
             KPICardView(title: "Low Stock Items", value: viewModel.lowStockItems, icon: "exclamationmark.triangle.fill", trend: nil, color: Color(hex: "E76F51"))
                 .contentShape(Rectangle())
                 .onTapGesture { isShowingLowStockDetail = true }
-                .accessibilityHint("Double tap to view low stock details")
             
             KPICardView(title: "After Service", value: viewModel.afterServiceCount, icon: "wrench.and.screwdriver.fill", trend: nil, color: Color(hex: "D4A017"))
                 .contentShape(Rectangle())
                 .onTapGesture { isShowingReturnsDetail = true }
-                .accessibilityHint("Double tap to view after service details")
         }
     }
     

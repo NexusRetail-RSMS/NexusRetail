@@ -205,8 +205,6 @@ struct StoreAnalyticsView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(height: totalHeight)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(store.name), \(isActive ? "Active" : "Inactive"). Location: \(locationLine). \(manager?.name != nil ? "Manager: \(manager!.name)" : "No manager assigned")")
     }
 
     private var heroBrandedPlaceholder: some View {
@@ -280,8 +278,6 @@ struct StoreAnalyticsView: View {
             // so swiping months/weeks/years updates the charts immediately
             SwipeableCalendarView(selectedRange: $analyticsVM.calendarRange)
         }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("Time range selection")
     }
 
     private var salesTrend: [Double] {
@@ -385,9 +381,6 @@ struct StoreAnalyticsView: View {
                 .onTapGesture { isShowingSalesDetail = true }
         }
         .analyticsCard()
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Sales Report Chart. Total sales over selected period: ₹\(formatCompact(Double(analyticsVM.kpiSales)))")
-        .accessibilityHint("Double tap for full sales report")
     }
 
     private func percentage(for units: Int) -> Double {
@@ -452,9 +445,6 @@ struct StoreAnalyticsView: View {
                 .onTapGesture { isShowingProductsDetail = true }
         }
         .analyticsCard()
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Top Products Chart. Total units: \(formatNum(analyticsVM.totalUnits))")
-        .accessibilityHint("Double tap for full breakdown")
     }
 
     private func sectionHeader(_ title: String) -> some View {
@@ -471,8 +461,6 @@ struct StoreAnalyticsView: View {
                 .font(.system(size: 11))
                 .foregroundColor(RSMSColors.secondaryText)
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isHeader)
     }
 
     private var calendarPeriodLabel: String {
@@ -642,8 +630,6 @@ private struct PremiumKPICard: View {
         .background(RSMSColors.cardBackground)
         .cornerRadius(RSMSRadius.medium)
         .overlay(RoundedRectangle(cornerRadius: RSMSRadius.medium).stroke(RSMSColors.cardBorder, lineWidth: 0.5))
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(title), \(value)\(emptyCaption != nil ? ", \(emptyCaption!)" : "")")
     }
 }
 

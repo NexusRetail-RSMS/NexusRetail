@@ -84,10 +84,15 @@ struct TopLocationsChartView: View {
     private var headerSection: some View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(selectedCountry != nil ? "\(CountryMapRegion.flags[selectedCountry ?? ""] ?? "📍") \(selectedCountry ?? "")" : "Store Locations")
+                Text(selectedCountry != nil ? "\(CountryMapRegion.flags[selectedCountry ?? ""] ?? "📍") \(selectedCountry ?? "")" : "Top Customer Locations")
                     .font(RSMSFonts.headline)
                     .foregroundColor(RSMSColors.primaryText)
-                    .accessibilityAddTraits(.isHeader)
+
+                if selectedCountry == nil {
+                    Text("Stores across all regions")
+                        .font(.system(size: 12))
+                        .foregroundColor(RSMSColors.secondaryText)
+                }
             }
 
         }
@@ -99,7 +104,7 @@ struct TopLocationsChartView: View {
         NexusMapView(
             stores: mapVM.stores,
             selectedStore: $selectedStore,
-            targetRegion: $mapVM.targetRegion
+            cameraPosition: $mapVM.cameraPosition
         )
         .frame(height: 260)
         .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.medium))
@@ -124,7 +129,6 @@ struct TopLocationsChartView: View {
                     .background(.ultraThinMaterial)
                     .clipShape(Circle())
                     .padding(RSMSSpacing.sm)
-                    .accessibilityLabel("Loading map data")
             }
         }
         .animation(.easeInOut(duration: 0.3), value: selectedStore?.id)
@@ -182,9 +186,7 @@ struct TopLocationsChartView: View {
                     .font(.system(size: 18))
                     .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
             }
-            .accessibilityLabel("Close Store Callout")
         }
-        .accessibilityElement(children: .combine)
         .padding(.horizontal, RSMSSpacing.md)
         .padding(.vertical, RSMSSpacing.sm)
         .background(.ultraThinMaterial)
@@ -210,15 +212,11 @@ struct TopLocationsChartView: View {
     }
 
     private func worldStatsView(_ stats: CountryMapStats) -> some View {
-        let displayRevenue = selectedStore?.revenue ?? stats.revenue
-        let displayStores = selectedStore != nil ? 1 : stats.storeCount
-        let displayCountries = selectedStore != nil ? 1 : Set(mapVM.stores.map { $0.country }).count
-        
-        return VStack(spacing: RSMSSpacing.md) {
+        VStack(spacing: RSMSSpacing.md) {
             HStack(spacing: 0) {
                 statPill(
                     icon: "building.2.fill",
-                    value: "\(displayStores)",
+                    value: "\(stats.storeCount)",
                     label: "Total Stores",
                     color: RSMSColors.burgundy
                 )
@@ -227,7 +225,7 @@ struct TopLocationsChartView: View {
 
                 statPill(
                     icon: "indianrupeesign.circle.fill",
-                    value: StoreMapViewModel.shortCurrency(displayRevenue),
+                    value: StoreMapViewModel.shortCurrency(stats.revenue),
                     label: "Revenue",
                     color: Color(hex: "2A9D8F")
                 )
@@ -236,7 +234,7 @@ struct TopLocationsChartView: View {
 
                 statPill(
                     icon: "globe",
-                    value: "\(displayCountries)",
+                    value: "\(Set(mapVM.stores.map { $0.country }).count)",
                     label: "Countries",
                     color: Color(hex: "E76F51")
                 )
@@ -275,21 +273,15 @@ struct TopLocationsChartView: View {
                 .padding(.vertical, 8)
                 .background(Color(hex: "F4A261").opacity(0.08))
                 .cornerRadius(RSMSRadius.small)
-                .accessibilityElement(children: .combine)
             }
         }
     }
 
     private func countryStatsView(_ stats: CountryMapStats) -> some View {
-        let displayRevenue = selectedStore?.revenue ?? stats.revenue
-        let displayStores = selectedStore != nil ? 1 : stats.storeCount
-        let displayOrders = selectedStore?.orderCount ?? stats.orderCount
-        let displayManagers = selectedStore != nil ? 1 : stats.managerCount
-        
-        return VStack(spacing: RSMSSpacing.md) {
+        VStack(spacing: RSMSSpacing.md) {
             // Revenue headline
             HStack(alignment: .lastTextBaseline, spacing: RSMSSpacing.sm) {
-                Text(StoreMapViewModel.shortCurrency(displayRevenue, symbol: stats.currencySymbol))
+                Text(StoreMapViewModel.shortCurrency(stats.revenue, symbol: stats.currencySymbol))
                     .font(.system(size: 32, weight: .bold))
                     .foregroundColor(RSMSColors.primaryText)
 
@@ -302,9 +294,9 @@ struct TopLocationsChartView: View {
 
             // Stat chips row
             HStack(spacing: RSMSSpacing.sm) {
-                statChip(icon: "building.2.fill", value: "\(displayStores)", label: "Stores")
-                statChip(icon: "cart.fill", value: "\(displayOrders)", label: "Orders")
-                statChip(icon: "person.2.fill", value: "\(displayManagers)", label: "Managers")
+                statChip(icon: "building.2.fill", value: "\(stats.storeCount)", label: "Stores")
+                statChip(icon: "cart.fill", value: "\(stats.orderCount)", label: "Orders")
+                statChip(icon: "person.2.fill", value: "\(stats.managerCount)", label: "Managers")
             }
             
             if let topStore = stats.topStoreName, let topDetail = stats.topStoreDetail {
@@ -340,7 +332,6 @@ struct TopLocationsChartView: View {
                 .padding(.vertical, 8)
                 .background(Color(hex: "F4A261").opacity(0.08))
                 .cornerRadius(RSMSRadius.small)
-                .accessibilityElement(children: .combine)
             }
         }
     }
@@ -359,9 +350,8 @@ struct TopLocationsChartView: View {
                 Button {
                     withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                         selectedStore = nil
+                        mapVM.cameraPosition = .region(CountryMapRegion.region(for: selectedCountry))
                     }
-                    // Animate camera to fit all stores in this country
-                    mapVM.targetRegion = CountryMapRegion.region(for: selectedCountry)
                 } label: {
                     Text("All Stores")
                     if selectedStore == nil {
@@ -375,12 +365,14 @@ struct TopLocationsChartView: View {
                     Button {
                         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                             selectedStore = store
+                            // Zoom to this store
+                            mapVM.cameraPosition = .region(
+                                MKCoordinateRegion(
+                                    center: store.coordinate,
+                                    span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+                                )
+                            )
                         }
-                        // Zoom to this specific store
-                        mapVM.targetRegion = MKCoordinateRegion(
-                            center: store.coordinate,
-                            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-                        )
                     } label: {
                         Text(store.name)
                         if selectedStore?.id == store.id {
@@ -409,8 +401,6 @@ struct TopLocationsChartView: View {
                 .clipShape(Capsule())
             }
             .disabled(mapVM.stores.isEmpty)
-            .accessibilityLabel("Select store")
-            .accessibilityHint(mapVM.stores.isEmpty ? "No stores available" : "Double tap to filter by a specific store")
         }
     }
 
@@ -431,7 +421,6 @@ struct TopLocationsChartView: View {
                 .foregroundColor(RSMSColors.secondaryText)
         }
         .frame(maxWidth: .infinity)
-        .accessibilityElement(children: .combine)
     }
 
     private func statChip(icon: String, value: String, label: String) -> some View {
@@ -452,7 +441,6 @@ struct TopLocationsChartView: View {
         .padding(.vertical, 6)
         .background(RSMSColors.burgundy.opacity(0.05))
         .clipShape(Capsule())
-        .accessibilityElement(children: .combine)
     }
 }
 

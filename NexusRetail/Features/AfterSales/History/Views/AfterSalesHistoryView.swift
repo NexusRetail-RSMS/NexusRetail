@@ -2,6 +2,8 @@ import SwiftUI
 
 struct AfterSalesHistoryView: View {
     @Environment(SessionStore.self) private var sessionStore
+    @Environment(AppTheme.self) private var theme
+    @Environment(\.dismiss) private var dismiss
     @Binding var path: NavigationPath
     @State private var viewModel: AfterSalesHistoryViewModel
     @State private var selectedTab: HistoryTab = .exchanges
@@ -64,7 +66,7 @@ struct AfterSalesHistoryView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -85,7 +87,7 @@ struct AfterSalesHistoryView: View {
                     } else if let error = viewModel.errorMessage {
                         Text(error)
                             .font(.system(size: 15))
-                            .foregroundColor(RSMSColors.error)
+                            .foregroundColor(theme.error)
                             .padding(.top, 40)
                     } else {
                         VStack(spacing: 22) {
@@ -135,7 +137,7 @@ struct AfterSalesHistoryView: View {
     private func emptyState(message: String) -> some View {
         Text(message)
             .font(.system(size: 15))
-            .foregroundColor(RSMSColors.secondaryText)
+            .foregroundColor(theme.secondaryText)
             .padding(.top, 40)
     }
 
@@ -205,9 +207,6 @@ struct AfterSalesHistoryView: View {
                     Text(item.productName)
                         .font(.system(size: 15.5, weight: .bold))
                         .foregroundColor(RSMSColors.primaryText)
-//                    if let issueDescription = item.issueDescription, !issueDescription.isEmpty {
-//                        tagChip(issueDescription)
-//                    }
                 }
                 Spacer()
                 Text(Self.dateFormatter.string(from: item.date))

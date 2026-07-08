@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AfterSalesRepairFormView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     @Binding var path: NavigationPath
     
@@ -41,16 +42,16 @@ struct AfterSalesRepairFormView: View {
     
     var body: some View {
         ZStack(alignment: .top) {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
                 .onTapGesture {
                     isInputFocused = false
                 }
             
-            ScrollView {
-                VStack(spacing: 0) {
-                    customHeaderSection
-                    
+            VStack(spacing: 0) {
+                customHeaderSection
+                
+                ScrollView {
                     VStack(alignment: .leading, spacing: 32) {
                         productSummaryCard
                         
@@ -61,8 +62,9 @@ struct AfterSalesRepairFormView: View {
                 .onTapGesture {
                     isInputFocused = false
                 }
+                
+                bottomActionBar
             }
-            .ignoresSafeArea(edges: .top)
 
             if isProcessing {
                 Color.black.opacity(0.25).ignoresSafeArea()
@@ -76,10 +78,6 @@ struct AfterSalesRepairFormView: View {
             }
         }
         .navigationBarHidden(true)
-        .safeAreaInset(edge: .bottom) {
-            bottomActionBar
-                .background(RSMSColors.background)
-        }
         .task { await runWarrantyAnimation() }
         .alert(resultTitle, isPresented: $showResult) {
             Button("OK") {
@@ -110,59 +108,59 @@ struct AfterSalesRepairFormView: View {
     private var warrantyCheckOverlay: some View {
         let inW = inWarranty
         return ZStack {
-            RSMSColors.background.ignoresSafeArea()
+            theme.background.ignoresSafeArea()
 
             VStack(spacing: 24) {
                 if checkPhase == .checking {
                     ZStack {
                         Circle()
-                            .stroke(RSMSColors.burgundy.opacity(0.15), lineWidth: 6)
+                            .stroke(theme.burgundy.opacity(0.15), lineWidth: 6)
                             .frame(width: 96, height: 96)
                         ProgressView()
                             .controlSize(.large)
-                            .tint(RSMSColors.burgundy)
+                            .tint(theme.burgundy)
                         Image(systemName: "shield.lefthalf.filled")
                             .font(.system(size: 30))
-                            .foregroundColor(RSMSColors.burgundy)
+                            .foregroundColor(theme.burgundy)
                     }
                     Text("Checking warranty…")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     Text("Verifying \(selectedItem.name)")
                         .font(.system(size: 14))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 } else {
                     ZStack {
                         Circle()
-                            .fill((inW ? RSMSColors.success : RSMSColors.warning).opacity(0.12))
+                            .fill((inW ? theme.success : theme.warning).opacity(0.12))
                             .frame(width: 110, height: 110)
                         Image(systemName: inW ? "checkmark.seal.fill" : "exclamationmark.shield.fill")
                             .font(.system(size: 54))
-                            .foregroundColor(inW ? RSMSColors.success : RSMSColors.warning)
+                            .foregroundColor(inW ? theme.success : theme.warning)
                             .scaleEffect(checkmarkScale)
                     }
 
                     VStack(spacing: 8) {
                         Text(inW ? "In Warranty" : "Out of Warranty")
                             .font(.system(size: 22, weight: .bold))
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
 
                         if inW {
                             Text("This product is covered\nRepair cost: FREE")
                                 .font(.system(size: 15))
-                                .foregroundColor(RSMSColors.success)
+                                .foregroundColor(theme.success)
                                 .multilineTextAlignment(.center)
                         } else {
                             Text("Warranty has expired\nRepair will be chargeable")
                                 .font(.system(size: 15))
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                                 .multilineTextAlignment(.center)
                         }
 
                         if inW, let end = warrantyEndDate {
                             Text("\(selectedItem.category) • covered until \(end.formatted(date: .abbreviated, time: .omitted))")
                                 .font(.system(size: 12))
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                                 .padding(.top, 2)
                         }
                     }
@@ -202,47 +200,36 @@ struct AfterSalesRepairFormView: View {
     
     // MARK: - Header
     private var customHeaderSection: some View {
-        HStack(alignment: .center, spacing: RSMSSpacing.md) {
+        HStack {
             Button {
                 dismiss()
             } label: {
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.2))
+                        .fill(Color.white)
                         .frame(width: 44, height: 44)
+                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
 
                     Image(systemName: "chevron.left")
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(theme.primaryText)
                 }
             }
-            .accessibilityLabel("Back")
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Repair Request")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.white)
-
-                Text("Submit a repair request for the selected product")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.8))
-                    .lineLimit(1)
-            }
-
+            
             Spacer()
+            
+            Text("Repair Request")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(theme.primaryText)
+            
+            Spacer()
+            
+            // Dummy view for alignment
+            Color.clear.frame(width: 44, height: 44)
         }
         .padding(.horizontal, RSMSSpacing.lg)
-        .padding(.top, 60)
-        .padding(.bottom, RSMSSpacing.xxxl)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            LinearGradient(
-                colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
-        .clipShape(HeaderCurve())
+        .padding(.bottom, RSMSSpacing.sm)
+        .background(theme.background)
     }
     
     // MARK: - Product Summary
@@ -263,12 +250,12 @@ struct AfterSalesRepairFormView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(selectedItem.name)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                     .lineLimit(2)
                 
                 Text(selectedItem.sku)
                     .font(.system(size: 13))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             }
             Spacer()
         }
@@ -277,7 +264,7 @@ struct AfterSalesRepairFormView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(RSMSColors.cardBorder, lineWidth: 1)
+                .strokeBorder(theme.cardBorder, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.03), radius: 12, x: 0, y: 4)
         .padding(.horizontal, RSMSSpacing.lg)
@@ -290,7 +277,7 @@ struct AfterSalesRepairFormView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Problem Description")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
                 
                 TextEditor(text: $problemDescription)
                     .focused($isInputFocused)
@@ -300,45 +287,45 @@ struct AfterSalesRepairFormView: View {
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(RSMSColors.inputBorder, lineWidth: 1)
+                            .stroke(theme.inputBorder, lineWidth: 1)
                     )
             }
             
             Divider()
-                .background(RSMSColors.divider)
+                .background(theme.divider)
             
             // Cost Details
             VStack(alignment: .leading, spacing: 16) {
                 Text("Cost Breakdown")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
 
                 if inWarranty {
                     HStack(spacing: 8) {
-                        Image(systemName: "checkmark.seal.fill").foregroundColor(RSMSColors.success)
+                        Image(systemName: "checkmark.seal.fill").foregroundColor(theme.success)
                         Text("Covered under warranty — no charge")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(RSMSColors.success)
+                            .foregroundColor(theme.success)
                         Spacer()
                     }
                     .padding(12)
-                    .background(RSMSColors.success.opacity(0.08))
+                    .background(theme.success.opacity(0.08))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 } else {
                     HStack {
                         Text("Base Service Cost")
                             .font(.system(size: 15))
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                         Spacer()
                         Text(String(format: "₹%.0f", serviceCost))
                             .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Additional Parts (₹)")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
 
                         TextField("Enter amount", text: $additionalAmountText)
                             .focused($isInputFocused)
@@ -348,26 +335,26 @@ struct AfterSalesRepairFormView: View {
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(RSMSColors.inputBorder, lineWidth: 1)
+                                    .stroke(theme.inputBorder, lineWidth: 1)
                             )
                     }
                 }
             }
             
             Divider()
-                .background(RSMSColors.divider)
+                .background(theme.divider)
             
             // Total
             HStack {
                 Text("Total Amount")
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                 
                 Spacer()
                 
                 Text(inWarranty ? "FREE" : String(format: "₹%.0f", totalAmount))
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
             }
         }
         .padding(.horizontal, RSMSSpacing.lg)
@@ -385,7 +372,7 @@ struct AfterSalesRepairFormView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(problemDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? RSMSColors.secondaryText.opacity(0.5) : RSMSColors.burgundy)
+                    .background(problemDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? theme.secondaryText.opacity(0.5) : theme.burgundy)
                     .cornerRadius(12)
             }
             .disabled(problemDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
