@@ -9,6 +9,7 @@ import SwiftUI
 import Supabase
 
 struct ClientDetailView: View {
+    @Environment(AppTheme.self) private var theme
     let client: AssociateClient
     @Environment(SessionStore.self) private var sessionStore
     
@@ -37,13 +38,13 @@ struct ClientDetailView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            RSMSColors.background.ignoresSafeArea()
+            theme.background.ignoresSafeArea()
             
             ScrollView(showsIndicators: false) {
                 ZStack(alignment: .top) {
                     // Top Curvy Background - Now inside ScrollView so it scrolls up
                     TopWaveShape()
-                        .fill(RSMSColors.burgundy.opacity(0.85))
+                        .fill(theme.burgundy.opacity(0.85))
                         .frame(height: 260)
                     
                     VStack(spacing: 0) {
@@ -52,7 +53,7 @@ struct ClientDetailView: View {
                         
                         // Avatar
                         Circle()
-                            .fill(LinearGradient(colors: [RSMSColors.gold, RSMSColors.gold.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .fill(LinearGradient(colors: [theme.gold, theme.gold.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing))
                             .frame(width: 120, height: 120)
                             .overlay(
                                 Circle().stroke(Color.white, lineWidth: 6)
@@ -69,7 +70,7 @@ struct ClientDetailView: View {
                         // Profile Info
                         Text(client.name)
                             .font(.system(size: 26, weight: .bold, design: .rounded))
-                            .foregroundStyle(RSMSColors.primaryText)
+                            .foregroundStyle(theme.primaryText)
                             .padding(.bottom, 4)
                         
                         HStack(spacing: 12) {
@@ -90,7 +91,7 @@ struct ClientDetailView: View {
                                     .font(.system(size: 14))
                             }
                         }
-                        .foregroundStyle(RSMSColors.secondaryText)
+                        .foregroundStyle(theme.secondaryText)
                         .padding(.bottom, 24)
                         
                         // Style Preferences & Purchase Pattern Card
@@ -98,13 +99,13 @@ struct ClientDetailView: View {
                             VStack(spacing: 8) {
                                 Text(client.preferences.isEmpty ? "None specified" : client.preferences)
                                     .font(.system(size: 16, weight: .bold))
-                                    .foregroundStyle(RSMSColors.burgundy)
+                                    .foregroundStyle(theme.burgundy)
                                     .multilineTextAlignment(.center)
                                     .lineLimit(2)
                                 
                                 Text("Style Preferences")
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(RSMSColors.secondaryText)
+                                    .foregroundStyle(theme.secondaryText)
                             }
                             .frame(maxWidth: .infinity)
                             
@@ -113,12 +114,12 @@ struct ClientDetailView: View {
                             VStack(spacing: 8) {
                                 Text("N/A")
                                     .font(.system(size: 16, weight: .bold))
-                                    .foregroundStyle(RSMSColors.burgundy)
+                                    .foregroundStyle(theme.burgundy)
                                     .multilineTextAlignment(.center)
                                 
                                 Text("Purchase Pattern")
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(RSMSColors.secondaryText)
+                                    .foregroundStyle(theme.secondaryText)
                             }
                             .frame(maxWidth: .infinity)
                         }
@@ -127,9 +128,9 @@ struct ClientDetailView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                         .overlay(
                             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                                .stroke(RSMSColors.burgundy.opacity(0.6), lineWidth: 1.5)
+                                .stroke(theme.burgundy.opacity(0.6), lineWidth: 1.5)
                         )
-                        .shadow(color: RSMSColors.burgundy.opacity(0.15), radius: 12, x: 0, y: 6)
+                        .shadow(color: theme.burgundy.opacity(0.15), radius: 12, x: 0, y: 6)
                         .padding(.horizontal, 24)
                         .padding(.bottom, 32)
                         
@@ -201,10 +202,10 @@ struct ClientDetailView: View {
             VStack(spacing: 8) {
                 Text(title)
                     .font(.system(size: 16, weight: selectedTab == index ? .bold : .medium))
-                    .foregroundStyle(selectedTab == index ? RSMSColors.burgundy : RSMSColors.secondaryText)
+                    .foregroundStyle(selectedTab == index ? theme.burgundy : theme.secondaryText)
                 
                 Rectangle()
-                    .fill(selectedTab == index ? RSMSColors.burgundy : Color.clear)
+                    .fill(selectedTab == index ? theme.burgundy : Color.clear)
                     .frame(height: 3)
                     .cornerRadius(1.5)
             }
@@ -305,7 +306,7 @@ struct ClientDetailView: View {
 
                 Section {
                     Toggle("Client consent received", isOn: $hasConsent)
-                        .tint(RSMSColors.burgundy)
+                        .tint(theme.burgundy)
                 } footer: {
                     Text("Required before saving personal details.")
                 }
@@ -315,12 +316,12 @@ struct ClientDetailView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { isNewClientPresented = false }
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Save") { saveClientCard() }
                         .bold()
-                        .foregroundColor(canCreateClient ? RSMSColors.burgundy : .gray)
+                        .foregroundColor(canCreateClient ? theme.burgundy : .gray)
                         .disabled(!canCreateClient)
                 }
             }
@@ -362,6 +363,7 @@ struct ClientDetailView: View {
 }
 
 fileprivate struct ProductCardView: View {
+    @Environment(AppTheme.self) private var theme
     let product: POSProduct
     
     var body: some View {
@@ -387,19 +389,19 @@ fileprivate struct ProductCardView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(RSMSColors.gold.opacity(0.3), lineWidth: 0.5)
+                        .stroke(theme.gold.opacity(0.3), lineWidth: 0.5)
                 )
-                .shadow(color: RSMSColors.gold.opacity(0.1), radius: 8, x: 0, y: 4)
+                .shadow(color: theme.gold.opacity(0.1), radius: 8, x: 0, y: 4)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(product.name)
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(RSMSColors.primaryText)
+                    .foregroundStyle(theme.primaryText)
                     .lineLimit(2)
                 
                 Text(formatIndianCurrency(product.price))
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(RSMSColors.burgundy)
+                    .foregroundStyle(theme.burgundy)
             }
             .padding(.horizontal, 4)
         }

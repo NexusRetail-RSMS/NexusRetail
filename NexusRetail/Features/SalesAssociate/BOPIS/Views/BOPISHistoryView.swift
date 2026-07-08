@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct BOPISHistoryView: View {
+    @Environment(AppTheme.self) private var theme
     var viewModel: BOPISViewModel
     
     var collectedOrders: [BOPISOrder] {
@@ -14,20 +15,20 @@ struct BOPISHistoryView: View {
     
     var body: some View {
         ZStack {
-            RSMSColors.background.ignoresSafeArea()
+            theme.background.ignoresSafeArea()
             
             if collectedOrders.isEmpty {
                 VStack(spacing: RSMSSpacing.xl) {
                     Spacer()
                     Image(systemName: "clock.badge.checkmark")
                         .font(.system(size: 64))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                     Text("No Completed Orders")
                         .font(RSMSFonts.title)
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     Text("Orders you mark as collected will appear here.")
                         .font(RSMSFonts.body)
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
                     Spacer()

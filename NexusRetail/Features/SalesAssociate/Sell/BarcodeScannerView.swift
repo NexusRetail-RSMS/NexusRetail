@@ -3,6 +3,7 @@ import PhotosUI
 import CoreImage
 
 struct BarcodeScannerView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     @Environment(SellViewModel.self) private var viewModel
     @Environment(SessionStore.self) private var sessionStore
@@ -18,7 +19,7 @@ struct BarcodeScannerView: View {
     
     var body: some View {
         ZStack(alignment: .top) {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
             
             ScrollView {
@@ -47,7 +48,7 @@ struct BarcodeScannerView: View {
                             .font(.system(size: 13, weight: .bold)).foregroundColor(.white)
                     }
                     .padding(.vertical, 12).padding(.horizontal, 20)
-                    .background(RSMSColors.success)
+                    .background(theme.success)
                     .clipShape(Capsule())
                     .shadow(radius: 6)
                     .padding(.bottom, 96) // clear the sticky cart bar
@@ -66,7 +67,7 @@ struct BarcodeScannerView: View {
                             .font(.system(size: 13, weight: .bold)).foregroundColor(.white)
                     }
                     .padding(.vertical, 12).padding(.horizontal, 20)
-                    .background(RSMSColors.error)
+                    .background(theme.error)
                     .clipShape(Capsule())
                     .shadow(radius: 6)
                     .padding(.bottom, 96) // clear the sticky cart bar
@@ -105,12 +106,12 @@ struct BarcodeScannerView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy.opacity(0.1))
+                        .fill(theme.burgundy.opacity(0.1))
                         .frame(width: 44, height: 44)
 
                     Image(systemName: "chevron.left")
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                 }
             }
             .accessibilityLabel("Back")
@@ -118,13 +119,13 @@ struct BarcodeScannerView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(scannedProduct == nil ? "Scan QR Code" : scannedProduct!.name)
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                     .lineLimit(1)
                 
                 if let product = scannedProduct {
                     Text(product.sku)
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
             }
             
@@ -157,7 +158,7 @@ struct BarcodeScannerView: View {
                 
                 // Overlay outline
                 RoundedRectangle(cornerRadius: 20)
-                    .stroke(RSMSColors.burgundy, lineWidth: 2)
+                    .stroke(theme.burgundy, lineWidth: 2)
                     .frame(height: 300)
             }
             .padding(.horizontal, RSMSSpacing.lg)
@@ -171,7 +172,7 @@ struct BarcodeScannerView: View {
                         Text("Upload QR Code Image")
                     }
                     .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .background(Color.gray.opacity(0.15))
@@ -183,13 +184,13 @@ struct BarcodeScannerView: View {
                 
                 Text("OR")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
                     .padding(.vertical, 4)
                 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Invoice Number")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     
                     TextField("Enter invoice number", text: $invoiceNumber)
                         .font(.system(size: 15, weight: .medium))
@@ -199,7 +200,7 @@ struct BarcodeScannerView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                                .stroke(theme.cardBorder, lineWidth: 1)
                         )
                         .onSubmit {
                             if !invoiceNumber.isEmpty {
@@ -306,15 +307,15 @@ struct BarcodeScannerView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(product.name)
                         .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     
                     Text("Category: \(product.category)  •  Size: \(product.size)")
                         .font(.system(size: 13))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
 
                     Text(formatIndianCurrency(product.price))
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
 
                     // This detail screen is only reached for out-of-stock items now
                     // (in-stock scans add straight to the cart).
@@ -323,21 +324,21 @@ struct BarcodeScannerView: View {
                         Text("Out of Stock")
                     }
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(RSMSColors.error)
+                    .foregroundColor(theme.error)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
-                    .background(RSMSColors.error.opacity(0.08))
+                    .background(theme.error.opacity(0.08))
                     .clipShape(Capsule())
                     .padding(.top, 4)
                 }
                 Spacer()
             }
             .padding(18)
-            .background(RSMSColors.cardBackground)
+            .background(theme.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 20))
             .overlay(
                 RoundedRectangle(cornerRadius: 20)
-                    .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                    .stroke(theme.cardBorder, lineWidth: 1)
             )
             .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 3)
             
@@ -346,7 +347,7 @@ struct BarcodeScannerView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Suggested Alternatives")
                     .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.darkBrown)
+                    .foregroundColor(theme.darkBrown)
 
                 HStack(spacing: 12) {
                     checklistBadge("Same Category")
@@ -360,7 +361,7 @@ struct BarcodeScannerView: View {
                 if alternatives.isEmpty {
                     Text("No suitable alternatives found in stock.")
                         .font(.system(size: 14))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                         .padding(.vertical, 10)
                 } else {
                     VStack(spacing: 12) {
@@ -383,10 +384,10 @@ struct BarcodeScannerView: View {
             Text(text)
                 .font(.system(size: 11, weight: .semibold))
         }
-        .foregroundColor(RSMSColors.burgundy)
+        .foregroundColor(theme.burgundy)
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
-        .background(RSMSColors.burgundy.opacity(0.08))
+        .background(theme.burgundy.opacity(0.08))
         .clipShape(Capsule())
     }
     
@@ -406,11 +407,11 @@ struct BarcodeScannerView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(alt.name)
                     .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                 
                 Text("Price: \(formatIndianCurrency(alt.price))  •  Size: \(alt.size)")
                     .font(.system(size: 11))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             }
             
             Spacer()
@@ -426,16 +427,16 @@ struct BarcodeScannerView: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(RSMSColors.burgundy)
+                    .background(theme.burgundy)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
             }
         }
         .padding(12)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
     }
     

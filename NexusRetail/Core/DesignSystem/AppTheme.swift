@@ -50,4 +50,13 @@ class AppTheme {
     var divider: Color {
         isDarkMode ? Color.white.opacity(0.08) : Color.gray.opacity(0.15)
     }
+    var warning: Color {
+        isDarkMode ? Color(hex: "F4A261") : Color(hex: "F57C00")
+    }
+    var inputBorder: Color {
+        isDarkMode ? Color.white.opacity(0.2) : Color.gray.opacity(0.3)
+    }
+    var disabled: Color {
+        isDarkMode ? Color.gray.opacity(0.3) : Color.gray.opacity(0.4)
+    }
 }

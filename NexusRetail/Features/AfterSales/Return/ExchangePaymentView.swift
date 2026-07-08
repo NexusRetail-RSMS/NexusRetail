@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ExchangePaymentView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     @Environment(SessionStore.self) private var sessionStore
     @Binding var path: NavigationPath
@@ -22,7 +23,7 @@ struct ExchangePaymentView: View {
     
     var body: some View {
         ZStack {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
             
             ScrollView {
@@ -90,7 +91,7 @@ struct ExchangePaymentView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             LinearGradient(
-                colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
+                colors: [theme.burgundy, theme.darkBurgundy],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -105,16 +106,16 @@ struct ExchangePaymentView: View {
             VStack(spacing: 6) {
                 Text("NEXUS RETAIL")
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
                     .kerning(1.5)
                 
                 Text("₹\(String(format: "%.0f", amount))")
                     .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
                 
                 Text("Exchange ID: #\(Int.random(in: 100000...999999))")
                     .font(.system(size: 12))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             }
             .padding(.vertical, 10)
             
@@ -138,7 +139,7 @@ struct ExchangePaymentView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("UPI (Google Pay, PhonePe, Bhim)")
                         .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                     
                     HStack(spacing: 12) {
                         upiMethodIcon("gpay", label: "Google Pay")
@@ -153,7 +154,7 @@ struct ExchangePaymentView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Other Payment Modes")
                         .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                     
                     optionRow(icon: "creditcard.fill", title: "Cards (Visa, Mastercard, RuPay)")
                     optionRow(icon: "building.columns.fill", title: "Netbanking")
@@ -175,11 +176,11 @@ struct ExchangePaymentView: View {
                 .buttonStyle(.plain)
             }
             .padding(20)
-            .background(RSMSColors.cardBackground)
+            .background(theme.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 20))
             .overlay(
                 RoundedRectangle(cornerRadius: 20)
-                    .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                    .stroke(theme.cardBorder, lineWidth: 1)
             )
             .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
         }
@@ -188,7 +189,7 @@ struct ExchangePaymentView: View {
     private func upiMethodIcon(_ name: String, label: String) -> some View {
         HStack(spacing: 8) {
             Image(systemName: "iphone.circle.fill")
-                .foregroundColor(RSMSColors.burgundy)
+                .foregroundColor(theme.burgundy)
             Text(label)
                 .font(.system(size: 12, weight: .bold))
         }
@@ -201,15 +202,15 @@ struct ExchangePaymentView: View {
     private func optionRow(icon: String, title: String) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
                 .frame(width: 20)
             Text(title)
                 .font(.system(size: 13, weight: .medium))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
             Spacer()
             Image(systemName: "chevron.right")
                 .font(.system(size: 10))
-                .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                .foregroundColor(theme.secondaryText.opacity(0.5))
         }
         .padding(.vertical, 4)
     }
@@ -237,7 +238,7 @@ struct ExchangePaymentView: View {
                         
                         Text("₹\(String(format: "%.0f", amount))")
                             .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(RSMSColors.burgundy)
+                            .foregroundColor(theme.burgundy)
                     } else if paymentState == .processing {
                         Text("AUTHORIZING...")
                             .font(.system(size: 16, weight: .black))
@@ -283,7 +284,7 @@ struct ExchangePaymentView: View {
                 VStack(spacing: 12) {
                     Text("Customer Action Required")
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(RSMSColors.darkBrown)
+                        .foregroundColor(theme.darkBrown)
                     
                     Button {
                         processCardPayment()
@@ -296,9 +297,9 @@ struct ExchangePaymentView: View {
                         .foregroundColor(.white)
                         .padding(.vertical, 14)
                         .padding(.horizontal, 24)
-                        .background(RSMSColors.burgundy)
+                        .background(theme.burgundy)
                         .clipShape(Capsule())
-                        .shadow(color: RSMSColors.burgundy.opacity(0.2), radius: 8, x: 0, y: 4)
+                        .shadow(color: theme.burgundy.opacity(0.2), radius: 8, x: 0, y: 4)
                     }
                     .buttonStyle(.plain)
                 }

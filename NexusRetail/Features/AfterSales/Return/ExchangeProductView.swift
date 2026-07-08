@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ExchangeProductView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     @Environment(SessionStore.self) private var sessionStore
     @Binding var path: NavigationPath
@@ -45,7 +46,7 @@ struct ExchangeProductView: View {
     
     var body: some View {
         ZStack(alignment: .top) {
-            RSMSColors.background.ignoresSafeArea()
+            theme.background.ignoresSafeArea()
             
             VStack(spacing: 0) {
                 customHeaderSection
@@ -55,12 +56,12 @@ struct ExchangeProductView: View {
                         originalProductSection
                         
                         Divider()
-                            .background(RSMSColors.divider)
+                            .background(theme.divider)
                             .padding(.horizontal, RSMSSpacing.lg)
                         
                         Text("Select Replacement")
                             .font(.system(size: 18, weight: .bold, design: .rounded))
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                             .padding(.horizontal, RSMSSpacing.lg)
                         
                         searchBarSection
@@ -100,14 +101,14 @@ struct ExchangeProductView: View {
                         .frame(width: 44, height: 44)
                     Image(systemName: "chevron.left")
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                 }
             }
             
             VStack(alignment: .leading, spacing: 2) {
                 Text("Exchange Product")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
             }
             Spacer()
         }
@@ -122,7 +123,7 @@ struct ExchangeProductView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Product to Exchange")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
                 .padding(.horizontal, RSMSSpacing.lg)
             
             HStack(spacing: 16) {
@@ -131,7 +132,7 @@ struct ExchangeProductView: View {
                         image.resizable().aspectRatio(contentMode: .fill)
                     } else {
                         Color.gray.opacity(0.1)
-                            .overlay(Image(systemName: "shippingbox").foregroundColor(RSMSColors.secondaryText))
+                            .overlay(Image(systemName: "shippingbox").foregroundColor(theme.secondaryText))
                     }
                 }
                 .frame(width: 60, height: 60)
@@ -140,13 +141,13 @@ struct ExchangeProductView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(originalProduct.name)
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     Text("SKU: \(originalProduct.sku)")
                         .font(.system(size: 12))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                     Text(formatIndianCurrency(originalProduct.price))
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                 }
                 Spacer()
             }
@@ -162,7 +163,7 @@ struct ExchangeProductView: View {
     private var searchBarSection: some View {
         HStack(spacing: 12) {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
             
             TextField("Search inventory...", text: $searchText)
                 .textFieldStyle(.plain)
@@ -171,7 +172,7 @@ struct ExchangeProductView: View {
             if !searchText.isEmpty {
                 Button { searchText = "" } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(RSMSColors.secondaryText.opacity(0.6))
+                        .foregroundColor(theme.secondaryText.opacity(0.6))
                 }
             }
         }
@@ -188,7 +189,7 @@ struct ExchangeProductView: View {
                 ProgressView().padding(.top, 20)
             } else if filteredProducts.isEmpty {
                 Text("No products found.")
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
                     .padding(.top, 20)
             } else {
                 ForEach(filteredProducts) { product in
@@ -221,11 +222,11 @@ struct ExchangeProductView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(product.name)
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     
                     Text(formatIndianCurrency(product.price))
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(RSMSColors.darkBrown)
+                        .foregroundColor(theme.darkBrown)
                 }
                 
                 Spacer()
@@ -233,19 +234,19 @@ struct ExchangeProductView: View {
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.title2)
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                 } else {
                     Circle()
-                        .stroke(RSMSColors.cardBorder, lineWidth: 2)
+                        .stroke(theme.cardBorder, lineWidth: 2)
                         .frame(width: 24, height: 24)
                 }
             }
             .padding(14)
-            .background(isSelected ? RSMSColors.burgundy.opacity(0.05) : .white)
+            .background(isSelected ? theme.burgundy.opacity(0.05) : .white)
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(isSelected ? RSMSColors.burgundy : RSMSColors.cardBorder, lineWidth: isSelected ? 2 : 1)
+                    .stroke(isSelected ? theme.burgundy : theme.cardBorder, lineWidth: isSelected ? 2 : 1)
             )
         }
         .buttonStyle(.plain)
@@ -259,17 +260,17 @@ struct ExchangeProductView: View {
                 HStack {
                     Text("Difference:")
                         .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                     Spacer()
                     Text(formatIndianCurrency(diff))
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(diff >= 0 ? RSMSColors.primaryText : RSMSColors.error)
+                        .foregroundColor(diff >= 0 ? theme.primaryText : theme.error)
                 }
                 
                 if diff < 0 {
                     Text("Replacement product must be equal or higher value.")
                         .font(.system(size: 12))
-                        .foregroundColor(RSMSColors.error)
+                        .foregroundColor(theme.error)
                 }
                 
                 Button {
@@ -285,7 +286,7 @@ struct ExchangeProductView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(isNextEnabled ? RSMSColors.burgundy : Color.gray.opacity(0.4))
+                        .background(isNextEnabled ? theme.burgundy : Color.gray.opacity(0.4))
                         .cornerRadius(12)
                 }
                 .disabled(!isNextEnabled)

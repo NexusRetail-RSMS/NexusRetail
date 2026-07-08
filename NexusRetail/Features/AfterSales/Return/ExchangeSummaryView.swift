@@ -2,6 +2,7 @@ import SwiftUI
 import Supabase
 
 struct ExchangeSummaryView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(SessionStore.self) private var sessionStore
     @Binding var path: NavigationPath
     
@@ -24,7 +25,7 @@ struct ExchangeSummaryView: View {
     
     var body: some View {
         ZStack {
-            RSMSColors.background.ignoresSafeArea()
+            theme.background.ignoresSafeArea()
             
             ScrollView {
                 VStack(alignment: .center, spacing: 0) {
@@ -37,7 +38,7 @@ struct ExchangeSummaryView: View {
                         VStack(alignment: .leading, spacing: 14) {
                             Text("Share Digital Receipt")
                                 .font(.system(size: 15, weight: .bold, design: .rounded))
-                                .foregroundColor(RSMSColors.darkBrown)
+                                .foregroundColor(theme.darkBrown)
                                 .padding(.horizontal, 4)
                             
                             VStack(spacing: 12) {
@@ -45,16 +46,16 @@ struct ExchangeSummaryView: View {
                                     .keyboardType(.emailAddress)
                                     .textInputAutocapitalization(.never)
                                     .padding(12)
-                                    .background(RSMSColors.background)
+                                    .background(theme.background)
                                     .cornerRadius(10)
-                                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(RSMSColors.cardBorder, lineWidth: 1))
+                                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(theme.cardBorder, lineWidth: 1))
                                 
                                 TextField("Customer Phone (optional)", text: $phone)
                                     .keyboardType(.phonePad)
                                     .padding(12)
-                                    .background(RSMSColors.background)
+                                    .background(theme.background)
                                     .cornerRadius(10)
-                                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(RSMSColors.cardBorder, lineWidth: 1))
+                                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(theme.cardBorder, lineWidth: 1))
                                 
                                 Button { shareReceipt() } label: {
                                     HStack {
@@ -64,7 +65,7 @@ struct ExchangeSummaryView: View {
                                     .foregroundColor(.white)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 12)
-                                    .background(RSMSColors.burgundy)
+                                    .background(theme.burgundy)
                                     .clipShape(RoundedRectangle(cornerRadius: 10))
                                 }
                                 .buttonStyle(.plain)
@@ -72,9 +73,9 @@ struct ExchangeSummaryView: View {
                                 .opacity(email.isEmpty && phone.isEmpty ? 0.6 : 1.0)
                             }
                             .padding(16)
-                            .background(RSMSColors.cardBackground)
+                            .background(theme.cardBackground)
                             .clipShape(RoundedRectangle(cornerRadius: 18))
-                            .overlay(RoundedRectangle(cornerRadius: 18).stroke(RSMSColors.cardBorder, lineWidth: 1))
+                            .overlay(RoundedRectangle(cornerRadius: 18).stroke(theme.cardBorder, lineWidth: 1))
                         }
                         
                         // Complete Sale
@@ -89,9 +90,9 @@ struct ExchangeSummaryView: View {
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
-                            .background(RSMSColors.burgundy)
+                            .background(theme.burgundy)
                             .clipShape(RoundedRectangle(cornerRadius: 16))
-                            .shadow(color: RSMSColors.burgundy.opacity(0.25), radius: 8, x: 0, y: 4)
+                            .shadow(color: theme.burgundy.opacity(0.25), radius: 8, x: 0, y: 4)
                         }
                         .buttonStyle(.plain)
                         .disabled(isSaving)
@@ -111,7 +112,7 @@ struct ExchangeSummaryView: View {
                             .font(.system(size: 13, weight: .bold)).foregroundColor(.white)
                     }
                     .padding(.vertical, 12).padding(.horizontal, 24)
-                    .background(RSMSColors.success)
+                    .background(theme.success)
                     .clipShape(Capsule())
                     .shadow(radius: 6)
                     .padding(.bottom, 36)
@@ -162,7 +163,7 @@ struct ExchangeSummaryView: View {
         .padding(.top, 60)
         .padding(.bottom, RSMSSpacing.xxxl)
         .frame(maxWidth: .infinity)
-        .background(LinearGradient(colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy], startPoint: .topLeading, endPoint: .bottomTrailing))
+        .background(LinearGradient(colors: [theme.burgundy, theme.darkBurgundy], startPoint: .topLeading, endPoint: .bottomTrailing))
         .clipShape(HeaderCurve())
     }
     
@@ -172,11 +173,11 @@ struct ExchangeSummaryView: View {
             // Branding
             VStack(spacing: 4) {
                 Text("NEXUS RETAIL")
-                    .font(.system(size: 16, weight: .black)).foregroundColor(RSMSColors.primaryText).kerning(2.0)
+                    .font(.system(size: 16, weight: .black)).foregroundColor(theme.primaryText).kerning(2.0)
                 Text("Official Store Receipt")
-                    .font(.system(size: 11, weight: .bold)).foregroundColor(RSMSColors.secondaryText)
+                    .font(.system(size: 11, weight: .bold)).foregroundColor(theme.secondaryText)
                 Text(storeName)
-                    .font(.system(size: 12)).foregroundColor(RSMSColors.secondaryText)
+                    .font(.system(size: 12)).foregroundColor(theme.secondaryText)
             }
             .padding(.top, 10)
             
@@ -197,15 +198,15 @@ struct ExchangeSummaryView: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("RETURNED: \(original.name)")
-                                .font(.system(size: 13, weight: .bold)).foregroundColor(RSMSColors.primaryText)
+                                .font(.system(size: 13, weight: .bold)).foregroundColor(theme.primaryText)
                             HStack(spacing: 8) {
                                 Text("SKU: \(original.sku)")
-                                    .font(.system(size: 11)).foregroundColor(RSMSColors.secondaryText)
+                                    .font(.system(size: 11)).foregroundColor(theme.secondaryText)
                             }
                         }
                         Spacer()
                         Text("-\(formatIndianCurrency(original.price))")
-                            .font(.system(size: 13, weight: .bold)).foregroundColor(RSMSColors.error)
+                            .font(.system(size: 13, weight: .bold)).foregroundColor(theme.error)
                     }
                 }
                 
@@ -213,15 +214,15 @@ struct ExchangeSummaryView: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("NEW: \(replacement.name)")
-                                .font(.system(size: 13, weight: .bold)).foregroundColor(RSMSColors.primaryText)
+                                .font(.system(size: 13, weight: .bold)).foregroundColor(theme.primaryText)
                             HStack(spacing: 8) {
                                 Text("SKU: \(replacement.sku)")
-                                    .font(.system(size: 11)).foregroundColor(RSMSColors.secondaryText)
+                                    .font(.system(size: 11)).foregroundColor(theme.secondaryText)
                             }
                         }
                         Spacer()
                         Text(formatIndianCurrency(replacement.price))
-                            .font(.system(size: 13, weight: .bold)).foregroundColor(RSMSColors.primaryText)
+                            .font(.system(size: 13, weight: .bold)).foregroundColor(theme.primaryText)
                     }
                 }
             }
@@ -231,9 +232,9 @@ struct ExchangeSummaryView: View {
             // Totals
             VStack(spacing: 8) {
                 HStack {
-                    Text("Amount Due / Paid").font(.system(size: 16, weight: .bold)).foregroundColor(RSMSColors.primaryText)
+                    Text("Amount Due / Paid").font(.system(size: 16, weight: .bold)).foregroundColor(theme.primaryText)
                     Spacer()
-                    Text(formatIndianCurrency(amount)).font(.system(size: 18, weight: .black)).foregroundColor(RSMSColors.burgundy)
+                    Text(formatIndianCurrency(amount)).font(.system(size: 18, weight: .black)).foregroundColor(theme.burgundy)
                 }
             }
             .padding(.bottom, 10)
@@ -241,9 +242,9 @@ struct ExchangeSummaryView: View {
             // Footer
             VStack(spacing: 2) {
                 Text("Thank you for shopping at Nexus Retail")
-                    .font(.system(size: 10)).foregroundColor(RSMSColors.secondaryText)
+                    .font(.system(size: 10)).foregroundColor(theme.secondaryText)
                 Text("For returns & exchanges visit any store within 30 days")
-                    .font(.system(size: 9)).foregroundColor(RSMSColors.secondaryText.opacity(0.6))
+                    .font(.system(size: 9)).foregroundColor(theme.secondaryText.opacity(0.6))
                     .multilineTextAlignment(.center)
             }
             .padding(.top, 4)
@@ -264,9 +265,9 @@ struct ExchangeSummaryView: View {
     
     private func receiptMetaRow(label: String, value: String) -> some View {
         HStack {
-            Text(label).font(.system(size: 12)).foregroundColor(RSMSColors.secondaryText)
+            Text(label).font(.system(size: 12)).foregroundColor(theme.secondaryText)
             Spacer()
-            Text(value).font(.system(size: 12, weight: .bold)).foregroundColor(RSMSColors.primaryText)
+            Text(value).font(.system(size: 12, weight: .bold)).foregroundColor(theme.primaryText)
         }
     }
     

@@ -6,9 +6,9 @@ struct ClientsListView: View {
     @State private var searchText = ""
     @Environment(\.dismiss) private var dismiss
 
-    private var accent: Color { theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy }
+    private var accent: Color { theme.isDarkMode ? RSMSColors.antiqueGold : theme.burgundy }
     private var cardBg: Color  { theme.isDarkMode ? Color(hex: "1E1209") : Color.white }
-    private var avatarBg: Color { theme.isDarkMode ? Color(hex: "2C1800") : RSMSColors.burgundy.opacity(0.08) }
+    private var avatarBg: Color { theme.isDarkMode ? Color(hex: "2C1800") : theme.burgundy.opacity(0.08) }
 
     private var filteredClients: [AssociateClient] {
         let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -97,7 +97,7 @@ struct ClientsListView: View {
                     theme.isDarkMode
                         ? LinearGradient(colors: [RSMSColors.antiqueGold.opacity(0.20), RSMSColors.darkWoodBrown.opacity(0.25)],
                                          startPoint: .topLeading, endPoint: .bottomTrailing)
-                        : LinearGradient(colors: [RSMSColors.burgundy.opacity(0.08), Color.clear],
+                        : LinearGradient(colors: [theme.burgundy.opacity(0.08), Color.clear],
                                          startPoint: .topLeading, endPoint: .bottomTrailing),
                     lineWidth: 1
                 )

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct InvoiceItemsSelectionView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     @Binding var path: NavigationPath
     let invoiceId: String
@@ -19,7 +20,7 @@ struct InvoiceItemsSelectionView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
 
             ScrollView {
@@ -27,12 +28,12 @@ struct InvoiceItemsSelectionView: View {
                     Text("Select item to process")
                         .font(.system(size: 14, weight: .medium))
                         .textCase(.uppercase)
-                        .foregroundColor(RSMSColors.secondaryText.opacity(0.8))
+                        .foregroundColor(theme.secondaryText.opacity(0.8))
                         .padding(.horizontal, RSMSSpacing.lg)
                         .padding(.bottom, 4)
 
                     if isLoading {
-                        HStack { Spacer(); ProgressView("Loading invoice...").tint(RSMSColors.burgundy); Spacer() }
+                        HStack { Spacer(); ProgressView("Loading invoice...").tint(theme.burgundy); Spacer() }
                             .padding(.top, 40)
                     } else if let loadError {
                         emptyState(message: loadError, icon: "exclamationmark.triangle")
@@ -62,10 +63,10 @@ struct InvoiceItemsSelectionView: View {
         VStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 40))
-                .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                .foregroundColor(theme.secondaryText.opacity(0.5))
             Text(message)
                 .font(.system(size: 14))
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -104,23 +105,23 @@ struct InvoiceItemsSelectionView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy.opacity(0.1))
+                        .fill(theme.burgundy.opacity(0.1))
                         .frame(width: 44, height: 44)
 
                     Image(systemName: "chevron.left")
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                 }
             }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Invoice Item")
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
 
                 Text(invoiceId)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
                     .lineLimit(1)
             }
 
@@ -152,7 +153,7 @@ struct InvoiceItemsSelectionView: View {
                             image.resizable()
                                 .aspectRatio(contentMode: .fill)
                         } else {
-                            RSMSColors.secondaryText.opacity(0.08)
+                            theme.secondaryText.opacity(0.08)
                         }
                     }
                     .frame(width: 56, height: 56)
@@ -161,19 +162,19 @@ struct InvoiceItemsSelectionView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(item.name)
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                             .lineLimit(1)
 
                         Text("\(item.category) \u{00B7} Qty: \(item.quantity)")
                             .font(.system(size: 12))
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                     }
 
                     Spacer()
 
                     Text(formatIndianCurrency(item.price))
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                 }
                 .contentShape(Rectangle())
             }
@@ -227,7 +228,7 @@ struct InvoiceItemsSelectionView: View {
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
-                            .background(RSMSColors.burgundy)
+                            .background(theme.burgundy)
                             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                     }
                     .buttonStyle(.plain)
@@ -237,11 +238,11 @@ struct InvoiceItemsSelectionView: View {
             }
         }
         .padding(16)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(isExpanded ? RSMSColors.burgundy : RSMSColors.cardBorder, lineWidth: isExpanded ? 1.5 : 1)
+                .stroke(isExpanded ? theme.burgundy : theme.cardBorder, lineWidth: isExpanded ? 1.5 : 1)
         )
     }
 
@@ -249,13 +250,13 @@ struct InvoiceItemsSelectionView: View {
         HStack {
             Text(label)
                 .font(.system(size: 13, weight: .medium))
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
 
             Spacer()
 
             Text(value)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(isWarning ? RSMSColors.burgundy : RSMSColors.primaryText)
+                .foregroundColor(isWarning ? theme.burgundy : theme.primaryText)
         }
         .padding(.vertical, 5)
     }

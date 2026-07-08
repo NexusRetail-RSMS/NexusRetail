@@ -6,16 +6,17 @@
 import SwiftUI
 
 struct PickupStatusBadge: View {
+    @Environment(AppTheme.self) private var theme
     let status: BOPISOrderStatus
     
     private var badgeColor: Color {
         switch status {
         case .pending:
-            return RSMSColors.warning
+            return theme.warning
         case .waitingForCustomer:
             return Color.blue // Or another highlight color
         case .collected:
-            return RSMSColors.secondaryText
+            return theme.secondaryText
         }
     }
     

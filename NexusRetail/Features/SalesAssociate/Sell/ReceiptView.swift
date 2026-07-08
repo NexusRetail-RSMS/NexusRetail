@@ -3,6 +3,7 @@ import Supabase
 import CoreImage.CIFilterBuiltins
 
 struct ReceiptView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(SellViewModel.self) private var viewModel
     @Environment(SessionStore.self) private var sessionStore
 
@@ -30,7 +31,7 @@ struct ReceiptView: View {
 
     var body: some View {
         ZStack {
-            RSMSColors.background.ignoresSafeArea()
+            theme.background.ignoresSafeArea()
 
             ScrollView {
                 VStack(alignment: .center, spacing: 0) {
@@ -54,7 +55,7 @@ struct ReceiptView: View {
                             .font(.system(size: 13, weight: .bold)).foregroundColor(.white)
                     }
                     .padding(.vertical, 12).padding(.horizontal, 24)
-                    .background(RSMSColors.success)
+                    .background(theme.success)
                     .clipShape(Capsule())
                     .shadow(radius: 6)
                     .padding(.bottom, 36)
@@ -164,7 +165,7 @@ struct ReceiptView: View {
         .padding(.top, 60)
         .padding(.bottom, RSMSSpacing.xxxl)
         .frame(maxWidth: .infinity)
-        .background(LinearGradient(colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy], startPoint: .topLeading, endPoint: .bottomTrailing))
+        .background(LinearGradient(colors: [theme.burgundy, theme.darkBurgundy], startPoint: .topLeading, endPoint: .bottomTrailing))
         .clipShape(HeaderCurve())
     }
 
@@ -174,11 +175,11 @@ struct ReceiptView: View {
             // Branding
             VStack(spacing: 4) {
                 Text("NEXUS RETAIL")
-                    .font(.system(size: 16, weight: .black)).foregroundColor(RSMSColors.primaryText).kerning(2.0)
+                    .font(.system(size: 16, weight: .black)).foregroundColor(theme.primaryText).kerning(2.0)
                 Text("Official Store Receipt")
-                    .font(.system(size: 11, weight: .bold)).foregroundColor(RSMSColors.secondaryText)
+                    .font(.system(size: 11, weight: .bold)).foregroundColor(theme.secondaryText)
                 Text(storeName)
-                    .font(.system(size: 12)).foregroundColor(RSMSColors.secondaryText)
+                    .font(.system(size: 12)).foregroundColor(theme.secondaryText)
             }
             .padding(.top, 10)
 
@@ -203,17 +204,17 @@ struct ReceiptView: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(item.product.name)
-                                .font(.system(size: 13, weight: .bold)).foregroundColor(RSMSColors.primaryText)
+                                .font(.system(size: 13, weight: .bold)).foregroundColor(theme.primaryText)
                             HStack(spacing: 8) {
                                 Text("SKU: \(item.product.sku)")
-                                    .font(.system(size: 11)).foregroundColor(RSMSColors.secondaryText)
+                                    .font(.system(size: 11)).foregroundColor(theme.secondaryText)
                                 Text("Qty: \(item.count)")
-                                    .font(.system(size: 11, weight: .semibold)).foregroundColor(RSMSColors.secondaryText)
+                                    .font(.system(size: 11, weight: .semibold)).foregroundColor(theme.secondaryText)
                             }
                         }
                         Spacer()
                         Text(formatIndianCurrency(item.product.price * Double(item.count)))
-                            .font(.system(size: 13, weight: .bold)).foregroundColor(RSMSColors.primaryText)
+                            .font(.system(size: 13, weight: .bold)).foregroundColor(theme.primaryText)
                     }
                 }
             }
@@ -223,19 +224,19 @@ struct ReceiptView: View {
             // Totals
             VStack(spacing: 8) {
                 HStack {
-                    Text("Subtotal").font(.system(size: 13)).foregroundColor(RSMSColors.secondaryText)
+                    Text("Subtotal").font(.system(size: 13)).foregroundColor(theme.secondaryText)
                     Spacer()
-                    Text(formatIndianCurrency(cachedSubtotal)).font(.system(size: 13, weight: .bold)).foregroundColor(RSMSColors.primaryText)
+                    Text(formatIndianCurrency(cachedSubtotal)).font(.system(size: 13, weight: .bold)).foregroundColor(theme.primaryText)
                 }
                 HStack {
-                    Text("GST (18% incl.)").font(.system(size: 13)).foregroundColor(RSMSColors.secondaryText)
+                    Text("GST (18% incl.)").font(.system(size: 13)).foregroundColor(theme.secondaryText)
                     Spacer()
-                    Text(formatIndianCurrency(cachedTotal * 0.18)).font(.system(size: 13)).foregroundColor(RSMSColors.secondaryText)
+                    Text(formatIndianCurrency(cachedTotal * 0.18)).font(.system(size: 13)).foregroundColor(theme.secondaryText)
                 }
                 HStack {
-                    Text("Total Paid").font(.system(size: 16, weight: .bold)).foregroundColor(RSMSColors.primaryText)
+                    Text("Total Paid").font(.system(size: 16, weight: .bold)).foregroundColor(theme.primaryText)
                     Spacer()
-                    Text(formatIndianCurrency(cachedTotal)).font(.system(size: 18, weight: .black)).foregroundColor(RSMSColors.burgundy)
+                    Text(formatIndianCurrency(cachedTotal)).font(.system(size: 18, weight: .black)).foregroundColor(theme.burgundy)
                 }
             }
             .padding(.bottom, 10)
@@ -251,7 +252,7 @@ struct ReceiptView: View {
                             .frame(width: 110, height: 110)
                     }
                     Text("Scan for service, returns & exchange")
-                        .font(.system(size: 9)).foregroundColor(RSMSColors.secondaryText)
+                        .font(.system(size: 9)).foregroundColor(theme.secondaryText)
                 }
                 .padding(.top, 6)
             }
@@ -259,9 +260,9 @@ struct ReceiptView: View {
             // Footer
             VStack(spacing: 2) {
                 Text("Thank you for shopping at Nexus Retail")
-                    .font(.system(size: 10)).foregroundColor(RSMSColors.secondaryText)
+                    .font(.system(size: 10)).foregroundColor(theme.secondaryText)
                 Text("For returns & exchanges visit any store within 30 days")
-                    .font(.system(size: 9)).foregroundColor(RSMSColors.secondaryText.opacity(0.6))
+                    .font(.system(size: 9)).foregroundColor(theme.secondaryText.opacity(0.6))
                     .multilineTextAlignment(.center)
             }
             .padding(.top, 4)
@@ -293,9 +294,9 @@ struct ReceiptView: View {
 
     private func receiptMetaRow(label: String, value: String) -> some View {
         HStack {
-            Text(label).font(.system(size: 12)).foregroundColor(RSMSColors.secondaryText)
+            Text(label).font(.system(size: 12)).foregroundColor(theme.secondaryText)
             Spacer()
-            Text(value).font(.system(size: 12, weight: .bold)).foregroundColor(RSMSColors.primaryText)
+            Text(value).font(.system(size: 12, weight: .bold)).foregroundColor(theme.primaryText)
         }
     }
 

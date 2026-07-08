@@ -3,6 +3,7 @@ import PhotosUI
 import CoreImage
 
 struct InvoiceScannerView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     @Binding var path: NavigationPath
 
@@ -14,7 +15,7 @@ struct InvoiceScannerView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
 
             ScrollView {
@@ -67,12 +68,12 @@ struct InvoiceScannerView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy.opacity(0.1))
+                        .fill(theme.burgundy.opacity(0.1))
                         .frame(width: 40, height: 40)
 
                     Image(systemName: "chevron.left")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                 }
             }
             .accessibilityLabel("Back")
@@ -80,13 +81,13 @@ struct InvoiceScannerView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Scan Bill")
                     .font(.system(size: 22, weight: .semibold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                     .lineLimit(1)
 
                 Text("INVOICE SCANNER")
                     .font(.system(size: 11, weight: .semibold, design: .monospaced))
                     .tracking(0.8)
-                    .foregroundColor(RSMSColors.secondaryText.opacity(0.7))
+                    .foregroundColor(theme.secondaryText.opacity(0.7))
             }
 
             Spacer()
@@ -105,18 +106,18 @@ struct InvoiceScannerView: View {
         VStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(RSMSColors.burgundy.opacity(0.1))
+                    .fill(theme.burgundy.opacity(0.1))
                     .frame(width: 60, height: 60)
 
                 Image(systemName: "doc.text.viewfinder")
                     .font(.system(size: 24, weight: .medium))
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
             }
 
             VStack(spacing: 4) {
                 Text("How would you like to add a bill?")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                     .multilineTextAlignment(.center)
             }
         }
@@ -139,11 +140,11 @@ struct InvoiceScannerView: View {
             )
         }
         .buttonStyle(PremiumPressStyle())
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(RSMSColors.inputBorder.opacity(0.5), lineWidth: 1)
+                .stroke(theme.inputBorder.opacity(0.5), lineWidth: 1)
         )
     }
 
@@ -160,11 +161,11 @@ struct InvoiceScannerView: View {
         .onChange(of: selectedPhoto) { _, newItem in
             processSelectedPhoto(newItem)
         }
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(RSMSColors.inputBorder.opacity(0.5), lineWidth: 1)
+                .stroke(theme.inputBorder.opacity(0.5), lineWidth: 1)
         )
     }
 
@@ -194,11 +195,11 @@ struct InvoiceScannerView: View {
                         .focused($isInvoiceFieldFocused)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 14)
-                        .background(RSMSColors.background)
+                        .background(theme.background)
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .overlay(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .stroke(RSMSColors.inputBorder, lineWidth: 1)
+                                .stroke(theme.inputBorder, lineWidth: 1)
                         )
                         .onSubmit {
                             if !invoiceNumber.isEmpty {
@@ -214,7 +215,7 @@ struct InvoiceScannerView: View {
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(invoiceNumber.isEmpty ? RSMSColors.secondaryText.opacity(0.4) : RSMSColors.burgundy)
+                            .background(invoiceNumber.isEmpty ? theme.secondaryText.opacity(0.4) : theme.burgundy)
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     }
                     .disabled(invoiceNumber.isEmpty)
@@ -224,11 +225,11 @@ struct InvoiceScannerView: View {
                 .transition(.opacity)
             }
         }
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(RSMSColors.inputBorder.opacity(0.5), lineWidth: 1)
+                .stroke(theme.inputBorder.opacity(0.5), lineWidth: 1)
         )
     }
 
@@ -260,29 +261,29 @@ struct InvoiceScannerView: View {
                         .foregroundColor(.white)
                 case .tinted:
                     Circle()
-                        .fill(RSMSColors.burgundy.opacity(0.1))
+                        .fill(theme.burgundy.opacity(0.1))
                         .frame(width: 48, height: 48)
                     Image(systemName: systemImage)
                         .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                 case .outline:
                     Circle()
-                        .stroke(RSMSColors.inputBorder, lineWidth: 1)
+                        .stroke(theme.inputBorder, lineWidth: 1)
                         .frame(width: 48, height: 48)
                     Image(systemName: systemImage)
                         .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                 }
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
 
                 Text(subtitle)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             }
 
             Spacer()
@@ -290,11 +291,11 @@ struct InvoiceScannerView: View {
             Text(tag)
                 .font(.system(size: 12, weight: .semibold, design: .monospaced))
                 .tracking(0.5)
-                .foregroundColor(RSMSColors.secondaryText.opacity(0.55))
+                .foregroundColor(theme.secondaryText.opacity(0.55))
 
             Image(systemName: "chevron.right")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                .foregroundColor(theme.secondaryText.opacity(0.5))
                 .rotationEffect(.degrees(chevronRotation))
                 .animation(.easeInOut(duration: 0.2), value: chevronRotation)
         }

@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct NewClientSheet: View {
+    @Environment(AppTheme.self) private var theme
     var viewModel: ClientelingViewModel
     @Environment(\.dismiss) private var dismiss
 
@@ -37,7 +38,7 @@ struct NewClientSheet: View {
 
                 Section {
                     Toggle("Client consent received", isOn: $hasConsent)
-                        .tint(RSMSColors.burgundy)
+                        .tint(theme.burgundy)
                 } footer: {
                     Text("Consent is required before saving client details.")
                 }
