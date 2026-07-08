@@ -314,6 +314,11 @@ struct AdminProfileSheet: View {
                     }
 
 
+                    // MARK: - Preferences
+                    Section("Preferences") {
+                        LanguageSettingsButton()
+                    }
+
                     // MARK: - Dark Mode Toggle
                     Section {
                         HStack {

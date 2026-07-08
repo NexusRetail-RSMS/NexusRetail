@@ -19,7 +19,7 @@ struct RevenueBarChart: View {
     var body: some View {
         VStack(alignment: .leading, spacing: RSMSSpacing.md) {
 
-            // Row 1: Title + time-range toggle
+            // Row 1: Title + tap-to-expand hint
             HStack {
                 Text(title)
                     .font(RSMSFonts.headline)
@@ -27,7 +27,9 @@ struct RevenueBarChart: View {
 
                 Spacer()
 
-                TimeRangeToggle(selection: $timeRange)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(RSMSColors.secondaryText)
             }
 
             // Chart
@@ -76,19 +78,26 @@ struct RevenueBarChart: View {
                 }
             } else {
                 Chart(data) { point in
-                    BarMark(
+                    AreaMark(
                         x: .value("Period", point.label),
-                        y: .value("Revenue", point.revenue),
-                        width: .ratio(0.45) // Makes bars noticeably thinner and more modern
+                        y: .value("Revenue", point.revenue)
                     )
+                    .interpolationMethod(.catmullRom)
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [RSMSColors.burgundy.opacity(0.6), RSMSColors.burgundy],
+                            colors: [RSMSColors.burgundy.opacity(0.22), RSMSColors.burgundy.opacity(0.02)],
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
-                    .cornerRadius(8) // More rounded cap
+
+                    LineMark(
+                        x: .value("Period", point.label),
+                        y: .value("Revenue", point.revenue)
+                    )
+                    .interpolationMethod(.catmullRom)
+                    .lineStyle(StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+                    .foregroundStyle(RSMSColors.burgundy)
                 }
                 .chartYScale(domain: 0...maxValue)
                 .chartYAxis {

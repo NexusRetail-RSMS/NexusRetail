@@ -51,9 +51,12 @@ struct ManagerDashboardView: View {
         .background(theme.background.ignoresSafeArea())
         .navigationBarHidden(true)
         .refreshable {
+            // Pick up any store reassignment made by an admin without needing re-login.
+            await sessionStore.refreshCurrentUser()
             await viewModel.fetchData(storeID: sessionStore.currentUser?.storeID)
         }
         .task {
+            await sessionStore.refreshCurrentUser()
             await viewModel.fetchData(storeID: sessionStore.currentUser?.storeID)
             await viewModel.fetchRevenueData(storeID: sessionStore.currentUser?.storeID)
             await notificationVM.load(storeID: sessionStore.currentUser?.storeID)

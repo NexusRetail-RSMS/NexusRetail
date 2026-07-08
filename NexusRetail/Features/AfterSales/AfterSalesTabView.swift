@@ -12,6 +12,7 @@ struct AfterSalesTabView: View {
     @State private var selectedTab: Int = 0
     @State private var dashboardPath = NavigationPath()
     @State private var posViewModel = SellViewModel()
+    @State private var showScanner = false
     @Namespace private var namespace
     @Environment(AppTheme.self) private var theme
 
@@ -22,7 +23,7 @@ struct AfterSalesTabView: View {
             TabView(selection: $selectedTab) {
                 // 1. Dashboard (hosts the after-sales scan/invoice/action flow)
                 NavigationStack(path: $dashboardPath) {
-                    AfterSalesDashboardView(path: $dashboardPath, namespace: namespace)
+                    AfterSalesDashboardView(path: $dashboardPath, namespace: namespace, showScanner: $showScanner)
                         .navigationBarHidden(true)
                         .navigationDestination(for: POSFlowDestination.self) { dest in
                             flowDestination(dest)
@@ -44,6 +45,18 @@ struct AfterSalesTabView: View {
         }
         .environment(theme)
         .environment(posViewModel)
+        // Dynamic-island scanner cover with Upload / Enter-invoice options below the camera.
+        .qrScanner(isScanning: $showScanner, showInvoiceOptions: true) { code in
+            handleScannedInvoice(code)
+        }
+    }
+
+    private func handleScannedInvoice(_ raw: String) {
+        let id = raw.hasPrefix("nexus://invoice/")
+            ? raw.replacingOccurrences(of: "nexus://invoice/", with: "")
+            : raw
+        selectedTab = 0
+        dashboardPath.append(POSFlowDestination.invoiceItemsSelection(invoiceId: id))
     }
 
     // MARK: - Flow destinations (tab bar hidden across the scan flow)
@@ -232,7 +245,14 @@ struct AfterSalesProfileSheet: View {
                             .foregroundColor(theme.secondaryText)
                     }
                     .padding(.top, RSMSSpacing.xxl)
-                    
+
+                    LanguageSettingsButton()
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(RSMSRadius.large)
+                        .padding(.horizontal, RSMSSpacing.lg)
+                        .padding(.top, RSMSSpacing.md)
+
                     Spacer()
                     
                     Button {
