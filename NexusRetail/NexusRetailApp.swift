@@ -9,11 +9,14 @@ import SwiftUI
 @main
 struct NexusRetailApp: App {
     @State private var sessionStore = SessionStore()
+    @State private var localizationManager = LocalizationManager()
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environment(sessionStore)
+                .environment(localizationManager)
+                .environment(\.layoutDirection, localizationManager.isRTL ? .rightToLeft : .leftToRight)
                 .task {
                     // Attempt to restore session on app launch
                     await sessionStore.restore()

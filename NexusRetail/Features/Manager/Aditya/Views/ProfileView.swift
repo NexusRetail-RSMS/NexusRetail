@@ -90,6 +90,14 @@ struct ProfileView: View {
                             }
                         }
                         
+                        // Language preference
+                        LanguageSettingsButton()
+                            .padding()
+                            .background(Color.white)
+                            .cornerRadius(RSMSRadius.large)
+                            .padding(.horizontal, RSMSSpacing.lg)
+                            .padding(.top, RSMSSpacing.md)
+
                         // Sign Out Button
                         Button {
                             Task {

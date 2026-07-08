@@ -205,6 +205,12 @@ struct AdminProfileSheet: View {
                     }
 
 
+                    // MARK: - Preferences
+                    Section("Preferences") {
+                        LanguageSettingsButton()
+                    }
+
+
                     // MARK: - Sign Out
                     Section {
                         Button(role: .destructive) {

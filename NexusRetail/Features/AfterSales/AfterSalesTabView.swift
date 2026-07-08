@@ -233,7 +233,14 @@ struct AfterSalesProfileSheet: View {
                             .foregroundColor(RSMSColors.secondaryText)
                     }
                     .padding(.top, RSMSSpacing.xxl)
-                    
+
+                    LanguageSettingsButton()
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(RSMSRadius.large)
+                        .padding(.horizontal, RSMSSpacing.lg)
+                        .padding(.top, RSMSSpacing.md)
+
                     Spacer()
                     
                     Button {
