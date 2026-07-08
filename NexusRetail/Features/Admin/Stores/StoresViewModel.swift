@@ -52,7 +52,7 @@ class StoresViewModel {
     }
     
     /// Creates a new store and re-fetches the list.
-    func create(name: String, address: String, phone: String, locale: String, currencyCode: String, timezone: String, managerID: UUID?, status: StoreStatus, includeRazorpay: Bool, razorpayKey: String, razorpaySecret: String, includeCard: Bool, cardTerminalID: String, latitude: Double?, longitude: Double?, city: String?, country: String?, imageData: Data? = nil) async -> Bool {
+    func create(name: String, address: String, phone: String, locale: String, currencyCode: String, timezone: String, managerID: UUID?, status: StoreStatus, includeRazorpay: Bool, includeCard: Bool, latitude: Double?, longitude: Double?, city: String?, country: String?, imageData: Data? = nil) async -> Bool {
         guard !name.isEmpty, !address.isEmpty else {
             errorMessage = "Name and Address are required."
             return false

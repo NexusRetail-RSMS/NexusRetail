@@ -186,7 +186,7 @@ struct CreateEventView: View {
                         // 5-15MB, which causes the upload stream to drop (NSURLError -1005).
                         // Run off the main thread so the UI stays responsive.
                         let compressed = await Task.detached(priority: .userInitiated) {
-                            await Self.compressForUpload(data)
+                            Self.compressForUpload(data)
                         }.value
                         bannerImageData = compressed
                     }

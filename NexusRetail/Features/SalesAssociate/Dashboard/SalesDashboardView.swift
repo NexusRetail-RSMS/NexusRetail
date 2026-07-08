@@ -69,8 +69,6 @@ struct SalesDashboardView: View {
                     BOPISView()
                 case .ordersHub:
                     OrdersHubView(path: $navigationPath)
-                case .invoiceScanner, .invoiceItemsSelection, .actionSelection, .repairForm:
-                    EmptyView()
                 }
             }
         }

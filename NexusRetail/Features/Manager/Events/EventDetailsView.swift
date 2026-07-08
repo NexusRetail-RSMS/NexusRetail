@@ -98,7 +98,7 @@ struct EventDetailsView: View {
                                 VStack(alignment: .leading, spacing: 12) {
                                     Label(formattedDate, systemImage: "calendar")
                                     Label(formattedTime, systemImage: "clock")
-                                    Label(event.venueStr, systemImage: "mappin.and.ellipse")
+                                    Label(event.venueStr ?? "No venue specified", systemImage: "mappin.and.ellipse")
                                 }
                                 .font(.system(size: 15))
                                 .foregroundColor(.secondary)

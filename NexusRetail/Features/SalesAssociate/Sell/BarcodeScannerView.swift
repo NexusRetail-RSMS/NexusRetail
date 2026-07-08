@@ -14,7 +14,6 @@ struct BarcodeScannerView: View {
     @State private var selectedPhoto: PhotosPickerItem? = nil
     @State private var stockLimitReached = false   // shown when scan hits stock limit
     @State private var toastMessage: String? = nil // brief add-to-cart confirmation
-    @State private var invoiceNumber = ""
     
     var body: some View {
         ZStack(alignment: .top) {
