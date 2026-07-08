@@ -52,7 +52,7 @@ struct StoreFormView: View {
             _currencyCode = State(initialValue: store.currencyCode ?? "INR")
             _timezone = State(initialValue: store.timezone ?? "Asia/Kolkata")
             _selectedManagerID = State(initialValue: store.managerID)
-            _isActive = State(initialValue: store.status == .active && store.managerID != nil)
+            _isActive = State(initialValue: store.status == .active)
             _country = State(initialValue: store.country ?? "")
             _city = State(initialValue: store.city ?? "")
             if let lat = store.latitude, let lng = store.longitude {

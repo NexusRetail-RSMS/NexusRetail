@@ -9,12 +9,8 @@ struct ManagerDashboardView: View {
     @State private var viewModel = ManagerDashboardViewModel()
     @Environment(SessionStore.self) private var sessionStore
     
-    // Notification ViewModel
-    @State private var notificationVM = LowStockNotificationViewModel()
-    
     // Presentation States
     @State private var isProfilePresented = false
-    @State private var isNotificationPresented = false
     @State private var isShowingRevenueDetail = false
     @State private var isShowingRequestsDetail = false
     @State private var isShowingLowStockDetail = false
@@ -61,16 +57,10 @@ struct ManagerDashboardView: View {
         }
         .onAppear {
             // Refresh data when view appears (e.g., after completing a sale)
-            Task {
-                await viewModel.fetchData(storeID: sessionStore.currentUser?.storeID)
-                await notificationVM.load(storeID: sessionStore.currentUser?.storeID)
-            }
+            Task { await viewModel.fetchData(storeID: sessionStore.currentUser?.storeID) }
         }
         .sheet(isPresented: $isProfilePresented) {
             AdminProfileSheet()
-        }
-        .sheet(isPresented: $isNotificationPresented) {
-            NotificationListView(viewModel: notificationVM)
         }
         .fullScreenCover(isPresented: $isShowingRevenueDetail) {
             NavigationStack {
@@ -242,11 +232,6 @@ struct ManagerDashboardView: View {
 
             Spacer()
 
-            // Notification bell
-            NotificationBellView(unreadCount: notificationVM.unreadCount) {
-                isNotificationPresented = true
-            }
-            
             // Profile avatar
             Button {
                 isProfilePresented = true
