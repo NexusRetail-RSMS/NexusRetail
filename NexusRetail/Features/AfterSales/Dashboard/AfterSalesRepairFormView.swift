@@ -6,15 +6,35 @@ struct AfterSalesRepairFormView: View {
     
     let invoiceId: String
     let selectedItem: POSProduct
+    /// Warranty end determined on the previous (action) screen — reused here so the
+    /// two screens never disagree and we don't re-hit the network.
+    var warrantyEndDate: Date? = nil
     
     @State private var problemDescription: String = ""
     @State private var additionalAmountText: String = ""
+
+    enum WarrantyCheckPhase { case checking, result, done }
+
+    @State private var checkPhase: WarrantyCheckPhase = .checking
+    @State private var checkmarkScale: CGFloat = 0.4
+    @State private var isProcessing = false
+    @State private var resultTitle = ""
+    @State private var resultMessage = ""
+    @State private var showResult = false
+    @State private var resultWasSuccess = false
     
     @FocusState private var isInputFocused: Bool
     
     private let serviceCost: Double = 500.0
+
+    /// Uses the warranty date passed from the action page (single source of truth).
+    private var inWarranty: Bool {
+        guard let warrantyEndDate else { return false }
+        return Date() <= warrantyEndDate
+    }
     
     private var totalAmount: Double {
+        if inWarranty { return 0 }
         let additional = Double(additionalAmountText) ?? 0.0
         return serviceCost + additional
     }
@@ -44,8 +64,137 @@ struct AfterSalesRepairFormView: View {
                 
                 bottomActionBar
             }
+
+            if isProcessing {
+                Color.black.opacity(0.25).ignoresSafeArea()
+                ProgressView().tint(.white)
+            }
+
+            // Warranty-check animation overlay (checking -> result -> reveal form)
+            if checkPhase != .done {
+                warrantyCheckOverlay
+                    .transition(.opacity)
+            }
         }
         .navigationBarHidden(true)
+        .task { await runWarrantyAnimation() }
+        .alert(resultTitle, isPresented: $showResult) {
+            Button("OK") {
+                if resultWasSuccess { path = NavigationPath() }
+            }
+        } message: {
+            Text(resultMessage)
+        }
+    }
+
+    /// No network call — warranty is already known from the action page. We just play
+    /// the brief checking → result animation using that value.
+    private func runWarrantyAnimation() async {
+        checkPhase = .checking
+        try? await Task.sleep(nanoseconds: 1_100_000_000)
+
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
+            checkPhase = .result
+            checkmarkScale = 1.0
+        }
+        try? await Task.sleep(nanoseconds: 1_500_000_000)
+        withAnimation(.easeInOut(duration: 0.4)) {
+            checkPhase = .done
+        }
+    }
+
+    // MARK: - Warranty Check Overlay
+    private var warrantyCheckOverlay: some View {
+        let inW = inWarranty
+        return ZStack {
+            RSMSColors.background.ignoresSafeArea()
+
+            VStack(spacing: 24) {
+                if checkPhase == .checking {
+                    ZStack {
+                        Circle()
+                            .stroke(RSMSColors.burgundy.opacity(0.15), lineWidth: 6)
+                            .frame(width: 96, height: 96)
+                        ProgressView()
+                            .controlSize(.large)
+                            .tint(RSMSColors.burgundy)
+                        Image(systemName: "shield.lefthalf.filled")
+                            .font(.system(size: 30))
+                            .foregroundColor(RSMSColors.burgundy)
+                    }
+                    Text("Checking warranty…")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(RSMSColors.primaryText)
+                    Text("Verifying \(selectedItem.name)")
+                        .font(.system(size: 14))
+                        .foregroundColor(RSMSColors.secondaryText)
+                } else {
+                    ZStack {
+                        Circle()
+                            .fill((inW ? RSMSColors.success : RSMSColors.warning).opacity(0.12))
+                            .frame(width: 110, height: 110)
+                        Image(systemName: inW ? "checkmark.seal.fill" : "exclamationmark.shield.fill")
+                            .font(.system(size: 54))
+                            .foregroundColor(inW ? RSMSColors.success : RSMSColors.warning)
+                            .scaleEffect(checkmarkScale)
+                    }
+
+                    VStack(spacing: 8) {
+                        Text(inW ? "In Warranty" : "Out of Warranty")
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundColor(RSMSColors.primaryText)
+
+                        if inW {
+                            Text("This product is covered\nRepair cost: FREE")
+                                .font(.system(size: 15))
+                                .foregroundColor(RSMSColors.success)
+                                .multilineTextAlignment(.center)
+                        } else {
+                            Text("Warranty has expired\nRepair will be chargeable")
+                                .font(.system(size: 15))
+                                .foregroundColor(RSMSColors.secondaryText)
+                                .multilineTextAlignment(.center)
+                        }
+
+                        if inW, let end = warrantyEndDate {
+                            Text("\(selectedItem.category) • covered until \(end.formatted(date: .abbreviated, time: .omitted))")
+                                .font(.system(size: 12))
+                                .foregroundColor(RSMSColors.secondaryText)
+                                .padding(.top, 2)
+                        }
+                    }
+                }
+            }
+            .padding(32)
+        }
+    }
+
+    private func submitRepair() async {
+        isProcessing = true
+        defer { isProcessing = false }
+        do {
+            let result = try await AfterSalesService.process(
+                orderId: invoiceId, itemId: selectedItem.itemId,
+                type: "repair", issue: problemDescription, partsCost: totalAmount)
+            if result.success {
+                resultWasSuccess = true
+                resultTitle = "Repair Logged"
+                let cost = result.serviceCost ?? totalAmount
+                resultMessage = cost <= 0
+                    ? "Repair for \(selectedItem.name) has been logged free of charge under warranty."
+                    : "Repair for \(selectedItem.name) has been logged. Amount to collect: \(String(format: "₹%.0f", cost))."
+            } else {
+                resultWasSuccess = false
+                resultTitle = "Couldn't Log Repair"
+                resultMessage = result.message ?? "Please try again."
+            }
+            showResult = true
+        } catch {
+            resultWasSuccess = false
+            resultTitle = "Something went wrong"
+            resultMessage = "Couldn't submit the repair request. Please try again."
+            showResult = true
+        }
     }
     
     // MARK: - Header
@@ -149,32 +298,45 @@ struct AfterSalesRepairFormView: View {
                 Text("Cost Breakdown")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(RSMSColors.primaryText)
-                
-                HStack {
-                    Text("Base Service Cost")
-                        .font(.system(size: 15))
-                        .foregroundColor(RSMSColors.secondaryText)
-                    Spacer()
-                    Text(String(format: "₹%.0f", serviceCost))
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(RSMSColors.primaryText)
-                }
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Additional Parts (₹)")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(RSMSColors.secondaryText)
-                    
-                    TextField("Enter amount", text: $additionalAmountText)
-                        .focused($isInputFocused)
-                        .keyboardType(.decimalPad)
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(RSMSColors.inputBorder, lineWidth: 1)
-                        )
+
+                if inWarranty {
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark.seal.fill").foregroundColor(RSMSColors.success)
+                        Text("Covered under warranty — no charge")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(RSMSColors.success)
+                        Spacer()
+                    }
+                    .padding(12)
+                    .background(RSMSColors.success.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                } else {
+                    HStack {
+                        Text("Base Service Cost")
+                            .font(.system(size: 15))
+                            .foregroundColor(RSMSColors.secondaryText)
+                        Spacer()
+                        Text(String(format: "₹%.0f", serviceCost))
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(RSMSColors.primaryText)
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Additional Parts (₹)")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(RSMSColors.secondaryText)
+
+                        TextField("Enter amount", text: $additionalAmountText)
+                            .focused($isInputFocused)
+                            .keyboardType(.decimalPad)
+                            .padding()
+                            .background(Color.white)
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(RSMSColors.inputBorder, lineWidth: 1)
+                            )
+                    }
                 }
             }
             
@@ -189,7 +351,7 @@ struct AfterSalesRepairFormView: View {
                 
                 Spacer()
                 
-                Text(String(format: "₹%.0f", totalAmount))
+                Text(inWarranty ? "FREE" : String(format: "₹%.0f", totalAmount))
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(RSMSColors.burgundy)
             }
@@ -202,7 +364,7 @@ struct AfterSalesRepairFormView: View {
         VStack {
             Button {
                 isInputFocused = false
-                print("Repair form submitted for item \(selectedItem.id). Problem: \(problemDescription). Total Cost: \(totalAmount)")
+                Task { await submitRepair() }
             } label: {
                 Text("Submit Repair Request")
                     .font(.system(size: 18, weight: .bold))

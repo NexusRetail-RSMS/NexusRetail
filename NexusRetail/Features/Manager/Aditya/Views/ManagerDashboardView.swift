@@ -56,6 +56,10 @@ struct ManagerDashboardView: View {
             await viewModel.fetchData(storeID: sessionStore.currentUser?.storeID)
             await viewModel.fetchRevenueData(storeID: sessionStore.currentUser?.storeID)
             await notificationVM.load(storeID: sessionStore.currentUser?.storeID)
+            // Start real-time listener for instant low-stock notifications
+            Task {
+                await notificationVM.startListening(storeID: sessionStore.currentUser?.storeID)
+            }
         }
         .onChange(of: viewModel.topProductsTimeRange) { _, _ in
             Task { await viewModel.fetchData(storeID: sessionStore.currentUser?.storeID) }
@@ -219,7 +223,7 @@ struct ManagerDashboardView: View {
                         ManagerReturnsView()
                     }
                 }
-                .navigationTitle("Returns")
+                .navigationTitle("After Service")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .navigationBarLeading) {
@@ -295,7 +299,7 @@ struct ManagerDashboardView: View {
                 .contentShape(Rectangle())
                 .onTapGesture { isShowingLowStockDetail = true }
             
-            KPICardView(title: "Today Returns", value: viewModel.todayReturns, icon: "arrow.uturn.left", trend: nil, color: Color(hex: "D4A017"))
+            KPICardView(title: "After Service", value: viewModel.afterServiceCount, icon: "wrench.and.screwdriver.fill", trend: nil, color: Color(hex: "D4A017"))
                 .contentShape(Rectangle())
                 .onTapGesture { isShowingReturnsDetail = true }
         }

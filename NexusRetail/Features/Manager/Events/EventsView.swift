@@ -5,8 +5,9 @@ struct EventsView: View {
     @State private var showingCreateEvent = false
     @State private var searchText = ""
     @State private var selectedFilter: EventFilter = .all
+    @Environment(SessionStore.self) private var sessionStore
     
-    private var filteredEvents: [MockEvent] {
+    private var filteredEvents: [SupabaseEvent] {
         // Sort all events by date and time (earliest first)
         let sorted = viewModel.events.sorted { 
             if $0.eventDate == $1.eventDate {
@@ -38,8 +39,8 @@ struct EventsView: View {
         if !searchText.isEmpty {
             orderedEvents = orderedEvents.filter { event in
                 event.title.localizedCaseInsensitiveContains(searchText) ||
-                event.eventType.rawValue.localizedCaseInsensitiveContains(searchText) ||
-                event.venue.localizedCaseInsensitiveContains(searchText)
+                (event.eventType ?? "").localizedCaseInsensitiveContains(searchText) ||
+                (event.venueStr).localizedCaseInsensitiveContains(searchText)
             }
         }
         
@@ -60,17 +61,17 @@ struct EventsView: View {
                         .padding(.horizontal, RSMSSpacing.lg)
                         .padding(.bottom, 16)
                     
-                    ScrollView {
-                        VStack(spacing: 24) {
-                            if filteredEvents.isEmpty {
-                                if searchText.isEmpty {
-                                    emptyState
-                                        .padding(.top, 60)
-                                } else {
-                                    emptySearchState
-                                        .padding(.top, 60)
-                                }
-                            } else {
+                    if filteredEvents.isEmpty {
+                        Spacer()
+                        if searchText.isEmpty {
+                            emptyState
+                        } else {
+                            emptySearchState
+                        }
+                        Spacer()
+                    } else {
+                        ScrollView {
+                            VStack(spacing: 24) {
                                 // Event List
                                 LazyVStack(spacing: 16) {
                                     ForEach(Array(filteredEvents.enumerated()), id: \.element.id) { index, event in
@@ -84,14 +85,19 @@ struct EventsView: View {
                                 }
                                 .padding(.horizontal, RSMSSpacing.lg)
                             }
+                            .padding(.bottom, 32)
                         }
-                        .padding(.bottom, 32)
                     }
                 }
             }
-            .toolbar(.hidden, for: .navigationBar)
+            .navigationBarHidden(true)
             .sheet(isPresented: $showingCreateEvent) {
                 CreateEventView(viewModel: viewModel)
+            }
+            .task {
+                let storeID = sessionStore.currentUser?.storeID
+                await viewModel.fetchEvents(for: storeID)
+                await viewModel.fetchCustomers(for: storeID)
             }
         }
     }
@@ -162,26 +168,6 @@ struct EventsView: View {
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(RSMSColors.primaryText)
-            
-            Text("Create your first store event to invite customers and showcase new products.")
-                .font(.body)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
-            
-            Button {
-                showingCreateEvent = true
-            } label: {
-                Text("Create Event")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(height: 50)
-                    .frame(maxWidth: .infinity)
-                    .background(RSMSColors.burgundy)
-                    .cornerRadius(25)
-            }
-            .padding(.horizontal, 40)
-            .padding(.top, 16)
         }
     }
     
@@ -209,7 +195,7 @@ struct EventsView: View {
 // MARK: - Event Card
 
 struct EventCard: View {
-    let event: MockEvent
+    let event: SupabaseEvent
     var isNextEvent: Bool = false
     
     private var statusColor: Color {
@@ -230,7 +216,7 @@ struct EventCard: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
         let start = formatter.string(from: event.startTime)
-        let end = formatter.string(from: event.endTime)
+        let end = formatter.string(from: event.endTime ?? event.startTime)
         return "\(start) – \(end)"
     }
     
@@ -240,12 +226,16 @@ struct EventCard: View {
             ZStack(alignment: .topLeading) {
                 ZStack(alignment: .bottomLeading) {
                     Group {
-                        if let imageData = event.bannerImageData, let uiImage = UIImage(data: imageData) {
-                            Image(uiImage: uiImage)
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(height: 120)
-                                .clipped()
+                        if let urlString = event.bannerImageURL, let url = URL(string: urlString) {
+                            AsyncImage(url: url) { image in
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                            } placeholder: {
+                                Color.gray.opacity(0.1)
+                            }
+                            .frame(height: 120)
+                            .clipped()
                         } else {
                             Rectangle()
                                 .fill(Color.gray.opacity(0.1))
@@ -291,7 +281,7 @@ struct EventCard: View {
                         .foregroundColor(RSMSColors.primaryText)
                         .lineLimit(1)
                     
-                    Text(event.eventType.rawValue)
+                    Text(event.eventType ?? "Custom")
                         .font(.system(size: 14))
                         .foregroundColor(RSMSColors.burgundy)
                 }
@@ -305,7 +295,7 @@ struct EventCard: View {
                 .foregroundColor(.secondary)
                 
                 // Venue
-                Label(event.venue, systemImage: "mappin.and.ellipse")
+                Label(event.venueStr, systemImage: "mappin.and.ellipse")
                     .font(.system(size: 13))
                     .foregroundColor(.secondary)
                     .lineLimit(1)

@@ -4,6 +4,7 @@ struct LoginView: View {
     @State private var viewModel: LoginViewModel
     @Environment(SessionStore.self) private var sessionStore
     @State private var showPassword = false
+    @State private var showForgotPassword = false
 
     @State private var didAppear = false
     @State private var errorShake = false
@@ -53,6 +54,9 @@ struct LoginView: View {
         }
         .ignoresSafeArea(edges: .bottom)
         .navigationBarBackButtonHidden(true)
+        .sheet(isPresented: $showForgotPassword) {
+            ForgotPasswordView()
+        }
         .onAppear {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.82).delay(0.05)) {
                 didAppear = true
@@ -89,13 +93,83 @@ struct LoginView: View {
 
     private var card: some View {
         VStack(spacing: 0) {
-            switch viewModel.loginState {
-            case .credentials:
-                credentialsForm
-            case .mfaSetup(_, let uri, let secret):
-                mfaSetupForm(uri: uri, secret: secret)
-            case .mfaVerify:
-                mfaVerifyForm
+            VStack(spacing: RSMSSpacing.xl) {
+                VStack(alignment: .leading, spacing: RSMSSpacing.xs) {
+                    Text("Welcome")
+                        .font(RSMSFonts.largeTitle)
+                        .fontWeight(.heavy)
+                        .tracking(-0.4)
+                        .foregroundColor(RSMSColors.primaryText)
+
+                    Text("Sign in to continue to your account")
+                        .font(RSMSFonts.subheadline)
+                        .foregroundColor(RSMSColors.secondaryText.opacity(0.85))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, RSMSSpacing.sm)
+
+                VStack(spacing: RSMSSpacing.lg) {
+                    PremiumField(
+                        icon: "envelope.fill",
+                        isFocused: focusedField == .email
+                    ) {
+                        TextField("Email or Username", text: $viewModel.email)
+                            .keyboardType(.emailAddress)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .textContentType(.username)
+                            .font(RSMSFonts.body)
+                            .focused($focusedField, equals: .email)
+                            .accessibilityLabel("Email address or username")
+                    }
+
+                    PremiumField(
+                        icon: "lock.fill",
+                        isFocused: focusedField == .password
+                    ) {
+                        HStack(spacing: RSMSSpacing.sm) {
+                            Group {
+                                if showPassword {
+                                    TextField("Password", text: $viewModel.password)
+                                        .textContentType(.password)
+                                } else {
+                                    SecureField("Password", text: $viewModel.password)
+                                        .textContentType(.password)
+                                }
+                            }
+                            .font(RSMSFonts.body)
+                            .focused($focusedField, equals: .password)
+                            .accessibilityLabel("Password")
+
+                            Button {
+                                withAnimation(.easeOut(duration: 0.15)) {
+                                    showPassword.toggle()
+                                }
+                            } label: {
+                                Image(systemName: showPassword ? "eye.slash.fill" : "eye.fill")
+                                    .foregroundColor(RSMSColors.secondaryText)
+                                    .imageScale(.medium)
+                                    .frame(width: 24, height: 24)
+                                    .contentTransition(.symbolEffect(.replace))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+
+                    HStack {
+                        Spacer()
+                        Button(action: { showForgotPassword = true }) {
+                            Text("Forgot password?")
+                                .font(RSMSFonts.subheadline)
+                                .foregroundColor(RSMSColors.burgundy)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
+                errorLabel
+
+                signInButton
             }
         }
         .frame(maxWidth: 480)
