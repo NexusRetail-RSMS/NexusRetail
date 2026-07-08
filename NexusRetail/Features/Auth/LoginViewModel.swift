@@ -37,7 +37,6 @@ class LoginViewModel {
         
         do {
             try await sessionStore.signIn(email: trimmedEmail, password: trimmedPassword)
-            // On complete success, the SessionStore updates and RootView routes automatically.
         } catch {
             errorMessage = error.localizedDescription
         }

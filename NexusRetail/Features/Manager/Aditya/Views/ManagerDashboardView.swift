@@ -121,6 +121,7 @@ struct ManagerDashboardView: View {
                                 .cornerRadius(16)
                                 .foregroundColor(RSMSColors.primaryText)
                             }
+                            .accessibilityLabel("Select Sales Report Time Range")
                         }
                         .padding(.horizontal, RSMSSpacing.lg)
                         .padding(.top, RSMSSpacing.lg)
@@ -244,6 +245,7 @@ struct ManagerDashboardView: View {
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .foregroundColor(RSMSColors.primaryText)
+                .accessibilityAddTraits(.isHeader)
 
             Spacer()
 
@@ -290,18 +292,22 @@ struct ManagerDashboardView: View {
             KPICardView(title: "Today's Revenue", value: viewModel.todayRevenue, icon: "indianrupeesign", trend: nil, color: Color(hex: "2A9D8F"))
                 .contentShape(Rectangle())
                 .onTapGesture { isShowingRevenueDetail = true }
+                .accessibilityHint("Double tap to view revenue details")
             
             KPICardView(title: "Pending Requests", value: viewModel.pendingRequests, icon: "doc.text.fill", trend: nil, color: RSMSColors.burgundy)
                 .contentShape(Rectangle())
                 .onTapGesture { isShowingRequestsDetail = true }
+                .accessibilityHint("Double tap to view pending requests")
             
             KPICardView(title: "Low Stock Items", value: viewModel.lowStockItems, icon: "exclamationmark.triangle.fill", trend: nil, color: Color(hex: "E76F51"))
                 .contentShape(Rectangle())
                 .onTapGesture { isShowingLowStockDetail = true }
+                .accessibilityHint("Double tap to view low stock details")
             
             KPICardView(title: "After Service", value: viewModel.afterServiceCount, icon: "wrench.and.screwdriver.fill", trend: nil, color: Color(hex: "D4A017"))
                 .contentShape(Rectangle())
                 .onTapGesture { isShowingReturnsDetail = true }
+                .accessibilityHint("Double tap to view after service details")
         }
     }
     

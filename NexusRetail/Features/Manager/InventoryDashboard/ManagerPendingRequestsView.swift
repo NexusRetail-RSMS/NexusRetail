@@ -41,6 +41,7 @@ struct ManagerPendingRequestsView: View {
                             }
                         }
                         .pickerStyle(.segmented)
+                        .accessibilityLabel("Filter Requests")
                         .padding(.horizontal, RSMSSpacing.lg)
                         .padding(.bottom, 4)
                         

@@ -47,6 +47,7 @@ struct StaffView: View {
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundColor(RSMSColors.primaryText)
+                    .accessibilityAddTraits(.isHeader)
                 
                 Spacer()
                 
@@ -61,6 +62,7 @@ struct StaffView: View {
                         .clipShape(Circle())
                 }
                 .accessibilityLabel("Add new employee")
+                .accessibilityHint("Double tap to add a new employee")
             }
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.top, RSMSSpacing.sm)
@@ -78,6 +80,7 @@ struct StaffView: View {
                 }
             }
             .pickerStyle(.segmented)
+            .accessibilityLabel("Filter by Role")
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.bottom, RSMSSpacing.md)
             
@@ -89,6 +92,7 @@ struct StaffView: View {
                         Text("Team Overview")
                             .font(.system(size: 20, weight: .semibold))
                             .foregroundColor(RSMSColors.primaryText)
+                            .accessibilityAddTraits(.isHeader)
                         
                         HStack(spacing: 0) {
                             // Left column
@@ -144,6 +148,8 @@ struct StaffView: View {
                             RoundedRectangle(cornerRadius: RSMSRadius.extraLarge)
                                 .stroke(RSMSColors.cardBorder, lineWidth: 1)
                         )
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("Team metrics: \(currentRoleEmployees.count) total employees, \(formattedTotalProducts) \(selectedRoleFilter == .afterSales ? "product aftercare" : "products sold")")
                     }
                     .padding(.bottom, RSMSSpacing.xs)
                     

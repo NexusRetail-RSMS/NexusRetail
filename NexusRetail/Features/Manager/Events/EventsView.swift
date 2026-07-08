@@ -110,6 +110,7 @@ struct EventsView: View {
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .foregroundColor(RSMSColors.primaryText)
+                .accessibilityAddTraits(.isHeader)
             
             Spacer()
             
@@ -123,6 +124,8 @@ struct EventsView: View {
                     .background(RSMSColors.burgundy.opacity(0.1))
                     .clipShape(Circle())
             }
+            .accessibilityLabel("Create Event")
+            .accessibilityHint("Double tap to create a new event")
         }
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.top, RSMSSpacing.sm)
@@ -152,6 +155,7 @@ struct EventsView: View {
                         .foregroundColor(RSMSColors.burgundy)
                 }
             }
+            .accessibilityLabel("Filter events")
         }
     }
     
@@ -247,6 +251,7 @@ struct EventCard: View {
                                 )
                         }
                     }
+                    .accessibilityHidden(true)
                     
                     // Status Badge
                     Text(event.status.rawValue)
@@ -342,6 +347,7 @@ struct EventCard: View {
             x: 0,
             y: isNextEvent ? 4 : 2
         )
+        .accessibilityElement(children: .combine)
         .animation(.easeInOut, value: isNextEvent)
     }
 }

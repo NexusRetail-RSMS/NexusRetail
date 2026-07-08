@@ -135,6 +135,8 @@ struct StoreFormView: View {
                                     RoundedRectangle(cornerRadius: 16)
                                         .stroke(RSMSColors.cardBorder, lineWidth: 1)
                                 )
+                                .accessibilityLabel("Store Location Map")
+                                .accessibilityHint("Double tap to drop a pin on the selected location")
                             }
 
                             HStack(spacing: 6) {
@@ -170,8 +172,10 @@ struct StoreFormView: View {
                                 }
                                 Spacer()
                             }
-                            .padding(.horizontal, RSMSSpacing.lg)
                             .padding(.vertical, RSMSSpacing.md)
+                            .accessibilityElement(children: .combine)
+                            .accessibilityLabel("Manager, \(selectedManager?.name ?? "None assigned")")
+                            .accessibilityHint("Double tap to change manager")
 
 
                         }
@@ -201,6 +205,7 @@ struct StoreFormView: View {
                             RoundedRectangle(cornerRadius: RSMSRadius.large)
                                 .stroke(RSMSColors.error.opacity(0.2), lineWidth: 1)
                         )
+                        .accessibilityElement(children: .combine)
                     }
                 }
                 .padding(.horizontal, RSMSSpacing.lg)
@@ -220,6 +225,7 @@ struct StoreFormView: View {
                         .bold()
                         .tint(RSMSColors.burgundy)
                         .disabled(name.isEmpty || viewModel.isLoading)
+                        .accessibilityHint("Double tap to save store details")
                 }
             }
             .overlay {
@@ -235,9 +241,9 @@ struct StoreFormView: View {
                     .padding(24)
                     .background(
                         RoundedRectangle(cornerRadius: 18)
-                            .fill(Color(uiColor: .systemBackground))
                             .shadow(color: Color.black.opacity(0.15), radius: 20, x: 0, y: 10)
                     )
+                    .accessibilityLabel("Saving store details")
                 }
             }
             .onChange(of: selectedPhotoItem) { _, newItem in
@@ -299,6 +305,9 @@ struct StoreFormView: View {
                 RoundedRectangle(cornerRadius: 28)
                     .stroke(RSMSColors.cardBorder, lineWidth: 1)
             )
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Store Image")
+            .accessibilityHint("Double tap to update photo")
         }
         .buttonStyle(.plain)
     }
@@ -347,6 +356,7 @@ struct StoreFormView: View {
                 ))
                     .labelsHidden()
                     .tint(RSMSColors.burgundy)
+                    .accessibilityLabel("Store Active Status")
             }
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.vertical, RSMSSpacing.md)
@@ -489,6 +499,7 @@ private struct FormSectionCard<Content: View>: View {
                 Text(title)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(RSMSColors.primaryText)
+                    .accessibilityAddTraits(.isHeader)
                 Spacer()
             }
             .padding(.horizontal, RSMSSpacing.lg)
@@ -546,6 +557,7 @@ private struct PremiumTextField: View {
                 .foregroundColor(RSMSColors.primaryText)
                 .keyboardType(keyboardType)
                 .autocorrectionDisabled(keyboardType == .phonePad)
+                .accessibilityLabel(placeholder)
         }
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.vertical, RSMSSpacing.md)
@@ -634,6 +646,7 @@ private struct PremiumToggleRow: View {
             Toggle("", isOn: $isOn)
                 .labelsHidden()
                 .tint(RSMSColors.burgundy)
+                .accessibilityLabel(title)
         }
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.vertical, RSMSSpacing.md)

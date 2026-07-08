@@ -27,6 +27,7 @@ struct AdminTransfersView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+                .accessibilityLabel("Transfer Categories")
                 .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.bottom, RSMSSpacing.md)
 
@@ -59,6 +60,7 @@ struct AdminTransfersView: View {
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .foregroundColor(RSMSColors.primaryText)
+                .accessibilityAddTraits(.isHeader)
 
             Spacer()
 
@@ -214,9 +216,10 @@ struct SkeletonCardView: View {
         .background(
             RoundedRectangle(cornerRadius: 24)
                 .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
         )
         .opacity(opacity)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Loading request data")
         .onAppear {
             withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
                 opacity = 0.7
@@ -303,6 +306,7 @@ struct HistoryView: View {
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .foregroundColor(RSMSColors.primaryText)
+                .accessibilityAddTraits(.isHeader)
 
             Spacer()
 
