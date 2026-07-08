@@ -8,6 +8,7 @@ struct TransferRequestCard: View {
 
     @Environment(AdminTransfersViewModel.self) private var viewModel
     @State private var showingScheduleSheet = false
+    @State private var predictedSource: String? = nil
 
     private var productImageURL: URL? {
         request.products.imageUrl.flatMap { URL(string: $0) }
@@ -552,5 +553,4 @@ struct ApprovedRequestCard: View {
         }
     }
 }
-
 

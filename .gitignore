@@ -85,3 +85,5 @@ Config.xcconfig
 
 skills-lock.json
 docs
+*.py
+translate_xcstrings.py

@@ -249,7 +249,7 @@ final class ProductCatalogueViewModel: ObservableObject {
             // Fallback if the RPC fails entirely
             let displayFormatter = DateFormatter()
             displayFormatter.dateStyle = .medium
-            let fallbackDate = displayFormatter.string(from: Date())
+            _ = displayFormatter.string(from: Date())
             
             if self.trendingProducts.isEmpty && !self.allProducts.isEmpty {
                 self.trendingProducts = self.allProducts.prefix(4).map { match in

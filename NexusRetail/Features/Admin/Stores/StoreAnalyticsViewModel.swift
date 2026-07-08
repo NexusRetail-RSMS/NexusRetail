@@ -68,7 +68,7 @@ class StoreAnalyticsViewModel {
 
     private var filteredOrders: [StoreOrder] {
         let cal = Calendar.current
-        let now = Date()
+        _ = Date()
 
         switch calendarRange {
         case .weekly(let date):

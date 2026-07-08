@@ -40,6 +40,7 @@ class StaffViewModel {
     
     private let localCacheKey = "nexus_local_staff_cache_v2"
     private let deletedIDsKey = "nexus_local_staff_deleted_ids_v1"
+    private var lastStoreID: UUID?
 
     private var deletedIDs: Set<UUID> {
         get {
@@ -88,8 +89,10 @@ class StaffViewModel {
             
             let remoteEmployees = response.compactMap { stat -> DisplayEmployee? in
                 guard !deleted.contains(stat.id) else { return nil }
+                if let managerStore = currentStoreID, stat.storeId != managerStore { return nil }
+                guard let role = stat.role?.lowercased(), !role.contains("manager"), !role.contains("admin") else { return nil }
                 
-                let isAfterSales = stat.role == "after_sales" || stat.role?.lowercased().contains("after") == true
+                let isAfterSales = role == "after_sales" || role.contains("after")
                 let roleStr = isAfterSales ? "After Sales Associate" : "Sales Associate"
                 let revVal = stat.revenue ?? 0
                 let revStr = formatIndianCurrency(revVal)
@@ -179,7 +182,7 @@ class StaffViewModel {
 
         // Reload either way: on success this confirms removal, on failure it
         // brings the still-live employee back into the list.
-        await loadStaff()
+        await loadStaff(storeID: nil)
         return deleted
     }
     
