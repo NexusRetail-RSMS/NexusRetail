@@ -18,10 +18,12 @@ struct SalesDashboardView: View {
 
     // UI state
     @State private var isProfilePresented = false
+    @State private var isNotificationPresented = false
     @Namespace private var namespace
 
-    // ViewModel
+    // ViewModels
     @State private var vm = SalesDashboardViewModel()
+    @State private var notificationVM = SalesNotificationViewModel()
 
     // MARK: - Body
     var body: some View {
@@ -49,6 +51,9 @@ struct SalesDashboardView: View {
             }
             .navigationBarHidden(true)
             .sheet(isPresented: $isProfilePresented) { AdminProfileSheet() }
+            .sheet(isPresented: $isNotificationPresented) {
+                SalesNotificationListView(viewModel: notificationVM)
+            }
             .navigationDestination(for: POSFlowDestination.self) { dest in
                 switch dest {
                 case .newSale:       NewSaleView(path: $navigationPath)
@@ -79,11 +84,21 @@ struct SalesDashboardView: View {
         .environment(posViewModel)
         .refreshable {
             await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
+            await notificationVM.load(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
         }
-        .task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id) }
+        .task {
+            await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
+            await notificationVM.load(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
+            Task {
+                await notificationVM.startListening(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
+            }
+        }
         .onAppear {
             // Refresh data when view appears (e.g., after completing a sale)
-            Task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id) }
+            Task {
+                await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
+                await notificationVM.load(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
+            }
         }
         .onChange(of: navigationPath.count) { _, newCount in
             // Refresh when returning to dashboard (path becomes empty)
@@ -101,6 +116,11 @@ struct SalesDashboardView: View {
                 .fontWeight(.bold)
                 .foregroundColor(RSMSColors.primaryText)
             Spacer()
+            
+            NotificationBellView(unreadCount: notificationVM.unreadCount) {
+                isNotificationPresented = true
+            }
+            
             Button { isProfilePresented = true } label: {
                 ZStack {
                     Circle().fill(RSMSColors.burgundy).frame(width: 44, height: 44)
