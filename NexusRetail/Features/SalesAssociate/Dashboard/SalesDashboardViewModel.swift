@@ -14,7 +14,7 @@ import Observation
 final class SalesDashboardViewModel {
 
     // MARK: - UI State
-    var selectedPeriod: SalesPeriod      = .month
+    var selectedPeriod: SalesPeriod      = .allTime
     var selectedChartPeriod: ChartPeriod = .monthly
     var isStatsLoading                   = false
 
@@ -60,6 +60,8 @@ final class SalesDashboardViewModel {
                         return diff >= 0 && diff < 30
                     }
                     return false
+                case .allTime:
+                    return true
                 }
             }
             if selectedPeriod == .today { return order.createdAt.hasPrefix(todayPrefix) }
@@ -78,6 +80,7 @@ final class SalesDashboardViewModel {
         case .today: return "18% vs yesterday"
         case .week:  return "8% vs last week"
         case .month: return "12% vs last month"
+        case .allTime: return "Lifetime total"
         }
     }
 
