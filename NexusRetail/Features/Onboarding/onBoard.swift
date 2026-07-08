@@ -136,6 +136,8 @@ struct OnboardingView: View {
                     .animation(.spring(response: 0.4, dampingFraction: 0.75), value: currentIndex)
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Page \(currentIndex + 1) of \(pages.count)")
     }
 
     // MARK: - Next Button
@@ -160,6 +162,7 @@ struct OnboardingView: View {
             .shadow(color: RSMSColors.burgundy.opacity(0.25), radius: 10, x: 0, y: 5)
         }
         .buttonStyle(.plain)
+        .accessibilityHint(isLastPage ? "Double tap to finish onboarding" : "Double tap to go to next page")
     }
 
     // MARK: - Navigation
@@ -238,6 +241,7 @@ private struct OnboardingPageView: View {
                         )
                     )
             }
+            .accessibilityHidden(true)
 
             VStack(spacing: RSMSSpacing.sm) {
                 Text(data.title)
@@ -258,6 +262,7 @@ private struct OnboardingPageView: View {
             .opacity(textOpacity)
         }
         .padding(.horizontal, RSMSSpacing.lg)
+        .accessibilityElement(children: .combine)
     }
 }
 

@@ -46,9 +46,11 @@ struct OTPVerificationView: View {
                             .font(.system(size: 38))
                             .foregroundColor(RSMSColors.burgundy)
                     }
+                    .accessibilityHidden(true)
                     Text("Two-Factor Verification")
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(RSMSColors.primaryText)
+                        .accessibilityAddTraits(.isHeader)
                     Text("We sent a 6-digit code to\n\(maskedEmail)")
                         .font(.system(size: 14))
                         .foregroundColor(RSMSColors.secondaryText)
@@ -69,6 +71,8 @@ struct OTPVerificationView: View {
                         .background(RSMSColors.cardBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                         .overlay(RoundedRectangle(cornerRadius: 14).stroke(RSMSColors.cardBorder, lineWidth: 1))
+                        .accessibilityLabel("Verification code")
+                        .accessibilityHint("Enter the 6-digit code sent to your email")
                         .onChange(of: code) { _, newValue in
                             let filtered = String(newValue.filter(\.isNumber).prefix(codeLength))
                             if filtered != newValue { code = filtered }
@@ -79,10 +83,12 @@ struct OTPVerificationView: View {
                         Text(errorMessage)
                             .font(.system(size: 13))
                             .foregroundColor(RSMSColors.error)
+                            .onAppear { UIAccessibility.post(notification: .announcement, argument: "Error: \(errorMessage)") }
                     } else if !infoMessage.isEmpty {
                         Text(infoMessage)
                             .font(.system(size: 13))
                             .foregroundColor(RSMSColors.secondaryText)
+                            .onAppear { UIAccessibility.post(notification: .announcement, argument: infoMessage) }
                     }
 
                     if let debugCode {
@@ -109,6 +115,7 @@ struct OTPVerificationView: View {
                 }
                 .disabled(code.count != codeLength || isVerifying)
                 .padding(.horizontal, RSMSSpacing.lg)
+                .accessibilityValue(isVerifying ? "Verifying" : "")
 
                 // Resend
                 Button {
@@ -125,6 +132,7 @@ struct OTPVerificationView: View {
                 }
                 .font(.system(size: 14))
                 .disabled(resendCountdown > 0 || isSending)
+                .accessibilityHint(resendCountdown > 0 ? "Available in \(resendCountdown) seconds" : "Double tap to resend the code")
 
                 Spacer()
 
@@ -136,6 +144,7 @@ struct OTPVerificationView: View {
                         .foregroundColor(RSMSColors.secondaryText)
                 }
                 .padding(.bottom, 24)
+                .accessibilityHint("Double tap to cancel and sign out")
             }
         }
         .task {

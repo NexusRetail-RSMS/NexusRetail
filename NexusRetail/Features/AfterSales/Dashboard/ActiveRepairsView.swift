@@ -78,6 +78,7 @@ struct ActiveRepairsView: View {
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .foregroundColor(RSMSColors.primaryText)
+                .accessibilityAddTraits(.isHeader)
             Spacer()
         }
         .padding(.horizontal, RSMSSpacing.lg)

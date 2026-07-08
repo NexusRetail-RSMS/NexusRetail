@@ -87,10 +87,9 @@ struct EmployeeCard: View {
                     }
                 } else {
                     Image(systemName: "person.fill")
-                        .foregroundColor(RSMSColors.burgundy)
-                        .font(.system(size: 24))
                 }
             }
+            .accessibilityHidden(true)
 
             // Name & products sold with amount below
             VStack(alignment: .leading, spacing: 4) {
@@ -123,10 +122,13 @@ struct EmployeeCard: View {
         .cornerRadius(RSMSRadius.extraLarge)
         .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
         .overlay(
-            RoundedRectangle(cornerRadius: RSMSRadius.large)
+            RoundedRectangle(cornerRadius: RSMSRadius.extraLarge)
                 .stroke(RSMSColors.cardBorder, lineWidth: 1)
         )
         .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityAction(named: "Edit") { onEdit?() }
+        .accessibilityAction(named: "Delete") { onDelete?() }
         .contextMenu {
             Button {
                 onEdit?()

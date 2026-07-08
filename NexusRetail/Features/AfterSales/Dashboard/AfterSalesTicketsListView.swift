@@ -147,6 +147,7 @@ struct AfterSalesTicketsListView: View {
         .background(RSMSColors.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(RSMSColors.cardBorder, lineWidth: 1))
+        .accessibilityElement(children: .combine)
     }
 
     private func stageLabel(_ stage: String) -> String {
