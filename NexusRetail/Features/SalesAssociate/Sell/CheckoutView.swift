@@ -18,6 +18,7 @@ struct CheckoutView: View {
     }
     @State private var phoneText: String = ""
     @State private var newClientName: String = ""
+    @State private var newClientEmail: String = ""
     @State private var lookupState: LookupState = .idle
     @State private var isCreatingClient = false
 
@@ -116,6 +117,7 @@ struct CheckoutView: View {
             .ignoresSafeArea(edges: .top)
         }
         .navigationBarHidden(true)
+        .toolbar(.hidden, for: .tabBar)
     }
 
     // MARK: - Customer Link (phone-first lookup / quick-create)
@@ -182,6 +184,17 @@ struct CheckoutView: View {
                         .background(Color.white)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .overlay(RoundedRectangle(cornerRadius: 12).stroke(RSMSColors.inputBorder, lineWidth: 1))
+                        
+                    TextField("Email address", text: $newClientEmail)
+                        .textContentType(.emailAddress)
+                        .keyboardType(.emailAddress)
+                        .autocapitalization(.none)
+                        .autocorrectionDisabled()
+                        .font(.system(size: 15))
+                        .padding(12)
+                        .background(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(RSMSColors.inputBorder, lineWidth: 1))
 
                     Button { createAndAttach() } label: {
                         HStack {
@@ -224,6 +237,8 @@ struct CheckoutView: View {
 
     private var canCreateClient: Bool {
         !newClientName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !newClientEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        newClientEmail.contains("@") &&
         phoneText.filter(\.isNumber).count >= 6
     }
 
@@ -237,6 +252,7 @@ struct CheckoutView: View {
                 if let result {
                     viewModel.selectedClientId = result.id
                     viewModel.selectedClient = result.name
+                    viewModel.receiptSharedEmail = result.email ?? ""
                     lookupState = .found(name: result.name)
                 } else {
                     lookupState = .notFound
@@ -247,6 +263,7 @@ struct CheckoutView: View {
 
     private func createAndAttach() {
         let name = newClientName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let email = newClientEmail.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard canCreateClient else { return }
         isCreatingClient = true
         Task {
@@ -254,11 +271,13 @@ struct CheckoutView: View {
                 let newId = try await viewModel.createClient(
                     name: name,
                     phone: phoneText,
+                    email: email,
                     createdBy: sessionStore.currentUser?.id
                 )
                 await MainActor.run {
                     viewModel.selectedClientId = newId
                     viewModel.selectedClient = name
+                    viewModel.receiptSharedEmail = email
                     lookupState = .found(name: name)
                     isCreatingClient = false
                 }
@@ -272,6 +291,7 @@ struct CheckoutView: View {
     private func resetLookup() {
         phoneText = ""
         newClientName = ""
+        newClientEmail = ""
         lookupState = .idle
         clearAttachedClient()
     }
@@ -279,6 +299,7 @@ struct CheckoutView: View {
     private func clearAttachedClient() {
         viewModel.selectedClient = nil
         viewModel.selectedClientId = nil
+        viewModel.receiptSharedEmail = ""
     }
 
     private var customHeaderSection: some View {

@@ -28,6 +28,9 @@ class SellViewModel {
     
     // Unavailable product and alternative helper tracking
     var originalUnavailableProduct: POSProduct? = nil
+    
+    // Gateway retention
+    private var razorpayGateway: RazorpayGateway?
     var isAlternativeSuggested: Bool = false
     
     // Receipt digital share fields
@@ -103,7 +106,19 @@ class SellViewModel {
     }
     
     func processCheckout(storeID: UUID?, associateID: UUID?) async throws {
-        guard let storeID = storeID, let associateID = associateID else { return }
+        let params = try createCheckoutParams(storeID: storeID, associateID: associateID)
+        let orderIdResponse: UUID = try await SupabaseManager.shared.client
+            .rpc("process_pos_checkout", params: params)
+            .execute()
+            .value
+        self.lastOrderId = orderIdResponse
+        
+        // Refresh local cache of stock so UI updates immediately
+        await POSProductRepository.shared.refreshStockForStore(storeID: storeID)
+    }
+    
+    private func createCheckoutParams(storeID: UUID?, associateID: UUID?) throws -> CheckoutParams {
+        guard let storeID = storeID, let associateID = associateID else { throw NSError(domain: "Checkout", code: 1, userInfo: [NSLocalizedDescriptionKey: "Missing storeID or associateID"]) }
         
         // Group items by ID to handle quantities
         var itemCounts: [UUID: (POSProduct, Int)] = [:]
@@ -123,10 +138,9 @@ class SellViewModel {
             ]
         }
         
-        // Map the POS payment method to the DB payment_method enum ('razorpay' | 'card').
         let paymentMethodValue = selectedPaymentMethod == .razorpay ? "razorpay" : "card"
 
-        let params = CheckoutParams(
+        return CheckoutParams(
             p_store_id: storeID,
             p_associate_id: associateID,
             p_items: pItems,
@@ -134,12 +148,145 @@ class SellViewModel {
             p_client_id: selectedClientId,
             p_payment_method: paymentMethodValue
         )
+    }
+    
+    struct CreateOrderRequest: Encodable {
+        let action = "create_order"
+        let store_id: UUID
+        let amount: Double
+        let receipt: String
+    }
+    
+    struct VerifySignatureRequest: Encodable {
+        let action = "verify_signature"
+        let store_id: UUID
+        let razorpay_order_id: String
+        let razorpay_payment_id: String
+        let razorpay_signature: String
+        let checkout_params: CheckoutParams
+    }
+    
+    struct VerifyResponse: Decodable {
+        let success: Bool
+        let order_id: UUID?
+        let message: String?
+    }
+    
+    private func extractEdgeFunctionError(_ error: Error) -> Error {
+        if let functionsError = error as? FunctionsError,
+           case .httpError(let code, let data) = functionsError,
+           let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let errMsg = dict["error"] as? String {
+            return NSError(domain: "Checkout", code: code, userInfo: [NSLocalizedDescriptionKey: errMsg])
+        }
+        return error
+    }
+    
+    func processRazorpayCheckout(storeID: UUID?, associateID: UUID?) async throws {
+        guard let storeID = storeID else { throw NSError(domain: "Checkout", code: 1, userInfo: [NSLocalizedDescriptionKey: "Missing storeID"]) }
         
-        let orderIdResponse: UUID = try await SupabaseManager.shared.client
-            .rpc("process_pos_checkout", params: params)
-            .execute()
-            .value
-        self.lastOrderId = orderIdResponse
+        // 1. Create order on the backend edge function
+        let createRequest = CreateOrderRequest(store_id: storeID, amount: totalAmount, receipt: "rcpt_\(Int.random(in: 1000...9999))")
+        
+        struct CreateOrderResponse: Decodable {
+            let razorpay_order_id: String
+        }
+        
+        let createResponse: CreateOrderResponse
+        do {
+            createResponse = try await SupabaseManager.shared.client.functions.invoke(
+                "razorpay-checkout",
+                options: FunctionInvokeOptions(body: createRequest)
+            )
+        } catch {
+            throw extractEdgeFunctionError(error)
+        }
+        
+        let razorpayOrderID = createResponse.razorpay_order_id
+        
+        // 2. Fetch Razorpay Key configuration to open checkout
+        let configService = PaymentConfigurationService()
+        guard let terminal = try await configService.fetchConfiguration(storeID: storeID, provider: .razorpay),
+              let razorpayKey = terminal.credential1 else {
+            throw NSError(domain: "Checkout", code: 2, userInfo: [NSLocalizedDescriptionKey: "Razorpay configuration missing"])
+        }
+        
+        // 3. Open Razorpay Checkout via UI bridging
+        return try await withCheckedThrowingContinuation { continuation in
+            DispatchQueue.main.async {
+                let options: [String: Any] = [
+                    "amount": Int(self.totalAmount * 100),
+                    "currency": "INR",
+                    "description": "Nexus Retail Checkout",
+                    "order_id": razorpayOrderID,
+                    "name": "Nexus Retail",
+                    "prefill": [
+                        "contact": "9999999999",
+                        "email": "test@nexusretail.com"
+                    ]
+                ]
+                
+                let gateway = RazorpayGateway(keyID: razorpayKey.trimmingCharacters(in: .whitespacesAndNewlines))
+                self.razorpayGateway = gateway
+                
+                gateway.openCheckout(options: options) { [weak self] result in
+                    guard let self = self else { return }
+                    switch result {
+                    case .success(let data):
+                        guard let paymentId = data["razorpay_payment_id"] as? String,
+                              let signature = data["razorpay_signature"] as? String else {
+                            self.razorpayGateway = nil
+                            continuation.resume(throwing: NSError(domain: "Checkout", code: 3, userInfo: [NSLocalizedDescriptionKey: "Invalid response from Razorpay"]))
+                            return
+                        }
+                        
+                        Task {
+                            do {
+                                // 4. Verify signature on backend & create database order
+                                let checkoutParams = try self.createCheckoutParams(storeID: storeID, associateID: associateID)
+                                let verifyRequest = VerifySignatureRequest(
+                                    store_id: storeID,
+                                    razorpay_order_id: razorpayOrderID,
+                                    razorpay_payment_id: paymentId,
+                                    razorpay_signature: signature,
+                                    checkout_params: checkoutParams
+                                )
+                                
+                                let verifyResponse: VerifyResponse
+                                do {
+                                    verifyResponse = try await SupabaseManager.shared.client.functions.invoke(
+                                        "razorpay-checkout",
+                                        options: FunctionInvokeOptions(body: verifyRequest)
+                                    )
+                                } catch {
+                                    throw self.extractEdgeFunctionError(error)
+                                }
+                                
+                                if verifyResponse.success, let dbOrderId = verifyResponse.order_id {
+                                    self.lastOrderId = dbOrderId
+                                    self.razorpayGateway = nil
+                                    
+                                    // Refresh local cache of stock so UI updates immediately
+                                    await POSProductRepository.shared.refreshStockForStore(storeID: storeID)
+                                    
+                                    continuation.resume(returning: ())
+                                } else {
+                                    self.razorpayGateway = nil
+                                    continuation.resume(throwing: NSError(domain: "Checkout", code: 4, userInfo: [NSLocalizedDescriptionKey: "Signature verification failed"]))
+                                }
+                            } catch {
+                                self.razorpayGateway = nil
+                                continuation.resume(throwing: error)
+                            }
+                        }
+                        
+                    case .failure(let error):
+                        self.razorpayGateway = nil
+                        continuation.resume(throwing: error)
+                    }
+                }
+            }
+        }
     }
     
     // MARK: - Client lookup / quick-create (checkout customer linking)
@@ -154,19 +301,19 @@ class SellViewModel {
     /// Looks up a client by phone. Fetches all clients and matches in memory on
     /// normalized digits — fine for this dataset's size; if the client table
     /// grows large, replace with a server-side normalized-phone query/index.
-    func findClient(byPhone phone: String) async -> (id: UUID, name: String)? {
+    func findClient(byPhone phone: String) async -> (id: UUID, name: String, email: String?)? {
         let target = normalizedPhone(phone)
         guard target.count >= 6 else { return nil }
 
-        struct ClientRow: Decodable { let id: UUID; let name: String; let phone: String? }
+        struct ClientRow: Decodable { let id: UUID; let name: String; let phone: String?; let email: String? }
         do {
             let rows: [ClientRow] = try await SupabaseManager.shared.client
                 .from("client")
-                .select("id, name, phone")
+                .select("id, name, phone, email")
                 .execute()
                 .value
             if let match = rows.first(where: { normalizedPhone($0.phone ?? "") == target }) {
-                return (match.id, match.name)
+                return (match.id, match.name, match.email)
             }
             return nil
         } catch {
@@ -176,13 +323,13 @@ class SellViewModel {
     }
 
     /// Creates a new client with the given name/phone and returns its id.
-    func createClient(name: String, phone: String, createdBy: UUID?) async throws -> UUID {
-        struct InsertClient: Encodable { let name: String; let phone: String; let created_by: UUID? }
+    func createClient(name: String, phone: String, email: String, createdBy: UUID?) async throws -> UUID {
+        struct InsertClient: Encodable { let name: String; let phone: String; let email: String; let created_by: UUID? }
         struct InsertedClient: Decodable { let id: UUID }
 
         let inserted: InsertedClient = try await SupabaseManager.shared.client
             .from("client")
-            .insert(InsertClient(name: name, phone: phone, created_by: createdBy))
+            .insert(InsertClient(name: name, phone: phone, email: email, created_by: createdBy))
             .select("id")
             .single()
             .execute()
@@ -229,6 +376,86 @@ class SellViewModel {
             }
         } catch {
             print("SellViewModel: Error fetching orders: \(error)")
+        }
+    }
+
+    // MARK: - Email Receipt
+    func sendReceiptEmail(to email: String, orderId: String, storeName: String, cashierName: String, items: [(product: POSProduct, count: Int)], total: Double, subtotal: Double) async {
+        let resendApiKey = "re_3ot8yx3s_BDYPp6FcxJXDcFsSXU6bGW7t"
+        guard let url = URL(string: "https://api.resend.com/emails") else { return }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(resendApiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        var itemsHtml = ""
+        for item in items {
+            itemsHtml += """
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;">\(item.product.name)<br><small style="color: #666;">SKU: \(item.product.sku)</small></td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: center;">\(item.count)</td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">₹\(String(format: "%.0f", item.product.price * Double(item.count)))</td>
+            </tr>
+            """
+        }
+        
+        let htmlBody = """
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; padding: 24px;">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <h2 style="margin: 0; letter-spacing: 2px;">NEXUS RETAIL</h2>
+                <p style="margin: 4px 0 0; color: #666; font-size: 12px;">Official Store Receipt - \(storeName)</p>
+            </div>
+            
+            <div style="background: #f9f9f9; padding: 12px; border-radius: 6px; margin-bottom: 24px; font-size: 14px;">
+                <p style="margin: 4px 0;"><b>Order ID:</b> \(orderId)</p>
+                <p style="margin: 4px 0;"><b>Date:</b> \(Date().formatted(date: .long, time: .shortened))</p>
+                <p style="margin: 4px 0;"><b>Cashier:</b> \(cashierName)</p>
+            </div>
+            
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 14px;">
+                <thead>
+                    <tr style="background: #f0f0f0;">
+                        <th style="padding: 8px; text-align: left;">Item</th>
+                        <th style="padding: 8px; text-align: center;">Qty</th>
+                        <th style="padding: 8px; text-align: right;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    \(itemsHtml)
+                </tbody>
+            </table>
+            
+            <div style="text-align: right; font-size: 14px; margin-bottom: 32px;">
+                <p style="margin: 4px 0;">Subtotal: ₹\(String(format: "%.0f", subtotal))</p>
+                <p style="margin: 4px 0;">GST (18% incl.): ₹\(String(format: "%.0f", total * 0.18))</p>
+                <h3 style="margin: 8px 0 0; font-size: 18px;">Total Paid: ₹\(String(format: "%.0f", total))</h3>
+            </div>
+            
+            <div style="text-align: center; color: #888; font-size: 12px;">
+                <p>Thank you for shopping at Nexus Retail!</p>
+                <p>For returns & exchanges visit any store within 30 days.</p>
+            </div>
+        </div>
+        """
+        
+        let payload: [String: Any] = [
+            "from": "Nexus Retail <receipts@updates.nexusretail.tech>",
+            "to": [email],
+            "subject": "Your Receipt from Nexus Retail (\(orderId))",
+            "html": htmlBody
+        ]
+        
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: payload)
+            let (_, response) = try await URLSession.shared.data(for: request)
+            if let httpRes = response as? HTTPURLResponse, httpRes.statusCode >= 200, httpRes.statusCode < 300 {
+                print("SellViewModel: Successfully emailed receipt to \(email)")
+            } else {
+                print("SellViewModel: Failed to email receipt to \(email)")
+            }
+        } catch {
+            print("SellViewModel: Error emailing receipt: \(error)")
         }
     }
 
