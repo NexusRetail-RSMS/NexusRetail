@@ -7,6 +7,7 @@ import SwiftUI
 import CoreLocation
 
 struct TopLocationsDetailView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     
     let countryPolygons: [CountryPolygon]
@@ -29,14 +30,14 @@ struct TopLocationsDetailView: View {
                 Button(action: { dismiss() }) {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 28))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
                 
                 Spacer()
                 
                 Text("Top Customer Locations")
                     .font(RSMSFonts.headline)
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                 
                 Spacer()
                 
@@ -44,7 +45,7 @@ struct TopLocationsDetailView: View {
                 Color.clear.frame(width: 28, height: 28)
             }
             .padding()
-            .background(RSMSColors.background)
+            .background(theme.background)
             
             ScrollView {
                 VStack(spacing: RSMSSpacing.xl) {
@@ -112,7 +113,7 @@ struct TopLocationsDetailView: View {
                         VStack(spacing: RSMSSpacing.sm) {
                             Text(selected)
                                 .font(RSMSFonts.headline)
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                             
                             Text("₹\(shortCurrency(data.revenue)) Revenue")
                                 .font(.system(size: 32, weight: .bold))
@@ -123,15 +124,15 @@ struct TopLocationsDetailView: View {
                         VStack(spacing: RSMSSpacing.sm) {
                             Text("Worldwide")
                                 .font(RSMSFonts.headline)
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                             
                             Text("₹\(shortCurrency(total)) Revenue")
                                 .font(.system(size: 32, weight: .bold))
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                             
                             Text("Tap any highlighted region for details")
                                 .font(.system(size: 14))
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                         }
                     }
                     
@@ -146,7 +147,7 @@ struct TopLocationsDetailView: View {
                             HStack {
                                 Text("#\(index + 1)")
                                     .font(.system(size: 14, weight: .bold))
-                                    .foregroundColor(RSMSColors.secondaryText)
+                                    .foregroundColor(theme.secondaryText)
                                     .frame(width: 30, alignment: .leading)
                                 
                                 Circle()
@@ -155,16 +156,16 @@ struct TopLocationsDetailView: View {
                                 
                                 Text(item.country)
                                     .font(.system(size: 16))
-                                    .foregroundColor(RSMSColors.primaryText)
+                                    .foregroundColor(theme.primaryText)
                                 
                                 Spacer()
                                 
                                 Text("₹\(shortCurrency(item.revenue))")
                                     .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(RSMSColors.primaryText)
+                                    .foregroundColor(theme.primaryText)
                             }
                             .padding()
-                            .background(RSMSColors.cardBackground)
+                            .background(theme.cardBackground)
                             .cornerRadius(RSMSRadius.medium)
                             .shadow(color: Color.black.opacity(0.02), radius: 4, y: 2)
                         }
@@ -174,7 +175,7 @@ struct TopLocationsDetailView: View {
                 .padding(.vertical)
             }
         }
-        .background(RSMSColors.background)
+        .background(theme.background)
     }
     
     private func getFillColor(for countryName: String) -> Color {

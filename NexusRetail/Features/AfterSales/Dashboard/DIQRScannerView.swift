@@ -88,6 +88,7 @@ fileprivate struct QRScannerViewModifier: ViewModifier {
 }
 
 fileprivate struct DIQRScannerView: View {
+    @Environment(AppTheme.self) private var theme
     var showInvoiceOptions: Bool = false
     var onClose: () -> ()
     var onScan: (String) -> Void
@@ -120,7 +121,7 @@ fileprivate struct DIQRScannerView: View {
 
             ZStack(alignment: .top) {
                 Rectangle()
-                    .fill(RSMSColors.background)
+                    .fill(theme.background)
                     .contentShape(.rect)
                     .opacity(isExpanding ? 1 : 0)
                     .onTapGesture {
@@ -130,7 +131,7 @@ fileprivate struct DIQRScannerView: View {
 
                 // Scanner Animated View
                 if showContent {
-                    ConcentricRectangle(corners: .concentric(minimum: .fixed(30)), isUniform: true)
+                    RoundedRectangle(cornerRadius: 30, style: .continuous)
                         .fill(.black)
                         .overlay {
                             GeometryReader {
@@ -212,16 +213,16 @@ fileprivate struct DIQRScannerView: View {
             Text("OR ENTER MANUALLY")
                 .font(.system(size: 11, weight: .semibold, design: .monospaced))
                 .tracking(1)
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
 
             // Card 1 — Upload
             PhotosPicker(selection: $selectedPhoto, matching: .images) {
                 optionRow(icon: "photo", iconStyle: .filled, title: "Upload QR Code", subtitle: "From your photos", tag: "IMG")
             }
             .buttonStyle(.plain)
-            .background(RSMSColors.cardBackground)
+            .background(theme.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(RSMSColors.cardBorder, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(theme.cardBorder, lineWidth: 1))
             .shadow(color: Color.black.opacity(0.06), radius: 10, y: 3)
 
             // Card 2 — Manual entry (expands inline)
@@ -241,11 +242,11 @@ fileprivate struct DIQRScannerView: View {
                     HStack(spacing: 10) {
                         TextField("Invoice number", text: $invoiceNumber)
                             .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                             .focused($invoiceFocused)
                             .padding(.horizontal, 14).padding(.vertical, 12)
-                            .background(RSMSColors.background, in: RoundedRectangle(cornerRadius: 12))
-                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(RSMSColors.inputBorder, lineWidth: 1))
+                            .background(theme.background, in: RoundedRectangle(cornerRadius: 12))
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(theme.inputBorder, lineWidth: 1))
                             .onSubmit { submitManual() }
 
                         Button { submitManual() } label: {
@@ -253,7 +254,7 @@ fileprivate struct DIQRScannerView: View {
                                 .font(.system(size: 15, weight: .bold))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 18).padding(.vertical, 12)
-                                .background(invoiceNumber.isEmpty ? RSMSColors.secondaryText.opacity(0.4) : RSMSColors.burgundy, in: RoundedRectangle(cornerRadius: 12))
+                                .background(invoiceNumber.isEmpty ? theme.secondaryText.opacity(0.4) : theme.burgundy, in: RoundedRectangle(cornerRadius: 12))
                         }
                         .disabled(invoiceNumber.isEmpty)
                     }
@@ -261,15 +262,15 @@ fileprivate struct DIQRScannerView: View {
                     .transition(.opacity)
                 }
             }
-            .background(RSMSColors.cardBackground)
+            .background(theme.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(RSMSColors.cardBorder, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(theme.cardBorder, lineWidth: 1))
             .shadow(color: Color.black.opacity(0.06), radius: 10, y: 3)
 
             if let optionsMessage {
                 Text(optionsMessage)
                     .font(.system(size: 12))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             }
         }
     }
@@ -279,25 +280,25 @@ fileprivate struct DIQRScannerView: View {
             ZStack {
                 switch iconStyle {
                 case .filled:
-                    Circle().fill(RSMSColors.burgundy.opacity(0.12)).frame(width: 44, height: 44)
-                    Image(systemName: icon).font(.system(size: 17, weight: .semibold)).foregroundColor(RSMSColors.burgundy)
+                    Circle().fill(theme.burgundy.opacity(0.12)).frame(width: 44, height: 44)
+                    Image(systemName: icon).font(.system(size: 17, weight: .semibold)).foregroundColor(theme.burgundy)
                 case .outline:
-                    Circle().stroke(RSMSColors.cardBorder, lineWidth: 1.5).frame(width: 44, height: 44)
-                    Image(systemName: icon).font(.system(size: 17, weight: .semibold)).foregroundColor(RSMSColors.primaryText)
+                    Circle().stroke(theme.cardBorder, lineWidth: 1.5).frame(width: 44, height: 44)
+                    Image(systemName: icon).font(.system(size: 17, weight: .semibold)).foregroundColor(theme.primaryText)
                 }
             }
             VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.system(size: 17, weight: .bold)).foregroundColor(RSMSColors.primaryText)
-                Text(subtitle).font(.system(size: 14)).foregroundColor(RSMSColors.secondaryText)
+                Text(title).font(.system(size: 17, weight: .bold)).foregroundColor(theme.primaryText)
+                Text(subtitle).font(.system(size: 14)).foregroundColor(theme.secondaryText)
             }
             Spacer()
             Text(tag)
                 .font(.system(size: 12, weight: .semibold, design: .monospaced))
                 .tracking(0.5)
-                .foregroundColor(RSMSColors.secondaryText.opacity(0.6))
+                .foregroundColor(theme.secondaryText.opacity(0.6))
             Image(systemName: "chevron.right")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                .foregroundColor(theme.secondaryText.opacity(0.5))
                 .rotationEffect(.degrees(chevronRotation))
         }
         .padding(16)

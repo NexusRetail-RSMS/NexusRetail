@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct LoginView: View {
+    @Environment(AppTheme.self) private var theme
     @State private var viewModel: LoginViewModel
     @Environment(SessionStore.self) private var sessionStore
     @State private var showPassword = false
@@ -99,11 +100,11 @@ struct LoginView: View {
                         .font(RSMSFonts.largeTitle)
                         .fontWeight(.heavy)
                         .tracking(-0.4)
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
 
                     Text("Sign in to continue to your account")
                         .font(RSMSFonts.subheadline)
-                        .foregroundColor(RSMSColors.secondaryText.opacity(0.85))
+                        .foregroundColor(theme.secondaryText.opacity(0.85))
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, RSMSSpacing.sm)
@@ -147,7 +148,7 @@ struct LoginView: View {
                                 }
                             } label: {
                                 Image(systemName: showPassword ? "eye.slash.fill" : "eye.fill")
-                                    .foregroundColor(RSMSColors.secondaryText)
+                                    .foregroundColor(theme.secondaryText)
                                     .imageScale(.medium)
                                     .frame(width: 24, height: 24)
                                     .contentTransition(.symbolEffect(.replace))
@@ -161,7 +162,7 @@ struct LoginView: View {
                         Button(action: { showForgotPassword = true }) {
                             Text("Forgot password?")
                                 .font(RSMSFonts.subheadline)
-                                .foregroundColor(RSMSColors.burgundy)
+                                .foregroundColor(theme.burgundy)
                         }
                         .buttonStyle(.plain)
                     }
@@ -202,7 +203,7 @@ struct LoginView: View {
                 .inset(by: 0.5)
                 .stroke(Color.black.opacity(0.06), lineWidth: 0.5)
         )
-        .shadow(color: RSMSColors.burgundy.opacity(0.22), radius: 36, x: 0, y: 22)
+        .shadow(color: theme.burgundy.opacity(0.22), radius: 36, x: 0, y: 22)
         .shadow(color: Color.black.opacity(0.16), radius: 14, x: 0, y: 8)
         .padding(.horizontal, 7)
         .padding(.bottom, 7)
@@ -261,13 +262,13 @@ struct LoginView: View {
                     .font(RSMSFonts.subheadline)
                     .multilineTextAlignment(.leading)
             }
-            .foregroundStyle(RSMSColors.error)
+            .foregroundStyle(theme.error)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(RSMSColors.error.opacity(0.08))
+                    .fill(theme.error.opacity(0.08))
             )
             .accessibilityLabel("Error: \(viewModel.errorMessage)")
             .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity), removal: .opacity))
@@ -304,8 +305,8 @@ struct LoginView: View {
             .background(
                 LinearGradient(
                     colors: viewModel.isLoginButtonEnabled
-                        ? [RSMSColors.burgundy, RSMSColors.burgundy.opacity(0.82)]
-                        : [RSMSColors.disabled, RSMSColors.disabled],
+                        ? [theme.burgundy, theme.burgundy.opacity(0.82)]
+                        : [theme.disabled, theme.disabled],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
@@ -323,7 +324,7 @@ struct LoginView: View {
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .stroke(Color.white.opacity(0.18), lineWidth: 1)
             )
-            .shadow(color: viewModel.isLoginButtonEnabled ? RSMSColors.burgundy.opacity(0.35) : .clear, radius: 18, x: 0, y: 10)
+            .shadow(color: viewModel.isLoginButtonEnabled ? theme.burgundy.opacity(0.35) : .clear, radius: 18, x: 0, y: 10)
         }
         .buttonStyle(SpringPressStyle())
         .disabled(!viewModel.isLoginButtonEnabled)
@@ -334,6 +335,7 @@ struct LoginView: View {
 }
 
 private struct PremiumField<Content: View>: View {
+    @Environment(AppTheme.self) private var theme
     let icon: String
     let isFocused: Bool
     @ViewBuilder let content: () -> Content
@@ -346,12 +348,12 @@ private struct PremiumField<Content: View>: View {
         HStack(spacing: RSMSSpacing.sm) {
             ZStack {
                 Circle()
-                    .fill(RSMSColors.burgundy.opacity(0.10))
+                    .fill(theme.burgundy.opacity(0.10))
                     .frame(width: 30, height: 30)
 
                 Image(systemName: icon)
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
             }
 
             content()
@@ -362,7 +364,7 @@ private struct PremiumField<Content: View>: View {
         .overlay(
             fieldShape
                 .stroke(
-                    isFocused ? RSMSColors.burgundy.opacity(0.5) : Color.white.opacity(0.3),
+                    isFocused ? theme.burgundy.opacity(0.5) : Color.white.opacity(0.3),
                     lineWidth: isFocused ? 1.5 : 1
                 )
         )

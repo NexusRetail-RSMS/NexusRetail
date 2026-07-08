@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct EventDetailsView: View {
+    @Environment(AppTheme.self) private var theme
     @Bindable var viewModel: EventsViewModel
     let eventId: UUID
     @Environment(\.dismiss) private var dismiss
@@ -74,7 +75,7 @@ struct EventDetailsView: View {
                                     .foregroundColor(.white)
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 6)
-                                    .background(RSMSColors.burgundy)
+                                    .background(theme.burgundy)
                                     .cornerRadius(12)
                                 
                                 Text(event.status.rawValue)
@@ -92,7 +93,7 @@ struct EventDetailsView: View {
                         VStack(alignment: .leading, spacing: 20) {
                             Text(event.title)
                                 .font(.system(size: 28, weight: .bold))
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                             
                             HStack(alignment: .top, spacing: 16) {
                                 VStack(alignment: .leading, spacing: 12) {
@@ -108,7 +109,7 @@ struct EventDetailsView: View {
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text("About")
                                         .font(.headline)
-                                        .foregroundColor(RSMSColors.primaryText)
+                                        .foregroundColor(theme.primaryText)
                                     
                                     Text(desc)
                                         .font(.subheadline)
@@ -127,7 +128,7 @@ struct EventDetailsView: View {
                                 Text("Guests")
                                     .font(.title3)
                                     .fontWeight(.bold)
-                                    .foregroundColor(RSMSColors.primaryText)
+                                    .foregroundColor(theme.primaryText)
                             }
                                 
                             HStack(spacing: 12) {
@@ -147,7 +148,7 @@ struct EventDetailsView: View {
                                     .font(.system(size: 16, weight: .semibold))
                                     .frame(maxWidth: .infinity)
                                     .frame(height: 50)
-                                    .background(RSMSColors.burgundy)
+                                    .background(theme.burgundy)
                                     .foregroundColor(.white)
                                     .cornerRadius(25)
                             }
@@ -162,7 +163,7 @@ struct EventDetailsView: View {
                             Text("Guest List")
                                 .font(.title3)
                                 .fontWeight(.bold)
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                                 .padding(20)
                             
                             if event.eventGuests?.isEmpty ?? true {
@@ -204,7 +205,7 @@ struct EventDetailsView: View {
                         } label: {
                             Image(systemName: "ellipsis.circle")
                                 .font(.system(size: 18))
-                                .foregroundColor(RSMSColors.burgundy)
+                                .foregroundColor(theme.burgundy)
                         }
                     }
                 }
@@ -232,13 +233,14 @@ struct EventDetailsView: View {
                     .foregroundColor(.secondary)
             }
         }
-        .background(RSMSColors.background.ignoresSafeArea())
+        .background(theme.background.ignoresSafeArea())
     }
 }
 
 // MARK: - StatBox
 
 struct StatBox: View {
+    @Environment(AppTheme.self) private var theme
     let title: String
     let value: String
     let icon: String
@@ -247,12 +249,12 @@ struct StatBox: View {
         VStack(alignment: .leading, spacing: 8) {
             Image(systemName: icon)
                 .font(.system(size: 20))
-                .foregroundColor(RSMSColors.burgundy)
+                .foregroundColor(theme.burgundy)
                 .padding(.bottom, 4)
             
             Text(value)
                 .font(.system(size: 16, weight: .bold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
             
@@ -272,6 +274,7 @@ struct StatBox: View {
 // MARK: - GuestRow
 
 struct GuestRow: View {
+    @Environment(AppTheme.self) private var theme
     let guest: SupabaseClientModel
     let onRemove: () -> Void
     
@@ -279,18 +282,18 @@ struct GuestRow: View {
         HStack(spacing: 16) {
             ZStack {
                 Circle()
-                    .fill(RSMSColors.burgundy.opacity(0.1))
+                    .fill(theme.burgundy.opacity(0.1))
                     .frame(width: 44, height: 44)
                 
                 Text(guest.avatarName)
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
             }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(guest.name ?? "Unknown")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                 
                 Text(guest.email ?? "No Email")
                     .font(.system(size: 13))
@@ -306,7 +309,7 @@ struct GuestRow: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis")
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondaryText)
                         .padding(.horizontal, 4)
                 }
             }

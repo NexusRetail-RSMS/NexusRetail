@@ -40,7 +40,7 @@ struct AfterSalesTabView: View {
                 .tabItem { Label("Repairs", systemImage: "wrench.and.screwdriver.fill") }
                 .tag(1)
             }
-            .tint(theme.isDarkMode ? RSMSColors.antiqueGold : theme.burgundy)
+            .tint(theme.isDarkMode ? theme.antiqueGold : theme.burgundy)
             .preferredColorScheme(theme.isDarkMode ? .dark : .light)
         }
         .environment(theme)

@@ -9,6 +9,7 @@ import PhotosUI
 // MARK: - Manager Detail View
 
 struct ManagerDetailView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     
     // We keep a local copy so edits reflect immediately
@@ -40,7 +41,7 @@ struct ManagerDetailView: View {
                     // Avatar
                     ZStack {
                         Circle()
-                            .fill(RSMSColors.burgundy.opacity(0.15))
+                            .fill(theme.burgundy.opacity(0.15))
                             .frame(width: 110, height: 110)
                         
                         if let urlString = manager.imageUrl, let url = URL(string: urlString) {
@@ -59,15 +60,15 @@ struct ManagerDetailView: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 58, height: 58)
-                                .foregroundColor(RSMSColors.burgundy)
+                                .foregroundColor(theme.burgundy)
                         }
                     }
-                    .shadow(color: RSMSColors.burgundy.opacity(0.15), radius: 10, x: 0, y: 4)
+                    .shadow(color: theme.burgundy.opacity(0.15), radius: 10, x: 0, y: 4)
                     
                     // Full name on one line
                     Text(manager.name)
                         .font(.system(size: 22, weight: .bold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 20)
@@ -78,13 +79,13 @@ struct ManagerDetailView: View {
             // MARK: - Contact Info
             Section(header: Text("Manager Information")
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
                 .textCase(.none)
             ) {
                 infoRow(icon: "person.badge.shield.checkmark.fill",
                         label: "Role",
                         value: "Manager",
-                        valueColor: RSMSColors.burgundy)
+                        valueColor: theme.burgundy)
                 
                 if !manager.phone.isEmpty {
                     infoRow(icon: "phone.fill",
@@ -102,13 +103,13 @@ struct ManagerDetailView: View {
             // MARK: - Store
             Section(header: Text("Store Information")
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
                 .textCase(.none)
             ) {
                 infoRow(icon: "building.2.fill",
                         label: "Store",
                         value: manager.storeName.isEmpty ? "Not Assigned" : manager.storeName,
-                        valueColor: manager.storeName.isEmpty ? RSMSColors.secondaryText : RSMSColors.primaryText)
+                        valueColor: manager.storeName.isEmpty ? theme.secondaryText : theme.primaryText)
                 
                 if !manager.address.isEmpty {
                     infoRow(icon: "location.fill",
@@ -121,7 +122,7 @@ struct ManagerDetailView: View {
                     infoRow(icon: "globe",
                             label: "Country",
                             value: manager.country,
-                            valueColor: RSMSColors.burgundy)
+                            valueColor: theme.burgundy)
                 }
             }
             
@@ -129,7 +130,7 @@ struct ManagerDetailView: View {
             if onResetPassword != nil {
                 Section(header: Text("Account")
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
                     .textCase(.none)
                 ) {
                     Button {
@@ -147,10 +148,10 @@ struct ManagerDetailView: View {
                         HStack {
                             Text("Reset Credentials")
                                 .font(RSMSFonts.body)
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                             Spacer()
                             Image(systemName: "key.fill")
-                                .foregroundColor(RSMSColors.burgundy)
+                                .foregroundColor(theme.burgundy)
                         }
                     }
                 }
@@ -174,7 +175,7 @@ struct ManagerDetailView: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
-        .background(RSMSColors.background.ignoresSafeArea())
+        .background(theme.background.ignoresSafeArea())
         .navigationBarBackButtonHidden(true)
         .toolbar(.visible, for: .navigationBar)
         .toolbar {
@@ -185,7 +186,7 @@ struct ManagerDetailView: View {
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                 }
             }
             
@@ -196,7 +197,7 @@ struct ManagerDetailView: View {
                 } label: {
                     Text("Edit")
                         .font(.system(.body, design: .default).weight(.semibold))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                 }
             }
         }
@@ -237,12 +238,12 @@ struct ManagerDetailView: View {
     ) -> some View {
         HStack(alignment: multiline ? .top : .center, spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(RSMSColors.burgundy)
+                .foregroundColor(theme.burgundy)
                 .frame(width: 20)
             
             Text(label)
                 .font(.system(size: 16, weight: .medium))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
             
             Spacer()
             
@@ -258,6 +259,7 @@ struct ManagerDetailView: View {
 // MARK: - Edit Manager Sheet
 
 struct EditManagerSheet: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     @Binding var manager: DisplayManager
     
@@ -322,9 +324,9 @@ struct EditManagerSheet: View {
                                                 PhotosPicker(selection: $photoPickerItem, matching: .images) {
                             ZStack {
                                 Circle()
-                                    .fill(RSMSColors.burgundy.opacity(0.15))
+                                    .fill(theme.burgundy.opacity(0.15))
                                     .frame(width: 110, height: 110)
-                                    .shadow(color: RSMSColors.burgundy.opacity(0.15), radius: 10, x: 0, y: 4)
+                                    .shadow(color: theme.burgundy.opacity(0.15), radius: 10, x: 0, y: 4)
                                 
                                 if let data = selectedImageData, let uiImage = UIImage(data: data) {
                                     Image(uiImage: uiImage)
@@ -348,7 +350,7 @@ struct EditManagerSheet: View {
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: 52, height: 52)
-                                        .foregroundColor(RSMSColors.burgundy)
+                                        .foregroundColor(theme.burgundy)
                                 }
                             }
                         }
@@ -358,7 +360,7 @@ struct EditManagerSheet: View {
                         PhotosPicker(selection: $photoPickerItem, matching: .images) {
                             Text(selectedImageData == nil ? "Add Photo" : "Change Photo")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                                 .padding(.horizontal, 22)
                                 .padding(.vertical, 8)
                                 .background(Color(.systemGray5))
@@ -386,14 +388,14 @@ struct EditManagerSheet: View {
                         .autocorrectionDisabled()
                     HStack {
                         Image(systemName: "phone.fill")
-                            .foregroundColor(RSMSColors.burgundy)
+                            .foregroundColor(theme.burgundy)
                             .frame(width: 20)
                         TextField("Phone", text: $phone)
                             .keyboardType(.phonePad)
                     }
                     HStack {
                         Image(systemName: "envelope.fill")
-                            .foregroundColor(RSMSColors.burgundy)
+                            .foregroundColor(theme.burgundy)
                             .frame(width: 20)
                         TextField("Email", text: $email)
                             .keyboardType(.emailAddress)
@@ -411,28 +413,28 @@ struct EditManagerSheet: View {
                     } label: {
                         HStack {
                             Image(systemName: "building.2.fill")
-                                .foregroundColor(RSMSColors.burgundy)
+                                .foregroundColor(theme.burgundy)
                                 .frame(width: 20)
                             Text("Store Name")
                         }
                     }
-                    .tint(RSMSColors.burgundy)
+                    .tint(theme.burgundy)
                     HStack(alignment: .top) {
                         Image(systemName: "location.fill")
-                            .foregroundColor(RSMSColors.burgundy)
+                            .foregroundColor(theme.burgundy)
                             .frame(width: 20)
                             .padding(.top, 8)
                         TextField("Store Address", text: $storeAddress, axis: .vertical)
                             .disabled(true)
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                     }
                     HStack {
                         Image(systemName: "globe")
-                            .foregroundColor(RSMSColors.burgundy)
+                            .foregroundColor(theme.burgundy)
                             .frame(width: 20)
                         TextField("Country", text: $selectedCountry)
                             .disabled(true)
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                     }
                 }
             }
@@ -443,7 +445,7 @@ struct EditManagerSheet: View {
                     Button { dismiss() } label: {
                         Image(systemName: "xmark")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -473,7 +475,7 @@ struct EditManagerSheet: View {
                         } label: {
                             Image(systemName: "checkmark")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(isFormValid ? RSMSColors.burgundy : Color.secondary)
+                                .foregroundColor(isFormValid ? theme.burgundy : Color.secondary)
                         }
                         .disabled(!isFormValid)
                     }

@@ -131,7 +131,7 @@ private struct PackItemRow: View {
     @ViewBuilder
     private var fallbackImage: some View {
         RoundedRectangle(cornerRadius: RSMSRadius.small)
-            .fill(RSMSColors.cream)
+            .fill(theme.cream)
             .frame(width: 60, height: 60)
             .overlay(
                 Image(systemName: "bag.fill")

@@ -14,11 +14,11 @@ enum ServicePriority: String, CaseIterable, Codable {
     var color: Color {
         switch self {
         case .high:
-            return RSMSColors.error
+            return AppTheme().error
         case .medium:
-            return RSMSColors.warning
+            return AppTheme().warning
         case .low:
-            return RSMSColors.success
+            return AppTheme().success
         }
     }
 }
@@ -32,13 +32,13 @@ enum ServiceStatus: String, CaseIterable, Codable {
     var color: Color {
         switch self {
         case .pending:
-            return RSMSColors.warning
+            return AppTheme().warning
         case .repair:
-            return RSMSColors.primaryText // Or another custom color
+            return AppTheme().primaryText // Or another custom color
         case .completed:
-            return RSMSColors.success
+            return AppTheme().success
         case .returned:
-            return RSMSColors.burgundy
+            return AppTheme().burgundy
         }
     }
 }

@@ -3,6 +3,7 @@ import MapKit
 import PhotosUI
 
 struct StoreFormView: View {
+    @Environment(AppTheme.self) private var theme
     @Bindable var viewModel: StoresViewModel
     @Environment(\.dismiss) private var dismiss
 
@@ -133,7 +134,7 @@ struct StoreFormView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 16))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 16)
-                                        .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                                        .stroke(theme.cardBorder, lineWidth: 1)
                                 )
                             }
 
@@ -143,7 +144,7 @@ struct StoreFormView: View {
                                 Text("Type an address above, or tap the map to drop a pin")
                                     .font(.system(size: 11.5))
                             }
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                         }
                         .padding(.horizontal, RSMSSpacing.lg)
                         .padding(.vertical, RSMSSpacing.md)
@@ -154,19 +155,19 @@ struct StoreFormView: View {
                             HStack(spacing: RSMSSpacing.md) {
                                 ZStack {
                                     Circle()
-                                        .fill(RSMSColors.burgundy.opacity(0.12))
+                                        .fill(theme.burgundy.opacity(0.12))
                                         .frame(width: 38, height: 38)
                                     Image(systemName: selectedManager == nil ? "person.badge.plus" : "person.fill")
                                         .font(.system(size: 15))
-                                        .foregroundColor(RSMSColors.burgundy)
+                                        .foregroundColor(theme.burgundy)
                                 }
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("Manager")
                                         .font(.system(size: 11.5, weight: .medium))
-                                        .foregroundColor(RSMSColors.secondaryText)
+                                        .foregroundColor(theme.secondaryText)
                                     Text(selectedManager?.name ?? "None assigned")
                                         .font(.system(size: 14.5, weight: .medium))
-                                        .foregroundColor(selectedManager == nil ? RSMSColors.secondaryText : RSMSColors.primaryText)
+                                        .foregroundColor(selectedManager == nil ? theme.secondaryText : theme.primaryText)
                                 }
                                 Spacer()
                             }
@@ -188,18 +189,18 @@ struct StoreFormView: View {
                     if let errorMessage = viewModel.errorMessage {
                         HStack(spacing: 10) {
                             Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundColor(RSMSColors.error)
+                                .foregroundColor(theme.error)
                             Text(errorMessage)
                                 .font(.system(size: 13, weight: .medium))
-                                .foregroundColor(RSMSColors.error)
+                                .foregroundColor(theme.error)
                         }
                         .padding(RSMSSpacing.lg)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(RSMSColors.error.opacity(0.08))
+                        .background(theme.error.opacity(0.08))
                         .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.large))
                         .overlay(
                             RoundedRectangle(cornerRadius: RSMSRadius.large)
-                                .stroke(RSMSColors.error.opacity(0.2), lineWidth: 1)
+                                .stroke(theme.error.opacity(0.2), lineWidth: 1)
                         )
                     }
                 }
@@ -207,18 +208,18 @@ struct StoreFormView: View {
                 .padding(.top, RSMSSpacing.lg)
                 .padding(.bottom, RSMSSpacing.xxxxl)
             }
-            .background(RSMSColors.background.ignoresSafeArea())
+            .background(theme.background.ignoresSafeArea())
             .navigationTitle(editingStore != nil ? "Edit Store" : "Add New Store")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }
-                        .tint(RSMSColors.burgundy)
+                        .tint(theme.burgundy)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Save") { save() }
                         .bold()
-                        .tint(RSMSColors.burgundy)
+                        .tint(theme.burgundy)
                         .disabled(name.isEmpty || viewModel.isLoading)
                 }
             }
@@ -227,10 +228,10 @@ struct StoreFormView: View {
                     Color.black.opacity(0.25).ignoresSafeArea()
                     VStack(spacing: 12) {
                         ProgressView()
-                            .tint(RSMSColors.burgundy)
+                            .tint(theme.burgundy)
                         Text("Saving…")
                             .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                     }
                     .padding(24)
                     .background(
@@ -297,7 +298,7 @@ struct StoreFormView: View {
             .clipShape(RoundedRectangle(cornerRadius: 28))
             .overlay(
                 RoundedRectangle(cornerRadius: 28)
-                    .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                    .stroke(theme.cardBorder, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -306,22 +307,22 @@ struct StoreFormView: View {
     private var imagePlaceholder: some View {
         ZStack {
             LinearGradient(
-                colors: [RSMSColors.burgundy.opacity(0.10), RSMSColors.cardBackground],
+                colors: [theme.burgundy.opacity(0.10), theme.cardBackground],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
             VStack(spacing: 8) {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy.opacity(0.12))
+                        .fill(theme.burgundy.opacity(0.12))
                         .frame(width: 56, height: 56)
                     Image(systemName: "building.2.fill")
                         .font(.system(size: 22))
-                        .foregroundStyle(RSMSColors.burgundy)
+                        .foregroundStyle(theme.burgundy)
                 }
                 Text("Store Image")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
             }
         }
     }
@@ -332,7 +333,7 @@ struct StoreFormView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Store is Active")
                         .font(.system(size: 14.5, weight: .medium))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                 }
                 Spacer()
                 Toggle("", isOn: Binding<Bool>(
@@ -346,7 +347,7 @@ struct StoreFormView: View {
                     }
                 ))
                     .labelsHidden()
-                    .tint(RSMSColors.burgundy)
+                    .tint(theme.burgundy)
             }
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.vertical, RSMSSpacing.md)
@@ -477,6 +478,7 @@ struct StoreFormView: View {
 }
 
 private struct FormSectionCard<Content: View>: View {
+    @Environment(AppTheme.self) private var theme
     let title: String
     @ViewBuilder let content: () -> Content
 
@@ -484,11 +486,11 @@ private struct FormSectionCard<Content: View>: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(RSMSColors.burgundy)
+                    .fill(theme.burgundy)
                     .frame(width: 3, height: 16)
                 Text(title)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                 Spacer()
             }
             .padding(.horizontal, RSMSSpacing.lg)
@@ -499,26 +501,28 @@ private struct FormSectionCard<Content: View>: View {
                 content()
             }
         }
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.large))
         .overlay(
             RoundedRectangle(cornerRadius: RSMSRadius.large)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 14, x: 0, y: 6)
     }
 }
 
 private struct FormDivider: View {
+    @Environment(AppTheme.self) private var theme
     var body: some View {
         Rectangle()
-            .fill(RSMSColors.divider)
+            .fill(theme.divider)
             .frame(height: 0.5)
             .padding(.leading, RSMSSpacing.lg + 38 + RSMSSpacing.md)
     }
 }
 
 private struct PremiumTextField: View {
+    @Environment(AppTheme.self) private var theme
     let icon: String
     let placeholder: String
     @Binding var text: String
@@ -530,7 +534,7 @@ private struct PremiumTextField: View {
                 RoundedRectangle(cornerRadius: 11)
                     .fill(
                         LinearGradient(
-                            colors: [RSMSColors.burgundy.opacity(0.12), RSMSColors.burgundy.opacity(0.04)],
+                            colors: [theme.burgundy.opacity(0.12), theme.burgundy.opacity(0.04)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -538,12 +542,12 @@ private struct PremiumTextField: View {
                     .frame(width: 38, height: 38)
                 Image(systemName: icon)
                     .font(.system(size: 15))
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
             }
 
             TextField(placeholder, text: $text)
                 .font(.system(size: 14.5, weight: .medium))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
                 .keyboardType(keyboardType)
                 .autocorrectionDisabled(keyboardType == .phonePad)
         }
@@ -553,6 +557,7 @@ private struct PremiumTextField: View {
 }
 
 private struct PremiumMenuRow: View {
+    @Environment(AppTheme.self) private var theme
     let icon: String
     let title: String
     let value: String
@@ -572,7 +577,7 @@ private struct PremiumMenuRow: View {
                     RoundedRectangle(cornerRadius: 11)
                         .fill(
                             LinearGradient(
-                                colors: [RSMSColors.burgundy.opacity(0.12), RSMSColors.burgundy.opacity(0.04)],
+                                colors: [theme.burgundy.opacity(0.12), theme.burgundy.opacity(0.04)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
@@ -580,31 +585,32 @@ private struct PremiumMenuRow: View {
                         .frame(width: 38, height: 38)
                     Image(systemName: icon)
                         .font(.system(size: 15))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.system(size: 11.5, weight: .medium))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                     Text(value)
                         .font(.system(size: 14.5, weight: .medium))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                 }
 
                 Spacer()
                 Image(systemName: "chevron.up.chevron.down")
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(RSMSColors.secondaryText.opacity(0.6))
+                    .foregroundColor(theme.secondaryText.opacity(0.6))
             }
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.vertical, RSMSSpacing.md)
         }
-        .tint(RSMSColors.primaryText)
+        .tint(theme.primaryText)
     }
 }
 
 private struct PremiumToggleRow: View {
+    @Environment(AppTheme.self) private var theme
     let icon: String
     let title: String
     @Binding var isOn: Bool
@@ -615,7 +621,7 @@ private struct PremiumToggleRow: View {
                 RoundedRectangle(cornerRadius: 11)
                     .fill(
                         LinearGradient(
-                            colors: [RSMSColors.burgundy.opacity(0.12), RSMSColors.burgundy.opacity(0.04)],
+                            colors: [theme.burgundy.opacity(0.12), theme.burgundy.opacity(0.04)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -623,17 +629,17 @@ private struct PremiumToggleRow: View {
                     .frame(width: 38, height: 38)
                 Image(systemName: icon)
                     .font(.system(size: 15))
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
             }
 
             Text(title)
                 .font(.system(size: 14.5, weight: .medium))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
 
             Spacer()
             Toggle("", isOn: $isOn)
                 .labelsHidden()
-                .tint(RSMSColors.burgundy)
+                .tint(theme.burgundy)
         }
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.vertical, RSMSSpacing.md)
@@ -641,6 +647,7 @@ private struct PremiumToggleRow: View {
 }
 
 private struct ManagerPickerSheet: View {
+    @Environment(AppTheme.self) private var theme
     let managers: [DisplayManager]
     @Binding var selectedManagerID: UUID?
     @Environment(\.dismiss) private var dismiss
@@ -662,32 +669,32 @@ private struct ManagerPickerSheet: View {
                         HStack(spacing: RSMSSpacing.md) {
                             ZStack {
                                 Circle()
-                                    .fill(RSMSColors.background)
+                                    .fill(theme.background)
                                     .frame(width: 44, height: 44)
                                     .overlay(
                                         Circle()
                                             .stroke(style: StrokeStyle(lineWidth: 1, dash: [4]))
-                                            .foregroundColor(RSMSColors.cardBorder)
+                                            .foregroundColor(theme.cardBorder)
                                     )
                                 Image(systemName: "xmark")
                                     .font(.system(size: 14))
-                                    .foregroundColor(RSMSColors.secondaryText)
+                                    .foregroundColor(theme.secondaryText)
                             }
                             Text("None")
                                 .font(.system(size: 14.5, weight: .medium))
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                             Spacer()
                             if selectedManagerID == nil {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(RSMSColors.burgundy)
+                                    .foregroundColor(theme.burgundy)
                             }
                         }
                         .padding(RSMSSpacing.md)
-                        .background(RSMSColors.cardBackground)
+                        .background(theme.cardBackground)
                         .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.large))
                         .overlay(
                             RoundedRectangle(cornerRadius: RSMSRadius.large)
-                                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                                .stroke(theme.cardBorder, lineWidth: 1)
                         )
                     }
                     .buttonStyle(.plain)
@@ -696,10 +703,10 @@ private struct ManagerPickerSheet: View {
                         VStack(spacing: 10) {
                             Image(systemName: "person.crop.circle.badge.questionmark")
                                 .font(.system(size: 34))
-                                .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                                .foregroundColor(theme.secondaryText.opacity(0.5))
                             Text("No available managers")
                                 .font(.system(size: 13.5, weight: .medium))
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                         }
                         .frame(maxWidth: .infinity, minHeight: 200)
                     } else {
@@ -711,7 +718,7 @@ private struct ManagerPickerSheet: View {
                                 HStack(spacing: RSMSSpacing.md) {
                                     ZStack {
                                         Circle()
-                                            .fill(RSMSColors.burgundy.opacity(0.1))
+                                            .fill(theme.burgundy.opacity(0.1))
                                             .frame(width: 44, height: 44)
                                         if let urlString = manager.imageUrl, let url = URL(string: urlString) {
                                             AsyncImage(url: url) { image in
@@ -722,39 +729,39 @@ private struct ManagerPickerSheet: View {
                                                     .clipShape(Circle())
                                             } placeholder: {
                                                 Image(systemName: "person.fill")
-                                                    .foregroundColor(RSMSColors.burgundy)
+                                                    .foregroundColor(theme.burgundy)
                                             }
                                         } else {
                                             Image(systemName: "person.fill")
-                                                .foregroundColor(RSMSColors.burgundy)
+                                                .foregroundColor(theme.burgundy)
                                         }
                                     }
 
                                     VStack(alignment: .leading, spacing: 3) {
                                         Text(manager.name)
                                             .font(.system(size: 14.5, weight: .medium))
-                                            .foregroundColor(RSMSColors.primaryText)
+                                            .foregroundColor(theme.primaryText)
                                         HStack(spacing: 4) {
                                             Text(flagEmoji(for: manager.country))
                                                 .font(.system(size: 12))
                                             Text(manager.country)
                                                 .font(.system(size: 12))
-                                                .foregroundColor(RSMSColors.secondaryText)
+                                                .foregroundColor(theme.secondaryText)
                                         }
                                     }
 
                                     Spacer()
                                     if selectedManagerID == manager.id {
                                         Image(systemName: "checkmark.circle.fill")
-                                            .foregroundColor(RSMSColors.burgundy)
+                                            .foregroundColor(theme.burgundy)
                                     }
                                 }
                                 .padding(RSMSSpacing.md)
-                                .background(RSMSColors.cardBackground)
+                                .background(theme.cardBackground)
                                 .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.large))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: RSMSRadius.large)
-                                        .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                                        .stroke(theme.cardBorder, lineWidth: 1)
                                 )
                             }
                             .buttonStyle(.plain)
@@ -763,14 +770,14 @@ private struct ManagerPickerSheet: View {
                 }
                 .padding(RSMSSpacing.lg)
             }
-            .background(RSMSColors.background.ignoresSafeArea())
+            .background(theme.background.ignoresSafeArea())
             .navigationTitle("Select Manager")
             .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search managers")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }
-                        .tint(RSMSColors.burgundy)
+                        .tint(theme.burgundy)
                 }
             }
         }

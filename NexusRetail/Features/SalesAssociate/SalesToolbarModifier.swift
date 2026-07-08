@@ -14,9 +14,9 @@ struct SalesToolbarModifier: ViewModifier {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { isProfilePresented = true } label: {
                         ZStack {
-                            Circle().fill(theme.isDarkMode ? Color(hex: "2C0000") : RSMSColors.burgundy).frame(width: 32, height: 32)
+                            Circle().fill(theme.headerBackground).frame(width: 32, height: 32)
                             Text(initials(for: sessionStore.currentUser?.name))
-                                .font(.system(size: 11, weight: .bold)).foregroundStyle(theme.isDarkMode ? RSMSColors.antiqueGold : .white)
+                                .font(.system(size: 11, weight: .bold)).foregroundStyle(.white)
                         }
                     }
                 }

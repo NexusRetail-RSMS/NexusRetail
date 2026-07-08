@@ -9,6 +9,7 @@
 import SwiftUI
 
 struct RequestStockSheet: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     let item: InventoryItemRow
     let storeID: UUID?
@@ -23,7 +24,7 @@ struct RequestStockSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                RSMSColors.background
+                theme.background
                     .ignoresSafeArea()
 
                 ScrollView {
@@ -39,7 +40,7 @@ struct RequestStockSheet: View {
                                 ZStack {
                                     Color.gray.opacity(0.08)
                                     Image(systemName: "shippingbox")
-                                        .foregroundColor(RSMSColors.secondaryText.opacity(0.4))
+                                        .foregroundColor(theme.secondaryText.opacity(0.4))
                                 }
                             }
                         }
@@ -52,10 +53,10 @@ struct RequestStockSheet: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(item.name)
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                             Text("\(item.skuCode) · \(item.category)")
                                 .font(.system(size: 13))
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                         }
 
                         Spacer()
@@ -69,7 +70,7 @@ struct RequestStockSheet: View {
                         HStack(spacing: 8) {
                             Text("Quantity")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
 
                         }
 
@@ -77,7 +78,7 @@ struct RequestStockSheet: View {
                         TextField("", value: $quantity, format: .number)
                             .keyboardType(.numberPad)
                             .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                             .multilineTextAlignment(.center)
                             .frame(width: 50)
                         Stepper(
@@ -86,7 +87,7 @@ struct RequestStockSheet: View {
                             in: 1...999
                         )
                         .labelsHidden()
-                        .tint(RSMSColors.burgundy)
+                        .tint(theme.burgundy)
                     }
                     .padding(16)
                     .frame(maxWidth: .infinity)
@@ -130,7 +131,7 @@ struct RequestStockSheet: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(isSuccess ? Color.green : RSMSColors.burgundy)
+                        .background(isSuccess ? Color.green : theme.burgundy)
                         .foregroundColor(.white)
                         .cornerRadius(24)
                     }
@@ -153,7 +154,7 @@ struct RequestStockSheet: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button(action: { dismiss() }) {
                         Image(systemName: "xmark")
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                     }
                 }
             }

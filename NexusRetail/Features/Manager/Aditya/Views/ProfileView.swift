@@ -6,13 +6,14 @@
 import SwiftUI
 
 struct ProfileView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     @Environment(SessionStore.self) private var sessionStore
     
     var body: some View {
         NavigationStack {
             ZStack {
-                RSMSColors.background
+                theme.background
                     .ignoresSafeArea()
                 
                 ScrollView {
@@ -23,7 +24,7 @@ struct ProfileView: View {
                                 // Avatar
                                 ZStack {
                                     Circle()
-                                        .fill(RSMSColors.burgundy)
+                                        .fill(theme.burgundy)
                                         .frame(width: 60, height: 60)
                                     
                                     Text(initials(for: sessionStore.currentUser?.name ?? "Manager"))
@@ -34,11 +35,11 @@ struct ProfileView: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(sessionStore.currentUser?.name ?? "Aryavansh")
                                         .font(.headline)
-                                        .foregroundColor(RSMSColors.primaryText)
+                                        .foregroundColor(theme.primaryText)
                                     
                                     Text(sessionStore.currentUser?.email ?? "manager@nexus.com")
                                         .font(.subheadline)
-                                        .foregroundColor(RSMSColors.secondaryText)
+                                        .foregroundColor(theme.secondaryText)
                                     
                                     Text("Role: \(sessionStore.currentUser?.role.rawValue.capitalized ?? "Manager")")
                                         .font(.caption)
@@ -64,7 +65,7 @@ struct ProfileView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Store Settings")
                                     .font(.subheadline)
-                                    .foregroundColor(RSMSColors.secondaryText)
+                                    .foregroundColor(theme.secondaryText)
                                     .padding(.horizontal, RSMSSpacing.lg)
                                 
                                 VStack(spacing: 0) {
@@ -73,12 +74,12 @@ struct ProfileView: View {
                                     } label: {
                                         HStack {
                                             Image(systemName: "creditcard")
-                                                .foregroundColor(RSMSColors.burgundy)
+                                                .foregroundColor(theme.burgundy)
                                             Text("Payment Configuration")
-                                                .foregroundColor(RSMSColors.primaryText)
+                                                .foregroundColor(theme.primaryText)
                                             Spacer()
                                             Image(systemName: "chevron.right")
-                                                .foregroundColor(RSMSColors.secondaryText)
+                                                .foregroundColor(theme.secondaryText)
                                                 .font(.caption)
                                         }
                                         .padding()
@@ -109,7 +110,7 @@ struct ProfileView: View {
                         } label: {
                             Text("Sign Out")
                                 .font(.body.weight(.medium))
-                                .foregroundColor(RSMSColors.error)
+                                .foregroundColor(theme.error)
                                 .frame(maxWidth: .infinity)
                                 .padding()
                                 .background(Color.white)
@@ -128,7 +129,7 @@ struct ProfileView: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
                 }
             }
         }

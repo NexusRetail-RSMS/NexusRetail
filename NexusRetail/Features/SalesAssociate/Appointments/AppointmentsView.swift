@@ -15,7 +15,7 @@ struct AppointmentsView: View {
     @State private var selectedFilter: FilterMode = .inStore
 
     // MARK: - Accent helpers
-    private var accent: Color { theme.isDarkMode ? RSMSColors.antiqueGold : theme.burgundy }
+    private var accent: Color { theme.isDarkMode ? theme.antiqueGold : theme.burgundy }
     private var cardBg: Color {
         theme.isDarkMode ? Color(hex: "1A1009") : Color.white
     }
@@ -248,7 +248,7 @@ struct AppointmentsView: View {
                 .strokeBorder(
                     theme.isDarkMode
                         ? LinearGradient(
-                            colors: [RSMSColors.antiqueGold.opacity(0.30), RSMSColors.darkWoodBrown.opacity(0.25)],
+                            colors: [theme.antiqueGold.opacity(0.30), theme.darkWoodBrown.opacity(0.25)],
                             startPoint: .topLeading, endPoint: .bottomTrailing)
                         : LinearGradient(
                             colors: [theme.burgundy.opacity(0.12), Color.clear],
@@ -258,7 +258,7 @@ struct AppointmentsView: View {
         )
         .shadow(
             color: theme.isDarkMode
-                ? RSMSColors.antiqueGold.opacity(0.08)
+                ? theme.antiqueGold.opacity(0.08)
                 : Color.black.opacity(0.06),
             radius: theme.isDarkMode ? 14 : 8,
             x: 0, y: theme.isDarkMode ? 8 : 4

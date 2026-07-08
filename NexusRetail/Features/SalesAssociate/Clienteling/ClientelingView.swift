@@ -28,9 +28,9 @@ struct ClientelingView: View {
     }
 
     // MARK: - Accent helpers
-    private var accent: Color { theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy }
+    private var accent: Color { theme.isDarkMode ? theme.antiqueGold : theme.burgundy }
     private var cardBg: Color { theme.isDarkMode ? Color(hex: "1E1209") : Color.white }
-    private var avatarBg: Color { theme.isDarkMode ? Color(hex: "2C1800") : RSMSColors.burgundy.opacity(0.08) }
+    private var avatarBg: Color { theme.isDarkMode ? Color(hex: "2C1800") : theme.burgundy.opacity(0.08) }
 
     var body: some View {
         ZStack {
@@ -76,11 +76,11 @@ struct ClientelingView: View {
             Button { isProfilePresented = true } label: {
                 ZStack {
                     Circle()
-                        .fill(theme.isDarkMode ? Color(hex: "2C0000") : RSMSColors.burgundy)
+                        .fill(theme.isDarkMode ? Color(hex: "2C0000") : theme.burgundy)
                         .frame(width: 40, height: 40)
                     Text(initials(for: sessionStore.currentUser?.name))
                         .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(theme.isDarkMode ? RSMSColors.antiqueGold : .white)
+                        .foregroundStyle(theme.isDarkMode ? theme.antiqueGold : .white)
                 }
             }
             .buttonStyle(BounceButtonStyle())
@@ -160,9 +160,9 @@ struct ClientelingView: View {
                         Circle()
                             .strokeBorder(
                                 theme.isDarkMode
-                                    ? LinearGradient(colors: [RSMSColors.antiqueGold, RSMSColors.antiqueGold.opacity(0.4)],
+                                    ? LinearGradient(colors: [theme.antiqueGold, theme.antiqueGold.opacity(0.4)],
                                                      startPoint: .topLeading, endPoint: .bottomTrailing)
-                                    : LinearGradient(colors: [RSMSColors.burgundy.opacity(0.25), RSMSColors.burgundy.opacity(0.08)],
+                                    : LinearGradient(colors: [theme.burgundy.opacity(0.25), theme.burgundy.opacity(0.08)],
                                                      startPoint: .topLeading, endPoint: .bottomTrailing),
                                 lineWidth: 1.5
                             )
@@ -198,9 +198,9 @@ struct ClientelingView: View {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .strokeBorder(
                     theme.isDarkMode
-                        ? LinearGradient(colors: [RSMSColors.antiqueGold.opacity(0.22), RSMSColors.darkWoodBrown.opacity(0.3)],
+                        ? LinearGradient(colors: [theme.antiqueGold.opacity(0.22), theme.darkWoodBrown.opacity(0.3)],
                                          startPoint: .topLeading, endPoint: .bottomTrailing)
-                        : LinearGradient(colors: [RSMSColors.burgundy.opacity(0.10), Color.clear],
+                        : LinearGradient(colors: [theme.burgundy.opacity(0.10), Color.clear],
                                          startPoint: .topLeading, endPoint: .bottomTrailing),
                     lineWidth: 1
                 )
@@ -221,11 +221,11 @@ struct ClientelingView: View {
             Form {
                 Section("Client Details") {
                     TextField("Contact Number", text: $appointmentClientPhone)
-                        .foregroundColor(.gray).disabled(true)
+                        .foregroundColor(theme.secondaryText).disabled(true)
                     TextField("Full Name", text: $appointmentClientName)
-                        .foregroundColor(.gray).disabled(true)
+                        .foregroundColor(theme.secondaryText).disabled(true)
                     TextField("Email Address", text: $appointmentClientEmail)
-                        .foregroundColor(.gray).disabled(true)
+                        .foregroundColor(theme.secondaryText).disabled(true)
                 }
                 Section("Appointment") {
                     HStack {
@@ -238,7 +238,7 @@ struct ClientelingView: View {
                         Text("5:09 PM").padding(.horizontal, 12).padding(.vertical, 6)
                             .background(Color.gray.opacity(0.1)).cornerRadius(16)
                     }
-                    TextField("Product / Notes", text: .constant("")).foregroundColor(.gray)
+                    TextField("Product / Notes", text: .constant("")).foregroundColor(theme.secondaryText)
                 }
             }
             .navigationTitle("New Appointment")
@@ -250,7 +250,7 @@ struct ClientelingView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Save") { isNewAppointmentPresented = false }
-                        .bold().foregroundColor(.gray).disabled(true)
+                        .bold().foregroundColor(theme.secondaryText).disabled(true)
                 }
             }
         }

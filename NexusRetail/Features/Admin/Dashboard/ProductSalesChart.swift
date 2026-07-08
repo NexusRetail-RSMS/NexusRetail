@@ -195,15 +195,15 @@ struct ProductRankRow: View {
     
     private func colorFor(category: String) -> Color {
         switch category {
-        case "Couture": return RSMSColors.burgundy
+        case "Couture": return theme.burgundy
         case "Perfume", "Perfumes", "Fragrances", "Fragrance": return Color(hex: "F4A261")
         case "Jewellery", "Jewelry": return Color(hex: "E9C46A")
         case "Leather", "Leather Goods": return Color(hex: "2A9D8F")
         case "Watches": return Color(hex: "264653")
         case "Accessories": return Color(hex: "8A2BE2")
         case "Bags": return Color(hex: "2A9D8F")
-        case "Clothes": return RSMSColors.burgundy
-        default: return RSMSColors.chartBar
+        case "Clothes": return theme.burgundy
+        default: return theme.chartBar
         }
     }
 }

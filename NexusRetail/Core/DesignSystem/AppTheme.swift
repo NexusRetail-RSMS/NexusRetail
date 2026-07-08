@@ -1,62 +1,54 @@
 import SwiftUI
 
+private func dynamicColor(lightHex: String, darkHex: String) -> Color {
+    Color(UIColor { traitCollection in
+        return traitCollection.userInterfaceStyle == .dark ? UIColor(Color(hex: darkHex)) : UIColor(Color(hex: lightHex))
+    })
+}
+
+private func dynamicColor(light: Color, dark: Color) -> Color {
+    Color(UIColor { traitCollection in
+        return traitCollection.userInterfaceStyle == .dark ? UIColor(dark) : UIColor(light)
+    })
+}
+
 @Observable
 class AppTheme {
-    var isDarkMode = false
+    var isDarkMode = false // Kept for legacy/manual overrides if needed
 
-    var background: Color {
-        isDarkMode ? Color(hex: "1A1A1A") : Color(hex: "F9F8F3")
-    }
-    var cardBackground: Color {
-        isDarkMode ? Color(hex: "1E1E1E") : Color.white
-    }
-    var headerBackground: Color {
-        isDarkMode ? Color(hex: "2C0000") : Color(hex: "8B0000")
-    }
+    let background = dynamicColor(lightHex: "F9F8F3", darkHex: "1A1A1A")
+    let groupedBackground = dynamicColor(lightHex: "F2F2F7", darkHex: "000000")
+    let cardBackground = dynamicColor(light: .white, dark: Color(hex: "1E1E1E"))
+    let elevatedSurface = dynamicColor(light: .white, dark: Color(hex: "2C2C2E"))
+    let headerBackground = dynamicColor(lightHex: "8B0000", darkHex: "2C0000")
 
-    var primaryText: Color {
-        isDarkMode ? Color(hex: "EDE7C7") : Color(hex: "200E01")
-    }
-    var secondaryText: Color {
-        isDarkMode ? Color(hex: "9E8E7A") : Color.gray
-    }
+    let primaryText = dynamicColor(lightHex: "200E01", darkHex: "EDE7C7")
+    let secondaryText = dynamicColor(light: .gray, dark: Color(hex: "9E8E7A"))
+    let tertiaryText = dynamicColor(light: Color.gray.opacity(0.8), dark: Color(hex: "9E8E7A").opacity(0.8))
 
-    var burgundy: Color {
-        isDarkMode ? Color(hex: "A52A2A") : Color(hex: "8B0000")
-    }
-    var darkBurgundy: Color {
-        isDarkMode ? Color(hex: "3D0000") : Color(hex: "5B0202")
-    }
-    var gold: Color {
-        isDarkMode ? Color(hex: "C9A84C") : Color(hex: "D4AF37")
-    }
-    var darkBrown: Color {
-        isDarkMode ? Color(hex: "3E2723") : Color(hex: "200E01")
-    }
+    let burgundy = dynamicColor(lightHex: "8B0000", darkHex: "A52A2A")
+    let darkBurgundy = dynamicColor(lightHex: "5B0202", darkHex: "3D0000")
+    let gold = dynamicColor(lightHex: "D4AF37", darkHex: "C9A84C")
+    let darkBrown = dynamicColor(lightHex: "200E01", darkHex: "3E2723")
+    let darkWoodBrown = dynamicColor(lightHex: "3E2723", darkHex: "3E2723")
 
-    var primaryAction: Color {
-        isDarkMode ? Color(hex: "C9A84C") : Color(hex: "8B0000")
-    }
-    var error: Color {
-        isDarkMode ? Color(hex: "CF6679") : Color(hex: "D32F2F")
-    }
-    var success: Color {
-        isDarkMode ? Color(hex: "81C784") : Color(hex: "2E7D32")
-    }
+    let cream = dynamicColor(lightHex: "EDE7C7", darkHex: "2C2C2E")
+    let antiqueGold = dynamicColor(lightHex: "C9A84C", darkHex: "C9A84C")
 
-    var cardBorder: Color {
-        isDarkMode ? Color.white.opacity(0.1) : Color.gray.opacity(0.15)
-    }
-    var divider: Color {
-        isDarkMode ? Color.white.opacity(0.08) : Color.gray.opacity(0.15)
-    }
-    var warning: Color {
-        isDarkMode ? Color(hex: "F4A261") : Color(hex: "F57C00")
-    }
-    var inputBorder: Color {
-        isDarkMode ? Color.white.opacity(0.2) : Color.gray.opacity(0.3)
-    }
-    var disabled: Color {
-        isDarkMode ? Color.gray.opacity(0.3) : Color.gray.opacity(0.4)
-    }
+    let chartBar = dynamicColor(lightHex: "A44A33", darkHex: "A44A33")
+
+    let primaryAction = dynamicColor(lightHex: "8B0000", darkHex: "C9A84C")
+    let accent = dynamicColor(lightHex: "8B0000", darkHex: "C9A84C")
+    
+    let error = dynamicColor(lightHex: "D32F2F", darkHex: "CF6679")
+    let success = dynamicColor(lightHex: "2E7D32", darkHex: "81C784")
+    let warning = dynamicColor(lightHex: "F57C00", darkHex: "F4A261")
+
+    let cardBorder = dynamicColor(light: Color.gray.opacity(0.15), dark: Color.white.opacity(0.1))
+    let divider = dynamicColor(light: Color.gray.opacity(0.15), dark: Color.white.opacity(0.08))
+    let inputBorder = dynamicColor(light: Color.gray.opacity(0.3), dark: Color.white.opacity(0.2))
+    
+    let shadow = dynamicColor(light: Color.black.opacity(0.05), dark: Color.clear)
+
+    let disabled = dynamicColor(light: Color.gray.opacity(0.4), dark: Color.gray.opacity(0.3))
 }

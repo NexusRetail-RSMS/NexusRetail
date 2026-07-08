@@ -19,9 +19,9 @@ enum StockStatus: String {
     
     var color: Color {
         switch self {
-        case .inStock: return RSMSColors.success
-        case .low: return RSMSColors.warning
-        case .outOfStock: return RSMSColors.error
+        case .inStock: return AppTheme().success
+        case .low: return AppTheme().warning
+        case .outOfStock: return AppTheme().error
         }
     }
     
@@ -77,12 +77,12 @@ enum TransferStatus: String, Codable, CaseIterable {
     
     var color: Color {
         switch self {
-        case .pending: return RSMSColors.warning
+        case .pending: return AppTheme().warning
         case .approved: return .green.opacity(0.6)
-        case .routed: return RSMSColors.burgundy.opacity(0.8)
-        case .dispatched: return RSMSColors.burgundy
-        case .delivered: return RSMSColors.success
-        case .unfulfillable: return RSMSColors.error
+        case .routed: return AppTheme().burgundy.opacity(0.8)
+        case .dispatched: return AppTheme().burgundy
+        case .delivered: return AppTheme().success
+        case .unfulfillable: return AppTheme().error
         }
     }
     

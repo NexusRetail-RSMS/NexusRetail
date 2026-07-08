@@ -4,6 +4,7 @@ import Combine
 // MARK: - Requests Card
 
 struct TransferRequestCard: View {
+    @Environment(AppTheme.self) private var theme
     let request: AdminStockRequest
 
     @Environment(AdminTransfersViewModel.self) private var viewModel
@@ -71,7 +72,7 @@ struct TransferRequestCard: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(request.managerName)
                 .font(.system(size: 17, weight: .bold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
                 .lineLimit(1)
 
             Text(request.storeName)
@@ -97,12 +98,12 @@ struct TransferRequestCard: View {
             .clipShape(RoundedRectangle(cornerRadius: 16))
         } else {
             RoundedRectangle(cornerRadius: 16)
-                .fill(RSMSColors.burgundy.opacity(0.05))
+                .fill(theme.burgundy.opacity(0.05))
                 .frame(width: 70, height: 70)
                 .overlay(
                     Image(systemName: "bag")
                         .font(.system(size: 24))
-                        .foregroundColor(RSMSColors.burgundy.opacity(0.25))
+                        .foregroundColor(theme.burgundy.opacity(0.25))
                 )
         }
     }
@@ -113,7 +114,7 @@ struct TransferRequestCard: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(request.productName)
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
                 .lineLimit(1)
                 .truncationMode(.tail)
 
@@ -196,6 +197,7 @@ struct TransferRequestCard: View {
 }
 
 struct InfoColumn: View {
+    @Environment(AppTheme.self) private var theme
     let title: String
     let value: String
     var alignment: HorizontalAlignment = .leading
@@ -213,7 +215,7 @@ struct InfoColumn: View {
 
             Text(value)
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
                 .lineLimit(1)
                 .multilineTextAlignment(textAlignment)
         }
@@ -224,6 +226,7 @@ struct InfoColumn: View {
 // MARK: - Schedule Sheet
 
 struct ScheduleSheet: View {
+    @Environment(AppTheme.self) private var theme
     let request: AdminStockRequest
     @Environment(AdminTransfersViewModel.self) private var viewModel
     @Environment(\.dismiss) private var dismiss
@@ -248,7 +251,7 @@ struct ScheduleSheet: View {
             VStack(spacing: 8) {
                 Image(systemName: "calendar.badge.clock")
                     .font(.system(size: 40))
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
 
                 Text("Schedule Request")
                     .font(.title2)
@@ -315,7 +318,7 @@ struct ScheduleSheet: View {
             .padding(.horizontal, 24)
             .padding(.bottom, 32)
         }
-        .background(RSMSColors.background)
+        .background(theme.background)
         .presentationDetents([.large])
     }
 }
@@ -323,6 +326,7 @@ struct ScheduleSheet: View {
 // MARK: - Waiting Card
 
 struct WaitingRequestCard: View {
+    @Environment(AppTheme.self) private var theme
     let request: AdminStockRequest
 
     @Environment(AdminTransfersViewModel.self) private var viewModel
@@ -351,10 +355,10 @@ struct WaitingRequestCard: View {
                         Text(autoApprove.formatted(date: .abbreviated, time: .omitted))
                             .font(.system(size: 12, weight: .bold))
                     }
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(RSMSColors.burgundy.opacity(0.1))
+                    .background(theme.burgundy.opacity(0.1))
                     .clipShape(Capsule())
                 }
             }
@@ -421,7 +425,7 @@ struct WaitingRequestCard: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(request.managerName)
                 .font(.system(size: 17, weight: .bold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
                 .lineLimit(1)
 
             Text(request.storeName)
@@ -445,12 +449,12 @@ struct WaitingRequestCard: View {
             .clipShape(RoundedRectangle(cornerRadius: 16))
         } else {
             RoundedRectangle(cornerRadius: 16)
-                .fill(RSMSColors.burgundy.opacity(0.05))
+                .fill(theme.burgundy.opacity(0.05))
                 .frame(width: 70, height: 70)
                 .overlay(
                     Image(systemName: "bag")
                         .font(.system(size: 24))
-                        .foregroundColor(RSMSColors.burgundy.opacity(0.25))
+                        .foregroundColor(theme.burgundy.opacity(0.25))
                 )
         }
     }
@@ -459,7 +463,7 @@ struct WaitingRequestCard: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(request.productName)
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
                 .lineLimit(1)
                 .truncationMode(.tail)
 
@@ -474,6 +478,7 @@ struct WaitingRequestCard: View {
 // MARK: - Approved Card
 
 struct ApprovedRequestCard: View {
+    @Environment(AppTheme.self) private var theme
     let request: AdminStockRequest
 
     private var badgeTitle: String {
@@ -504,10 +509,10 @@ struct ApprovedRequestCard: View {
                     Text(badgeTitle)
                         .font(.system(size: 12, weight: .semibold))
                 }
-                .foregroundColor(RSMSColors.burgundy)
+                .foregroundColor(theme.burgundy)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
-                .background(RSMSColors.burgundy.opacity(0.1))
+                .background(theme.burgundy.opacity(0.1))
                 .cornerRadius(8)
             }
 
@@ -545,7 +550,7 @@ struct ApprovedRequestCard: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(request.managerName)
                 .font(.system(size: 17, weight: .bold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
                 .lineLimit(1)
 
             Text(request.storeName)
@@ -569,12 +574,12 @@ struct ApprovedRequestCard: View {
             .clipShape(RoundedRectangle(cornerRadius: 16))
         } else {
             RoundedRectangle(cornerRadius: 16)
-                .fill(RSMSColors.burgundy.opacity(0.05))
+                .fill(theme.burgundy.opacity(0.05))
                 .frame(width: 70, height: 70)
                 .overlay(
                     Image(systemName: "bag")
                         .font(.system(size: 24))
-                        .foregroundColor(RSMSColors.burgundy.opacity(0.25))
+                        .foregroundColor(theme.burgundy.opacity(0.25))
                 )
         }
     }
@@ -583,7 +588,7 @@ struct ApprovedRequestCard: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(request.productName)
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
                 .lineLimit(1)
                 .truncationMode(.tail)
 

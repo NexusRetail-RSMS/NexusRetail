@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct LanguagePickerView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(LocalizationManager.self) private var localizationManager
     @Environment(\.dismiss) private var dismiss
     
@@ -17,7 +18,7 @@ struct LanguagePickerView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                RSMSColors.background.ignoresSafeArea()
+                theme.background.ignoresSafeArea()
                 
                 VStack(spacing: RSMSSpacing.lg) {
                     
@@ -25,7 +26,7 @@ struct LanguagePickerView: View {
                         VStack(spacing: RSMSSpacing.sm) {
                             Image(systemName: "globe")
                                 .font(.system(size: 60))
-                                .foregroundColor(RSMSColors.burgundy)
+                                .foregroundColor(theme.burgundy)
                                 .padding(.top, 40)
                                 .padding(.bottom, 20)
                             
@@ -35,11 +36,11 @@ struct LanguagePickerView: View {
                             Text("Select Language")
                                 .font(RSMSFonts.largeTitle)
                                 .fontWeight(.bold)
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                             
                             Text("Choose your preferred language for the application.")
                                 .font(RSMSFonts.body)
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal)
                         }
@@ -57,18 +58,18 @@ struct LanguagePickerView: View {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(language.displayName)
                                         .font(RSMSFonts.headline)
-                                        .foregroundColor(RSMSColors.primaryText)
+                                        .foregroundColor(theme.primaryText)
                                     
                                     Text(Locale(identifier: language.code).localizedString(forLanguageCode: language.code) ?? language.displayName)
                                         .font(RSMSFonts.caption)
-                                        .foregroundColor(RSMSColors.secondaryText)
+                                        .foregroundColor(theme.secondaryText)
                                 }
                                 
                                 Spacer()
                                 
                                 if selectedLanguageCode == language.code {
                                     Image(systemName: "checkmark.circle.fill")
-                                        .foregroundColor(RSMSColors.burgundy)
+                                        .foregroundColor(theme.burgundy)
                                         .font(.system(size: 20))
                                 }
                             }
@@ -89,10 +90,10 @@ struct LanguagePickerView: View {
                                 .font(RSMSFonts.headline)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 16)
-                                .background(RSMSColors.burgundy)
+                                .background(theme.burgundy)
                                 .foregroundColor(.white)
                                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                                .shadow(color: RSMSColors.burgundy.opacity(0.3), radius: 8, x: 0, y: 4)
+                                .shadow(color: theme.burgundy.opacity(0.3), radius: 8, x: 0, y: 4)
                         }
                         .padding(.horizontal, RSMSSpacing.lg)
                         .padding(.bottom, RSMSSpacing.xl)
@@ -105,7 +106,7 @@ struct LanguagePickerView: View {
                 if !isInitialLaunch {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Close") { dismiss() }
-                            .foregroundColor(RSMSColors.burgundy)
+                            .foregroundColor(theme.burgundy)
                     }
                 }
             }

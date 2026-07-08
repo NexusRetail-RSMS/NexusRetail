@@ -159,10 +159,7 @@ final class ManagerDashboardViewModel {
             case .monthly: periodPrefix = "M"
             case .yearly:  periodPrefix = "Y"
             }
-            let params = ManagerSalesParams(
-                p_store_id: ManagerNullableUUID(value: storeID),
-                p_period: "\(periodPrefix):\(ISO8601DateFormatter().string(from: Date()))"
-            )
+
             
             let topParams = ManagerTopProductsParams(
                 p_store_id: ManagerNullableUUID(value: storeID),

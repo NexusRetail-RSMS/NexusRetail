@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct RootView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(SessionStore.self) private var sessionStore
     @Environment(LocalizationManager.self) private var localizationManager
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
@@ -16,7 +17,7 @@ struct RootView: View {
             if isRestoring {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(RSMSColors.background.ignoresSafeArea())
+                    .background(theme.background.ignoresSafeArea())
             } else if !localizationManager.hasSelectedLanguage && sessionStore.currentUser == nil && !hasSeenOnboarding {
                 // First-run onboarding step: choose a language before anything else.
                 LanguagePickerView(isInitialLaunch: true, initialLanguageCode: localizationManager.currentLanguage)

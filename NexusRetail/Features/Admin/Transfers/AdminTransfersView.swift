@@ -6,12 +6,13 @@ enum TransferTab: String, CaseIterable {
 }
 
 struct AdminTransfersView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(AdminTransfersViewModel.self) private var viewModel
     @State private var selectedTab: TransferTab = .requests
 
     var body: some View {
         ZStack {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -58,7 +59,7 @@ struct AdminTransfersView: View {
             Text("Transfers")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
 
             Spacer()
 
@@ -67,12 +68,12 @@ struct AdminTransfersView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy.opacity(0.1))
+                        .fill(theme.burgundy.opacity(0.1))
                         .frame(width: 44, height: 44)
 
                     Image(systemName: "clock.arrow.circlepath")
                         .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                 }
             }
             .accessibilityLabel("History")
@@ -84,6 +85,7 @@ struct AdminTransfersView: View {
 // MARK: - Requests
 
 struct RequestsListView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(AdminTransfersViewModel.self) private var viewModel
 
     var body: some View {
@@ -104,7 +106,7 @@ struct RequestsListView: View {
         .refreshable {
             await viewModel.load()
         }
-        .background(RSMSColors.background)
+        .background(theme.background)
     }
 
     private var skeletonSection: some View {
@@ -117,18 +119,18 @@ struct RequestsListView: View {
         VStack(spacing: 20) {
             ZStack {
                 Circle()
-                    .fill(RSMSColors.burgundy.opacity(0.1))
+                    .fill(theme.burgundy.opacity(0.1))
                     .frame(width: 80, height: 80)
 
                 Image(systemName: "tray")
                     .font(.system(size: 36, weight: .medium))
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
             }
 
             VStack(spacing: 6) {
                 Text("No Transfer Requests")
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
 
                 Text("New store requests will appear here.")
                     .font(.system(size: 15))
@@ -141,6 +143,7 @@ struct RequestsListView: View {
 }
 
 struct SkeletonCardView: View {
+    @Environment(AppTheme.self) private var theme
     @State private var opacity = 0.3
 
     var body: some View {
@@ -148,15 +151,15 @@ struct SkeletonCardView: View {
             // Manager Section
             HStack(spacing: 14) {
                 Circle()
-                    .fill(RSMSColors.burgundy.opacity(0.06))
+                    .fill(theme.burgundy.opacity(0.06))
                     .frame(width: 52, height: 52)
 
                 VStack(alignment: .leading, spacing: 6) {
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(RSMSColors.burgundy.opacity(0.08))
+                        .fill(theme.burgundy.opacity(0.08))
                         .frame(width: 140, height: 14)
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(RSMSColors.burgundy.opacity(0.05))
+                        .fill(theme.burgundy.opacity(0.05))
                         .frame(width: 100, height: 11)
                 }
             }
@@ -168,15 +171,15 @@ struct SkeletonCardView: View {
             // Product Section
             HStack(spacing: 14) {
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(RSMSColors.burgundy.opacity(0.06))
+                    .fill(theme.burgundy.opacity(0.06))
                     .frame(width: 64, height: 64)
 
                 VStack(alignment: .leading, spacing: 6) {
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(RSMSColors.burgundy.opacity(0.08))
+                        .fill(theme.burgundy.opacity(0.08))
                         .frame(width: 160, height: 14)
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(RSMSColors.burgundy.opacity(0.05))
+                        .fill(theme.burgundy.opacity(0.05))
                         .frame(width: 90, height: 11)
                 }
             }
@@ -186,10 +189,10 @@ struct SkeletonCardView: View {
                 ForEach(0..<3, id: \.self) { _ in
                     VStack(alignment: .leading, spacing: 6) {
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(RSMSColors.burgundy.opacity(0.05))
+                            .fill(theme.burgundy.opacity(0.05))
                             .frame(width: 40, height: 10)
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(RSMSColors.burgundy.opacity(0.08))
+                            .fill(theme.burgundy.opacity(0.08))
                             .frame(width: 50, height: 16)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -200,11 +203,11 @@ struct SkeletonCardView: View {
             // Action Buttons
             HStack(spacing: 10) {
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(RSMSColors.burgundy.opacity(0.08))
+                    .fill(theme.burgundy.opacity(0.08))
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(RSMSColors.burgundy.opacity(0.04))
+                    .fill(theme.burgundy.opacity(0.04))
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)
             }
@@ -228,6 +231,7 @@ struct SkeletonCardView: View {
 // MARK: - Waiting
 
 struct WaitingRequestsView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(AdminTransfersViewModel.self) private var viewModel
 
     var body: some View {
@@ -246,14 +250,14 @@ struct WaitingRequestsView: View {
         .refreshable {
             await viewModel.load()
         }
-        .background(RSMSColors.background)
+        .background(theme.background)
     }
 
     private var emptyState: some View {
         VStack(spacing: 16) {
             Image(systemName: "clock.badge.checkmark")
                 .font(.system(size: 48))
-                .foregroundColor(.gray)
+                .foregroundColor(theme.secondaryText)
             Text("No scheduled requests")
                 .foregroundColor(.secondary)
         }
@@ -264,11 +268,12 @@ struct WaitingRequestsView: View {
 // MARK: - History
 
 struct HistoryView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         ZStack {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -287,12 +292,12 @@ struct HistoryView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy.opacity(0.1))
+                        .fill(theme.burgundy.opacity(0.1))
                         .frame(width: 44, height: 44)
 
                     Image(systemName: "chevron.left")
                         .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                 }
             }
             .accessibilityLabel("Back")
@@ -302,7 +307,7 @@ struct HistoryView: View {
             Text("History")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
 
             Spacer()
 
@@ -316,6 +321,7 @@ struct HistoryView: View {
 }
 
 struct ApprovedHistoryView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(AdminTransfersViewModel.self) private var viewModel
     @State private var contentOpacity = 0.0
 
@@ -339,7 +345,7 @@ struct ApprovedHistoryView: View {
         .refreshable {
             await viewModel.load()
         }
-        .background(RSMSColors.background)
+        .background(theme.background)
         .opacity(contentOpacity)
         .onAppear {
             withAnimation(.easeOut(duration: 0.25)) {
@@ -352,18 +358,18 @@ struct ApprovedHistoryView: View {
         VStack(spacing: 20) {
             ZStack {
                 Circle()
-                    .fill(RSMSColors.burgundy.opacity(0.1))
+                    .fill(theme.burgundy.opacity(0.1))
                     .frame(width: 80, height: 80)
 
                 Image(systemName: "checkmark.circle")
                     .font(.system(size: 36, weight: .medium))
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
             }
 
             VStack(spacing: 6) {
                 Text("No Transfer History")
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
 
                 Text("Approved transfer requests will appear here.")
                     .font(.system(size: 15))
