@@ -4,7 +4,6 @@ struct InvoiceItemsSelectionView: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var path: NavigationPath
     let invoiceId: String
-
     // Real, DB-backed invoice data.
     @State private var items: [AfterSalesInvoiceLine] = []
     @State private var customer: RequestCustomer? = nil

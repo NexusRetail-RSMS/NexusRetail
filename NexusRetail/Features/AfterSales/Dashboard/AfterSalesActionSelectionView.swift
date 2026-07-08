@@ -75,7 +75,6 @@ struct ActionSelectionView: View {
         ZStack(alignment: .top) {
             RSMSColors.background
                 .ignoresSafeArea()
-
             ScrollView {
                 VStack(spacing: 16) {
                     VStack(spacing: 0) {
@@ -431,7 +430,6 @@ struct ActionSelectionView: View {
             showResult = true
         }
     }
-
     // MARK: - Customer sheet
 
     private var customerSheetContent: some View {
@@ -465,6 +463,18 @@ struct ActionSelectionView: View {
                     detailRow(icon: "envelope", label: "Email", value: customer.email.isEmpty ? "—" : customer.email) {
                         if !customer.email.isEmpty { emailCustomer(customer.email) }
                     }
+
+    private func actionCard(title: String, description: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(color.opacity(0.1))
+                        .frame(width: 64, height: 64)
+                    
+                    Image(systemName: icon)
+                        .font(.system(size: 26, weight: .medium))
+                        .foregroundColor(color)
                 }
                 .padding(20)
                 .background(RSMSColors.background)
@@ -562,4 +572,14 @@ struct ActionSelectionView: View {
 private struct IdentifiableURL: Identifiable {
     let url: URL
     var id: String { url.absoluteString }
+}
+
+// Button style for press animation
+struct ScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
+    }
+}
 }
