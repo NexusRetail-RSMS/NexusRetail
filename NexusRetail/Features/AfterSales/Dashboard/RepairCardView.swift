@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct RepairCardView: View {
+    @Environment(AppTheme.self) private var theme
     let customerName: String
     let customerImageURL: String?
     let itemImageURL: String?
@@ -15,14 +16,14 @@ struct RepairCardView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(customerName)
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                 }
                 
                 Spacer()
             }
             
             Divider()
-                .background(RSMSColors.divider)
+                .background(theme.divider)
             
             // Middle Section: Item Info
             HStack(spacing: 16) {
@@ -42,18 +43,17 @@ struct RepairCardView: View {
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color.gray.opacity(0.1))
                         .frame(width: 60, height: 60)
-                        .overlay(Image(systemName: "photo").foregroundColor(RSMSColors.secondaryText))
+                        .overlay(Image(systemName: "photo").foregroundColor(theme.secondaryText))
                 }
-                
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(itemName)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     
                     Text("SKU: \(itemSKU)")
                         .font(.system(size: 14))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
             }
             
@@ -61,23 +61,23 @@ struct RepairCardView: View {
             HStack {
                 HStack(spacing: 8) {
                     Image(systemName: "calendar.badge.clock")
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                         .font(.system(size: 20))
                     
                     VStack(alignment: .leading, spacing: 2) {
                         Text("ESTIMATED PICKUP")
                             .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(RSMSColors.burgundy)
+                            .foregroundColor(theme.burgundy)
                         
                         Text(formatDate(pickupDate))
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                     }
                 }
                 Spacer()
             }
             .padding(12)
-            .background(RSMSColors.burgundy.opacity(0.05))
+            .background(theme.burgundy.opacity(0.05))
             .cornerRadius(8)
         }
         .padding(16)
@@ -88,8 +88,6 @@ struct RepairCardView: View {
                 .strokeBorder(Color.gray.opacity(0.15), lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
-        .accessibilityElement(children: .combine)
-        .accessibilityHint("Double tap to view repair details")
     }
     
     private func formatDate(_ date: Date) -> String {

@@ -71,7 +71,6 @@ struct CreateEventView: View {
                     .listRowInsets(EdgeInsets())
                     .buttonStyle(PlainButtonStyle())
                     .disabled(isProcessingImage || isSaving)
-                    .accessibilityLabel(bannerImageData != nil || eventToEdit?.bannerImageURL != nil ? "Change Event Banner" : "Add Event Banner")
                 }
                 
                 // Details Section
@@ -98,7 +97,6 @@ struct CreateEventView: View {
                         TextEditor(text: $description)
                             .frame(minHeight: 100)
                             .padding(.leading, -4)
-                            .accessibilityLabel("Description")
                     }
                 }
                 
@@ -134,7 +132,6 @@ struct CreateEventView: View {
                                     .font(.title3)
                             }
                             .buttonStyle(PlainButtonStyle())
-                            .accessibilityLabel("Decrease Guests")
                             
                             Text("\(maximumGuests)")
                                 .font(.headline)
@@ -150,7 +147,6 @@ struct CreateEventView: View {
                                     .font(.title3)
                             }
                             .buttonStyle(PlainButtonStyle())
-                            .accessibilityLabel("Increase Guests")
                         }
                     }
                 }

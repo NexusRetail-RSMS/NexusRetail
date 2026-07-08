@@ -8,9 +8,10 @@
 import SwiftUI
 
 struct LuxuryCardModifier: ViewModifier {
+    @Environment(AppTheme.self) private var theme
     func body(content: Content) -> some View {
         content
-            .background(RSMSColors.cardBackground)
+            .background(theme.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
             .shadow(color: .black.opacity(0.045), radius: 18, x: 0, y: 8)
     }

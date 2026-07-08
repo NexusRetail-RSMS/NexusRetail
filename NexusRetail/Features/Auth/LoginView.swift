@@ -5,7 +5,6 @@ struct LoginView: View {
     @Environment(SessionStore.self) private var sessionStore
     @State private var showPassword = false
     @State private var showForgotPassword = false
-    @State private var importAuth = false
 
     @State private var didAppear = false
     @State private var errorShake = false
@@ -71,7 +70,6 @@ struct LoginView: View {
             withAnimation(.spring(response: 0.25, dampingFraction: 0.35)) {
                 errorShake.toggle()
             }
-            UIAccessibility.post(notification: .announcement, argument: "Login error: \(newValue)")
         }
         .task {
             await cycleAmbientBackground()
@@ -123,7 +121,6 @@ struct LoginView: View {
                             .font(RSMSFonts.body)
                             .focused($focusedField, equals: .email)
                             .accessibilityLabel("Email address or username")
-                            .accessibilityHint("Enter your email or username to sign in")
                     }
 
                     PremiumField(
@@ -156,8 +153,6 @@ struct LoginView: View {
                                     .contentTransition(.symbolEffect(.replace))
                             }
                             .buttonStyle(.plain)
-                            .accessibilityLabel(showPassword ? "Hide password" : "Show password")
-                            .accessibilityHint("Toggles password visibility")
                         }
                     }
 
@@ -169,7 +164,6 @@ struct LoginView: View {
                                 .foregroundColor(RSMSColors.burgundy)
                         }
                         .buttonStyle(.plain)
-                        .accessibilityHint("Double tap to recover your password")
                     }
                 }
 
@@ -177,9 +171,11 @@ struct LoginView: View {
 
                 signInButton
             }
+            .padding(.horizontal, RSMSSpacing.lg)
+            .padding(.bottom, 26)
         }
         .frame(maxWidth: 480)
-        // Removed fixed maxHeight to accommodate the QR code in setup flow
+        .frame(maxHeight: 400)
         .background(cardShape.fill(.regularMaterial))
         .background(
             LinearGradient(
@@ -247,13 +243,11 @@ struct LoginView: View {
                         .offset(y: 2)
                 }
             }
-            .accessibilityHidden(true)
 
             Text("NexusRetail")
                 .font(.system(size: 28, weight: .heavy, design: .rounded))
                 .foregroundColor(.white)
                 .tracking(0.3)
-                .accessibilityAddTraits(.isHeader)
         }
     }
 
@@ -336,10 +330,7 @@ struct LoginView: View {
         .animation(.easeOut(duration: 0.2), value: viewModel.isLoginButtonEnabled)
         .accessibilityLabel("Sign in")
         .accessibilityValue(viewModel.isLoading ? "Authenticating" : "")
-        .accessibilityHint("Double tap to sign into your account")
     }
-
-
 }
 
 private struct PremiumField<Content: View>: View {

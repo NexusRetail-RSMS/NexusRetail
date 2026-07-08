@@ -168,7 +168,6 @@ struct StoreListView: View {
                     Text("Stores")
                         .font(.system(size: 34, weight: .bold, design: .rounded))
                         .foregroundColor(RSMSColors.primaryText)
-                        .accessibilityAddTraits(.isHeader)
 
                 }
 
@@ -335,9 +334,6 @@ private struct StoreImageCard: View {
                 .stroke(Color.white.opacity(0.07), lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.22), radius: 20, x: 0, y: 10)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(store.name). \(locationLine). Manager: \(manager?.name ?? "Unassigned"). Status: \(isActive ? "Active" : "Inactive")")
-        .accessibilityHint("Double tap to view store details")
     }
 
     // MARK: - Branded placeholder (no image uploaded yet)

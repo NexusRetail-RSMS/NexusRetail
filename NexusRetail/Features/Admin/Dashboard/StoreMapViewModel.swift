@@ -25,9 +25,8 @@ class StoreMapViewModel {
     /// Aggregated stats for the current view (country or worldwide).
     var stats: CountryMapStats?
 
-    /// One-shot camera target. Set this to animate the map to a region,
-    /// then NexusMapView clears it back to nil after applying.
-    var targetRegion: MKCoordinateRegion?
+    /// Map camera position — animated transitions when country changes.
+    var cameraPosition: MapCameraPosition = .region(CountryMapRegion.world)
 
     /// Whether the store data is currently loading.
     var isLoadingStores = false
@@ -37,10 +36,6 @@ class StoreMapViewModel {
 
     /// The currently selected country (nil = world view).
     private(set) var currentCountry: String?
-    
-    /// Tracks whether the initial data load has completed.
-    /// Used to distinguish first load from subsequent filter changes.
-    private var initialLoadDone = false
 
     // MARK: - Supabase RPC Params
 
@@ -54,33 +49,21 @@ class StoreMapViewModel {
     /// Animates the map and fetches stores for the new country.
     @MainActor
     func updateCountry(_ country: String?, revenueByCountry: [CountryRevenue]) async {
-        // On first load, always proceed. After that, skip if country hasn't changed.
-        if initialLoadDone {
-            guard country != currentCountry else { return }
-        }
-        
+        // Avoid redundant reloads
+        guard country != currentCountry else { return }
         currentCountry = country
 
-        // 1. Fetch stores from Supabase
+        // 1. Animate the map region
+        let targetRegion = CountryMapRegion.region(for: country)
+        withAnimation(.easeInOut(duration: 0.8)) {
+            cameraPosition = .region(targetRegion)
+        }
+
+        // 2. Fetch stores from Supabase
         await loadStores(for: country)
 
-        // 2. Compute stats
+        // 3. Compute stats
         computeStats(for: country, revenueByCountry: revenueByCountry)
-        
-        // 3. Set the camera region
-        if country == nil {
-            // Global view: frame all actual stores dynamically (prevents massive invalid spans)
-            if !stores.isEmpty {
-                targetRegion = boundingRegion(for: stores)
-            } else {
-                targetRegion = CountryMapRegion.world
-            }
-        } else {
-            // Specific country view: use predefined country region for consistency
-            targetRegion = CountryMapRegion.region(for: country)
-        }
-        
-        initialLoadDone = true
     }
 
     // MARK: - Load Stores from Supabase
@@ -105,41 +88,6 @@ class StoreMapViewModel {
         }
 
         isLoadingStores = false
-    }
-    
-    // MARK: - Bounding Region
-    
-    /// Calculates a region that fits all given stores with padding.
-    private func boundingRegion(for items: [StoreMapItem]) -> MKCoordinateRegion {
-        guard !items.isEmpty else { return CountryMapRegion.world }
-        
-        var minLat = items[0].latitude
-        var maxLat = items[0].latitude
-        var minLon = items[0].longitude
-        var maxLon = items[0].longitude
-        
-        for item in items {
-            minLat = min(minLat, item.latitude)
-            maxLat = max(maxLat, item.latitude)
-            minLon = min(minLon, item.longitude)
-            maxLon = max(maxLon, item.longitude)
-        }
-        
-        let center = CLLocationCoordinate2D(
-            latitude: (minLat + maxLat) / 2,
-            longitude: (minLon + maxLon) / 2
-        )
-        
-        // Add 20% padding so pins aren't right at the edge
-        // Minimum delta of 30.0 ensures the Global view always looks like a zoomed-out global/continental map
-        // even if the user only has a single store.
-        let latDelta = max((maxLat - minLat) * 1.4, 30.0)
-        let lonDelta = max((maxLon - minLon) * 1.4, 30.0)
-        
-        return MKCoordinateRegion(
-            center: center,
-            span: MKCoordinateSpan(latitudeDelta: latDelta, longitudeDelta: lonDelta)
-        )
     }
 
     // MARK: - Compute Stats

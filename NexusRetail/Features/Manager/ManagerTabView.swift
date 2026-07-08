@@ -7,6 +7,7 @@ import SwiftUI
 
 /// Manager shell: Inventory, Requests, Pricing, Events, Staff.
 struct ManagerTabView: View {
+    @Environment(AppTheme.self) private var theme
     var body: some View {
         TabView {
             // 0. Dashboard
@@ -41,7 +42,9 @@ struct ManagerTabView: View {
                 Label("Employees", systemImage: "person.2")
             }
         }
-        .tint(RSMSColors.burgundy)
+        .tint(theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
+        .preferredColorScheme(theme.isDarkMode ? .dark : .light)
+        .environment(theme)
     }
 }
 
@@ -49,6 +52,7 @@ struct ManagerTabView: View {
 struct ManagerToolbarModifier: ViewModifier {
     let title: String
     @Environment(SessionStore.self) private var sessionStore
+    @Environment(AppTheme.self) private var theme
     @State private var isProfilePresented = false
 
     func body(content: Content) -> some View {
@@ -87,6 +91,7 @@ struct ManagerToolbarModifier: ViewModifier {
             }
             .sheet(isPresented: $isProfilePresented) {
                 AdminProfileSheet()
+                    .environment(theme)
             }
     }
     

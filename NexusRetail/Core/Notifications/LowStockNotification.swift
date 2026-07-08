@@ -131,21 +131,7 @@ final class LowStockNotificationViewModel {
     var errorMessage: String? = nil
     
     /// IDs the manager has already seen/dismissed
-    private(set) var readIDs: Set<UUID> = []
-    
-    init() {
-        loadReadIDs()
-    }
-    
-    private func loadReadIDs() {
-        let array = UserDefaults.standard.stringArray(forKey: "managerReadNotificationIDs") ?? []
-        readIDs = Set(array.compactMap { UUID(uuidString: $0) })
-    }
-    
-    private func saveReadIDs() {
-        let array = readIDs.map { $0.uuidString }
-        UserDefaults.standard.set(array, forKey: "managerReadNotificationIDs")
-    }
+    private var readIDs: Set<UUID> = []
     
     /// The store we're monitoring — kept so the realtime callback can reload.
     private var monitoredStoreID: UUID?
@@ -166,7 +152,6 @@ final class LowStockNotificationViewModel {
     /// Mark a single notification as read
     func markAsRead(_ id: UUID) {
         readIDs.insert(id)
-        saveReadIDs()
     }
     
     /// Mark all current notifications as read
@@ -174,7 +159,6 @@ final class LowStockNotificationViewModel {
         for notification in notifications {
             readIDs.insert(notification.id)
         }
-        saveReadIDs()
     }
     
     /// Fetch low-stock items and approved transfer requests

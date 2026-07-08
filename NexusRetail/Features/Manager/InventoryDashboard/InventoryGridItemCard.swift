@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct InventoryGridItemCard: View {
+    @Environment(AppTheme.self) private var theme
     let item: InventoryItemRow
     
     @State private var showQR: Bool = false
@@ -25,13 +26,12 @@ struct InventoryGridItemCard: View {
                             ZStack {
                                 Color.gray.opacity(0.05)
                                 Image(systemName: "shippingbox")
-                                    .foregroundColor(RSMSColors.secondaryText.opacity(0.4))
+                                    .foregroundColor(theme.secondaryText.opacity(0.4))
                                     .font(.system(size: 40))
                             }
                         }
                     )
                     .clipShape(TopCorners(radius: 12))
-                    .accessibilityHidden(true)
                 
             }
             
@@ -39,7 +39,7 @@ struct InventoryGridItemCard: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(item.name)
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
                     .frame(height: 40, alignment: .topLeading) // Fixed height to prevent jagged grid
@@ -47,7 +47,7 @@ struct InventoryGridItemCard: View {
                 HStack(alignment: .center) {
                     Text("Stock: \(item.onHand)")
                         .font(.system(size: 14))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                     
                     Spacer()
                     
@@ -63,12 +63,9 @@ struct InventoryGridItemCard: View {
             .padding(.horizontal, 12)
             .padding(.bottom, 12)
         }
-        .background(Color.white)
+        .background(theme.cardBackground)
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.05), radius: 6, y: 2)
-        .accessibilityElement(children: .combine)
-        .accessibilityHint("Double tap to request restock")
-        .accessibilityAction(named: "Show QR Code") { showQR = true }
         .contextMenu {
             Button(action: { showQR = true }) {
                 Label("Show QR Code", systemImage: "qrcode")
@@ -99,7 +96,6 @@ struct InventoryQRCodeSheet: View {
                     .background(Color.white)
                     .cornerRadius(12)
                     .shadow(radius: 5)
-                    .accessibilityLabel("QR Code for \(item.name)")
                 
                 VStack(spacing: 8) {
                     Text(item.name)

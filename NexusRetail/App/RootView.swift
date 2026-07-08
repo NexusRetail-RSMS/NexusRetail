@@ -7,6 +7,7 @@ import SwiftUI
 
 struct RootView: View {
     @Environment(SessionStore.self) private var sessionStore
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @State private var isRestoring = true
 
     var body: some View {
@@ -28,6 +29,8 @@ struct RootView: View {
                 case .afterSales:
                     AfterSalesTabView()
                 }
+            } else if !hasSeenOnboarding {
+                OnboardingView()
             } else {
                 NavigationStack {
                     LoginView()

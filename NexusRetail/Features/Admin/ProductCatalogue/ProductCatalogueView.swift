@@ -6,7 +6,6 @@ struct ProductCatalogueView: View {
     @State private var showAddProduct = false
     @State private var editingProduct: CatalogueProduct?
     @State private var productToDelete: CatalogueProduct?
-    @Environment(\.accessibilityVoiceOverEnabled) private var isVoiceOverEnabled
     
     var body: some View {
         ZStack(alignment: .top) {
@@ -40,18 +39,6 @@ struct ProductCatalogueView: View {
         } message: {
             if let product = productToDelete {
                 Text("Are you sure you want to delete \"\(product.name)\"? This action cannot be undone.")
-            }
-        }
-        .onChange(of: isVoiceOverEnabled) { _, isEnabled in
-            if isEnabled {
-                viewModel.stopAutoScroll()
-            } else {
-                viewModel.resumeAutoScroll()
-            }
-        }
-        .onAppear {
-            if isVoiceOverEnabled {
-                viewModel.stopAutoScroll()
             }
         }
     }

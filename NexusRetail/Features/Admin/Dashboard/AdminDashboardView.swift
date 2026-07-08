@@ -16,7 +16,9 @@ import SwiftUI
 import Supabase
 
 struct AdminDashboardView: View {
+    @Environment(AdminNavigationStore.self) private var navStore
     @Environment(SessionStore.self) private var sessionStore
+    @Environment(AppTheme.self) private var theme
     @State private var viewModel = DashboardViewModel()
     @State private var isProfilePresented = false
     
@@ -64,7 +66,6 @@ struct AdminDashboardView: View {
                             }
                             .foregroundColor(.white)
                             .font(RSMSFonts.caption.bold())
-                            .accessibilityHint("Double tap to reload dashboard data")
                         }
                         .padding()
                         .background(Color(hex: "FF3B30"))
@@ -96,11 +97,6 @@ struct AdminDashboardView: View {
                                 timeRange: $viewModel.revenueTimeRange
                             )
                             .contentShape(Rectangle())
-                            .accessibilityElement(children: .ignore)
-                            .accessibilityLabel("Store Revenue Chart")
-                            .accessibilityValue("Total Revenue: \(viewModel.formattedRevenue)")
-                            .accessibilityHint("Double tap to view detailed sales analytics")
-                            .accessibilityAddTraits(.isButton)
                             .onTapGesture { isShowingSalesDetail = true }
 
                             // MARK: - Top Product Sales
@@ -110,11 +106,6 @@ struct AdminDashboardView: View {
                                 timeRange: $viewModel.productTimeRange
                             )
                             .contentShape(Rectangle())
-                            .accessibilityElement(children: .ignore)
-                            .accessibilityLabel("Top Product Sales Chart")
-                            .accessibilityValue("Highest selling product is at \(viewModel.productMaxValue) units")
-                            .accessibilityHint("Double tap to view product sales details")
-                            .accessibilityAddTraits(.isButton)
                             .onTapGesture { isShowingProductsDetail = true }
 
                             // MARK: - Top Locations
@@ -143,6 +134,7 @@ struct AdminDashboardView: View {
         }
         .sheet(isPresented: $isProfilePresented) {
             AdminProfileSheet()
+                .environment(theme)
         }
         .fullScreenCover(isPresented: $isShowingSalesDetail) {
             NavigationStack {
@@ -165,7 +157,6 @@ struct AdminDashboardView: View {
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .foregroundColor(RSMSColors.primaryText)
-                .accessibilityAddTraits(.isHeader)
 
             Spacer()
 
@@ -204,8 +195,7 @@ struct AdminDashboardView: View {
                     }
                 }
             }
-            .accessibilityLabel(viewModel.selectedCountry == nil ? "Country filter: All Global" : "Country filter: \(viewModel.selectedCountry!)")
-            .accessibilityHint("Double tap to change country filter")
+            .accessibilityLabel("Country filter")
 
             // Profile avatar
             Button {

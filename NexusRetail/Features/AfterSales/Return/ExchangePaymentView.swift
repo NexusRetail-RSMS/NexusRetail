@@ -1,15 +1,18 @@
 import SwiftUI
 
-struct PaymentFlowView: View {
+struct ExchangePaymentView: View {
     @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
-    @Environment(SellViewModel.self) private var viewModel
     @Environment(SessionStore.self) private var sessionStore
     @Binding var path: NavigationPath
     
+    let originalProductId: UUID
+    let replacementProductId: UUID
+    let amount: Double
+    
     @State private var paymentState: PaymentState = .initial
     @State private var isProcessing = false
-    @State private var progressValue: Double = 0.0
+    @State private var selectedPaymentMethod: POSPaymentMethod = .razorpay
     
     enum PaymentState {
         case initial
@@ -29,7 +32,7 @@ struct PaymentFlowView: View {
                     customHeaderSection
                     
                     VStack(spacing: 32) {
-                        if viewModel.selectedPaymentMethod == .razorpay {
+                        if selectedPaymentMethod == .razorpay {
                             razorpaySection
                         } else {
                             cardTerminalSection
@@ -48,7 +51,6 @@ struct PaymentFlowView: View {
             }
         }
         .navigationBarHidden(true)
-        .toolbar(.hidden, for: .tabBar)
     }
     
     // MARK: - Header
@@ -72,11 +74,11 @@ struct PaymentFlowView: View {
             }
             
             VStack(alignment: .leading, spacing: 2) {
-                Text(viewModel.selectedPaymentMethod == .razorpay ? "Razorpay" : "Card Checkout")
+                Text(selectedPaymentMethod == .razorpay ? "Razorpay" : "Card Checkout")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(.white)
                 
-                Text(viewModel.selectedClient == nil ? "Anonymous Transaction" : "Client: \(viewModel.selectedClient!)")
+                Text("Exchange Transaction")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white.opacity(0.8))
             }
@@ -107,11 +109,11 @@ struct PaymentFlowView: View {
                     .foregroundColor(theme.secondaryText)
                     .kerning(1.5)
                 
-                Text("₹\(String(format: "%.0f", viewModel.totalAmount))")
+                Text("₹\(String(format: "%.0f", amount))")
                     .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundColor(theme.burgundy)
                 
-                Text("Order ID: #\(Int.random(in: 100000...999999))")
+                Text("Exchange ID: #\(Int.random(in: 100000...999999))")
                     .font(.system(size: 12))
                     .foregroundColor(theme.secondaryText)
             }
@@ -163,7 +165,7 @@ struct PaymentFlowView: View {
                 Button {
                     processRazorpayPayment()
                 } label: {
-                    Text("Pay ₹\(String(format: "%.0f", viewModel.totalAmount))")
+                    Text("Pay ₹\(String(format: "%.0f", amount))")
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -234,7 +236,7 @@ struct PaymentFlowView: View {
                             .font(.system(size: 12))
                             .foregroundColor(.white.opacity(0.8))
                         
-                        Text("₹\(String(format: "%.0f", viewModel.totalAmount))")
+                        Text("₹\(String(format: "%.0f", amount))")
                             .font(.system(size: 24, weight: .bold))
                             .foregroundColor(theme.burgundy)
                     } else if paymentState == .processing {
@@ -331,31 +333,17 @@ struct PaymentFlowView: View {
         }
         
         Task {
-            do {
-                try await viewModel.processRazorpayCheckout(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
-                
-                // Refresh product stock after checkout
-                await POSProductRepository.shared.refreshStockForStore(storeID: sessionStore.currentUser?.storeID)
-                
-                await viewModel.fetchRecentOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
-                
-                await MainActor.run {
-                    withAnimation {
-                        isProcessing = false
-                        paymentState = .success
-                    }
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                        path.append(POSFlowDestination.receipt)
-                    }
+            // Simulate processing time
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            
+            await MainActor.run {
+                withAnimation {
+                    isProcessing = false
+                    paymentState = .success
                 }
-            } catch {
-                print("Checkout failed: \(error)")
-                await MainActor.run {
-                    withAnimation {
-                        isProcessing = false
-                        paymentState = .failed
-                    }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    path.append(POSFlowDestination.exchangeSummary(originalProductId: originalProductId, replacementProductId: replacementProductId, amount: amount))
                 }
             }
         }
@@ -367,29 +355,16 @@ struct PaymentFlowView: View {
         }
         
         Task {
-            do {
-                try await viewModel.processCheckout(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
-                
-                // Refresh product stock after checkout
-                await POSProductRepository.shared.refreshStockForStore(storeID: sessionStore.currentUser?.storeID)
-                
-                await viewModel.fetchRecentOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
-                
-                await MainActor.run {
-                    withAnimation {
-                        paymentState = .success
-                    }
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                        path.append(POSFlowDestination.receipt)
-                    }
+            // Simulate processing time
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            
+            await MainActor.run {
+                withAnimation {
+                    paymentState = .success
                 }
-            } catch {
-                print("Checkout failed: \(error)")
-                await MainActor.run {
-                    withAnimation {
-                        paymentState = .failed
-                    }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                    path.append(POSFlowDestination.exchangeSummary(originalProductId: originalProductId, replacementProductId: replacementProductId, amount: amount))
                 }
             }
         }
@@ -411,16 +386,5 @@ struct PaymentFlowView: View {
                     .foregroundColor(.white)
             }
         }
-    }
-}
-extension View {
-    func shadow(inner shadowColor: Color, radius: CGFloat, offset: CGPoint = .zero) -> some View {
-        self.overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(shadowColor, lineWidth: radius)
-                .blur(radius: radius)
-                .offset(x: offset.x, y: offset.y)
-                .mask(RoundedRectangle(cornerRadius: 12))
-        )
     }
 }

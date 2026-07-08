@@ -1,12 +1,13 @@
 import SwiftUI
 
 struct RepairOrderDetailsView: View {
+    @Environment(AppTheme.self) private var theme
     let repair: ActiveRepairsView.RepairOrderViewModel
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         ZStack(alignment: .top) {
-            RSMSColors.background.ignoresSafeArea()
+            theme.background.ignoresSafeArea()
             
             VStack(spacing: 0) {
                 headerSection
@@ -22,7 +23,6 @@ struct RepairOrderDetailsView: View {
                                 .scaledToFill()
                                 .frame(width: 120, height: 120)
                                 .clipShape(RoundedRectangle(cornerRadius: 16))
-                                .accessibilityHidden(true)
                         } placeholder: {
                             placeholderImage
                         }
@@ -34,11 +34,11 @@ struct RepairOrderDetailsView: View {
                         Text(repair.itemName)
                             .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                         
                         Text("SKU: \(repair.itemSKU)")
                             .font(.subheadline)
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                     }
                 }
                 .padding(.top, 24)
@@ -65,18 +65,17 @@ struct RepairOrderDetailsView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Problem Description")
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                             
                             Text(problemDesc)
                                 .font(.system(size: 16))
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding()
                                 .background(Color.gray.opacity(0.05))
                                 .cornerRadius(12)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .accessibilityElement(children: .combine)
                     }
                 }
                 .padding(20)
@@ -101,24 +100,22 @@ struct RepairOrderDetailsView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy.opacity(0.1))
+                        .fill(theme.burgundy.opacity(0.1))
                         .frame(width: 44, height: 44)
                     
                     Image(systemName: "chevron.left")
                         .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                 }
             }
             .accessibilityLabel("Back")
-            .accessibilityHint("Go back")
             
             Spacer()
             
             Text("Details")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .foregroundColor(RSMSColors.primaryText)
-                .accessibilityAddTraits(.isHeader)
+                .foregroundColor(theme.primaryText)
             
             Spacer()
             
@@ -137,23 +134,21 @@ struct RepairOrderDetailsView: View {
             .overlay(
                 Image(systemName: "photo")
                     .font(.system(size: 40))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             )
-            .accessibilityHidden(true)
     }
     
     private func detailRow(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
             
             Text(value)
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
     }
     
     private func formatDate(_ date: Date) -> String {

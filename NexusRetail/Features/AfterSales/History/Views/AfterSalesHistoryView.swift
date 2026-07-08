@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AfterSalesHistoryView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     @Binding var path: NavigationPath
     @State private var viewModel = AfterSalesHistoryViewModel()
@@ -19,7 +20,7 @@ struct AfterSalesHistoryView: View {
     
     var body: some View {
         ZStack(alignment: .top) {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
@@ -41,7 +42,7 @@ struct AfterSalesHistoryView: View {
                     } else if let error = viewModel.errorMessage {
                         Text(error)
                             .font(.system(size: 15))
-                            .foregroundColor(RSMSColors.error)
+                            .foregroundColor(theme.error)
                             .padding(.top, 40)
                     } else {
                         VStack(spacing: 16) {
@@ -86,12 +87,12 @@ struct AfterSalesHistoryView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy.opacity(0.1))
+                        .fill(theme.burgundy.opacity(0.1))
                         .frame(width: 44, height: 44)
                     
                     Image(systemName: "chevron.left")
                         .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                 }
             }
             .accessibilityLabel("Back")
@@ -101,8 +102,7 @@ struct AfterSalesHistoryView: View {
             Text("History")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .foregroundColor(RSMSColors.primaryText)
-                .accessibilityAddTraits(.isHeader)
+                .foregroundColor(theme.primaryText)
             
             Spacer()
             
@@ -118,7 +118,7 @@ struct AfterSalesHistoryView: View {
     private func emptyState(message: String) -> some View {
         Text(message)
             .font(.system(size: 15))
-            .foregroundColor(RSMSColors.secondaryText)
+            .foregroundColor(theme.secondaryText)
             .padding(.top, 40)
     }
     
@@ -129,10 +129,10 @@ struct AfterSalesHistoryView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.customerName)
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     Text("Invoice #\(item.invoiceNumber)")
                         .font(.system(size: 13, weight: .medium, design: .monospaced))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
                 Spacer()
                 statusBadge(item.status)
@@ -144,31 +144,30 @@ struct AfterSalesHistoryView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(item.productName)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Reason:")
                             .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                         Text(item.reason)
                             .font(.system(size: 13))
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                     }
                 }
                 Spacer()
                 Text(Self.dateFormatter.string(from: item.exchangeDate))
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             }
         }
         .padding(16)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
-        .accessibilityElement(children: .combine)
     }
     
     private func repairCard(_ item: RepairHistoryItem) -> some View {
@@ -177,10 +176,10 @@ struct AfterSalesHistoryView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.customerName)
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     Text("Invoice #\(item.invoiceNumber)")
                         .font(.system(size: 13, weight: .medium, design: .monospaced))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
                 Spacer()
                 statusBadge(item.status)
@@ -192,26 +191,25 @@ struct AfterSalesHistoryView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.productName)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     Text(item.repairType)
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                 }
                 Spacer()
                 Text(Self.dateFormatter.string(from: item.completionDate))
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             }
         }
         .padding(16)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
-        .accessibilityElement(children: .combine)
     }
     
     private func statusBadge(_ status: String) -> some View {

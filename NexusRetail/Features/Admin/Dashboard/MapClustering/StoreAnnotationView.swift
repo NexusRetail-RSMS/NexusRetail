@@ -31,8 +31,6 @@ class StoreAnnotationView: MKAnnotationView {
         backgroundColor = .clear
         displayPriority = .defaultHigh
         collisionMode = .circle
-        isAccessibilityElement = true
-        accessibilityHint = "Double tap to select this store"
     }
     
     /// Updates the SwiftUI view with the latest state
@@ -61,13 +59,6 @@ class StoreAnnotationView: MKAnnotationView {
         
         // Offset so the pointer is exactly at the coordinate
         self.centerOffset = CGPoint(x: 0, y: -size.height / 2)
-        
-        self.accessibilityLabel = store.name
-        if isSelected {
-            self.accessibilityTraits.insert(.selected)
-        } else {
-            self.accessibilityTraits.remove(.selected)
-        }
     }
     
     override func prepareForDisplay() {
