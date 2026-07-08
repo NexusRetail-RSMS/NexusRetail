@@ -18,10 +18,10 @@ struct NexusRetailApp: App {
                 .environment(sessionStore)
                 .environment(localizationManager)
                 .environment(theme)
+                .preferredColorScheme(theme.isDarkMode ? .dark : .light)
                 .environment(\.locale, Locale(identifier: localizationManager.currentLanguage))
                 .environment(\.layoutDirection, localizationManager.isRTL ? .rightToLeft : .leftToRight)
                 .id(localizationManager.currentLanguage)
-                .preferredColorScheme(theme.isDarkMode ? .dark : .light)
                 .task {
                     // Attempt to restore session on app launch
                     await sessionStore.restore()

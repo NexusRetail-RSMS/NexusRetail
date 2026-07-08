@@ -11,6 +11,7 @@ import SwiftUI
 /// Displays all payment providers as premium cards with toggles, status indicators,
 /// and navigation links to individual configuration detail screens.
 struct PaymentConfigurationView: View {
+    @Environment(AppTheme.self) private var theme
 
     @State private var viewModel = PaymentConfigurationViewModel()
     @Environment(\.dismiss) private var dismiss
@@ -21,7 +22,7 @@ struct PaymentConfigurationView: View {
     var body: some View {
         ZStack {
             // Full-screen cream background
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
 
             ScrollView {
@@ -109,7 +110,7 @@ struct PaymentConfigurationView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             LinearGradient(
-                colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
+                colors: [theme.burgundy, theme.darkBurgundy],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -121,11 +122,11 @@ struct PaymentConfigurationView: View {
         VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
             Text("Payment Gateways")
                 .font(RSMSFonts.title)
-                .foregroundColor(RSMSColors.burgundy)
+                .foregroundColor(theme.burgundy)
 
             Text("Configure payment gateways for your store so you can start accepting payments.")
                 .font(RSMSFonts.subheadline)
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -154,23 +155,23 @@ struct PaymentConfigurationView: View {
                     // Provider icon in a burgundy circle
                     ZStack {
                         Circle()
-                            .fill(RSMSColors.burgundy.opacity(0.12))
+                            .fill(theme.burgundy.opacity(0.12))
                             .frame(width: 48, height: 48)
 
                         Image(systemName: config.provider.iconName)
                             .font(.system(size: 22, weight: .semibold))
-                            .foregroundColor(RSMSColors.burgundy)
+                            .foregroundColor(theme.burgundy)
                     }
 
                     // Name + subtitle
                     VStack(alignment: .leading, spacing: 3) {
                         Text(config.provider.displayName)
                             .font(RSMSFonts.headline)
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
 
                         Text(config.provider.subtitle)
                             .font(RSMSFonts.caption)
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                             .lineLimit(2)
                     }
 
@@ -186,7 +187,7 @@ struct PaymentConfigurationView: View {
                         }
                     ))
                     .labelsHidden()
-                    .tint(RSMSColors.burgundy)
+                    .tint(theme.burgundy)
                     .disabled(!isAdmin)
                 }
                 .padding(.horizontal, RSMSSpacing.lg)
@@ -195,7 +196,7 @@ struct PaymentConfigurationView: View {
 
                 // Divider
                 Rectangle()
-                    .fill(RSMSColors.divider)
+                    .fill(theme.divider)
                     .frame(height: 1)
                     .padding(.horizontal, RSMSSpacing.lg)
 
@@ -208,26 +209,26 @@ struct PaymentConfigurationView: View {
                     VStack(alignment: .trailing, spacing: 2) {
                         Text("Last Updated")
                             .font(RSMSFonts.caption)
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
 
                         Text(formattedDate(config.updatedAt))
                             .font(RSMSFonts.caption)
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                     }
 
                     Image(systemName: "chevron.right")
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                         .padding(.leading, RSMSSpacing.sm)
                 }
                 .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.vertical, RSMSSpacing.md)
             }
-            .background(RSMSColors.cardBackground)
+            .background(theme.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.large))
             .overlay(
                 RoundedRectangle(cornerRadius: RSMSRadius.large)
-                    .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                    .stroke(theme.cardBorder, lineWidth: 1)
             )
             .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
         }
@@ -256,40 +257,40 @@ struct PaymentConfigurationView: View {
             HStack(spacing: RSMSSpacing.md) {
                 Image(systemName: "checkmark.shield.fill")
                     .font(.system(size: 20))
-                    .foregroundColor(RSMSColors.success)
+                    .foregroundColor(theme.success)
 
                 Text("At least one payment gateway is configured. You can now accept payments.")
                     .font(RSMSFonts.subheadline)
-                    .foregroundColor(RSMSColors.success)
+                    .foregroundColor(theme.success)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding(RSMSSpacing.lg)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RSMSColors.success.opacity(0.08))
+            .background(theme.success.opacity(0.08))
             .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.medium))
             .overlay(
                 RoundedRectangle(cornerRadius: RSMSRadius.medium)
-                    .stroke(RSMSColors.success.opacity(0.3), lineWidth: 1)
+                    .stroke(theme.success.opacity(0.3), lineWidth: 1)
             )
         } else if !viewModel.configurations.isEmpty {
             // Warning banner — only show after configs have loaded
             HStack(spacing: RSMSSpacing.md) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.system(size: 20))
-                    .foregroundColor(RSMSColors.warning)
+                    .foregroundColor(theme.warning)
 
                 Text("Store cannot process payments until at least one payment gateway is configured.")
                     .font(RSMSFonts.subheadline)
-                    .foregroundColor(RSMSColors.warning)
+                    .foregroundColor(theme.warning)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding(RSMSSpacing.lg)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RSMSColors.warning.opacity(0.08))
+            .background(theme.warning.opacity(0.08))
             .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.medium))
             .overlay(
                 RoundedRectangle(cornerRadius: RSMSRadius.medium)
-                    .stroke(RSMSColors.warning.opacity(0.3), lineWidth: 1)
+                    .stroke(theme.warning.opacity(0.3), lineWidth: 1)
             )
         }
     }
@@ -304,14 +305,14 @@ struct PaymentConfigurationView: View {
             VStack(spacing: RSMSSpacing.md) {
                 ProgressView()
                     .controlSize(.large)
-                    .tint(RSMSColors.burgundy)
+                    .tint(theme.burgundy)
 
                 Text("Loading configurations…")
                     .font(RSMSFonts.subheadline)
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
             }
             .padding(RSMSSpacing.xxl)
-            .background(RSMSColors.cardBackground)
+            .background(theme.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.large))
             .shadow(color: Color.black.opacity(0.12), radius: 16, x: 0, y: 8)
         }

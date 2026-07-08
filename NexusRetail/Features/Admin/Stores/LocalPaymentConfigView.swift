@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct LocalPaymentConfigView: View {
+    @Environment(AppTheme.self) private var theme
     @Binding var config: PaymentTerminalConfig
     let provider: PaymentProvider
     
@@ -47,7 +48,7 @@ struct LocalPaymentConfigView: View {
                             .frame(maxWidth: .infinity)
                             .fontWeight(.bold)
                     }
-                    .tint(RSMSColors.burgundy)
+                    .tint(theme.burgundy)
                     .disabled(credential1.isEmpty || credential2.isEmpty)
                 }
             }
@@ -58,7 +59,7 @@ struct LocalPaymentConfigView: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .tint(RSMSColors.burgundy)
+                    .tint(theme.burgundy)
                 }
             }
         }

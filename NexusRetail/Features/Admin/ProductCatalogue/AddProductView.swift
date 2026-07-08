@@ -2,6 +2,7 @@ import SwiftUI
 import PhotosUI
 
 struct AddProductView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var viewModel: ProductCatalogueViewModel
 
@@ -65,21 +66,21 @@ struct AddProductView: View {
                                 } else {
 
                                     RoundedRectangle(cornerRadius: 18)
-                                        .fill(RSMSColors.cardBackground)
+                                        .fill(theme.cardBackground)
                                         .overlay {
                                             VStack(spacing: 10) {
 
                                                 Image(systemName: "camera.fill")
                                                     .font(.system(size: 34))
-                                                    .foregroundStyle(RSMSColors.burgundy)
+                                                    .foregroundStyle(theme.burgundy)
 
                                                 Text("Upload Product Image")
                                                     .font(.headline)
-                                                    .foregroundStyle(RSMSColors.darkBrown)
+                                                    .foregroundStyle(theme.darkBrown)
 
                                                 Text("Tap to select an image")
                                                     .font(.caption)
-                                                    .foregroundStyle(RSMSColors.secondaryText)
+                                                    .foregroundStyle(theme.secondaryText)
                                             }
                                         }
                                 }
@@ -94,7 +95,7 @@ struct AddProductView: View {
                                 ZStack {
 
                                     Circle()
-                                        .fill(RSMSColors.burgundy)
+                                        .fill(theme.burgundy)
                                         .frame(width: 46, height: 46)
 
                                     Image(systemName: "camera.fill")
@@ -126,12 +127,12 @@ struct AddProductView: View {
                     
                     TextField("SKU (Auto-generated)", text: $sku)
                         .disabled(true)
-                        .foregroundStyle(RSMSColors.secondaryText)
+                        .foregroundStyle(theme.secondaryText)
 
                     Picker("Category", selection: $category) {
                         ForEach(categories, id: \.self) { Text($0) }
                     }
-                    .tint(RSMSColors.burgundy)
+                    .tint(theme.burgundy)
                 }
 
                 // Stock is set only at creation. On edit it's aggregated per-store
@@ -151,7 +152,7 @@ struct AddProductView: View {
                         TextField("0.00", text: $basePrice)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
-                            .foregroundStyle(RSMSColors.darkBrown)
+                            .foregroundStyle(theme.darkBrown)
                     }
                     HStack {
                         Text("Floor Price")
@@ -159,14 +160,14 @@ struct AddProductView: View {
                         TextField("0.00", text: $floorPrice)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
-                            .foregroundStyle(RSMSColors.darkBrown)
+                            .foregroundStyle(theme.darkBrown)
                     }
                     Picker("Currency", selection: $currency) {
                         Text("INR").tag("INR")
                         Text("EUR").tag("EUR")
                         Text("GBP").tag("GBP")
                     }
-                    .tint(RSMSColors.burgundy)
+                    .tint(theme.burgundy)
                 }
 
                 if product == nil {
@@ -177,7 +178,7 @@ struct AddProductView: View {
                             in: Calendar.current.startOfDay(for: Date())...,
                             displayedComponents: .date
                         )
-                        .tint(RSMSColors.burgundy)
+                        .tint(theme.burgundy)
                     }
                 }
             }
@@ -203,7 +204,7 @@ struct AddProductView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }
-                        .tint(RSMSColors.burgundy)
+                        .tint(theme.burgundy)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     if isSaving {
@@ -247,7 +248,7 @@ struct AddProductView: View {
                             }
                         }
                         .fontWeight(.bold)
-                        .tint(RSMSColors.burgundy)
+                        .tint(theme.burgundy)
                         .disabled(!canSave)
                     }
                 }

@@ -2,6 +2,7 @@ import SwiftUI
 import CoreImage.CIFilterBuiltins
 
 struct ProductCatalogueView: View {
+    @Environment(AppTheme.self) private var theme
     @StateObject private var viewModel = ProductCatalogueViewModel()
     @State private var showAddProduct = false
     @State private var editingProduct: CatalogueProduct?
@@ -9,7 +10,7 @@ struct ProductCatalogueView: View {
     
     var body: some View {
         ZStack(alignment: .top) {
-            RSMSColors.background.ignoresSafeArea()
+            theme.background.ignoresSafeArea()
 
             productList
         }
@@ -49,7 +50,7 @@ struct ProductCatalogueView: View {
                 Text("Products")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
 
                 Spacer()
 
@@ -58,9 +59,9 @@ struct ProductCatalogueView: View {
                 } label: {
                     Image(systemName: "plus")
                         .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                         .frame(width: 44, height: 44)
-                        .background(RSMSColors.burgundy.opacity(0.1))
+                        .background(theme.burgundy.opacity(0.1))
                         .clipShape(Circle())
                 }
             }
@@ -113,7 +114,7 @@ struct ProductCatalogueView: View {
                 .background(.ultraThinMaterial)
         }
         .scrollIndicators(.hidden)
-        .background(RSMSColors.background)
+        .background(theme.background)
         .animation(.easeInOut(duration: 0.2), value: viewModel.searchText)
         .animation(.easeInOut(duration: 0.2), value: viewModel.selectedCategory)
     }
@@ -148,8 +149,8 @@ struct ProductCatalogueView: View {
                     ForEach(viewModel.trendingProducts.indices, id: \.self) { i in
                         Capsule()
                             .fill(i == viewModel.currentTrendingIndex
-                                  ? RSMSColors.burgundy
-                                  : RSMSColors.burgundy.opacity(0.2))
+                                  ? theme.burgundy
+                                  : theme.burgundy.opacity(0.2))
                             .frame(width: i == viewModel.currentTrendingIndex ? 18 : 6, height: 6)
                             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: viewModel.currentTrendingIndex)
                     }
@@ -225,7 +226,7 @@ struct ProductCatalogueView: View {
             .padding(18)
         }
         .frame(height: 210)
-        .background(Color.white)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 4)
     }
@@ -234,7 +235,7 @@ struct ProductCatalogueView: View {
         HStack {
             Text("Products")
                 .font(.system(size: 20, weight: .bold, design: .rounded))
-                .foregroundStyle(RSMSColors.darkBrown)
+                .foregroundStyle(theme.darkBrown)
             Spacer()
             Menu {
                 ForEach(viewModel.categoryOptions, id: \.self) { option in
@@ -251,11 +252,11 @@ struct ProductCatalogueView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy.opacity(0.1))
+                        .fill(theme.burgundy.opacity(0.1))
                         .frame(width: 36, height: 36)
 
                     Image(systemName: "line.3.horizontal.decrease")
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                         .font(.system(size: 14, weight: .medium))
                 }
             }
@@ -264,15 +265,16 @@ struct ProductCatalogueView: View {
 }
 
 private struct ProductRowCard: View {
+    @Environment(AppTheme.self) private var theme
     let product: CatalogueProduct
     let viewModel: ProductCatalogueViewModel
     let onEdit: () -> Void
     let onDelete: () -> Void
     
     var stockColor: Color {
-        if product.stock == 0 { return RSMSColors.warning }
+        if product.stock == 0 { return theme.warning }
         if product.stock < 10 { return .orange }
-        return RSMSColors.success
+        return theme.success
     }
 
         @State private var showQR = false
@@ -281,7 +283,7 @@ private struct ProductRowCard: View {
             HStack(spacing: 14) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(RSMSColors.burgundy.opacity(0.06))
+                        .fill(theme.burgundy.opacity(0.06))
 
                     if let image = product.image {
                         Image(uiImage: image)
@@ -304,7 +306,7 @@ private struct ProductRowCard: View {
                             case .failure:
                                 Image(systemName: "photo")
                                     .font(.system(size: 24))
-                                    .foregroundStyle(RSMSColors.secondaryText.opacity(0.4))
+                                    .foregroundStyle(theme.secondaryText.opacity(0.4))
                             @unknown default:
                                 EmptyView()
                             }
@@ -318,7 +320,7 @@ private struct ProductRowCard: View {
                     } else {
                         Image(systemName: "photo")
                             .font(.system(size: 24))
-                            .foregroundStyle(RSMSColors.secondaryText.opacity(0.4))
+                            .foregroundStyle(theme.secondaryText.opacity(0.4))
                     }
                 }
                 .frame(width: 72, height: 72)
@@ -329,12 +331,12 @@ private struct ProductRowCard: View {
                         VStack(alignment: .leading, spacing: 3) {
                             Text(product.name)
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundStyle(RSMSColors.darkBrown)
+                                .foregroundStyle(theme.darkBrown)
                                 .lineLimit(2)
 
                             Text(product.category)
                                 .font(.system(size: 12))
-                                .foregroundStyle(RSMSColors.secondaryText)
+                                .foregroundStyle(theme.secondaryText)
                         }
 
                         Spacer()
@@ -343,7 +345,7 @@ private struct ProductRowCard: View {
                             // Price on the right
                             Text(viewModel.formattedPrice(for: product))
                                 .font(.system(size: 17, weight: .bold, design: .rounded))
-                                .foregroundStyle(RSMSColors.darkBrown)
+                                .foregroundStyle(theme.darkBrown)
                             
                             if product.qrCode != nil {
                                 Button {
@@ -351,7 +353,7 @@ private struct ProductRowCard: View {
                                 } label: {
                                     Image(systemName: "qrcode")
                                         .font(.system(size: 16))
-                                        .foregroundColor(RSMSColors.burgundy)
+                                        .foregroundColor(theme.burgundy)
                                 }
                             }
                         }
@@ -361,13 +363,13 @@ private struct ProductRowCard: View {
             }
             .padding(14)
             .frame(height: 100)
-            .background(RSMSColors.cardBackground)
+            .background(theme.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(RSMSColors.cardBorder, lineWidth: 1)
+                    .strokeBorder(theme.cardBorder, lineWidth: 1)
             )
-            .shadow(color: RSMSColors.darkBrown.opacity(0.04), radius: 6, x: 0, y: 2)
+            .shadow(color: theme.darkBrown.opacity(0.04), radius: 6, x: 0, y: 2)
             .contextMenu {
                 if product.qrCode != nil {
                     Button {
@@ -385,7 +387,7 @@ private struct ProductRowCard: View {
                     } icon: {
                         Image(systemName: "square.and.pencil")
                             .renderingMode(.template)
-                            .foregroundColor(.black)
+                            .foregroundColor(theme.primaryText)
                     }
                 }
                 .tint(.black)
@@ -414,7 +416,7 @@ private struct ProductRowCard: View {
                             QRCodeView(qrCodeString: qr)
                                 .frame(width: 250, height: 250)
                                 .padding()
-                                .background(Color.white)
+                                .background(theme.cardBackground)
                                 .cornerRadius(16)
                                 .shadow(radius: 4)
                             

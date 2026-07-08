@@ -79,7 +79,7 @@ struct RepairOrderDetailsView: View {
                     }
                 }
                 .padding(20)
-                .background(Color.white)
+                .background(theme.cardBackground)
                 .cornerRadius(16)
                 .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
                 .padding(.horizontal, 20)

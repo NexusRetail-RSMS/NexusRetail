@@ -25,8 +25,7 @@ struct SalesTabView: View {
                 InventoryCatalogView()
             }
         }
-        .tint(theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy)
-        .preferredColorScheme(theme.isDarkMode ? .dark : .light)
+        .tint(theme.isDarkMode ? theme.antiqueGold : theme.burgundy)
         .environment(theme)
         .onAppear { updateTabBarAppearance() }
         .onChange(of: theme.isDarkMode) { _, _ in updateTabBarAppearance() }

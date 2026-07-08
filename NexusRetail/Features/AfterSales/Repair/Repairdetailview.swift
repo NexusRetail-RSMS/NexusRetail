@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct RepairDetailView: View {
+    @Environment(AppTheme.self) private var theme
     let item: AfterSalesHistoryView.RepairItem
 
     private static let dateFormatter: DateFormatter = {
@@ -30,7 +31,7 @@ struct RepairDetailView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
@@ -52,7 +53,7 @@ struct RepairDetailView: View {
         }
         .navigationTitle("Repair")
         .navigationBarTitleDisplayMode(.large)
-        .tint(RSMSColors.burgundy)
+        .tint(theme.burgundy)
     }
 
     // MARK: - Customer
@@ -63,21 +64,21 @@ struct RepairDetailView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.customerName)
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                 Text("#\(reference)")
                     .font(.system(size: 13, weight: .medium, design: .monospaced))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             }
 
             Spacer()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.large))
         .overlay(
             RoundedRectangle(cornerRadius: RSMSRadius.large)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
     }
@@ -92,16 +93,16 @@ struct RepairDetailView: View {
 
                 Text(item.productName)
                     .font(.system(size: 16.5, weight: .bold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.large))
         .overlay(
             RoundedRectangle(cornerRadius: RSMSRadius.large)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
     }
@@ -113,18 +114,18 @@ struct RepairDetailView: View {
 
             Text(description)
                 .font(.system(size: 14.5))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(12)
-                .background(RSMSColors.background)
+                .background(theme.background)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .padding(16)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.large))
         .overlay(
             RoundedRectangle(cornerRadius: RSMSRadius.large)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
     }
@@ -155,11 +156,11 @@ struct RepairDetailView: View {
             }
         }
         .padding(16)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.large))
         .overlay(
             RoundedRectangle(cornerRadius: RSMSRadius.large)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
     }
@@ -184,11 +185,11 @@ struct RepairDetailView: View {
             detailRow(icon: "checkmark.seal", label: "Status", value: item.status)
         }
         .padding(16)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.large))
         .overlay(
             RoundedRectangle(cornerRadius: RSMSRadius.large)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
     }
@@ -215,19 +216,19 @@ struct RepairDetailView: View {
 
     private var productIconTile: some View {
         RoundedRectangle(cornerRadius: 10)
-            .fill(RSMSColors.burgundy.opacity(0.08))
+            .fill(theme.burgundy.opacity(0.08))
             .frame(width: 44, height: 44)
             .overlay(
                 Image(systemName: iconName(for: item.productName))
                     .font(.system(size: 19, weight: .medium))
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
             )
     }
 
     private func sectionLabel(_ text: String) -> some View {
         Text(text.uppercased())
             .font(.system(size: 11.5, weight: .bold))
-            .foregroundColor(RSMSColors.secondaryText)
+            .foregroundColor(theme.secondaryText)
             .tracking(0.5)
     }
 
@@ -236,24 +237,24 @@ struct RepairDetailView: View {
             HStack(spacing: 8) {
                 Image(systemName: icon)
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
                     .frame(width: 18)
                 Text(label)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             }
 
             Spacer()
 
             Text(value)
                 .font(.system(size: 14, weight: .bold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
         }
     }
 
     private var monogram: some View {
         Circle()
-            .fill(RSMSColors.burgundy)
+            .fill(theme.burgundy)
             .frame(width: 44, height: 44)
             .overlay(
                 Text(initials(for: item.customerName))

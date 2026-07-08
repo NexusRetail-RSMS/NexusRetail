@@ -11,6 +11,7 @@ enum RequestFilterTab: String, CaseIterable {
 }
 
 struct ManagerPendingRequestsView: View {
+    @Environment(AppTheme.self) private var theme
     @Bindable var viewModel: InventoryViewModel
     @Environment(SessionStore.self) private var sessionStore
     @State private var selectedTab: RequestFilterTab = .pending
@@ -26,7 +27,7 @@ struct ManagerPendingRequestsView: View {
     
     var body: some View {
         ZStack {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
             
             if viewModel.isLoading && viewModel.requests.isEmpty {
@@ -48,13 +49,13 @@ struct ManagerPendingRequestsView: View {
                             VStack(spacing: 16) {
                                 Image(systemName: "doc.text")
                                     .font(.system(size: 48))
-                                    .foregroundColor(RSMSColors.secondaryText.opacity(0.4))
+                                    .foregroundColor(theme.secondaryText.opacity(0.4))
                                 Text("No requests")
                                     .font(RSMSFonts.headline)
-                                    .foregroundColor(RSMSColors.primaryText)
+                                    .foregroundColor(theme.primaryText)
                                 Text("You haven't submitted any stock transfer requests matching this filter.")
                                     .font(RSMSFonts.caption)
-                                    .foregroundColor(RSMSColors.secondaryText)
+                                    .foregroundColor(theme.secondaryText)
                                     .multilineTextAlignment(.center)
                             }
                             .padding(.vertical, 40)

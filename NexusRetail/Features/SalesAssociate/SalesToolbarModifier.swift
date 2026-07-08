@@ -4,7 +4,6 @@ struct SalesToolbarModifier: ViewModifier {
     let title: String
     @Environment(SessionStore.self) private var sessionStore
     @Environment(AppTheme.self) private var theme
-    @State private var isProfilePresented = false
 
     func body(content: Content) -> some View {
         content
@@ -12,16 +11,15 @@ struct SalesToolbarModifier: ViewModifier {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { isProfilePresented = true } label: {
+                    NavigationLink(destination: GlobalProfileView()) {
                         ZStack {
-                            Circle().fill(theme.isDarkMode ? Color(hex: "2C0000") : RSMSColors.burgundy).frame(width: 32, height: 32)
+                            Circle().fill(theme.headerBackground).frame(width: 32, height: 32)
                             Text(initials(for: sessionStore.currentUser?.name))
-                                .font(.system(size: 11, weight: .bold)).foregroundStyle(theme.isDarkMode ? RSMSColors.antiqueGold : .white)
+                                .font(.system(size: 11, weight: .bold)).foregroundStyle(.white)
                         }
                     }
                 }
             }
-            .sheet(isPresented: $isProfilePresented) { AdminProfileSheet().environment(theme) }
     }
 
     private func initials(for name: String?) -> String {

@@ -10,6 +10,7 @@
 import SwiftUI
 
 struct LanguageSettingsButton: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(LocalizationManager.self) private var localizationManager
     @State private var showPicker = false
 
@@ -30,15 +31,15 @@ struct LanguageSettingsButton: View {
             HStack(spacing: 12) {
                 Image(systemName: "globe")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
                 Text("Language")
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                 Spacer()
                 Text(currentDisplayName)
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
                 Image(systemName: "chevron.right")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             }
             .contentShape(Rectangle())
         }

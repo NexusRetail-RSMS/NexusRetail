@@ -26,6 +26,7 @@ struct SalesGranularPoint: Identifiable {
 // MARK: - View
 
 struct SalesDetailView: View {
+    @Environment(AppTheme.self) private var theme
     let store: Store
     // Default to yearly so there's always data visible on open.
     // Weekly default caused "no data" because current week may have no orders.
@@ -77,7 +78,7 @@ struct SalesDetailView: View {
             HStack {
                 Text("Sales Report")
                     .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                 
                 Spacer()
                 
@@ -92,7 +93,7 @@ struct SalesDetailView: View {
                             .font(.system(size: 12))
                     }
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .background(Color.gray.opacity(0.1))
@@ -111,26 +112,26 @@ struct SalesDetailView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("TOTAL")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
                     .tracking(1)
 
                 Text("₹\(formatNumber(Int(totalSales)))")
                     .font(.system(size: 32, weight: .bold))
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
             }
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.top, RSMSSpacing.lg)
 
             Text(periodLabel)
                 .font(RSMSFonts.subheadline)
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
                 .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.top, RSMSSpacing.xs)
 
             // Legend
             HStack(spacing: RSMSSpacing.sm) {
-                RoundedRectangle(cornerRadius: 2).fill(RSMSColors.burgundy).frame(width: 16, height: 8)
-                Text("Revenue (₹)").font(.system(size: 12)).foregroundColor(RSMSColors.secondaryText)
+                RoundedRectangle(cornerRadius: 2).fill(theme.burgundy).frame(width: 16, height: 8)
+                Text("Revenue (₹)").font(.system(size: 12)).foregroundColor(theme.secondaryText)
             }
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.top, RSMSSpacing.md)
@@ -140,7 +141,7 @@ struct SalesDetailView: View {
                 VStack {
                     Spacer()
                     ProgressView()
-                        .tint(RSMSColors.burgundy)
+                        .tint(theme.burgundy)
                     Spacer()
                 }
                 .frame(height: 300)
@@ -155,7 +156,7 @@ struct SalesDetailView: View {
                                 y: .value("Revenue", point.online + point.offline)
                             )
                             .interpolationMethod(.catmullRom)
-                            .foregroundStyle(LinearGradient(colors: [RSMSColors.burgundy.opacity(0.22), RSMSColors.burgundy.opacity(0.02)], startPoint: .top, endPoint: .bottom))
+                            .foregroundStyle(LinearGradient(colors: [theme.burgundy.opacity(0.22), theme.burgundy.opacity(0.02)], startPoint: .top, endPoint: .bottom))
 
                             LineMark(
                                 x: .value("Period", point.label),
@@ -163,18 +164,18 @@ struct SalesDetailView: View {
                             )
                             .interpolationMethod(.catmullRom)
                             .lineStyle(StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
-                            .foregroundStyle(RSMSColors.burgundy)
+                            .foregroundStyle(theme.burgundy)
                         }
                         .chartYScale(domain: 0...maxValue)
                         .chartYAxis {
                             AxisMarks(position: .leading) { value in
                                 AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
-                                    .foregroundStyle(RSMSColors.divider)
+                                    .foregroundStyle(theme.divider)
                                 AxisValueLabel {
                                     if let v = value.as(Double.self) {
                                         Text(shortCurrency(v))
                                             .font(.system(size: 10))
-                                            .foregroundStyle(RSMSColors.secondaryText)
+                                            .foregroundStyle(theme.secondaryText)
                                     }
                                 }
                             }
@@ -183,7 +184,7 @@ struct SalesDetailView: View {
                             AxisMarks { _ in
                                 AxisValueLabel()
                                     .font(.system(size: 10))
-                                    .foregroundStyle(RSMSColors.secondaryText)
+                                    .foregroundStyle(theme.secondaryText)
                             }
                         }
                     } else {
@@ -193,19 +194,19 @@ struct SalesDetailView: View {
                                 x: .value("Period", point.label),
                                 y: .value("Revenue", 8.0)
                             )
-                            .foregroundStyle(RSMSColors.burgundy.opacity(0.15))
+                            .foregroundStyle(theme.burgundy.opacity(0.15))
                             .lineStyle(StrokeStyle(lineWidth: 2))
                         }
                         .chartYScale(domain: 0...100)
                         .chartYAxis {
                             AxisMarks(position: .leading) { value in
                                 AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
-                                    .foregroundStyle(RSMSColors.divider)
+                                    .foregroundStyle(theme.divider)
                                 AxisValueLabel {
                                     if let v = value.as(Double.self) {
                                         Text(shortCurrency(v))
                                             .font(.system(size: 10))
-                                            .foregroundStyle(RSMSColors.secondaryText)
+                                            .foregroundStyle(theme.secondaryText)
                                     }
                                 }
                             }
@@ -214,13 +215,13 @@ struct SalesDetailView: View {
                             AxisMarks { _ in
                                 AxisValueLabel()
                                     .font(.system(size: 10))
-                                    .foregroundStyle(RSMSColors.secondaryText)
+                                    .foregroundStyle(theme.secondaryText)
                             }
                         }
                         .overlay {
                             Text("No sales this period")
                                 .font(RSMSFonts.subheadline)
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                         }
                     }
                 }
@@ -244,7 +245,7 @@ struct SalesDetailView: View {
             VStack(alignment: .leading, spacing: 0) {
                 Text("Sales by Category")
                     .font(RSMSFonts.headline)
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                     .padding(.bottom, RSMSSpacing.md)
 
                 if isLoading {
@@ -254,9 +255,9 @@ struct SalesDetailView: View {
                     VStack(spacing: RSMSSpacing.sm) {
                         Image(systemName: "chart.bar.xaxis")
                             .font(.system(size: 28))
-                            .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                            .foregroundColor(theme.secondaryText.opacity(0.5))
                         Text("No sales data available.")
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, RSMSSpacing.xl)
@@ -270,17 +271,17 @@ struct SalesDetailView: View {
                             HStack {
                                 Text(cat.category)
                                     .font(.system(size: 15, weight: .semibold))
-                                    .foregroundColor(RSMSColors.primaryText)
+                                    .foregroundColor(theme.primaryText)
                                     .lineLimit(1)
                                 Spacer()
                                 Text("₹\(formatNumber(Int(cat.revenue)))")
                                     .font(.system(size: 15, weight: .bold))
-                                    .foregroundColor(RSMSColors.burgundy)
+                                    .foregroundColor(theme.burgundy)
                             }
                             GeometryReader { geo in
                                 ZStack(alignment: .leading) {
-                                    Capsule().fill(RSMSColors.cardBorder.opacity(0.35)).frame(height: 8)
-                                    Capsule().fill(RSMSColors.burgundy).frame(width: max(6, geo.size.width * frac), height: 8)
+                                    Capsule().fill(theme.cardBorder.opacity(0.35)).frame(height: 8)
+                                    Capsule().fill(theme.burgundy).frame(width: max(6, geo.size.width * frac), height: 8)
                                 }
                             }
                             .frame(height: 8)
@@ -288,19 +289,19 @@ struct SalesDetailView: View {
                                 Spacer()
                                 Text("\(share)%")
                                     .font(.system(size: 12, weight: .medium))
-                                    .foregroundColor(RSMSColors.secondaryText)
+                                    .foregroundColor(theme.secondaryText)
                             }
                         }
                         .padding(.vertical, RSMSSpacing.md)
 
                         if index < categorySales.count - 1 {
-                            Divider().foregroundColor(RSMSColors.divider)
+                            Divider().foregroundColor(theme.divider)
                         }
                     }
                 }
             }
             .padding(RSMSSpacing.lg)
-            .background(RSMSColors.cardBackground)
+            .background(theme.cardBackground)
             .cornerRadius(RSMSRadius.large)
             .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
             .padding(.horizontal, RSMSSpacing.lg)
@@ -308,7 +309,7 @@ struct SalesDetailView: View {
             .padding(.bottom, RSMSSpacing.xxl)
         }
         }
-        .background(RSMSColors.background.ignoresSafeArea())
+        .background(theme.background.ignoresSafeArea())
         .navigationBarBackButtonHidden(true)
         .toolbar(.visible, for: .navigationBar)
         .toolbar {
@@ -320,7 +321,7 @@ struct SalesDetailView: View {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 16, weight: .semibold))
                     }
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
                 }
             }
         }
@@ -383,16 +384,16 @@ struct SalesDetailView: View {
 
     private func summaryTile(title: String, value: String, caption: String?) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.system(size: 12, weight: .medium)).foregroundColor(RSMSColors.secondaryText)
-            Text(value).font(.system(size: 18, weight: .bold)).foregroundColor(RSMSColors.burgundy).lineLimit(1).minimumScaleFactor(0.6)
+            Text(title).font(.system(size: 12, weight: .medium)).foregroundColor(theme.secondaryText)
+            Text(value).font(.system(size: 18, weight: .bold)).foregroundColor(theme.burgundy).lineLimit(1).minimumScaleFactor(0.6)
             Text(caption ?? " ")
-                .font(.system(size: 11)).foregroundColor(RSMSColors.secondaryText).lineLimit(1)
+                .font(.system(size: 11)).foregroundColor(theme.secondaryText).lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(RSMSColors.cardBorder.opacity(0.6), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.cardBorder.opacity(0.6), lineWidth: 1))
     }
 
     private func formatNumber(_ value: Int) -> String {
@@ -410,7 +411,7 @@ struct SalesDetailView: View {
     
     private func getColor(for index: Int) -> Color {
         let colors: [Color] = [
-            RSMSColors.burgundy,
+            theme.burgundy,
             Color(hex: "2A9D8F"),
             Color(hex: "E76F51"),
             Color(hex: "E9C46A"),

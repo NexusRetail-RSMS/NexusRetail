@@ -62,7 +62,7 @@ struct BOPISPackOrderView: View {
                             .cornerRadius(RSMSRadius.medium)
                     }
                     .padding(RSMSSpacing.lg)
-                    .background(Color.white)
+                    .background(theme.cardBackground)
                 }
             }
             .navigationTitle("Pack Items")
@@ -123,7 +123,7 @@ private struct PackItemRow: View {
             Spacer()
         }
         .padding(RSMSSpacing.md)
-        .background(Color.white)
+        .background(theme.cardBackground)
         .cornerRadius(RSMSRadius.medium)
         .shadow(color: Color.black.opacity(0.05), radius: 4, y: 2)
     }
@@ -131,7 +131,7 @@ private struct PackItemRow: View {
     @ViewBuilder
     private var fallbackImage: some View {
         RoundedRectangle(cornerRadius: RSMSRadius.small)
-            .fill(RSMSColors.cream)
+            .fill(theme.cream)
             .frame(width: 60, height: 60)
             .overlay(
                 Image(systemName: "bag.fill")

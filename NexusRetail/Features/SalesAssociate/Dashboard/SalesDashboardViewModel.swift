@@ -232,8 +232,8 @@ final class SalesDashboardViewModel {
     // MARK: - Helpers
     func statusColor(for status: String) -> Color {
         switch status {
-        case "Completed":       return RSMSColors.success
-        case "Pending Payment": return RSMSColors.warning
+        case "Completed":       return AppTheme().success
+        case "Pending Payment": return AppTheme().warning
         default:                return .blue
         }
     }

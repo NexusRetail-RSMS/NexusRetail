@@ -10,7 +10,6 @@ struct SalesAssociateDashboardView: View {
     @State private var stylePreferences = ""
     @State private var hasConsent = true
     @State private var isNewClientPresented = false
-    @State private var isProfilePresented = false
     @State private var contentAppeared = false
 
     @State private var clients: [AssociateClient] = [
@@ -57,7 +56,6 @@ struct SalesAssociateDashboardView: View {
             }
         }
         .sheet(isPresented: $isNewClientPresented) { newClientSheet }
-        .sheet(isPresented: $isProfilePresented) { AdminProfileSheet().environment(theme) }
     }
 
     private var headerBar: some View {
@@ -71,7 +69,7 @@ struct SalesAssociateDashboardView: View {
             Spacer()
 
             HStack(spacing: 10) {
-                Button { isProfilePresented = true } label: {
+                NavigationLink(destination: GlobalProfileView()) {
                     ZStack {
                         Circle()
                             .fill(theme.burgundy)

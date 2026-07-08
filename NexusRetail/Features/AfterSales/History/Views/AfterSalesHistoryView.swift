@@ -124,7 +124,7 @@ struct AfterSalesHistoryView: View {
         }
         .navigationTitle("History")
         .navigationBarTitleDisplayMode(.large)
-        .tint(RSMSColors.burgundy)
+        .tint(theme.burgundy)
         .task {
             await viewModel.fetchHistory(storeID: sessionStore.currentUser?.storeID)
         }
@@ -150,10 +150,10 @@ struct AfterSalesHistoryView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(item.customerName)
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     Text("#\(referenceCode(item.orderId, fallback: item.id))")
                         .font(.system(size: 12, weight: .medium, design: .monospaced))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
             }
 
@@ -164,21 +164,21 @@ struct AfterSalesHistoryView: View {
 
                 Text(item.productName)
                     .font(.system(size: 15.5, weight: .bold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
 
                 Spacer()
 
                 Text(Self.dateFormatter.string(from: item.date))
                     .font(.system(size: 12.5, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             }
         }
         .padding(16)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.large))
         .overlay(
             RoundedRectangle(cornerRadius: RSMSRadius.large)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
     }
@@ -191,10 +191,10 @@ struct AfterSalesHistoryView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(item.customerName)
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     Text("#\(referenceCode(item.orderId, fallback: item.id))")
                         .font(.system(size: 12, weight: .medium, design: .monospaced))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
             }
 
@@ -206,20 +206,20 @@ struct AfterSalesHistoryView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(item.productName)
                         .font(.system(size: 15.5, weight: .bold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                 }
                 Spacer()
                 Text(Self.dateFormatter.string(from: item.date))
                     .font(.system(size: 12.5, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             }
         }
         .padding(16)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.large))
         .overlay(
             RoundedRectangle(cornerRadius: RSMSRadius.large)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
     }
@@ -228,7 +228,7 @@ struct AfterSalesHistoryView: View {
 
     private func monogram(for name: String) -> some View {
         Circle()
-            .fill(RSMSColors.burgundy)
+            .fill(theme.burgundy)
             .frame(width: 38, height: 38)
             .overlay(
                 Text(initials(for: name))
@@ -257,12 +257,12 @@ struct AfterSalesHistoryView: View {
 
     private func productIconTile(for productName: String) -> some View {
         RoundedRectangle(cornerRadius: 9)
-            .fill(RSMSColors.burgundy.opacity(0.08))
+            .fill(theme.burgundy.opacity(0.08))
             .frame(width: 34, height: 34)
             .overlay(
                 Image(systemName: iconName(for: productName))
                     .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
             )
     }
 
@@ -314,11 +314,11 @@ struct AfterSalesHistoryView: View {
     private func tagChip(_ text: String) -> some View {
         Text(text)
             .font(.system(size: 12, weight: .semibold))
-            .foregroundColor(RSMSColors.burgundy)
+            .foregroundColor(theme.burgundy)
             .lineLimit(1)
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
-            .background(RSMSColors.burgundy.opacity(0.08))
+            .background(theme.burgundy.opacity(0.08))
             .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 

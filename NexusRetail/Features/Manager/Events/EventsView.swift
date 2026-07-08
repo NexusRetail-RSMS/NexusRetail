@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct EventsView: View {
+    @Environment(AppTheme.self) private var theme
     @State private var viewModel = EventsViewModel()
     @State private var showingCreateEvent = false
     @State private var searchText = ""
@@ -50,7 +51,7 @@ struct EventsView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                RSMSColors.background.ignoresSafeArea()
+                theme.background.ignoresSafeArea()
                 
                 VStack(spacing: 0) {
                     // Fixed Header
@@ -109,7 +110,7 @@ struct EventsView: View {
             Text("Events")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
             
             Spacer()
             
@@ -118,9 +119,9 @@ struct EventsView: View {
             } label: {
                 Image(systemName: "plus")
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
                     .frame(width: 44, height: 44)
-                    .background(RSMSColors.burgundy.opacity(0.1))
+                    .background(theme.burgundy.opacity(0.1))
                     .clipShape(Circle())
             }
         }
@@ -144,12 +145,12 @@ struct EventsView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy.opacity(0.08))
+                        .fill(theme.burgundy.opacity(0.08))
                         .frame(width: 48, height: 48)
 
                     Image(systemName: "line.3.horizontal.decrease")
                         .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                 }
             }
         }
@@ -161,13 +162,13 @@ struct EventsView: View {
         VStack(spacing: 16) {
             Image(systemName: "calendar.badge.plus")
                 .font(.system(size: 60))
-                .foregroundColor(RSMSColors.burgundy.opacity(0.5))
+                .foregroundColor(theme.burgundy.opacity(0.5))
                 .padding(.bottom, 8)
             
             Text("No Events Yet")
                 .font(.title2)
                 .fontWeight(.bold)
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
         }
     }
     
@@ -181,7 +182,7 @@ struct EventsView: View {
             Text("No Events Found")
                 .font(.title2)
                 .fontWeight(.bold)
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
             
             Text("Try searching using a different event name or category.")
                 .font(.body)
@@ -195,6 +196,7 @@ struct EventsView: View {
 // MARK: - Event Card
 
 struct EventCard: View {
+    @Environment(AppTheme.self) private var theme
     let event: SupabaseEvent
     var isNextEvent: Bool = false
     
@@ -263,10 +265,10 @@ struct EventCard: View {
                 if isNextEvent {
                     Text("Next Event")
                         .font(.system(size: 11, weight: .heavy))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Color.white)
+                        .background(theme.cardBackground)
                         .cornerRadius(6)
                         .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
                         .padding(12)
@@ -278,12 +280,12 @@ struct EventCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(event.title)
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                         .lineLimit(1)
                     
                     Text(event.eventType ?? "Custom")
                         .font(.system(size: 14))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                 }
                 
                 // Date & Time
@@ -311,7 +313,7 @@ struct EventCard: View {
                             .foregroundColor(.secondary)
                         Text("\(event.invitedCount) Guests")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                     }
                     
                     Spacer()
@@ -327,17 +329,17 @@ struct EventCard: View {
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 24)
-                    .fill(Color.white)
+                    .fill(theme.cardBackground)
                 
                 if isNextEvent {
                     RoundedRectangle(cornerRadius: 24)
-                        .stroke(RSMSColors.burgundy.opacity(0.3), lineWidth: 1)
+                        .stroke(theme.burgundy.opacity(0.3), lineWidth: 1)
                 }
             }
         )
         .clipShape(RoundedRectangle(cornerRadius: 24))
         .shadow(
-            color: isNextEvent ? RSMSColors.burgundy.opacity(0.15) : Color.black.opacity(0.05),
+            color: isNextEvent ? theme.burgundy.opacity(0.15) : Color.black.opacity(0.05),
             radius: isNextEvent ? 12 : 8,
             x: 0,
             y: isNextEvent ? 4 : 2
