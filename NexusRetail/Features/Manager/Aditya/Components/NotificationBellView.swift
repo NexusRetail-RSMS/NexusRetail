@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct NotificationBellView: View {
+    @Environment(AppTheme.self) private var theme
     let unreadCount: Int
     let action: () -> Void
     
@@ -17,11 +18,11 @@ struct NotificationBellView: View {
                 // Bell icon
                 Image(systemName: unreadCount > 0 ? "bell.badge.fill" : "bell.fill")
                     .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
                     .frame(width: 44, height: 44)
                     .background(
                         Circle()
-                            .fill(RSMSColors.burgundy.opacity(0.1))
+                            .fill(theme.burgundy.opacity(0.1))
                     )
                 
                 // Unread badge
@@ -33,7 +34,7 @@ struct NotificationBellView: View {
                         .padding(.vertical, 2)
                         .background(
                             Capsule()
-                                .fill(RSMSColors.error)
+                                .fill(theme.error)
                         )
                         .offset(x: 4, y: -4)
                 }

@@ -25,7 +25,7 @@ struct DashboardHeaderView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy)
+                        .fill(theme.burgundy)
                         .frame(width: 40, height: 40)
                     
                     Text(initials(for: name))

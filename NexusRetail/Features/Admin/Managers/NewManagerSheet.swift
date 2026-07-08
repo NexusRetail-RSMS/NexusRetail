@@ -7,6 +7,7 @@ import SwiftUI
 import PhotosUI
 
 struct NewManagerSheet: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
 
     var onCreate: ((String, String, String, String, String, String, String, UIImage?) async -> String?)? = nil
@@ -68,9 +69,9 @@ struct NewManagerSheet: View {
                         PhotosPicker(selection: $selectedPhoto, matching: .images) {
                             ZStack {
                                 Circle()
-                                    .fill(RSMSColors.burgundy.opacity(0.15))
+                                    .fill(theme.burgundy.opacity(0.15))
                                     .frame(width: 110, height: 110)
-                                    .shadow(color: RSMSColors.burgundy.opacity(0.15), radius: 10, x: 0, y: 4)
+                                    .shadow(color: theme.burgundy.opacity(0.15), radius: 10, x: 0, y: 4)
 
                                 if let image = selectedImage {
                                     Image(uiImage: image)
@@ -83,7 +84,7 @@ struct NewManagerSheet: View {
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: 52, height: 52)
-                                        .foregroundColor(RSMSColors.burgundy)
+                                        .foregroundColor(theme.burgundy)
                                 }
                             }
                         }
@@ -93,7 +94,7 @@ struct NewManagerSheet: View {
                         PhotosPicker(selection: $selectedPhoto, matching: .images) {
                             Text(selectedImage == nil ? "Add Photo" : "Change Photo")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                                 .padding(.horizontal, 22)
                                 .padding(.vertical, 8)
                                 .background(Color(.systemGray5))
@@ -139,15 +140,15 @@ struct NewManagerSheet: View {
                             Text(name).tag(name)
                         }
                     }
-                    .tint(RSMSColors.burgundy)
+                    .tint(theme.burgundy)
 
                     TextField("Store Address", text: $storeAddress, axis: .vertical)
                         .disabled(true)
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
 
                     TextField("Country", text: $selectedCountry)
                         .disabled(true)
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
             }
             .navigationTitle("Add New Manager")
@@ -159,7 +160,7 @@ struct NewManagerSheet: View {
                     } label: {
                         Image(systemName: "xmark")
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(RSMSColors.burgundy)
+                            .foregroundColor(theme.burgundy)
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -198,7 +199,7 @@ struct NewManagerSheet: View {
                         } label: {
                             Image(systemName: "checkmark")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(isFormValid ? RSMSColors.burgundy : Color.secondary)
+                                .foregroundColor(isFormValid ? theme.burgundy : Color.secondary)
                         }
                         .disabled(!isFormValid)
                     }

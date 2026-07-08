@@ -15,8 +15,6 @@ struct AfterSalesTabView: View {
     @Namespace private var namespace
     @Environment(AppTheme.self) private var theme
 
-
-
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             TabView(selection: $selectedTab) {
@@ -44,6 +42,45 @@ struct AfterSalesTabView: View {
         }
         .environment(theme)
         .environment(posViewModel)
+        .task { updateTabBarAppearance() }
+        .onChange(of: theme.isDarkMode) { _, _ in updateTabBarAppearance() }
+    }
+
+    private func updateTabBarAppearance() {
+        let appearance = UITabBarAppearance()
+        appearance.configureWithDefaultBackground()
+
+        if theme.isDarkMode {
+            appearance.backgroundColor = UIColor(Color(hex: "1A1A1A"))
+            appearance.shadowColor = UIColor(Color(hex: "3D0000").opacity(0.6))
+
+            let itemAppearance = UITabBarItemAppearance()
+            itemAppearance.normal.iconColor = UIColor(Color(hex: "7A5C3A"))
+            itemAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor(Color(hex: "7A5C3A"))]
+            itemAppearance.selected.iconColor = UIColor(Color(hex: "C9A84C"))
+            itemAppearance.selected.titleTextAttributes = [.foregroundColor: UIColor(Color(hex: "C9A84C")),
+                                                           .font: UIFont.systemFont(ofSize: 10, weight: .semibold)]
+            appearance.stackedLayoutAppearance = itemAppearance
+            appearance.inlineLayoutAppearance = itemAppearance
+            appearance.compactInlineLayoutAppearance = itemAppearance
+        } else {
+            appearance.backgroundColor = UIColor(red: 0.98, green: 0.97, blue: 0.95, alpha: 0.98)
+            appearance.shadowColor = UIColor(Color(hex: "8B0000").opacity(0.18))
+
+            let itemAppearance = UITabBarItemAppearance()
+            itemAppearance.normal.iconColor = UIColor(Color(hex: "9E8E7A"))
+            itemAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor(Color(hex: "9E8E7A"))]
+            let burgundyColor = UIColor(red: 0.55, green: 0.0, blue: 0.01, alpha: 1.0)
+            itemAppearance.selected.iconColor = burgundyColor
+            itemAppearance.selected.titleTextAttributes = [.foregroundColor: burgundyColor,
+                                                           .font: UIFont.systemFont(ofSize: 10, weight: .semibold)]
+            appearance.stackedLayoutAppearance = itemAppearance
+            appearance.inlineLayoutAppearance = itemAppearance
+            appearance.compactInlineLayoutAppearance = itemAppearance
+        }
+
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
     }
 
     // MARK: - Flow destinations (tab bar hidden across the scan flow)
@@ -232,6 +269,36 @@ struct AfterSalesProfileSheet: View {
                             .foregroundColor(theme.secondaryText)
                     }
                     .padding(.top, RSMSSpacing.xxl)
+                    
+                    // Dark Mode Toggle
+                    VStack(spacing: 0) {
+                        Divider()
+                            .background(theme.divider)
+                        HStack {
+                            ZStack {
+                                Circle()
+                                    .fill(theme.isDarkMode ? theme.gold.opacity(0.15) : theme.burgundy.opacity(0.10))
+                                    .frame(width: 36, height: 36)
+                                Image(systemName: theme.isDarkMode ? "moon.stars.fill" : "sun.max.fill")
+                                    .font(.system(size: 16))
+                                    .foregroundColor(theme.isDarkMode ? theme.gold : theme.burgundy)
+                            }
+                            Text("Dark Mode")
+                                .font(RSMSFonts.body)
+                                .foregroundColor(theme.primaryText)
+                            Spacer()
+                            Toggle("", isOn: Binding(
+                                get: { theme.isDarkMode },
+                                set: { theme.isDarkMode = $0 }
+                            ))
+                            .tint(theme.gold)
+                        }
+                        .padding(.horizontal, RSMSSpacing.lg)
+                        .padding(.vertical, 12)
+                    }
+                    .background(theme.cardBackground)
+                    .cornerRadius(RSMSRadius.medium)
+                    .padding(.horizontal, RSMSSpacing.lg)
                     
                     Spacer()
                     

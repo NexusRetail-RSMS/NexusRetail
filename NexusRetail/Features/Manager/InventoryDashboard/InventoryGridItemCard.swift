@@ -78,6 +78,7 @@ struct InventoryGridItemCard: View {
 }
 
 struct InventoryQRCodeSheet: View {
+    @Environment(AppTheme.self) private var theme
     let item: InventoryItemRow
     @Environment(\.dismiss) private var dismiss
     
@@ -93,7 +94,7 @@ struct InventoryQRCodeSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 250, height: 250)
-                    .background(Color.white)
+                    .background(theme.cardBackground)
                     .cornerRadius(12)
                     .shadow(radius: 5)
                 

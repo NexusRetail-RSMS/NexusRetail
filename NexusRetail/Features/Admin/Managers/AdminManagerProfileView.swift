@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AdminManagerProfileView: View {
+    @Environment(AppTheme.self) private var theme
     let manager: AdminTransferManager
     @Environment(AdminTransfersViewModel.self) private var viewModel
     

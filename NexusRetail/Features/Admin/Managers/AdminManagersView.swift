@@ -124,6 +124,7 @@ enum PerformanceSortOrder: String, CaseIterable {
 // MARK: - Main View
 
 struct AdminManagersView: View {
+    @Environment(AppTheme.self) private var theme
     @Binding var isAddManagerPresented: Bool
     @Binding var searchText: String
     @Environment(AdminNavigationStore.self) private var navStore
@@ -170,7 +171,7 @@ struct AdminManagersView: View {
 
     var body: some View {
         ZStack {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
 
             ScrollView {
@@ -179,7 +180,7 @@ struct AdminManagersView: View {
                     VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
                         Text("Top Performers")
                             .font(RSMSFonts.headline)
-                            .foregroundColor(RSMSColors.darkBrown)
+                            .foregroundColor(theme.primaryText)
                             .padding(.horizontal, RSMSSpacing.lg)
 
                         let topManagers = Array(viewModel.managers.prefix(topCount).enumerated())
@@ -221,7 +222,7 @@ struct AdminManagersView: View {
                         HStack(spacing: 6) {
                             ForEach(0..<actualTopCount, id: \.self) { i in
                                 Circle()
-                                    .fill(i == topPerformerPage ? RSMSColors.burgundy : RSMSColors.cardBorder)
+                                    .fill(i == topPerformerPage ? theme.burgundy : theme.cardBorder)
                                     .frame(width: i == topPerformerPage ? 8 : 6,
                                            height: i == topPerformerPage ? 8 : 6)
                                     .animation(.spring(response: 0.3), value: topPerformerPage)
@@ -236,7 +237,7 @@ struct AdminManagersView: View {
                     HStack(alignment: .center) {
                         Text("All Managers")
                             .font(RSMSFonts.headline)
-                            .foregroundColor(RSMSColors.darkBrown)
+                            .foregroundColor(theme.primaryText)
                         Spacer()
                         Menu {
                             Picker(selection: $selectedCountryFilter) {
@@ -277,12 +278,7 @@ struct AdminManagersView: View {
                         } label: {
                             Image(systemName: "line.3.horizontal.decrease")
                                 .font(.system(size: 17, weight: .medium))
-                                .foregroundColor(isFiltered ? RSMSColors.burgundy : RSMSColors.primaryText)
-                                .frame(width: 40, height: 40)
-                                .background(isFiltered
-                                    ? RSMSColors.burgundy.opacity(0.12)
-                                    : Color.black.opacity(0.05))
-                                .clipShape(Circle())
+                                .foregroundColor(theme.secondaryText)
                         }
                         .id("\(selectedCountryFilter)_\(selectedPerformanceSort.rawValue)")
                     }
@@ -293,13 +289,13 @@ struct AdminManagersView: View {
                         VStack(spacing: RSMSSpacing.md) {
                             Image(systemName: "magnifyingglass")
                                 .font(.system(size: 44))
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                             Text("Not Present")
                                 .font(RSMSFonts.headline)
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                             Text("No manager or store matches '\(searchText)'.")
                                 .font(RSMSFonts.subheadline)
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                                 .multilineTextAlignment(.center)
                         }
                         .frame(maxWidth: .infinity)
@@ -337,7 +333,7 @@ struct AdminManagersView: View {
                         Text("Managers")
                             .font(.largeTitle)
                             .fontWeight(.bold)
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
 
                         Spacer()
 
@@ -346,10 +342,7 @@ struct AdminManagersView: View {
                         } label: {
                             Image(systemName: "plus")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(RSMSColors.burgundy)
-                                .frame(width: 44, height: 44)
-                                .background(RSMSColors.burgundy.opacity(0.1))
-                                .clipShape(Circle())
+                                .foregroundColor(theme.secondaryText)
                         }
                         .accessibilityLabel("Add new manager")
                     }
@@ -359,7 +352,6 @@ struct AdminManagersView: View {
                 .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.top, 16)
                 .padding(.bottom, 8)
-                .background(.ultraThinMaterial)
             }
         }
         .toolbar(.hidden, for: .navigationBar)
@@ -442,6 +434,7 @@ struct AdminManagersView: View {
 // MARK: - Top Performance Card
 
 struct TopPerformanceCard: View {
+    @Environment(AppTheme.self) private var theme
     let manager: DisplayManager
     let rank: Int
     var onEdit: (() -> Void)? = nil
@@ -467,7 +460,7 @@ struct TopPerformanceCard: View {
                             colors: [
                                 rankColor.opacity(0.18),
                                 rankColor.opacity(0.04),
-                                RSMSColors.cardBackground
+                                theme.cardBackground
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -485,7 +478,7 @@ struct TopPerformanceCard: View {
                         // Avatar
                         ZStack {
                             Circle()
-                                .fill(RSMSColors.burgundy.opacity(0.1))
+                                .fill(theme.burgundy.opacity(0.1))
                                 .frame(width: 75, height: 75)
                             if let urlString = manager.imageUrl, let url = URL(string: urlString) {
                                 AsyncImage(url: url) { image in
@@ -500,7 +493,7 @@ struct TopPerformanceCard: View {
                                 }
                             } else {
                                 Image(systemName: "person.fill")
-                                    .foregroundColor(RSMSColors.burgundy)
+                                    .foregroundColor(theme.burgundy)
                                     .font(.system(size: 24))
                             }
                         }
@@ -508,17 +501,17 @@ struct TopPerformanceCard: View {
                         VStack(alignment: .leading, spacing: 3) {
                             Text(manager.name.components(separatedBy: " ").first ?? manager.name)
                                 .font(.system(size: 22, weight: .bold, design: .rounded))
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                                 .lineLimit(1)
 
                             Text(manager.storeName)
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                                 .lineLimit(1)
                                 
                             Text(manager.country)
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(RSMSColors.secondaryText.opacity(0.8))
+                                .foregroundColor(theme.secondaryText.opacity(0.8))
                                 .lineLimit(1)
                         }
 
@@ -535,10 +528,10 @@ struct TopPerformanceCard: View {
                         VStack(alignment: .trailing, spacing: 2) {
                             Text("Revenue")
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                             Text(manager.revenue)
                                 .font(.system(size: 19, weight: .bold, design: .rounded))
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                         }
                     }
                 }
@@ -556,10 +549,10 @@ struct TopPerformanceCard: View {
                 } icon: {
                     Image(systemName: "square.and.pencil")
                         .renderingMode(.template)
-                        .foregroundColor(.black)
+                        .foregroundColor(theme.primaryText)
                 }
             }
-            .tint(.black)
+            .tint(theme.primaryText)
 
             Button(role: .destructive) {
                 onDelete?()
@@ -574,13 +567,14 @@ struct TopPerformanceCard: View {
             }
             .tint(.red)
         }
-        .tint(.black)
+        .tint(theme.primaryText)
     }
 }
 
 // MARK: - Manager List Card
 
 struct ManagerListCard: View {
+    @Environment(AppTheme.self) private var theme
     let manager: DisplayManager
     var onEdit: (() -> Void)? = nil
     var onDelete: (() -> Void)? = nil
@@ -593,7 +587,7 @@ struct ManagerListCard: View {
                 // Avatar
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy.opacity(0.1))
+                        .fill(theme.burgundy.opacity(0.1))
                         .frame(width: 55, height: 55)
                     if let urlString = manager.imageUrl, let url = URL(string: urlString) {
                         AsyncImage(url: url) { image in
@@ -608,7 +602,7 @@ struct ManagerListCard: View {
                         }
                     } else {
                         Image(systemName: "person.fill")
-                            .foregroundColor(RSMSColors.burgundy)
+                            .foregroundColor(theme.burgundy)
                             .font(.system(size: 22))
                     }
                 }
@@ -617,10 +611,10 @@ struct ManagerListCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(manager.name)
                         .font(.system(size: 16, weight: .bold, design: .rounded))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     Text("\(manager.storeName), \(manager.country)")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
 
                 Spacer()
@@ -628,16 +622,16 @@ struct ManagerListCard: View {
                 // Chevron
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             }
             .padding(16)
             .frame(minHeight: 85)
-            .background(RSMSColors.cardBackground)
+            .background(theme.cardBackground)
             .cornerRadius(RSMSRadius.extraLarge)
             .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
             .overlay(
                 RoundedRectangle(cornerRadius: RSMSRadius.large)
-                    .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                    .stroke(theme.cardBorder, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -650,10 +644,10 @@ struct ManagerListCard: View {
                 } icon: {
                     Image(systemName: "square.and.pencil")
                         .renderingMode(.template)
-                        .foregroundColor(.black)
+                        .foregroundColor(theme.primaryText)
                 }
             }
-            .tint(.black)
+            .tint(theme.primaryText)
 
             Button(role: .destructive) {
                 onDelete?()
@@ -668,7 +662,7 @@ struct ManagerListCard: View {
             }
             .tint(.red)
         }
-        .tint(.black)
+        .tint(theme.primaryText)
     }
 }
 

@@ -42,7 +42,7 @@ struct AdminDashboardView: View {
 
     var body: some View {
         ZStack {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
 
             ScrollView {
@@ -78,7 +78,7 @@ struct AdminDashboardView: View {
                         VStack {
                             Spacer()
                             ProgressView("Loading Dashboard...")
-                                .tint(RSMSColors.burgundy)
+                                .tint(theme.burgundy)
                                 .padding()
                             Spacer()
                         }
@@ -156,7 +156,7 @@ struct AdminDashboardView: View {
             Text("Dashboard")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
 
             Spacer()
 
@@ -179,20 +179,14 @@ struct AdminDashboardView: View {
                     }
                 }
             } label: {
-                ZStack {
-                    Circle()
-                        .fill(RSMSColors.burgundy.opacity(0.1))
-                        .frame(width: 44, height: 44)
-
-                    if let selected = viewModel.selectedCountry {
-                        Text(countryCode(for: selected))
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(RSMSColors.burgundy)
-                    } else {
-                        Text("ALL")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(RSMSColors.burgundy)
-                    }
+                if let selected = viewModel.selectedCountry {
+                    Text(countryCode(for: selected))
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(theme.secondaryText)
+                } else {
+                    Text("ALL")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(theme.secondaryText)
                 }
             }
             .accessibilityLabel("Country filter")
@@ -203,7 +197,7 @@ struct AdminDashboardView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy)
+                        .fill(theme.burgundy)
                         .frame(width: 44, height: 44)
 
                     if let urlString = sessionStore.currentUser?.imageUrl, let url = URL(string: urlString) {
@@ -281,7 +275,7 @@ struct AdminDashboardView: View {
                 value: viewModel.activeStoresText,
                 icon: "building.2.fill",
                 trend: nil,
-                color: RSMSColors.burgundy
+                color: theme.burgundy
             )
             KPICardView(
                 title: "Pending Transfers",

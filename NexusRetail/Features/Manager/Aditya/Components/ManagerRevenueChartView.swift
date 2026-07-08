@@ -7,6 +7,7 @@ import SwiftUI
 import Charts
 
 struct ManagerRevenueChartView: View {
+    @Environment(AppTheme.self) private var theme
     let data: [ManagerRevenueChartPoint]
     let maxValue: Double
     let sixMonthTotal: String
@@ -23,10 +24,10 @@ struct ManagerRevenueChartView: View {
                 VStack(spacing: 8) {
                     Image(systemName: "chart.bar.xaxis")
                         .font(.system(size: 24))
-                        .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                        .foregroundColor(theme.secondaryText.opacity(0.5))
                     Text("No revenue data available")
                         .font(.system(size: 12))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .frame(height: 220)
@@ -38,7 +39,7 @@ struct ManagerRevenueChartView: View {
                     )
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [RSMSColors.darkBurgundy, RSMSColors.burgundy],
+                            colors: [theme.darkBurgundy, theme.burgundy],
                             startPoint: .bottom,
                             endPoint: .top
                         )
@@ -50,21 +51,21 @@ struct ManagerRevenueChartView: View {
                             VStack(spacing: 4) {
                                 Text(point.label)
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(RSMSColors.secondaryText)
+                                    .foregroundColor(theme.secondaryText)
                                 
                                 // Format number to remove trailing zero if it's a whole number
                                 Text("₹\(String(format: point.revenue.truncatingRemainder(dividingBy: 1) == 0 ? "%.0f" : "%.1f", point.revenue))L")
                                     .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(RSMSColors.darkBurgundy)
+                                    .foregroundColor(theme.darkBurgundy)
                             }
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
-                            .background(Color.white)
+                            .background(theme.cardBackground)
                             .cornerRadius(12)
                             .shadow(color: Color.black.opacity(0.12), radius: 10, y: 4)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(RSMSColors.divider, lineWidth: 1)
+                                    .stroke(theme.divider, lineWidth: 1)
                             )
                             .offset(y: -10)
                             // Make sure the tooltip stays above other bars
@@ -77,12 +78,12 @@ struct ManagerRevenueChartView: View {
                 .chartYAxis {
                     AxisMarks(position: .leading, values: .automatic(desiredCount: 4)) { value in
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [4]))
-                            .foregroundStyle(RSMSColors.divider)
+                            .foregroundStyle(theme.divider)
                         AxisValueLabel {
                             if let v = value.as(Double.self) {
                                 Text("\(Int(v))L")
                                     .font(.system(size: 10))
-                                    .foregroundColor(RSMSColors.secondaryText)
+                                    .foregroundColor(theme.secondaryText)
                             }
                         }
                     }
@@ -93,7 +94,7 @@ struct ManagerRevenueChartView: View {
                             if let label = value.as(String.self) {
                                 Text(label)
                                     .font(.system(size: 10, weight: .medium))
-                                    .foregroundColor(RSMSColors.secondaryText)
+                                    .foregroundColor(theme.secondaryText)
                             }
                         }
                     }
@@ -105,16 +106,16 @@ struct ManagerRevenueChartView: View {
             HStack(spacing: RSMSSpacing.md) {
                 HStack(spacing: RSMSSpacing.xs) {
                     Circle()
-                        .fill(RSMSColors.darkBurgundy)
+                        .fill(theme.darkBurgundy)
                         .frame(width: 8, height: 8)
                     Text("Peak: \(peakMonth)")
                         .font(.system(size: 12))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
             }
         }
         .padding(RSMSSpacing.lg)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .cornerRadius(RSMSRadius.large)
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
     }

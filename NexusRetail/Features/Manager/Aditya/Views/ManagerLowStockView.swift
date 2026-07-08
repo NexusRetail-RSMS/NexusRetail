@@ -53,16 +53,17 @@ class ManagerLowStockViewModel: ObservableObject {
 }
 
 struct ManagerLowStockView: View {
+    @Environment(AppTheme.self) private var theme
     @StateObject private var viewModel = ManagerLowStockViewModel()
     @Environment(SessionStore.self) private var sessionStore
     
     var body: some View {
         ZStack {
-            RSMSColors.background.ignoresSafeArea()
+            theme.background.ignoresSafeArea()
             
             if viewModel.isLoading {
                 ProgressView()
-                    .tint(RSMSColors.burgundy)
+                    .tint(theme.burgundy)
             } else if let error = viewModel.errorMessage {
                 VStack {
                     Image(systemName: "exclamationmark.triangle")
@@ -106,12 +107,12 @@ struct ManagerLowStockView: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(item.products?.item_name ?? "Unknown Item")
                                         .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(RSMSColors.primaryText)
+                                        .foregroundColor(theme.primaryText)
                                         .lineLimit(1)
                                     
                                     Text("SKU: \(item.products?.sku_code ?? "N/A")")
                                         .font(.system(size: 12))
-                                        .foregroundColor(RSMSColors.secondaryText)
+                                        .foregroundColor(theme.secondaryText)
                                 }
                                 
                                 Spacer()
@@ -123,11 +124,11 @@ struct ManagerLowStockView: View {
                                     
                                     Text("Min: \(item.reorder_threshold)")
                                         .font(.system(size: 11))
-                                        .foregroundColor(RSMSColors.secondaryText)
+                                        .foregroundColor(theme.secondaryText)
                                 }
                             }
                             .padding()
-                            .background(RSMSColors.cardBackground)
+                            .background(theme.cardBackground)
                             .clipShape(RoundedRectangle(cornerRadius: 16))
                         }
                     }

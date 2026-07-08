@@ -9,6 +9,7 @@
 import SwiftUI
 
 struct CardGatewayConfigurationView: View {
+    @Environment(AppTheme.self) private var theme
 
     // MARK: - Parameters
 
@@ -27,7 +28,7 @@ struct CardGatewayConfigurationView: View {
     var body: some View {
         ZStack {
             // Full-screen cream background
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
 
             ScrollView {
@@ -41,7 +42,7 @@ struct CardGatewayConfigurationView: View {
                         VStack {
                             Spacer()
                             ProgressView()
-                                .tint(RSMSColors.burgundy)
+                                .tint(theme.burgundy)
                                 .scaleEffect(1.2)
                                 .frame(maxWidth: .infinity)
                                 .padding(.top, 100)
@@ -122,7 +123,7 @@ struct CardGatewayConfigurationView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             LinearGradient(
-                colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
+                colors: [theme.burgundy, theme.darkBurgundy],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -135,7 +136,7 @@ struct CardGatewayConfigurationView: View {
     private var subtitleSection: some View {
         Text("Enter your Stripe credentials. You can find these in your Stripe dashboard.")
             .font(RSMSFonts.subheadline)
-            .foregroundColor(RSMSColors.secondaryText)
+            .foregroundColor(theme.secondaryText)
             .padding(.bottom, RSMSSpacing.xs)
     }
 
@@ -147,13 +148,13 @@ struct CardGatewayConfigurationView: View {
         VStack(alignment: .leading, spacing: RSMSSpacing.lg) {
             Text("Credentials")
                 .font(RSMSFonts.headline)
-                .foregroundColor(RSMSColors.darkBrown)
+                .foregroundColor(theme.darkBrown)
 
             // Publishable Key Field
             VStack(alignment: .leading, spacing: RSMSSpacing.xs) {
                 Text("Publishable Key")
                     .font(RSMSFonts.subheadline)
-                    .foregroundColor(RSMSColors.darkBrown)
+                    .foregroundColor(theme.darkBrown)
 
                 HStack(spacing: RSMSSpacing.sm) {
                     TextField("Enter Publishable Key", text: $viewModel.publicKey)
@@ -167,19 +168,19 @@ struct CardGatewayConfigurationView: View {
                         }
                     } label: {
                         Image(systemName: "questionmark.circle")
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                             .imageScale(.medium)
                     }
                     .buttonStyle(.plain)
                 }
                 .padding(RSMSSpacing.md)
-                .background(RSMSColors.cardBackground)
+                .background(theme.cardBackground)
                 .overlay(
                     RoundedRectangle(cornerRadius: RSMSRadius.small)
                         .stroke(
                             viewModel.publicKeyError.isEmpty
-                                ? RSMSColors.inputBorder
-                                : RSMSColors.error,
+                                ? theme.inputBorder
+                                : theme.error,
                             lineWidth: 1
                         )
                 )
@@ -188,18 +189,18 @@ struct CardGatewayConfigurationView: View {
                 if showInfoHelper {
                     HStack(spacing: RSMSSpacing.sm) {
                         Image(systemName: "info.circle.fill")
-                            .foregroundColor(RSMSColors.burgundy)
+                            .foregroundColor(theme.burgundy)
                         
                         Text(viewModel.environment == .test 
                              ? "Test Mode: Use your Stripe Test Publishable Key (starts with 'pk_test_'). Find this in Dashboard > Developers > API Keys." 
                              : "Live Mode: Use your Stripe Live Publishable Key (starts with 'pk_live_').")
                             .font(RSMSFonts.caption)
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(RSMSSpacing.sm)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(RSMSColors.burgundy.opacity(0.06))
+                    .background(theme.burgundy.opacity(0.06))
                     .cornerRadius(RSMSRadius.small)
                     .transition(.opacity.combined(with: .move(edge: .top)))
                 }
@@ -207,7 +208,7 @@ struct CardGatewayConfigurationView: View {
                 if !viewModel.publicKeyError.isEmpty {
                     Text(viewModel.publicKeyError)
                         .font(RSMSFonts.caption)
-                        .foregroundColor(RSMSColors.error)
+                        .foregroundColor(theme.error)
                 }
             }
 
@@ -215,7 +216,7 @@ struct CardGatewayConfigurationView: View {
             VStack(alignment: .leading, spacing: RSMSSpacing.xs) {
                 Text("Secret Key")
                     .font(RSMSFonts.subheadline)
-                    .foregroundColor(RSMSColors.darkBrown)
+                    .foregroundColor(theme.darkBrown)
 
                 HStack(spacing: RSMSSpacing.sm) {
                     Group {
@@ -233,20 +234,20 @@ struct CardGatewayConfigurationView: View {
                         showSecret.toggle()
                     } label: {
                         Image(systemName: showSecret ? "eye.slash.fill" : "eye.fill")
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                             .imageScale(.medium)
                     }
                     .buttonStyle(.plain)
                     .disabled(!isAdmin)
                 }
                 .padding(RSMSSpacing.md)
-                .background(RSMSColors.cardBackground)
+                .background(theme.cardBackground)
                 .overlay(
                     RoundedRectangle(cornerRadius: RSMSRadius.small)
                         .stroke(
                             viewModel.secretKeyError.isEmpty
-                                ? RSMSColors.inputBorder
-                                : RSMSColors.error,
+                                ? theme.inputBorder
+                                : theme.error,
                             lineWidth: 1
                         )
                 )
@@ -255,12 +256,12 @@ struct CardGatewayConfigurationView: View {
                 if !viewModel.secretKeyError.isEmpty {
                     Text(viewModel.secretKeyError)
                         .font(RSMSFonts.caption)
-                        .foregroundColor(RSMSColors.error)
+                        .foregroundColor(theme.error)
                 }
             }
         }
         .padding(RSMSSpacing.lg)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .cornerRadius(RSMSRadius.large)
         .shadow(color: .black.opacity(0.04), radius: 6, x: 0, y: 2)
     }
@@ -270,16 +271,16 @@ struct CardGatewayConfigurationView: View {
     private var securityBadge: some View {
         HStack(spacing: RSMSSpacing.sm) {
             Image(systemName: "shield.lefthalf.filled.badge.checkmark")
-                .foregroundColor(RSMSColors.success)
+                .foregroundColor(theme.success)
                 .imageScale(.medium)
 
             Text("Your credentials are encrypted and stored securely.")
                 .font(RSMSFonts.caption)
-                .foregroundColor(RSMSColors.success)
+                .foregroundColor(theme.success)
         }
         .padding(RSMSSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RSMSColors.success.opacity(0.08))
+        .background(theme.success.opacity(0.08))
         .cornerRadius(RSMSRadius.small)
     }
 
@@ -300,7 +301,7 @@ struct CardGatewayConfigurationView: View {
             if viewModel.isEditing {
                 RSMSSecondaryButton(
                     title: "Disable Card Gateway",
-                    color: RSMSColors.error
+                    color: theme.error
                 ) {
                     Task {
                         await disableCardGateway()

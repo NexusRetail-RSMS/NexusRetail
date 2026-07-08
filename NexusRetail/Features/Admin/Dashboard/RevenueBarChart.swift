@@ -11,6 +11,7 @@ import SwiftUI
 import Charts
 
 struct RevenueBarChart: View {
+    @Environment(AppTheme.self) private var theme
     var title: String = "Store Revenue"
     let data: [RevenueChartPoint]
     let maxValue: Double
@@ -23,7 +24,7 @@ struct RevenueBarChart: View {
             HStack {
                 Text(title)
                     .font(RSMSFonts.headline)
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
 
                 Spacer()
 
@@ -39,7 +40,7 @@ struct RevenueBarChart: View {
                             y: .value("Revenue", 5.0),
                             width: .ratio(0.45)
                         )
-                        .foregroundStyle(RSMSColors.burgundy.opacity(0.12))
+                        .foregroundStyle(theme.burgundy.opacity(0.12))
                         .cornerRadius(8)
                     }
                 }
@@ -47,12 +48,12 @@ struct RevenueBarChart: View {
                 .chartYAxis {
                     AxisMarks(position: .leading, values: .automatic(desiredCount: 5)) { value in
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
-                            .foregroundStyle(RSMSColors.divider)
+                            .foregroundStyle(theme.divider)
                         AxisValueLabel {
                             if let v = value.as(Double.self) {
                                 Text("\(Int(v))")
                                     .font(.system(size: 10))
-                                    .foregroundColor(RSMSColors.secondaryText)
+                                    .foregroundColor(theme.secondaryText)
                             }
                         }
                     }
@@ -63,7 +64,7 @@ struct RevenueBarChart: View {
                             if let label = value.as(String.self) {
                                 Text(label)
                                     .font(.system(size: 10, weight: .medium))
-                                    .foregroundColor(RSMSColors.secondaryText)
+                                    .foregroundColor(theme.secondaryText)
                             }
                         }
                     }
@@ -72,7 +73,7 @@ struct RevenueBarChart: View {
                 .overlay {
                     Text("No revenue data")
                         .font(RSMSFonts.subheadline)
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
             } else {
                 Chart(data) { point in
@@ -83,7 +84,7 @@ struct RevenueBarChart: View {
                     )
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [RSMSColors.burgundy.opacity(0.6), RSMSColors.burgundy],
+                            colors: [theme.burgundy.opacity(0.6), theme.burgundy],
                             startPoint: .top,
                             endPoint: .bottom
                         )
@@ -94,12 +95,12 @@ struct RevenueBarChart: View {
                 .chartYAxis {
                     AxisMarks(position: .leading, values: .automatic(desiredCount: 5)) { value in
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
-                            .foregroundStyle(RSMSColors.divider)
+                            .foregroundStyle(theme.divider)
                         AxisValueLabel {
                             if let v = value.as(Double.self) {
                                 Text("\(Int(v))")
                                     .font(.system(size: 10))
-                                    .foregroundColor(RSMSColors.secondaryText)
+                                    .foregroundColor(theme.secondaryText)
                             }
                         }
                     }
@@ -110,7 +111,7 @@ struct RevenueBarChart: View {
                             if let label = value.as(String.self) {
                                 Text(label)
                                     .font(.system(size: 10, weight: .medium))
-                                    .foregroundColor(RSMSColors.secondaryText)
+                                    .foregroundColor(theme.secondaryText)
                             }
                         }
                     }
@@ -121,15 +122,15 @@ struct RevenueBarChart: View {
             // Legend
             HStack(spacing: RSMSSpacing.sm) {
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(RSMSColors.burgundy)
+                    .fill(theme.burgundy)
                     .frame(width: 16, height: 8)
                 Text("Revenue in ₹ Lakhs")
                     .font(.system(size: 10))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             }
         }
         .padding(RSMSSpacing.lg)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .cornerRadius(RSMSRadius.large)
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
         .animation(.easeInOut(duration: 0.3), value: data)

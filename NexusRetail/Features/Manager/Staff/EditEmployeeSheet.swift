@@ -7,6 +7,7 @@ import SwiftUI
 import PhotosUI
 
 struct EditEmployeeSheet: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     @State var employee: DisplayEmployee
     var onSave: ((DisplayEmployee) -> Void)? = nil
@@ -46,9 +47,9 @@ struct EditEmployeeSheet: View {
                         PhotosPicker(selection: $photoPickerItem, matching: .images) {
                             ZStack {
                                 Circle()
-                                    .fill(RSMSColors.burgundy.opacity(0.15))
+                                    .fill(theme.burgundy.opacity(0.15))
                                     .frame(width: 110, height: 110)
-                                    .shadow(color: RSMSColors.burgundy.opacity(0.15), radius: 10, x: 0, y: 4)
+                                    .shadow(color: theme.burgundy.opacity(0.15), radius: 10, x: 0, y: 4)
                                 
                                 if let data = selectedImageData, let uiImage = UIImage(data: data) {
                                     Image(uiImage: uiImage)
@@ -71,7 +72,7 @@ struct EditEmployeeSheet: View {
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: 52, height: 52)
-                                        .foregroundColor(RSMSColors.burgundy)
+                                        .foregroundColor(theme.burgundy)
                                 }
                             }
                         }
@@ -80,7 +81,7 @@ struct EditEmployeeSheet: View {
                         PhotosPicker(selection: $photoPickerItem, matching: .images) {
                             Text(selectedImageData == nil && employee.imageUrl == nil ? "Add Photo" : "Change Photo")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                                 .padding(.horizontal, 22)
                                 .padding(.vertical, 8)
                                 .background(Color(.systemGray5))
@@ -154,10 +155,10 @@ struct EditEmployeeSheet: View {
     private func roleSelectionRow(role: UserRole, label: String) -> some View {
         HStack {
             Text(label)
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
             Spacer()
             Image(systemName: selectedRole == role ? "checkmark.circle.fill" : "circle")
-                .foregroundColor(selectedRole == role ? RSMSColors.burgundy : .gray)
+                .foregroundColor(selectedRole == role ? theme.burgundy : .gray)
                 .font(.system(size: 22))
         }
         .contentShape(Rectangle())

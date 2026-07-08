@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct SegmentControlView: View {
+    @Environment(AppTheme.self) private var theme
     @Binding var selection: SalesTimeRange
     
     var body: some View {
@@ -20,7 +21,7 @@ struct SegmentControlView: View {
 }
 
 #Preview {
-    @Previewable @State var selection: SalesTimeRange = .weekly
+    @Previewable @State var selection = SalesTimeRange.weekly
     SegmentControlView(selection: $selection)
         .padding()
         .background(RSMSColors.background)

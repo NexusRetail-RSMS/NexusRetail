@@ -37,10 +37,10 @@ struct RevenueCardView: View {
                         Text(trend)
                             .font(.system(size: 16, weight: .bold))
                     }
-                    .foregroundColor(trend.hasPrefix("-") ? RSMSColors.error : RSMSColors.success)
+                    .foregroundColor(trend.hasPrefix("-") ? theme.error : theme.success)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(trend.hasPrefix("-") ? RSMSColors.error.opacity(0.12) : RSMSColors.success.opacity(0.12))
+                    .background(trend.hasPrefix("-") ? theme.error.opacity(0.12) : theme.success.opacity(0.12))
                     .cornerRadius(RSMSRadius.medium)
                     
                     Text("vs yesterday")
@@ -50,7 +50,7 @@ struct RevenueCardView: View {
             }
             
             Divider()
-                .background(RSMSColors.divider)
+                .background(theme.divider)
             
             // Bottom Metrics
             HStack(spacing: 0) {
@@ -58,14 +58,14 @@ struct RevenueCardView: View {
                 
                 Divider()
                     .frame(height: 30)
-                    .background(RSMSColors.divider)
+                    .background(theme.divider)
                     .padding(.horizontal, RSMSSpacing.md)
                 
                 metricView(title: "Average Ticket", value: averageTicket)
                 
                 Divider()
                     .frame(height: 30)
-                    .background(RSMSColors.divider)
+                    .background(theme.divider)
                     .padding(.horizontal, RSMSSpacing.md)
                 
                 metricView(title: "Returns", value: returns)

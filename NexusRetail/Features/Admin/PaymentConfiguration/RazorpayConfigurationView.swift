@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct RazorpayConfigurationView: View {
+    @Environment(AppTheme.self) private var theme
 
     // MARK: - Parameters
 
@@ -26,7 +27,7 @@ struct RazorpayConfigurationView: View {
     var body: some View {
         ZStack {
             // Full-screen cream background
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
 
             ScrollView {
@@ -40,7 +41,7 @@ struct RazorpayConfigurationView: View {
                         VStack {
                             Spacer()
                             ProgressView()
-                                .tint(RSMSColors.burgundy)
+                                .tint(theme.burgundy)
                                 .scaleEffect(1.2)
                                 .frame(maxWidth: .infinity)
                                 .padding(.top, 100)
@@ -121,7 +122,7 @@ struct RazorpayConfigurationView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             LinearGradient(
-                colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
+                colors: [theme.burgundy, theme.darkBurgundy],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -134,7 +135,7 @@ struct RazorpayConfigurationView: View {
     private var subtitleSection: some View {
         Text("Enter your Razorpay credentials. You can find these in your Razorpay dashboard.")
             .font(RSMSFonts.subheadline)
-            .foregroundColor(RSMSColors.secondaryText)
+            .foregroundColor(theme.secondaryText)
             .padding(.bottom, RSMSSpacing.xs)
     }
 
@@ -144,13 +145,13 @@ struct RazorpayConfigurationView: View {
         VStack(alignment: .leading, spacing: RSMSSpacing.lg) {
             Text("Credentials")
                 .font(RSMSFonts.headline)
-                .foregroundColor(RSMSColors.darkBrown)
+                .foregroundColor(theme.darkBrown)
 
             // Key ID Field
             VStack(alignment: .leading, spacing: RSMSSpacing.xs) {
                 Text("Key ID")
                     .font(RSMSFonts.subheadline)
-                    .foregroundColor(RSMSColors.darkBrown)
+                    .foregroundColor(theme.darkBrown)
 
                 HStack(spacing: RSMSSpacing.sm) {
                     TextField("Enter Razorpay Key ID", text: $viewModel.keyID)
@@ -164,19 +165,19 @@ struct RazorpayConfigurationView: View {
                         }
                     } label: {
                         Image(systemName: "questionmark.circle")
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                             .imageScale(.medium)
                     }
                     .buttonStyle(.plain)
                 }
                 .padding(RSMSSpacing.md)
-                .background(RSMSColors.cardBackground)
+                .background(theme.cardBackground)
                 .overlay(
                     RoundedRectangle(cornerRadius: RSMSRadius.small)
                         .stroke(
                             viewModel.keyIDError.isEmpty
-                                ? RSMSColors.inputBorder
-                                : RSMSColors.error,
+                                ? theme.inputBorder
+                                : theme.error,
                             lineWidth: 1
                         )
                 )
@@ -185,18 +186,18 @@ struct RazorpayConfigurationView: View {
                 if showInfoHelper {
                     HStack(spacing: RSMSSpacing.sm) {
                         Image(systemName: "info.circle.fill")
-                            .foregroundColor(RSMSColors.burgundy)
+                            .foregroundColor(theme.burgundy)
                         
                         Text(viewModel.environment == .test 
                              ? "Test Mode: Use your Razorpay Test Key ID (starts with 'rzp_test_'). Generate this in Dashboard > Settings > API Keys." 
                              : "Live Mode: Use your Razorpay Live Key ID (starts with 'rzp_live_').")
                             .font(RSMSFonts.caption)
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(RSMSSpacing.sm)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(RSMSColors.burgundy.opacity(0.06))
+                    .background(theme.burgundy.opacity(0.06))
                     .cornerRadius(RSMSRadius.small)
                     .transition(.opacity.combined(with: .move(edge: .top)))
                 }
@@ -204,7 +205,7 @@ struct RazorpayConfigurationView: View {
                 if !viewModel.keyIDError.isEmpty {
                     Text(viewModel.keyIDError)
                         .font(RSMSFonts.caption)
-                        .foregroundColor(RSMSColors.error)
+                        .foregroundColor(theme.error)
                 }
             }
 
@@ -212,7 +213,7 @@ struct RazorpayConfigurationView: View {
             VStack(alignment: .leading, spacing: RSMSSpacing.xs) {
                 Text("Key Secret")
                     .font(RSMSFonts.subheadline)
-                    .foregroundColor(RSMSColors.darkBrown)
+                    .foregroundColor(theme.darkBrown)
 
                 HStack(spacing: RSMSSpacing.sm) {
                     Group {
@@ -230,20 +231,20 @@ struct RazorpayConfigurationView: View {
                         showSecret.toggle()
                     } label: {
                         Image(systemName: showSecret ? "eye.slash.fill" : "eye.fill")
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                             .imageScale(.medium)
                     }
                     .buttonStyle(.plain)
                     .disabled(!isAdmin)
                 }
                 .padding(RSMSSpacing.md)
-                .background(RSMSColors.cardBackground)
+                .background(theme.cardBackground)
                 .overlay(
                     RoundedRectangle(cornerRadius: RSMSRadius.small)
                         .stroke(
                             viewModel.keySecretError.isEmpty
-                                ? RSMSColors.inputBorder
-                                : RSMSColors.error,
+                                ? theme.inputBorder
+                                : theme.error,
                             lineWidth: 1
                         )
                 )
@@ -252,12 +253,12 @@ struct RazorpayConfigurationView: View {
                 if !viewModel.keySecretError.isEmpty {
                     Text(viewModel.keySecretError)
                         .font(RSMSFonts.caption)
-                        .foregroundColor(RSMSColors.error)
+                        .foregroundColor(theme.error)
                 }
             }
         }
         .padding(RSMSSpacing.lg)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .cornerRadius(RSMSRadius.large)
         .shadow(color: .black.opacity(0.04), radius: 6, x: 0, y: 2)
     }
@@ -267,16 +268,16 @@ struct RazorpayConfigurationView: View {
     private var securityBadge: some View {
         HStack(spacing: RSMSSpacing.sm) {
             Image(systemName: "shield.lefthalf.filled.badge.checkmark")
-                .foregroundColor(RSMSColors.success)
+                .foregroundColor(theme.success)
                 .imageScale(.medium)
 
             Text("Your credentials are encrypted and stored securely.")
                 .font(RSMSFonts.caption)
-                .foregroundColor(RSMSColors.success)
+                .foregroundColor(theme.success)
         }
         .padding(RSMSSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RSMSColors.success.opacity(0.08))
+        .background(theme.success.opacity(0.08))
         .cornerRadius(RSMSRadius.small)
     }
 
@@ -297,7 +298,7 @@ struct RazorpayConfigurationView: View {
             if viewModel.isEditing {
                 RSMSSecondaryButton(
                     title: "Disable Razorpay",
-                    color: RSMSColors.error
+                    color: theme.error
                 ) {
                     Task {
                         await disableRazorpay()

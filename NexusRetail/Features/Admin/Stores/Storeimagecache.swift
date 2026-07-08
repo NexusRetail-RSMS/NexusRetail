@@ -65,6 +65,7 @@ final class StoreImageCache {
 // MARK: - CachedStoreImage view
 
 struct CachedStoreImage: View {
+    @Environment(AppTheme.self) private var theme
     let urlString: String?
 
     @State private var image: UIImage?

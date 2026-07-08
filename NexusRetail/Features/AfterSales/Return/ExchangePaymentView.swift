@@ -195,7 +195,7 @@ struct ExchangePaymentView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .background(Color.gray.opacity(0.06))
+        .background(theme.burgundy.opacity(0.06))
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
     
@@ -271,11 +271,11 @@ struct ExchangePaymentView: View {
                 .padding(.horizontal, 20)
             }
             .padding(.vertical, 28)
-            .background(Color.gray.opacity(0.12))
+            .background(theme.cardBackground)
             .cornerRadius(24)
             .overlay(
                 RoundedRectangle(cornerRadius: 24)
-                    .stroke(Color.gray.opacity(0.3), lineWidth: 2)
+                    .stroke(theme.cardBorder, lineWidth: 2)
             )
             .frame(width: 290)
             

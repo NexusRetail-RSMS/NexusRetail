@@ -2,7 +2,25 @@ import SwiftUI
 
 @Observable
 class AppTheme {
-    var isDarkMode = false
+    var isDarkMode = false {
+        didSet { savePreference() }
+    }
+    
+    private var currentUserId: String?
+    
+    func configure(for userId: String?) {
+        currentUserId = userId
+        isDarkMode = UserDefaults.standard.bool(forKey: storageKey())
+    }
+    
+    private func storageKey() -> String {
+        if let uid = currentUserId { return "isDarkMode_\(uid)" }
+        return "isDarkMode"
+    }
+    
+    private func savePreference() {
+        UserDefaults.standard.set(isDarkMode, forKey: storageKey())
+    }
 
     var background: Color {
         isDarkMode ? Color(hex: "1A1A1A") : Color(hex: "F9F8F3")

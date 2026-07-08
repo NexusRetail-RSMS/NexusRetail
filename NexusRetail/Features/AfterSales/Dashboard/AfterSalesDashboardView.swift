@@ -133,19 +133,18 @@ struct AfterSalesDashboardView: View {
     
     // MARK: - Service Request Trend Chart
     private var serviceTrendChartSection: some View {
-        VStack(alignment: .leading, spacing: RSMSSpacing.md) {
+        let accentColor = theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy
+        let barGradient: [Color] = theme.isDarkMode
+            ? [RSMSColors.antiqueGold.opacity(0.55), RSMSColors.antiqueGold]
+            : [RSMSColors.burgundy.opacity(0.6), RSMSColors.burgundy]
+
+        return VStack(alignment: .leading, spacing: RSMSSpacing.md) {
             HStack {
                 Text("Service Requests")
                     .font(RSMSFonts.headline)
                     .foregroundColor(theme.primaryText)
                 Spacer()
-                Picker("Period", selection: $vm.selectedChartPeriod) {
-                    ForEach(ChartPeriod.allCases) { period in
-                        Text(period.rawValue).tag(period)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .fixedSize()
+                periodToggle(accentColor: accentColor)
             }
             
             if vm.serviceRequestChartData.allSatisfy({ $0.value == 0 }) {
@@ -153,7 +152,7 @@ struct AfterSalesDashboardView: View {
             } else {
             Chart(vm.serviceRequestChartData) { point in
                 BarMark(x: .value("Period", point.label), y: .value("Requests", point.value), width: .ratio(0.45))
-                    .foregroundStyle(LinearGradient(colors: [theme.burgundy.opacity(0.8), theme.burgundy], startPoint: .top, endPoint: .bottom))
+                    .foregroundStyle(LinearGradient(colors: barGradient, startPoint: .top, endPoint: .bottom))
                     .cornerRadius(8)
             }
             .chartYAxis {
@@ -182,7 +181,45 @@ struct AfterSalesDashboardView: View {
         .padding(RSMSSpacing.lg)
         .background(theme.cardBackground)
         .cornerRadius(RSMSRadius.large)
-        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+        .overlay(
+            RoundedRectangle(cornerRadius: RSMSRadius.large)
+                .strokeBorder(accentColor.opacity(theme.isDarkMode ? 0.22 : 0.0), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(theme.isDarkMode ? 0.35 : 0.05), radius: 8, x: 0, y: 4)
+    }
+
+    private func periodToggle(accentColor: Color) -> some View {
+        HStack(spacing: 0) {
+            ForEach(ChartPeriod.allCases) { period in
+                let isSelected = vm.selectedChartPeriod == period
+                Button {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.72)) {
+                        vm.selectedChartPeriod = period
+                    }
+                } label: {
+                    Text(period.rawValue)
+                        .font(.system(size: 12, weight: isSelected ? .bold : .medium))
+                        .foregroundColor(
+                            isSelected
+                                ? (theme.isDarkMode ? Color(hex: "1A0A0A") : .white)
+                                : theme.secondaryText
+                        )
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 6)
+                        .background(
+                            isSelected
+                                ? accentColor
+                                : Color.clear
+                        )
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .animation(.spring(response: 0.3, dampingFraction: 0.72), value: vm.selectedChartPeriod)
+            }
+        }
+        .padding(3)
+        .background(theme.divider.opacity(0.3))
+        .clipShape(Capsule())
     }
 
     private func emptyChartPlaceholder(text: String) -> some View {
@@ -244,7 +281,15 @@ struct AfterSalesDashboardView: View {
         .padding(RSMSSpacing.lg)
         .background(theme.cardBackground)
         .cornerRadius(RSMSRadius.large)
-        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+        .overlay(
+            RoundedRectangle(cornerRadius: RSMSRadius.large)
+                .strokeBorder(accentColor.opacity(theme.isDarkMode ? 0.22 : 0.0), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(theme.isDarkMode ? 0.35 : 0.04), radius: 6, x: 0, y: 3)
+    }
+    
+    private var accentColor: Color {
+        theme.isDarkMode ? RSMSColors.antiqueGold : RSMSColors.burgundy
     }
     
     // MARK: - Floating QR Button
@@ -256,9 +301,9 @@ struct AfterSalesDashboardView: View {
         } label: {
             ZStack {
                 Circle()
-                    .fill(Color(red: 122/255, green: 22/255, blue: 34/255))
+                    .fill(accentColor)
                     .frame(width: 60, height: 60)
-                    .shadow(color: Color(red: 122/255, green: 22/255, blue: 34/255).opacity(0.5), radius: 8, x: 0, y: 4)
+                    .shadow(color: accentColor.opacity(0.5), radius: 8, x: 0, y: 4)
                 
                 Image(systemName: "qrcode.viewfinder")
                     .font(.system(size: 24, weight: .bold))

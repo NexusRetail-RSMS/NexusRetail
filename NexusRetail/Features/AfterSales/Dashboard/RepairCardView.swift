@@ -81,11 +81,11 @@ struct RepairCardView: View {
             .cornerRadius(8)
         }
         .padding(16)
-        .background(Color.white)
+        .background(theme.cardBackground)
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(Color.gray.opacity(0.15), lineWidth: 1)
+                .strokeBorder(theme.cardBorder, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
     }

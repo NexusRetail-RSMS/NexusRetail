@@ -6,13 +6,14 @@
 import SwiftUI
 
 struct ProfileView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     @Environment(SessionStore.self) private var sessionStore
     
     var body: some View {
         NavigationStack {
             ZStack {
-                RSMSColors.background
+                theme.background
                     .ignoresSafeArea()
                 
                 ScrollView {
@@ -23,7 +24,7 @@ struct ProfileView: View {
                                 // Avatar
                                 ZStack {
                                     Circle()
-                                        .fill(RSMSColors.burgundy)
+                                        .fill(theme.burgundy)
                                         .frame(width: 60, height: 60)
                                     
                                     Text(initials(for: sessionStore.currentUser?.name ?? "Manager"))
@@ -34,11 +35,11 @@ struct ProfileView: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(sessionStore.currentUser?.name ?? "Aryavansh")
                                         .font(.headline)
-                                        .foregroundColor(RSMSColors.primaryText)
+                                        .foregroundColor(theme.primaryText)
                                     
                                     Text(sessionStore.currentUser?.email ?? "manager@nexus.com")
                                         .font(.subheadline)
-                                        .foregroundColor(RSMSColors.secondaryText)
+                                        .foregroundColor(theme.secondaryText)
                                     
                                     Text("Role: \(sessionStore.currentUser?.role.rawValue.capitalized ?? "Manager")")
                                         .font(.caption)
@@ -54,7 +55,7 @@ struct ProfileView: View {
                             }
                             .padding(RSMSSpacing.lg)
                         }
-                        .background(Color.white)
+                        .background(theme.cardBackground)
                         .cornerRadius(RSMSRadius.large)
                         .padding(.horizontal, RSMSSpacing.lg)
                         .padding(.top, RSMSSpacing.lg)
@@ -64,7 +65,7 @@ struct ProfileView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Store Settings")
                                     .font(.subheadline)
-                                    .foregroundColor(RSMSColors.secondaryText)
+                                    .foregroundColor(theme.secondaryText)
                                     .padding(.horizontal, RSMSSpacing.lg)
                                 
                                 VStack(spacing: 0) {
@@ -73,22 +74,52 @@ struct ProfileView: View {
                                     } label: {
                                         HStack {
                                             Image(systemName: "creditcard")
-                                                .foregroundColor(RSMSColors.burgundy)
+                                                .foregroundColor(theme.burgundy)
                                             Text("Payment Configuration")
-                                                .foregroundColor(RSMSColors.primaryText)
+                                                .foregroundColor(theme.primaryText)
                                             Spacer()
                                             Image(systemName: "chevron.right")
-                                                .foregroundColor(RSMSColors.secondaryText)
+                                                .foregroundColor(theme.secondaryText)
                                                 .font(.caption)
                                         }
                                         .padding()
                                     }
                                 }
-                                .background(Color.white)
+                                .background(theme.cardBackground)
                                 .cornerRadius(RSMSRadius.large)
                                 .padding(.horizontal, RSMSSpacing.lg)
                             }
                         }
+                        
+                        // Dark Mode Toggle
+                        VStack(spacing: 0) {
+                            Divider()
+                                .background(theme.divider)
+                            HStack {
+                                ZStack {
+                                    Circle()
+                                        .fill(theme.isDarkMode ? theme.gold.opacity(0.15) : theme.burgundy.opacity(0.10))
+                                        .frame(width: 36, height: 36)
+                                    Image(systemName: theme.isDarkMode ? "moon.stars.fill" : "sun.max.fill")
+                                        .font(.system(size: 16))
+                                        .foregroundColor(theme.isDarkMode ? theme.gold : theme.burgundy)
+                                }
+                                Text("Dark Mode")
+                                    .font(RSMSFonts.body)
+                                    .foregroundColor(theme.primaryText)
+                                Spacer()
+                                Toggle("", isOn: Binding(
+                                    get: { theme.isDarkMode },
+                                    set: { theme.isDarkMode = $0 }
+                                ))
+                                .tint(theme.gold)
+                            }
+                            .padding(.horizontal, RSMSSpacing.lg)
+                            .padding(.vertical, 12)
+                        }
+                        .background(theme.cardBackground)
+                        .cornerRadius(RSMSRadius.large)
+                        .padding(.horizontal, RSMSSpacing.lg)
                         
                         // Sign Out Button
                         Button {
@@ -101,10 +132,10 @@ struct ProfileView: View {
                         } label: {
                             Text("Sign Out")
                                 .font(.body.weight(.medium))
-                                .foregroundColor(RSMSColors.error)
+                                .foregroundColor(theme.error)
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(Color.white)
+                                .background(theme.cardBackground)
                                 .cornerRadius(RSMSRadius.large)
                         }
                         .padding(.horizontal, RSMSSpacing.lg)
@@ -120,7 +151,7 @@ struct ProfileView: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
                 }
             }
         }

@@ -7,6 +7,7 @@ import SwiftUI
 
 /// A branded map marker with a burgundy pin appearance.
 struct StoreMarkerView: View {
+    @Environment(AppTheme.self) private var theme
     let store: StoreMapItem
     let isSelected: Bool
 
@@ -16,15 +17,15 @@ struct StoreMarkerView: View {
                 // Outer glow when selected
                 if isSelected {
                     Circle()
-                        .fill(RSMSColors.burgundy.opacity(0.15))
+                        .fill(theme.burgundy.opacity(0.15))
                         .frame(width: 40, height: 40)
                 }
 
                 // Main pin circle
                 Circle()
-                    .fill(isSelected ? RSMSColors.darkBurgundy : RSMSColors.burgundy)
+                    .fill(isSelected ? theme.darkBurgundy : theme.burgundy)
                     .frame(width: isSelected ? 28 : 22, height: isSelected ? 28 : 22)
-                    .shadow(color: RSMSColors.burgundy.opacity(0.35), radius: 4, x: 0, y: 2)
+                    .shadow(color: theme.burgundy.opacity(0.35), radius: 4, x: 0, y: 2)
 
                 // Icon
                 Image(systemName: "building.2.fill")
@@ -34,7 +35,7 @@ struct StoreMarkerView: View {
 
             // Triangle pointer
             Triangle()
-                .fill(isSelected ? RSMSColors.darkBurgundy : RSMSColors.burgundy)
+                .fill(isSelected ? theme.darkBurgundy : theme.burgundy)
                 .frame(width: 10, height: 6)
                 .offset(y: -1)
         }

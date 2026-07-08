@@ -35,7 +35,7 @@ struct InventoryDashboardView: View {
                     Spacer()
                     ProgressView("Loading inventory…")
                         .font(RSMSFonts.body)
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                     Spacer()
                 } else {
                     ScrollView {
@@ -84,7 +84,7 @@ struct InventoryDashboardView: View {
             NavigationLink(destination: ManagerPendingRequestsView(viewModel: viewModel)) {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy)
+                        .fill(theme.burgundy)
                         .frame(width: 44, height: 44)
                     
                     Image(systemName: "shippingbox.and.arrow.backward")
@@ -121,12 +121,12 @@ struct InventoryDashboardView: View {
             } label: {
                 ZStack {
                         Circle()
-                            .fill(RSMSColors.burgundy.opacity(0.08))
+                            .fill(theme.burgundy.opacity(0.08))
                             .frame(width: 48, height: 48)
 
                         Image(systemName: "line.3.horizontal.decrease")
                             .font(.system(size: 20, weight: .medium))
-                            .foregroundColor(RSMSColors.burgundy)
+                            .foregroundColor(theme.burgundy)
                     }
             }
         }
@@ -222,11 +222,11 @@ struct CategoryChip: View {
             .foregroundColor(isSelected ? .white : theme.primaryText)
             .padding(.horizontal, 14)
             .padding(.vertical, 7)
-            .background(isSelected ? RSMSColors.burgundy : theme.cardBackground)
+            .background(isSelected ? theme.burgundy : theme.cardBackground)
             .clipShape(Capsule())
             .overlay(
                 Capsule()
-                    .stroke(isSelected ? Color.clear : RSMSColors.inputBorder, lineWidth: 1)
+                    .stroke(isSelected ? Color.clear : theme.inputBorder, lineWidth: 1)
             )
             .contentShape(Capsule())
             .highPriorityGesture(
