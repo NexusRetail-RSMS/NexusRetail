@@ -6,7 +6,6 @@ struct ClientelingView: View {
     @Environment(AppTheme.self) private var theme
 
     @State private var searchText = ""
-    @State private var isProfilePresented = false
     @State private var contentAppeared = false
     
     // Appointment State
@@ -53,7 +52,6 @@ struct ClientelingView: View {
                 contentAppeared = true
             }
         }
-        .sheet(isPresented: $isProfilePresented) { AdminProfileSheet().environment(theme) }
         .sheet(isPresented: $isNewAppointmentPresented) { newAppointmentSheet }
         .task { await loadClients() }
     }
@@ -73,7 +71,7 @@ struct ClientelingView: View {
             }
             Spacer()
             // Profile avatar button
-            Button { isProfilePresented = true } label: {
+            NavigationLink(destination: GlobalProfileView()) {
                 ZStack {
                     Circle()
                         .fill(theme.isDarkMode ? Color(hex: "2C0000") : theme.burgundy)

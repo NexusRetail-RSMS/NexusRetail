@@ -43,9 +43,13 @@ struct RootView: View {
             }
         }
         .animation(.easeInOut, value: sessionStore.currentRole)
+        .onChange(of: sessionStore.currentUser?.id) { _, newID in
+            theme.currentUserId = newID
+        }
         .task {
             await sessionStore.restore()
             isRestoring = false
+            theme.currentUserId = sessionStore.currentUser?.id
         }
     }
 }

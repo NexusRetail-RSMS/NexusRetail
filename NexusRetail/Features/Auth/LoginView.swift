@@ -417,5 +417,4 @@ private struct SpringPressStyle: ButtonStyle {
         LoginView()
             .environment(SessionStore())
     }
-    .preferredColorScheme(.dark)
 }

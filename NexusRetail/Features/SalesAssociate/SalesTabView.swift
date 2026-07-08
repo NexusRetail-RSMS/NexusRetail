@@ -26,7 +26,6 @@ struct SalesTabView: View {
             }
         }
         .tint(theme.isDarkMode ? theme.antiqueGold : theme.burgundy)
-        .preferredColorScheme(theme.isDarkMode ? .dark : .light)
         .environment(theme)
         .onAppear { updateTabBarAppearance() }
         .onChange(of: theme.isDarkMode) { _, _ in updateTabBarAppearance() }

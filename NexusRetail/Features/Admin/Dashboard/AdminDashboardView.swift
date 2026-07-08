@@ -20,7 +20,6 @@ struct AdminDashboardView: View {
     @Environment(SessionStore.self) private var sessionStore
     @Environment(AppTheme.self) private var theme
     @State private var viewModel = DashboardViewModel()
-    @State private var isProfilePresented = false
     
     // Drill-down states
     @State private var isShowingSalesDetail = false
@@ -132,10 +131,6 @@ struct AdminDashboardView: View {
             }
             viewModel.startListening()
         }
-        .sheet(isPresented: $isProfilePresented) {
-            AdminProfileSheet()
-                .environment(theme)
-        }
         .fullScreenCover(isPresented: $isShowingSalesDetail) {
             NavigationStack {
                 SalesDetailView(store: globalStore)
@@ -198,9 +193,7 @@ struct AdminDashboardView: View {
             .accessibilityLabel("Country filter")
 
             // Profile avatar
-            Button {
-                isProfilePresented = true
-            } label: {
+            NavigationLink(destination: GlobalProfileView()) {
                 ZStack {
                     Circle()
                         .fill(theme.burgundy)

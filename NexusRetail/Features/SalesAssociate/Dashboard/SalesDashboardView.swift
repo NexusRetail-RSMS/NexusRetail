@@ -18,7 +18,6 @@ struct SalesDashboardView: View {
     @State private var navigationPath  = NavigationPath()
 
     // UI state
-    @State private var isProfilePresented = false
     @Namespace private var namespace
 
     // ViewModel
@@ -49,7 +48,6 @@ struct SalesDashboardView: View {
                 }
             }
             .navigationBarHidden(true)
-            .sheet(isPresented: $isProfilePresented) { AdminProfileSheet().environment(theme) }
             .navigationDestination(for: POSFlowDestination.self) { dest in
                 switch dest {
                 case .newSale:       NewSaleView(path: $navigationPath)
@@ -112,7 +110,7 @@ struct SalesDashboardView: View {
                 .fontWeight(.bold)
                 .foregroundColor(theme.primaryText)
             Spacer()
-            Button { isProfilePresented = true } label: {
+            NavigationLink(destination: GlobalProfileView()) {
                 ZStack {
                     Circle().fill(theme.isDarkMode ? Color(hex: "2C0000") : theme.burgundy).frame(width: 44, height: 44)
                     if let urlString = sessionStore.currentUser?.imageUrl, let url = URL(string: urlString) {

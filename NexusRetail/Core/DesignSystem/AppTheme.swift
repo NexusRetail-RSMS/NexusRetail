@@ -14,7 +14,32 @@ private func dynamicColor(light: Color, dark: Color) -> Color {
 
 @Observable
 class AppTheme {
-    var isDarkMode = false // Kept for legacy/manual overrides if needed
+    var isDarkMode = false {
+        didSet { savePerUserPreference() }
+    }
+
+    var currentUserId: UUID? {
+        didSet { loadPerUserPreference() }
+    }
+
+    private var isRestoringPreference = false
+
+    private func loadPerUserPreference() {
+        guard let id = currentUserId else {
+            isRestoringPreference = true
+            isDarkMode = false
+            isRestoringPreference = false
+            return
+        }
+        isRestoringPreference = true
+        isDarkMode = UserDefaults.standard.bool(forKey: "isDarkMode_\(id.uuidString)")
+        isRestoringPreference = false
+    }
+
+    private func savePerUserPreference() {
+        guard !isRestoringPreference, let id = currentUserId else { return }
+        UserDefaults.standard.set(isDarkMode, forKey: "isDarkMode_\(id.uuidString)")
+    }
 
     let background = dynamicColor(lightHex: "F9F8F3", darkHex: "1A1A1A")
     let groupedBackground = dynamicColor(lightHex: "F2F2F7", darkHex: "000000")

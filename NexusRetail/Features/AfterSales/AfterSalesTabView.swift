@@ -41,7 +41,6 @@ struct AfterSalesTabView: View {
                 .tag(1)
             }
             .tint(theme.isDarkMode ? theme.antiqueGold : theme.burgundy)
-            .preferredColorScheme(theme.isDarkMode ? .dark : .light)
         }
         .environment(theme)
         .environment(posViewModel)
@@ -118,7 +117,6 @@ struct AfterSalesToolbarModifier: ViewModifier {
     
     @Environment(AppTheme.self) private var theme
     @Environment(SessionStore.self) private var sessionStore
-    @State private var isProfilePresented = false
     
     func body(content: Content) -> some View {
         content
@@ -126,9 +124,7 @@ struct AfterSalesToolbarModifier: ViewModifier {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        isProfilePresented = true
-                    } label: {
+                    NavigationLink(destination: GlobalProfileView()) {
                         ZStack {
                             Circle()
                                 .fill(theme.burgundy)
@@ -155,9 +151,6 @@ struct AfterSalesToolbarModifier: ViewModifier {
                     .accessibilityLabel("Profile")
                     .accessibilityHint("Opens your after-sales specialist profile")
                 }
-            }
-            .sheet(isPresented: $isProfilePresented) {
-                AdminProfileSheet()
             }
     }
     

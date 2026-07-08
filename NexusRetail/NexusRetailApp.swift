@@ -18,6 +18,7 @@ struct NexusRetailApp: App {
                 .environment(sessionStore)
                 .environment(localizationManager)
                 .environment(theme)
+                .preferredColorScheme(theme.isDarkMode ? .dark : .light)
                 .environment(\.locale, Locale(identifier: localizationManager.currentLanguage))
                 .environment(\.layoutDirection, localizationManager.isRTL ? .rightToLeft : .leftToRight)
                 .id(localizationManager.currentLanguage)
