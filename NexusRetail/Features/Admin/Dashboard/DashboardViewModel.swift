@@ -220,6 +220,12 @@ class DashboardViewModel {
             self.topProductsMonthly = try await topMonthlyTask
             self.totalProducts = try await productsCountTask
             
+        } catch is CancellationError {
+            // A newer load() superseded this one (e.g. view re-rendered or
+            // country filter changed). Not a real failure — ignore silently.
+            print("Dashboard: load cancelled, ignoring")
+        } catch let urlError as URLError where urlError.code == .cancelled {
+            print("Dashboard: request cancelled, ignoring")
         } catch {
             self.errorMessage = "Failed to load dashboard data: \(error.localizedDescription)"
             print("Dashboard Error: \(error)")
