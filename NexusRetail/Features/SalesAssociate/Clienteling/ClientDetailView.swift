@@ -133,30 +133,6 @@ struct ClientDetailView: View {
                         .padding(.horizontal, 24)
                         .padding(.bottom, 32)
                         
-                        // Edit Profile Info Button
-                        Button {
-                            clientName = client.name
-                            clientPhone = client.phone
-                            stylePreferences = client.preferences
-                            hasConsent = true
-                            isEditingClient = true
-                            isNewClientPresented = true
-                        } label: {
-                            HStack(spacing: 8) {
-                                Text("Edit profile info")
-                                    .font(.system(size: 15, weight: .semibold))
-                                Image(systemName: "pencil")
-                                    .font(.system(size: 14, weight: .bold))
-                            }
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 12)
-                            .background(RSMSColors.burgundy)
-                            .clipShape(Capsule())
-                            .shadow(color: RSMSColors.burgundy.opacity(0.3), radius: 8, x: 0, y: 4)
-                        }
-                        .padding(.bottom, 40)
-                        
                         // Custom Tabs
                         HStack(spacing: 32) {
                             customTab(title: "For You", index: 0)
@@ -192,10 +168,28 @@ struct ClientDetailView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Edit") {
+                    startEditing()
+                }
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(.white)
+            }
+        }
         .sheet(isPresented: $isNewClientPresented) { newClientSheet }
         .task {
             await loadRecommendations()
         }
+    }
+
+    private func startEditing() {
+        clientName = client.name
+        clientPhone = client.phone
+        stylePreferences = client.preferences
+        hasConsent = true
+        isEditingClient = true
+        isNewClientPresented = true
     }
     
     private func customTab(title: String, index: Int) -> some View {
