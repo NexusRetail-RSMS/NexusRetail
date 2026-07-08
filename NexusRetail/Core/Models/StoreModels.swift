@@ -66,7 +66,7 @@ struct StoreOrder: Codable, Identifiable {
     
     // Nested relationship
     let orderLineItems: [OrderLineItem]?
-    
+
     enum CodingKeys: String, CodingKey {
         case id
         case clientID = "client_id"

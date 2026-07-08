@@ -28,6 +28,9 @@ class SellViewModel {
     
     // Unavailable product and alternative helper tracking
     var originalUnavailableProduct: POSProduct? = nil
+    
+    // Gateway retention
+    private var razorpayGateway: RazorpayGateway?
     var isAlternativeSuggested: Bool = false
     
     // Receipt digital share fields
@@ -103,7 +106,19 @@ class SellViewModel {
     }
     
     func processCheckout(storeID: UUID?, associateID: UUID?) async throws {
-        guard let storeID = storeID, let associateID = associateID else { return }
+        let params = try createCheckoutParams(storeID: storeID, associateID: associateID)
+        let orderIdResponse: UUID = try await SupabaseManager.shared.client
+            .rpc("process_pos_checkout", params: params)
+            .execute()
+            .value
+        self.lastOrderId = orderIdResponse
+        
+        // Refresh local cache of stock so UI updates immediately
+        await POSProductRepository.shared.refreshStockForStore(storeID: storeID)
+    }
+    
+    private func createCheckoutParams(storeID: UUID?, associateID: UUID?) throws -> CheckoutParams {
+        guard let storeID = storeID, let associateID = associateID else { throw NSError(domain: "Checkout", code: 1, userInfo: [NSLocalizedDescriptionKey: "Missing storeID or associateID"]) }
         
         // Group items by ID to handle quantities
         var itemCounts: [UUID: (POSProduct, Int)] = [:]
@@ -134,12 +149,6 @@ class SellViewModel {
             p_client_id: selectedClientId,
             p_payment_method: paymentMethodValue
         )
-        
-        let orderIdResponse: UUID = try await SupabaseManager.shared.client
-            .rpc("process_pos_checkout", params: params)
-            .execute()
-            .value
-        self.lastOrderId = orderIdResponse
     }
     
     // MARK: - Client lookup / quick-create (checkout customer linking)
@@ -229,6 +238,86 @@ class SellViewModel {
             }
         } catch {
             print("SellViewModel: Error fetching orders: \(error)")
+        }
+    }
+
+    // MARK: - Email Receipt
+    func sendReceiptEmail(to email: String, orderId: String, storeName: String, cashierName: String, items: [(product: POSProduct, count: Int)], total: Double, subtotal: Double) async {
+        let resendApiKey = "re_3ot8yx3s_BDYPp6FcxJXDcFsSXU6bGW7t"
+        guard let url = URL(string: "https://api.resend.com/emails") else { return }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(resendApiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        var itemsHtml = ""
+        for item in items {
+            itemsHtml += """
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;">\(item.product.name)<br><small style="color: #666;">SKU: \(item.product.sku)</small></td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: center;">\(item.count)</td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">₹\(String(format: "%.0f", item.product.price * Double(item.count)))</td>
+            </tr>
+            """
+        }
+        
+        let htmlBody = """
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; padding: 24px;">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <h2 style="margin: 0; letter-spacing: 2px;">NEXUS RETAIL</h2>
+                <p style="margin: 4px 0 0; color: #666; font-size: 12px;">Official Store Receipt - \(storeName)</p>
+            </div>
+            
+            <div style="background: #f9f9f9; padding: 12px; border-radius: 6px; margin-bottom: 24px; font-size: 14px;">
+                <p style="margin: 4px 0;"><b>Order ID:</b> \(orderId)</p>
+                <p style="margin: 4px 0;"><b>Date:</b> \(Date().formatted(date: .long, time: .shortened))</p>
+                <p style="margin: 4px 0;"><b>Cashier:</b> \(cashierName)</p>
+            </div>
+            
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 14px;">
+                <thead>
+                    <tr style="background: #f0f0f0;">
+                        <th style="padding: 8px; text-align: left;">Item</th>
+                        <th style="padding: 8px; text-align: center;">Qty</th>
+                        <th style="padding: 8px; text-align: right;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    \(itemsHtml)
+                </tbody>
+            </table>
+            
+            <div style="text-align: right; font-size: 14px; margin-bottom: 32px;">
+                <p style="margin: 4px 0;">Subtotal: ₹\(String(format: "%.0f", subtotal))</p>
+                <p style="margin: 4px 0;">GST (18% incl.): ₹\(String(format: "%.0f", total * 0.18))</p>
+                <h3 style="margin: 8px 0 0; font-size: 18px;">Total Paid: ₹\(String(format: "%.0f", total))</h3>
+            </div>
+            
+            <div style="text-align: center; color: #888; font-size: 12px;">
+                <p>Thank you for shopping at Nexus Retail!</p>
+                <p>For returns & exchanges visit any store within 30 days.</p>
+            </div>
+        </div>
+        """
+        
+        let payload: [String: Any] = [
+            "from": "Nexus Retail <receipts@updates.nexusretail.tech>",
+            "to": [email],
+            "subject": "Your Receipt from Nexus Retail (\(orderId))",
+            "html": htmlBody
+        ]
+        
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: payload)
+            let (_, response) = try await URLSession.shared.data(for: request)
+            if let httpRes = response as? HTTPURLResponse, httpRes.statusCode >= 200, httpRes.statusCode < 300 {
+                print("SellViewModel: Successfully emailed receipt to \(email)")
+            } else {
+                print("SellViewModel: Failed to email receipt to \(email)")
+            }
+        } catch {
+            print("SellViewModel: Error emailing receipt: \(error)")
         }
     }
 

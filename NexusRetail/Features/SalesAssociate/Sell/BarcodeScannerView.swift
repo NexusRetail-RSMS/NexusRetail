@@ -83,8 +83,9 @@ struct BarcodeScannerView: View {
             scannedProduct = nil
             isScanning = true
         }
+        .toolbar(.hidden, for: .tabBar)
         .task {
-            allProducts = await POSProductRepository.shared.fetchProducts(storeID: sessionStore.currentUser?.storeID)
+            _ = await POSProductRepository.shared.fetchProducts(storeID: sessionStore.currentUser?.storeID)
         }
     }
     
@@ -114,7 +115,7 @@ struct BarcodeScannerView: View {
             .accessibilityLabel("Back")
             
             VStack(alignment: .leading, spacing: 2) {
-                Text(scannedProduct == nil ? "Scan Barcode" : scannedProduct!.name)
+                Text(scannedProduct == nil ? "Scan QR Code" : scannedProduct!.name)
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(RSMSColors.primaryText)
                     .lineLimit(1)
@@ -136,11 +137,6 @@ struct BarcodeScannerView: View {
     
     private var scannerViewSection: some View {
         VStack(spacing: 32) {
-            Text("Point camera at product barcode")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(RSMSColors.secondaryText)
-                .multilineTextAlignment(.center)
-            
             // Live Camera Viewfinder
             ZStack {
                 CameraScannerView { scannedCode in
@@ -164,7 +160,7 @@ struct BarcodeScannerView: View {
             .padding(.horizontal, RSMSSpacing.lg)
             
             // Simulator Controls
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .center, spacing: 16) {
                 // Photo picker for simulator QR testing
                 PhotosPicker(selection: $selectedPhoto, matching: .images) {
                     HStack {
@@ -181,6 +177,35 @@ struct BarcodeScannerView: View {
                 .onChange(of: selectedPhoto) { _, newItem in
                     processSelectedPhoto(newItem)
                 }
+                
+                Text("OR")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(RSMSColors.secondaryText)
+                    .padding(.vertical, 4)
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Invoice Number")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(RSMSColors.primaryText)
+                    
+                    TextField("Enter invoice number", text: $invoiceNumber)
+                        .font(.system(size: 15, weight: .medium))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 14)
+                        .background(Color.gray.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                        )
+                        .onSubmit {
+                            if !invoiceNumber.isEmpty {
+                                simulateScan(forSku: invoiceNumber)
+                                invoiceNumber = ""
+                            }
+                        }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.horizontal, RSMSSpacing.lg)
         }
@@ -189,7 +214,7 @@ struct BarcodeScannerView: View {
     }
     
     private func simulateScan(forSku sku: String) {
-        guard let match = allProducts.first(where: { $0.sku == sku }) else { return }
+        guard let match = POSProductRepository.shared.products.first(where: { $0.sku == sku }) else { return }
 
         // Out of stock — show detail so the associate can pick an alternative.
         if match.stock == 0 {
@@ -412,7 +437,7 @@ struct BarcodeScannerView: View {
         // Try ML-powered recommendations first
         let mlRecommendations = RecommendationService.shared.getRecommendedProducts(
             for: product,
-            from: allProducts,
+            from: POSProductRepository.shared.products,
             count: 5
         )
         
@@ -421,7 +446,7 @@ struct BarcodeScannerView: View {
         }
         
         // Fallback: same category, stock > 0, not itself, similar price
-        return allProducts.filter { item in
+        return POSProductRepository.shared.products.filter { item in
             item.id != product.id &&
             item.category == product.category &&
             item.stock > 0 &&
@@ -437,6 +462,7 @@ struct CameraScannerView: UIViewControllerRepresentable {
     
     class Coordinator: NSObject, AVCaptureMetadataOutputObjectsDelegate {
         var parent: CameraScannerView
+        var lastScanTime: Date = Date.distantPast
         
         init(parent: CameraScannerView) {
             self.parent = parent
@@ -446,6 +472,12 @@ struct CameraScannerView: UIViewControllerRepresentable {
             if let metadataObject = metadataObjects.first {
                 guard let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject else { return }
                 guard let stringValue = readableObject.stringValue else { return }
+                
+                // Debounce scans by 1.5 seconds to prevent runaway cart additions
+                if Date().timeIntervalSince(lastScanTime) < 1.5 {
+                    return
+                }
+                lastScanTime = Date()
                 
                 // Vibrate on successful scan
                 AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))

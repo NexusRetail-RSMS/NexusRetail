@@ -1,9 +1,6 @@
 import SwiftUI
 
 struct ManagerEventsView: View {
-    @State private var isShowingCreateForm = false
-    @State private var viewModel = EventsViewModel()
-    
     var body: some View {
         ZStack {
             RSMSColors.background.ignoresSafeArea()
@@ -331,7 +328,5 @@ struct UpcomingEventRow: View {
 }
 
 #Preview {
-    NavigationStack {
-        ManagerEventsView()
-    }
+    ManagerEventsView()
 }
