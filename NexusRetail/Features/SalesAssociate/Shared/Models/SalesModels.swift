@@ -9,6 +9,13 @@ import Foundation
 
 // MARK: - Navigation
 
+// MARK: - After-sales customer info
+struct RequestCustomer: Hashable {
+    let name: String
+    let phone: String
+    let email: String
+}
+
 enum POSFlowDestination: Hashable {
     case newSale
     case searchProduct
@@ -19,6 +26,13 @@ enum POSFlowDestination: Hashable {
     case receipt
     case bopis
     case ordersHub
+    
+    // After Sales Flow
+    case invoiceScanner
+    case invoiceItemsSelection(invoiceId: String)
+    case actionSelection(invoiceId: String, selectedItem: POSProduct, purchaseDate: Date?, warrantyEndDate: Date?, customer: RequestCustomer?)
+    case repairForm(invoiceId: String, selectedItem: POSProduct, warrantyEndDate: Date?)
+    case afterSalesHistory
 }
 
 // MARK: - Chart / Period

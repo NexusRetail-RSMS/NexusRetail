@@ -4,6 +4,7 @@ struct LoginView: View {
     @State private var viewModel: LoginViewModel
     @Environment(SessionStore.self) private var sessionStore
     @State private var showPassword = false
+    @State private var showForgotPassword = false
 
     @State private var didAppear = false
     @State private var errorShake = false
@@ -53,6 +54,9 @@ struct LoginView: View {
         }
         .ignoresSafeArea(edges: .bottom)
         .navigationBarBackButtonHidden(true)
+        .sheet(isPresented: $showForgotPassword) {
+            ForgotPasswordView()
+        }
         .onAppear {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.82).delay(0.05)) {
                 didAppear = true
@@ -154,7 +158,7 @@ struct LoginView: View {
 
                     HStack {
                         Spacer()
-                        Button(action: {}) {
+                        Button(action: { showForgotPassword = true }) {
                             Text("Forgot password?")
                                 .font(RSMSFonts.subheadline)
                                 .foregroundColor(RSMSColors.burgundy)

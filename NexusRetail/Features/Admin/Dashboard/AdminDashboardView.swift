@@ -128,6 +128,7 @@ struct AdminDashboardView: View {
             if viewModel.kpis == nil {
                 await viewModel.load()
             }
+            viewModel.startListening()
         }
         .sheet(isPresented: $isProfilePresented) {
             AdminProfileSheet()
@@ -272,9 +273,9 @@ struct AdminDashboardView: View {
                 color: Color(hex: "E76F51") // Warm orange
             )
             KPICardView(
-                title: "Low-Stock Alerts",
-                value: viewModel.lowStockText,
-                icon: "exclamationmark.triangle.fill",
+                title: "Total Products",
+                value: viewModel.totalProductsText,
+                icon: "tag.fill",
                 trend: nil,
                 color: Color(hex: "D4A017") // Gold
             )

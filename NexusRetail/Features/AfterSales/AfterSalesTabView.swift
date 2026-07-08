@@ -1,4 +1,4 @@
-//
+
 //  AfterSalesTabView.swift
 //  NexusRetail
 //
@@ -9,68 +9,85 @@
 import SwiftUI
 
 struct AfterSalesTabView: View {
+    @State private var selectedTab: Int = 0
+    @State private var dashboardPath = NavigationPath()
+    @State private var posViewModel = SellViewModel()
+    @Namespace private var namespace
+
+
+
     var body: some View {
-        TabView {
-            // 1. Dashboard
-            AfterSalesDashboardView()
-                .tabItem {
-                    Label("Dashboard", systemImage: "square.grid.2x2")
+        ZStack(alignment: .bottomTrailing) {
+            TabView(selection: $selectedTab) {
+                // 1. Dashboard (hosts the after-sales scan/invoice/action flow)
+                NavigationStack(path: $dashboardPath) {
+                    AfterSalesDashboardView(path: $dashboardPath, namespace: namespace)
+                        .navigationBarHidden(true)
+                        .navigationDestination(for: POSFlowDestination.self) { dest in
+                            flowDestination(dest)
+                        }
                 }
-            
-            // 2. Service Requests
-            NavigationStack {
-                AfterSalesPlaceholderView(
-                    title: "Service Requests",
-                    message: "Manage incoming service requests, returns, and exchanges.",
-                    icon: "tray.and.arrow.down.fill"
-                )
-                .modifier(AfterSalesToolbarModifier(title: "Requests"))
+                .tabItem { Label("Dashboard", systemImage: "square.grid.2x2.fill") }
+                .tag(0)
+
+                // 2. Repairs
+                NavigationStack {
+                    ActiveRepairsView()
+                        .navigationBarHidden(true)
+                }
+                .tabItem { Label("Repairs", systemImage: "wrench.and.screwdriver.fill") }
+                .tag(1)
             }
-            .tabItem {
-                Label("Requests", systemImage: "tray.full.fill")
-            }
-            
-            // 3. Repairs
-            NavigationStack {
-                AfterSalesPlaceholderView(
-                    title: "Active Repairs",
-                    message: "Track and update items currently in queue for diagnostics or repair.",
-                    icon: "wrench.and.screwdriver.fill"
-                )
-                .modifier(AfterSalesToolbarModifier(title: "Repairs"))
-            }
-            .tabItem {
-                Label("Repairs", systemImage: "wrench.and.screwdriver.fill")
-            }
-            
-            // 4. Customers
-            NavigationStack {
-                AfterSalesPlaceholderView(
-                    title: "Customers",
-                    message: "View customer profiles, warranty history, and past services.",
-                    icon: "person.2.fill"
-                )
-                .modifier(AfterSalesToolbarModifier(title: "Customers"))
-            }
-            .tabItem {
-                Label("Customers", systemImage: "person.2.fill")
-            }
-            
-            // 5. Profile
-            NavigationStack {
-                AfterSalesPlaceholderView(
-                    title: "My Profile",
-                    message: "Manage your After-Sales Specialist profile and settings.",
-                    icon: "person.crop.circle.fill"
-                )
-                .modifier(AfterSalesToolbarModifier(title: "Profile"))
-            }
-            .tabItem {
-                Label("Profile", systemImage: "person.crop.circle")
-            }
+            .tint(RSMSColors.burgundy)
         }
-        .tint(RSMSColors.burgundy)
+        .environment(posViewModel)
     }
+
+    // MARK: - Flow destinations (tab bar hidden across the scan flow)
+
+    @ViewBuilder
+    private func flowDestination(_ dest: POSFlowDestination) -> some View {
+        switch dest {
+        case .newSale:       NewSaleView(path: $dashboardPath)
+        case .searchProduct: ProductSearchView(path: $dashboardPath)
+        case .barcodeScanner:
+            BarcodeScannerView(path: $dashboardPath)
+                .toolbar(.hidden, for: .tabBar)
+        case .invoiceScanner:
+            Group {
+                if #available(iOS 18.0, *) {
+                    InvoiceScannerView(path: $dashboardPath)
+                        .navigationTransition(.zoom(sourceID: "scannerButton", in: namespace))
+                } else {
+                    InvoiceScannerView(path: $dashboardPath)
+                }
+            }
+            .toolbar(.hidden, for: .tabBar)
+        case .invoiceItemsSelection(let invoiceId):
+            InvoiceItemsSelectionView(path: $dashboardPath, invoiceId: invoiceId)
+                .toolbar(.hidden, for: .tabBar)
+        case .actionSelection(let invoiceId, let selectedItem, let purchaseDate, let warrantyEndDate, let customer):
+            ActionSelectionView(path: $dashboardPath, invoiceId: invoiceId, selectedItem: selectedItem, purchaseDate: purchaseDate, warrantyEndDate: warrantyEndDate, customer: customer)
+                .toolbar(.hidden, for: .tabBar)
+        case .repairForm(let invoiceId, let selectedItem, let warrantyEndDate):
+            AfterSalesRepairFormView(path: $dashboardPath, invoiceId: invoiceId, selectedItem: selectedItem, warrantyEndDate: warrantyEndDate)
+                .toolbar(.hidden, for: .tabBar)
+        case .afterSalesHistory:
+            AfterSalesHistoryView(path: $dashboardPath)
+                .toolbar(.hidden, for: .tabBar)
+        case .cart:          CartView(path: $dashboardPath)
+        case .checkout:      CheckoutView(path: $dashboardPath)
+        case .payment:       PaymentFlowView(path: $dashboardPath)
+        case .receipt:
+            ReceiptView(onComplete: { dashboardPath = NavigationPath() })
+        case .bopis:
+            BOPISView()
+        case .ordersHub:
+            OrdersHubView(path: $dashboardPath)
+        }
+    }
+
+
 }
 
 /// A view modifier that applies the common After-Sales toolbar (title + profile button).

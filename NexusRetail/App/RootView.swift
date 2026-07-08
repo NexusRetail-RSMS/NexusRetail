@@ -19,6 +19,8 @@ struct RootView: View {
                     .background(RSMSColors.background.ignoresSafeArea())
             } else if !localizationManager.hasSelectedLanguage {
                 LanguagePickerView(isInitialLaunch: true, initialLanguageCode: localizationManager.currentLanguage)
+            } else if sessionStore.currentUser != nil && sessionStore.needsOTPVerification {
+                OTPVerificationView()
             } else if let role = sessionStore.currentRole {
                 switch role {
                 case .admin:

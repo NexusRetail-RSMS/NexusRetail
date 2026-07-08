@@ -69,6 +69,10 @@ struct SalesDashboardView: View {
                     BOPISView()
                 case .ordersHub:
                     OrdersHubView(path: $navigationPath)
+                case .invoiceScanner, .invoiceItemsSelection, .actionSelection, .repairForm:
+                    EmptyView()
+                case .afterSalesHistory:
+                    AfterSalesHistoryView(path: $navigationPath)
                 }
             }
         }
@@ -174,7 +178,7 @@ struct SalesDashboardView: View {
                 Spacer()
                 Picker("Period", selection: $vm.selectedChartPeriod) {
                     ForEach(ChartPeriod.allCases) { period in
-                        Text(LocalizedStringKey(period.rawValue)).tag(period)
+                        Text(period.rawValue).tag(period)
                     }
                 }
                 .pickerStyle(.segmented)
