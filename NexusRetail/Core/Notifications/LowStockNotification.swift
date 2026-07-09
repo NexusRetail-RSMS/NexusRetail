@@ -132,7 +132,15 @@ final class LowStockNotificationViewModel {
     var errorMessage: String? = nil
     
     /// IDs the manager has already seen/dismissed
-    private var readIDs: Set<UUID> = []
+    private var readIDs: Set<UUID> = {
+        let saved = UserDefaults.standard.stringArray(forKey: "readNotificationIDs") ?? []
+        return Set(saved.compactMap { UUID(uuidString: $0) })
+    }() {
+        didSet {
+            let stringArray = readIDs.map { $0.uuidString }
+            UserDefaults.standard.set(stringArray, forKey: "readNotificationIDs")
+        }
+    }
     
     /// The store we're monitoring — kept so the realtime callback can reload.
     private var monitoredStoreID: UUID?
