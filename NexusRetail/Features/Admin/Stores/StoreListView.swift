@@ -174,25 +174,9 @@ struct StoreListView: View {
 
                 Spacer()
 
-                Button {
+                AddCircleButton(accessibilityLabel: "Add new store") {
                     isShowingCreateForm = true
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 19, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(width: 48, height: 48)
-                        .background(
-                            LinearGradient(
-                                colors: [theme.burgundy, theme.burgundy.opacity(0.82)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .clipShape(Circle())
-                        .shadow(color: theme.burgundy.opacity(0.35), radius: 12, x: 0, y: 6)
                 }
-                .buttonStyle(PremiumPressStyle())
-                .accessibilityLabel("Add new store")
             }
 
             NexusSearchBar(text: $searchText, placeholder: "Search stores, city…")

@@ -131,11 +131,21 @@ final class LowStockNotificationViewModel {
     var isLoading: Bool = false
     var errorMessage: String? = nil
     
-    /// IDs the manager has already seen/dismissed
+    /// IDs the manager has already seen/dismissed (persisted so they stay read).
     private var readIDs: Set<UUID> = []
+    private static let readIDsKey = "managerReadNotificationIDs"
     
     /// The store we're monitoring — kept so the realtime callback can reload.
     private var monitoredStoreID: UUID?
+
+    init() {
+        let stored = UserDefaults.standard.stringArray(forKey: Self.readIDsKey) ?? []
+        readIDs = Set(stored.compactMap { UUID(uuidString: $0) })
+    }
+
+    private func persistReadIDs() {
+        UserDefaults.standard.set(readIDs.map { $0.uuidString }, forKey: Self.readIDsKey)
+    }
     
     /// Supabase realtime channel for live inventory updates.
     private var realtimeChannel: RealtimeChannelV2?
@@ -153,6 +163,7 @@ final class LowStockNotificationViewModel {
     /// Mark a single notification as read
     func markAsRead(_ id: UUID) {
         readIDs.insert(id)
+        persistReadIDs()
     }
     
     /// Mark all current notifications as read
@@ -160,6 +171,7 @@ final class LowStockNotificationViewModel {
         for notification in notifications {
             readIDs.insert(notification.id)
         }
+        persistReadIDs()
     }
     
     /// Fetch low-stock items and approved transfer requests

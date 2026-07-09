@@ -114,15 +114,8 @@ struct EventsView: View {
             
             Spacer()
             
-            Button {
+            AddCircleButton(accessibilityLabel: "Create event") {
                 showingCreateEvent = true
-            } label: {
-                Image(systemName: "plus")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(theme.burgundy)
-                    .frame(width: 44, height: 44)
-                    .background(theme.burgundy.opacity(0.1))
-                    .clipShape(Circle())
             }
         }
         .padding(.horizontal, RSMSSpacing.lg)

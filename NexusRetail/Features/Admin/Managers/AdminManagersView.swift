@@ -343,17 +343,9 @@ struct AdminManagersView: View {
 
                         Spacer()
 
-                        Button {
+                        AddCircleButton(accessibilityLabel: "Add new manager") {
                             isAddManagerPresented = true
-                        } label: {
-                            Image(systemName: "plus")
-                                .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(theme.burgundy)
-                                .frame(width: 44, height: 44)
-                                .background(theme.burgundy.opacity(0.1))
-                                .clipShape(Circle())
                         }
-                        .accessibilityLabel("Add new manager")
                     }
 
                     NexusSearchBar(text: $searchText, placeholder: "Search managers, stores…")

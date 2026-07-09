@@ -54,15 +54,8 @@ struct ProductCatalogueView: View {
 
                 Spacer()
 
-                Button {
+                AddCircleButton(accessibilityLabel: "Add product") {
                     showAddProduct = true
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(theme.burgundy)
-                        .frame(width: 44, height: 44)
-                        .background(theme.burgundy.opacity(0.1))
-                        .clipShape(Circle())
                 }
             }
 
