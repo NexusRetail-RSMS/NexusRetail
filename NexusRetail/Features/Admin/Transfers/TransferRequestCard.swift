@@ -44,6 +44,18 @@ struct TransferRequestCard: View {
                 // MARK: Sourcing Prediction
                 sourcingPredictionRow
                     .padding(.top, 14)
+                
+                // MARK: Decline Reason (if escalated from a store manager)
+                if let reason = request.declineReason, !reason.isEmpty {
+                    declinedBanner(reason: reason, storeName: request.sourceStoreName)
+                        .padding(.top, 10)
+                }
+            }
+            
+            if request.status == .pendingStoreApproval {
+                // MARK: Awaiting Store Approval Badge
+                awaitingStoreApprovalBadge
+                    .padding(.top, 14)
             }
 
             // MARK: Action Buttons
@@ -194,6 +206,59 @@ struct TransferRequestCard: View {
                     .cornerRadius(20)
             }
         }
+    }
+    
+    // MARK: - Declined Banner
+    
+    private func declinedBanner(reason: String, storeName: String?) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundColor(theme.error)
+                .font(.system(size: 14))
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Declined by \(storeName ?? "Store")")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(theme.error)
+                    .textCase(.uppercase)
+                
+                Text(reason)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(theme.primaryText)
+                    .lineLimit(2)
+            }
+            Spacer()
+        }
+        .padding(12)
+        .background(theme.error.opacity(0.06))
+        .cornerRadius(12)
+    }
+    
+    // MARK: - Awaiting Store Approval Badge
+    
+    private var awaitingStoreApprovalBadge: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "clock.badge.questionmark")
+                .foregroundColor(theme.burgundy)
+                .font(.system(size: 16))
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Awaiting Store Approval")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(theme.burgundy)
+                    .textCase(.uppercase)
+                
+                if let sourceName = request.sourceStoreName {
+                    Text("Sent to \(sourceName)'s manager for approval")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(theme.primaryText)
+                }
+            }
+            Spacer()
+        }
+        .padding(12)
+        .background(theme.burgundy.opacity(0.06))
+        .cornerRadius(12)
     }
 }
 

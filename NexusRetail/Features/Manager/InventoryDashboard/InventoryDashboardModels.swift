@@ -65,6 +65,7 @@ enum InventoryCategory: String, CaseIterable {
 /// Transfer request status — matches the DB enum
 enum TransferStatus: String, Codable, CaseIterable {
     case pending
+    case pendingStoreApproval = "pending_store_approval"
     case approved
     case routed
     case dispatched
@@ -72,12 +73,16 @@ enum TransferStatus: String, Codable, CaseIterable {
     case unfulfillable
     
     var displayName: String {
-        rawValue.capitalized
+        switch self {
+        case .pendingStoreApproval: return "Awaiting Store"
+        default: return rawValue.capitalized
+        }
     }
     
     var color: Color {
         switch self {
         case .pending: return AppTheme().warning
+        case .pendingStoreApproval: return AppTheme().burgundy.opacity(0.7)
         case .approved: return .green.opacity(0.6)
         case .routed: return AppTheme().burgundy.opacity(0.8)
         case .dispatched: return AppTheme().burgundy
@@ -90,11 +95,12 @@ enum TransferStatus: String, Codable, CaseIterable {
     var step: Int {
         switch self {
         case .pending: return 0
-        case .approved: return 1
-        case .routed: return 2
-        case .dispatched: return 3
-        case .delivered: return 4
-        case .unfulfillable: return 5
+        case .pendingStoreApproval: return 1
+        case .approved: return 2
+        case .routed: return 3
+        case .dispatched: return 4
+        case .delivered: return 5
+        case .unfulfillable: return 6
         }
     }
 }
