@@ -66,6 +66,7 @@ struct TopProductsDonut: View {
     let slices: [DonutSlice]
     var height: CGFloat = 220
     var centerCaption: String = "Units sold"
+    var unitLabel: String = "units"
 
     @State private var selectedValue: Int?
 
@@ -125,7 +126,7 @@ struct TopProductsDonut: View {
                 Text(formatCount(sel.value))
                     .font(.system(size: 26, weight: .bold))
                     .foregroundColor(theme.primaryText)
-                Text("units")
+                Text(unitLabel)
                     .font(.system(size: 11))
                     .foregroundColor(theme.secondaryText)
             } else {

@@ -34,9 +34,21 @@ struct ProductSalesChart: View {
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(theme.secondaryText)
+                if allowsYearly {
+                    // Inline period filter (used where there's no drill-down, e.g. Manager)
+                    Picker("Time Range", selection: $timeRange) {
+                        ForEach(SalesTimeRange.allCases, id: \.self) { range in
+                            Text(range.rawValue).tag(range)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 200)
+                } else {
+                    // Tap-to-expand hint (Admin opens a detailed view with its own filters)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(theme.secondaryText)
+                }
             }
 
             if data.isEmpty {
