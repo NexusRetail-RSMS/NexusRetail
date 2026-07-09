@@ -84,6 +84,7 @@ struct CreateEventView: View {
                             Text(type.rawValue).tag(type)
                         }
                     }
+                    .pickerStyle(.navigationLink)
                     
                     TextField("Venue", text: $venue)
                         .font(.body)
