@@ -16,9 +16,11 @@ import Supabase
 struct TopProduct: Identifiable {
     let id = UUID()
     let name: String
+    let category: String
     let unitsSold: Int
     let revenue: Double
     let color: Color
+    let imageURL: URL?
 }
 
 // MARK: - View
@@ -47,6 +49,14 @@ struct TopProductsDetailView: View {
 
     private var totalUnits: Int {
         products.reduce(0) { $0 + $1.unitsSold }
+    }
+
+    private var donutSlices: [DonutSlice] {
+        TopProductsPalette.makeSlices(
+            from: products.map { (label: $0.name, value: $0.unitsSold) },
+            maxSlices: 6,
+            dark: theme.isDarkMode
+        )
     }
 
     private var periodLabel: String {
@@ -143,52 +153,17 @@ struct TopProductsDetailView: View {
                     .padding(.horizontal, RSMSSpacing.lg)
                     .padding(.top, RSMSSpacing.xl)
                 } else {
-                    ZStack {
-                        Chart(products) { product in
-                        SectorMark(
-                            angle: .value("Units", product.unitsSold),
-                            innerRadius: .ratio(0.6),
-                            angularInset: 2
-                        )
-                        .foregroundStyle(product.color)
-                        .cornerRadius(6)
-                    }
-                    .frame(height: 240)
+                    TopProductsDonut(slices: donutSlices, height: 320, centerCaption: "Units sold")
+                        .padding(.horizontal, RSMSSpacing.lg)
+                        .padding(.top, RSMSSpacing.lg)
+                        .animation(.easeInOut(duration: 0.3), value: selectedRange)
 
-                    VStack(spacing: 2) {
-                        Text(formatNumber(totalUnits))
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(theme.primaryText)
-                        Text("Units sold")
-                            .font(.system(size: 11))
-                            .foregroundColor(theme.secondaryText)
-                    }
+                    Text("Tap a slice to see its details")
+                        .font(.system(size: 12))
+                        .foregroundColor(theme.secondaryText.opacity(0.8))
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top, RSMSSpacing.sm)
                 }
-                .padding(.horizontal, RSMSSpacing.lg)
-                .padding(.top, RSMSSpacing.xl)
-                .animation(.easeInOut(duration: 0.3), value: selectedRange)
-                }
-
-                // Legend (2-column grid)
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: RSMSSpacing.sm) {
-                    ForEach(products) { product in
-                        HStack(spacing: 6) {
-                            Circle()
-                                .fill(product.color)
-                                .frame(width: 8, height: 8)
-                            Text(product.name)
-                                .font(.system(size: 12))
-                                .foregroundColor(theme.secondaryText)
-                                .lineLimit(1)
-                            Text(formatNumber(product.unitsSold))
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(theme.primaryText)
-                            Spacer()
-                        }
-                    }
-                }
-                .padding(.horizontal, RSMSSpacing.lg)
-                .padding(.top, RSMSSpacing.lg)
 
                 // Ranked product list
                 VStack(alignment: .leading, spacing: 0) {
@@ -211,28 +186,29 @@ struct TopProductsDetailView: View {
                     } else {
                         ForEach(Array(products.enumerated()), id: \.element.id) { index, product in
                             HStack(spacing: RSMSSpacing.md) {
-                                // Rank badge
-                                Text("#\(index + 1)")
-                                    .font(.system(size: 14, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .frame(width: 32, height: 32)
-                                    .background(product.color)
-                                    .clipShape(Circle())
+                                // Product image
+                                productThumbnail(product)
 
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(product.name)
                                         .font(RSMSFonts.body)
                                         .foregroundColor(theme.primaryText)
-                                    Text("\(formatNumber(product.unitsSold)) units")
+                                        .lineLimit(1)
+                                    Text(product.category)
                                         .font(RSMSFonts.caption)
                                         .foregroundColor(theme.secondaryText)
                                 }
 
                                 Spacer()
 
-                                Text("₹\(formatNumber(Int(product.revenue)))")
-                                    .font(.system(size: 15, weight: .semibold))
-                                    .foregroundColor(theme.primaryText)
+                                VStack(alignment: .trailing, spacing: 2) {
+                                    Text("₹\(formatNumber(Int(product.revenue)))")
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundColor(theme.primaryText)
+                                    Text("\(formatNumber(product.unitsSold)) units")
+                                        .font(RSMSFonts.caption)
+                                        .foregroundColor(theme.secondaryText)
+                                }
                             }
                             .padding(.vertical, RSMSSpacing.md)
 
@@ -298,7 +274,7 @@ struct TopProductsDetailView: View {
         defer { isLoading = false }
         
         let storeId: UUID? = store.id.uuidString == "00000000-0000-0000-0000-000000000000" ? nil : store.id
-        let params = RpcParams(p_store_id: NullableUUID(value: storeId), p_period: selectedRange.rawValue, p_limit: 5)
+        let params = RpcParams(p_store_id: NullableUUID(value: storeId), p_period: selectedRange.rawValue, p_limit: 15)
         
         do {
             let fetchedProducts: [DashboardTopProduct] = try await SupabaseManager.shared.client
@@ -309,9 +285,11 @@ struct TopProductsDetailView: View {
             let mapped = fetchedProducts.enumerated().map { index, p in
                 TopProduct(
                     name: p.name,
+                    category: p.category,
                     unitsSold: p.units,
                     revenue: p.revenue,
-                    color: sliceColors[index % sliceColors.count]
+                    color: sliceColors[index % sliceColors.count],
+                    imageURL: p.imageUrl.flatMap { URL(string: $0) }
                 )
             }
             
@@ -328,5 +306,32 @@ struct TopProductsDetailView: View {
         f.numberStyle = .decimal
         f.groupingSeparator = ","
         return f.string(from: NSNumber(value: value)) ?? "\(value)"
+    }
+
+    @ViewBuilder
+    private func productThumbnail(_ product: TopProduct) -> some View {
+        Group {
+            if let url = product.imageURL {
+                AsyncImage(url: url) { image in
+                    image.resizable().aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    thumbnailPlaceholder(product)
+                }
+            } else {
+                thumbnailPlaceholder(product)
+            }
+        }
+        .frame(width: 46, height: 46)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(theme.divider, lineWidth: 1))
+    }
+
+    private func thumbnailPlaceholder(_ product: TopProduct) -> some View {
+        ZStack {
+            product.color.opacity(0.15)
+            Image(systemName: "bag.fill")
+                .font(.system(size: 16))
+                .foregroundColor(product.color)
+        }
     }
 }

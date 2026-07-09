@@ -21439,6 +21439,9 @@
         }
       }
     },
+    "Tap a slice to see its details" : {
+
+    },
     "Tap any highlighted region for details" : {
       "extractionState" : "manual",
       "localizations" : {
