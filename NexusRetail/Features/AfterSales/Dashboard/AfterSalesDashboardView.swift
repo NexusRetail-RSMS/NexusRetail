@@ -219,7 +219,7 @@ struct AfterSalesDashboardView: View {
             if vm.totalServiceRequests == 0 {
                 emptyChartPlaceholder(text: "No service tickets yet")
             } else {
-                TopProductsDonut(slices: serviceStatusSlices, height: 260, centerCaption: "Total", unitLabel: "requests")
+                TopProductsDonut(slices: serviceStatusSlices, height: 220, centerCaption: "Total", unitLabel: "requests")
             }
         }
         .padding(RSMSSpacing.lg)

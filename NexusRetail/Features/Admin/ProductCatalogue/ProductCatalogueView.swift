@@ -111,7 +111,7 @@ struct ProductCatalogueView: View {
                 .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.top, 16)
                 .padding(.bottom, 8)
-                .background(.ultraThinMaterial)
+                .fadingMaterialHeader()
         }
         .scrollIndicators(.hidden)
         .background(theme.background)

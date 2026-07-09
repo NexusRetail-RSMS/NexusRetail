@@ -137,7 +137,7 @@ struct StoreListView: View {
             }
             .safeAreaInset(edge: .top) {
                 headerSection
-                    .background(.ultraThinMaterial)
+                    .fadingMaterialHeader()
             }
             .refreshable {
                 await viewModel.load()

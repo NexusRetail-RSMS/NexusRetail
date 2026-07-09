@@ -361,7 +361,7 @@ struct AdminManagersView: View {
                 .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.top, 16)
                 .padding(.bottom, 8)
-                .background(.ultraThinMaterial)
+                .fadingMaterialHeader()
             }
         }
         .toolbar(.hidden, for: .navigationBar)
