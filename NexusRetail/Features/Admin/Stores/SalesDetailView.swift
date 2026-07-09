@@ -108,26 +108,6 @@ struct SalesDetailView: View {
                 .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.top, RSMSSpacing.md)
 
-            // Total
-            VStack(alignment: .leading, spacing: 4) {
-                Text("TOTAL")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(theme.secondaryText)
-                    .tracking(1)
-
-                Text("₹\(formatNumber(Int(totalSales)))")
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundColor(theme.burgundy)
-            }
-            .padding(.horizontal, RSMSSpacing.lg)
-            .padding(.top, RSMSSpacing.lg)
-
-            Text(periodLabel)
-                .font(RSMSFonts.subheadline)
-                .foregroundColor(theme.secondaryText)
-                .padding(.horizontal, RSMSSpacing.lg)
-                .padding(.top, RSMSSpacing.xs)
-
             // Legend
             HStack(spacing: RSMSSpacing.sm) {
                 RoundedRectangle(cornerRadius: 2).fill(theme.burgundy).frame(width: 16, height: 8)
@@ -264,35 +244,17 @@ struct SalesDetailView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, RSMSSpacing.xl)
                 } else {
-                    let maxRev = categorySales.map(\.revenue).max() ?? 0
-                    let totalRev = categorySales.reduce(0) { $0 + $1.revenue }
+                    // Clean native-style list: category name + revenue
                     ForEach(Array(categorySales.enumerated()), id: \.element.id) { index, cat in
-                        let frac  = maxRev > 0 ? CGFloat(cat.revenue / maxRev) : 0
-                        let share = totalRev > 0 ? Int((cat.revenue / totalRev) * 100) : 0
-                        VStack(spacing: 8) {
-                            HStack {
-                                Text(cat.category)
-                                    .font(.system(size: 15, weight: .semibold))
-                                    .foregroundColor(theme.primaryText)
-                                    .lineLimit(1)
-                                Spacer()
-                                Text("₹\(formatNumber(Int(cat.revenue)))")
-                                    .font(.system(size: 15, weight: .bold))
-                                    .foregroundColor(theme.burgundy)
-                            }
-                            GeometryReader { geo in
-                                ZStack(alignment: .leading) {
-                                    Capsule().fill(theme.cardBorder.opacity(0.35)).frame(height: 8)
-                                    Capsule().fill(theme.burgundy).frame(width: max(6, geo.size.width * frac), height: 8)
-                                }
-                            }
-                            .frame(height: 8)
-                            HStack {
-                                Spacer()
-                                Text("\(share)%")
-                                    .font(.system(size: 12, weight: .medium))
-                                    .foregroundColor(theme.secondaryText)
-                            }
+                        HStack {
+                            Text(cat.category)
+                                .font(.system(size: 16))
+                                .foregroundColor(theme.primaryText)
+                                .lineLimit(1)
+                            Spacer()
+                            Text("₹\(formatNumber(Int(cat.revenue)))")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(theme.secondaryText)
                         }
                         .padding(.vertical, RSMSSpacing.md)
                         .accessibilityElement(children: .combine)
@@ -386,14 +348,15 @@ struct SalesDetailView: View {
     // MARK: - Helpers
 
     private func summaryTile(title: String, value: String, caption: String?) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.system(size: 12, weight: .medium)).foregroundColor(theme.secondaryText)
-            Text(value).font(.system(size: 18, weight: .bold)).foregroundColor(theme.burgundy).lineLimit(1).minimumScaleFactor(0.6)
+        VStack(spacing: 6) {
+            Text(title).font(.system(size: 13, weight: .medium)).foregroundColor(theme.secondaryText)
+            Text(value).font(.system(size: 22, weight: .bold)).foregroundColor(theme.burgundy).lineLimit(1).minimumScaleFactor(0.6)
             Text(caption ?? " ")
                 .font(.system(size: 11)).foregroundColor(theme.secondaryText).lineLimit(1)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .center)
+        .padding(.vertical, 18)
+        .padding(.horizontal, 14)
         .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.cardBorder.opacity(0.6), lineWidth: 1))

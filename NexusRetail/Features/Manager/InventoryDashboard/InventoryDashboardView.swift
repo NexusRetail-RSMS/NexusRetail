@@ -27,7 +27,7 @@ struct InventoryDashboardView: View {
                 filterSection
                     .padding(.bottom, RSMSSpacing.sm)
             }
-            .background(.ultraThinMaterial)
+            .fadingMaterialHeader()
             
             // ── Scrollable content: grid only ──
             Group {
