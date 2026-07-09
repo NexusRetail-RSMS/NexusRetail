@@ -211,6 +211,7 @@ struct TopProductsDetailView: View {
                                 }
                             }
                             .padding(.vertical, RSMSSpacing.md)
+                            .accessibilityElement(children: .combine)
 
                             if index < products.count - 1 {
                                 Divider()

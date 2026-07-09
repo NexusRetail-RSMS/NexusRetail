@@ -209,6 +209,8 @@ struct SalesDetailView: View {
                 .padding(.top, RSMSSpacing.lg)
                 .animation(.easeInOut(duration: 0.3), value: selectedRange)
                 .frame(height: 300)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Sales Chart, Total sales: \(formatNumber(Int(totalSales)))")
             }
 
             // Total + Peak cards (matching the Sales Associate detail view)
@@ -255,6 +257,7 @@ struct SalesDetailView: View {
                                 .foregroundColor(theme.secondaryText)
                         }
                         .padding(.vertical, RSMSSpacing.md)
+                        .accessibilityElement(children: .combine)
 
                         if index < categorySales.count - 1 {
                             Divider().foregroundColor(theme.divider)
@@ -357,6 +360,7 @@ struct SalesDetailView: View {
         .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.cardBorder.opacity(0.6), lineWidth: 1))
+        .accessibilityElement(children: .combine)
     }
 
     private func formatNumber(_ value: Int) -> String {

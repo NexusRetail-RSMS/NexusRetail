@@ -273,6 +273,8 @@ struct SalesDashboardView: View {
                 .strokeBorder(accentColor.opacity(theme.isDarkMode ? 0.22 : 0.0), lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(theme.isDarkMode ? 0.35 : 0.05), radius: 8, x: 0, y: 4)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Revenue Chart")
     }
 
     /// Pill-style Weekly / Monthly toggle that replaces the segmented Picker.
@@ -773,6 +775,8 @@ struct SalesRevenueDetailView: View {
             }
             .frame(height: 240)
             .animation(.easeInOut(duration: 0.3), value: points)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Detailed Revenue Chart")
         }
     }
 
@@ -791,6 +795,7 @@ struct SalesRevenueDetailView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.cardBorder.opacity(0.6), lineWidth: 1))
         .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 3)
+        .accessibilityElement(children: .combine)
     }
 
     private var breakdownSection: some View {
@@ -886,6 +891,7 @@ struct SalesRevenueDetailView: View {
             }
         }
         .padding(14)
+        .accessibilityElement(children: .combine)
     }
 
     private var emptyBreakdown: some View {

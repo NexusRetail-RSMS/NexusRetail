@@ -382,6 +382,8 @@ struct StoreAnalyticsView: View {
                 .onTapGesture { isShowingSalesDetail = true }
         }
         .analyticsCard()
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Sales Report Chart")
     }
 
     private func percentage(for units: Int) -> Double {
@@ -446,6 +448,8 @@ struct StoreAnalyticsView: View {
                 .onTapGesture { isShowingProductsDetail = true }
         }
         .analyticsCard()
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Top Products Chart")
     }
 
     private func sectionHeader(_ title: String) -> some View {
@@ -632,6 +636,7 @@ private struct PremiumKPICard: View {
         .background(theme.cardBackground)
         .cornerRadius(RSMSRadius.medium)
         .overlay(RoundedRectangle(cornerRadius: RSMSRadius.medium).stroke(theme.cardBorder, lineWidth: 0.5))
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -653,6 +658,7 @@ private struct SparklineView: View {
         .chartYAxis(.hidden)
         .chartPlotStyle { plot in plot.padding(0) }
         .frame(height: 22)
+        .accessibilityHidden(true)
     }
 }
 
