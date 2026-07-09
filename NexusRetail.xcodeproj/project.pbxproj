@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		327BE9D92FEB91EC00A9318C /* Config.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 327BE9D82FEB91EC00A9318C /* Config.xcconfig */; };
 		64A4892BAE1C97F76E0F2DAE /* RazorpayCheckout in Frameworks */ = {isa = PBXBuildFile; productRef = 38B3F665C2D2130AA45356F0 /* RazorpayCheckout */; };
 		C7B5B7912FEB0A8100E6CF91 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = C7B5B7902FEB0A8100E6CF91 /* Auth */; };
 		C7B5B7932FEB0A8100E6CF91 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = C7B5B7922FEB0A8100E6CF91 /* Functions */; };
@@ -125,7 +124,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2650;
-				LastUpgradeCheck = 2650;
+				LastUpgradeCheck = 2660;
 				TargetAttributes = {
 					C7B5B6A82FEA47B800E6CF91 = {
 						CreatedOnToolsVersion = 26.5;
@@ -138,10 +137,6 @@
 			knownRegions = (
 				en,
 				Base,
-				hi,
-				es,
-				fr,
-				ar,
 			);
 			mainGroup = C7B5B6A02FEA47B800E6CF91;
 			minimizedProjectReferenceProxies = 1;
@@ -164,7 +159,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				327BE9D92FEB91EC00A9318C /* Config.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -216,7 +210,9 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = ANFATMJ6GH;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -238,6 +234,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -278,7 +275,9 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = ANFATMJ6GH;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -293,6 +292,7 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 			};
 			name = Release;
@@ -305,7 +305,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 6S9257K3UN;
+				DEAD_CODE_STRIPPING = YES;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
@@ -328,7 +328,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 26.5;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = team5.NexusRetail;
-				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = team5.rsms.nexusretail3323456;
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = team5.rsms.nexusretail33;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -352,7 +352,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 6S9257K3UN;
+				DEAD_CODE_STRIPPING = YES;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
@@ -375,7 +375,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 26.5;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = team5.NexusRetail;
-				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = team5.rsms.nexusretail3323456;
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = team5.rsms.nexusretail33;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;

@@ -167,6 +167,8 @@ struct TopProductsDetailView: View {
                 .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.top, RSMSSpacing.xl)
                 .animation(.easeInOut(duration: 0.3), value: selectedRange)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Top Products Chart, Total Units Sold: \(totalUnits)")
                 }
 
                 // Legend (2-column grid)
@@ -235,6 +237,7 @@ struct TopProductsDetailView: View {
                                     .foregroundColor(theme.primaryText)
                             }
                             .padding(.vertical, RSMSSpacing.md)
+                            .accessibilityElement(children: .combine)
 
                             if index < products.count - 1 {
                                 Divider()

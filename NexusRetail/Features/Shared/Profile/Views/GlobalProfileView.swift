@@ -104,8 +104,10 @@ struct GlobalProfileView: View {
                                     .frame(width: 126, height: 126)
                                     .blur(radius: 0.5)
                                     .onAppear {
-                                        withAnimation(.linear(duration: 4).repeatForever(autoreverses: false)) {
-                                            ringRotation = 360
+                                        if !UIAccessibility.isVoiceOverRunning {
+                                            withAnimation(.linear(duration: 4).repeatForever(autoreverses: false)) {
+                                                ringRotation = 360
+                                            }
                                         }
                                     }
                                 
@@ -296,5 +298,7 @@ struct GlobalProfileView: View {
                 .multilineTextAlignment(.trailing)
                 .lineLimit(multiline ? 3 : 1)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(label), \(value)")
     }
 }

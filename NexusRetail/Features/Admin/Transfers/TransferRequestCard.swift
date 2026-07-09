@@ -56,6 +56,7 @@ struct TransferRequestCard: View {
         .background(theme.cardBackground)
         .cornerRadius(24)
         .shadow(color: Color.black.opacity(0.04), radius: 15, x: 0, y: 8)
+        .accessibilityElement(children: .combine)
         .task {
             if request.status == .pending {
                 predictedSource = await viewModel.predictSourceString(for: request)
@@ -403,6 +404,7 @@ struct WaitingRequestCard: View {
                 .fill(theme.cardBackground)
                 .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
         )
+        .accessibilityElement(children: .combine)
         .alert("Approve Early", isPresented: $showingApproveEarlyAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Approve", role: .none) {
@@ -542,6 +544,7 @@ struct ApprovedRequestCard: View {
                 .fill(theme.cardBackground)
                 .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
         )
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Subviews

@@ -44,6 +44,7 @@ enum SalesPeriod: String {
     case today = "Today"
     case week  = "This Week"
     case month = "This Month"
+    case allTime = "All Time"
 }
 
 enum ChartPeriod: String, CaseIterable, Identifiable {

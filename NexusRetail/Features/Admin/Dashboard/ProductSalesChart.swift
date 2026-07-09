@@ -169,6 +169,8 @@ struct ProductRankRow: View {
                 .stroke(Color.black.opacity(0.05), lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.02), radius: 3, x: 0, y: 1)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Rank \(rank), \(point.name), \(point.category), \(point.sales) units")
     }
     
     private var imagePlaceholder: some View {
