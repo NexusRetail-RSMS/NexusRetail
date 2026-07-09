@@ -91,7 +91,7 @@ struct StoreAnalyticsView: View {
                         Label("Store Info", systemImage: "info.circle")
                     }
                     Button { isShowingEditForm = true } label: {
-                        Label("Edit Store", systemImage: "pencil")
+                        Label("Edit Store", systemImage: "square.and.pencil")
                     }
                 } label: {
                     Image(systemName: "ellipsis")

@@ -179,7 +179,7 @@ struct ClientDetailView: View {
                 Button {
                     startEditing()
                 } label: {
-                    Image(systemName: "pencil")
+                    Image(systemName: "square.and.pencil")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(.white)
                 }

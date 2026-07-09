@@ -194,7 +194,7 @@ struct EventDetailsView: View {
                             Button {
                                 showingEditEvent = true
                             } label: {
-                                Label("Edit Event", systemImage: "pencil")
+                                Label("Edit Event", systemImage: "square.and.pencil")
                             }
                             
                             Button(role: .destructive) {

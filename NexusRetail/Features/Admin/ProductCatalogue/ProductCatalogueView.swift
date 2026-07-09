@@ -246,11 +246,11 @@ struct ProductCatalogueView: View {
                 ZStack {
                     Circle()
                         .fill(theme.burgundy.opacity(0.1))
-                        .frame(width: 36, height: 36)
+                        .frame(width: 48, height: 48)
 
                     Image(systemName: "line.3.horizontal.decrease")
                         .foregroundColor(theme.burgundy)
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 19, weight: .medium))
                 }
             }
         }

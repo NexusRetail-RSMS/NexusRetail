@@ -78,6 +78,12 @@ struct GlobalProfileView: View {
         return .none
     }
     
+    private var profileCardColors: [Color] {
+        theme.isDarkMode
+            ? [Color(hex: "3D0000"), Color(hex: "2C0000"), Color(hex: "1E1E1E")]
+            : [theme.burgundy.opacity(0.20), theme.burgundy.opacity(0.05)]
+    }
+    
     var body: some View {
         List {
             if viewModel.isLoading && viewModel.profile == nil {
@@ -162,9 +168,7 @@ struct GlobalProfileView: View {
                 .listRowBackground(
                     // Gradient fills behind the avatar
                     LinearGradient(
-                        colors: theme.isDarkMode
-                            ? [Color(hex: "3D0000"), Color(hex: "1C1007"), Color(hex: "1C1C1C")]
-                            : [theme.burgundy.opacity(0.12), theme.cream.opacity(0.6)],
+                        colors: profileCardColors,
                         startPoint: .top, endPoint: .bottom
                     )
                 )

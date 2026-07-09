@@ -206,9 +206,9 @@ struct SalesDashboardView: View {
                 ? color.opacity(0.08)
                 : color.opacity(0.04)
         )
-        .cornerRadius(RSMSRadius.medium)
+        .cornerRadius(RSMSRadius.kpiCard)
         .overlay(
-            RoundedRectangle(cornerRadius: RSMSRadius.medium)
+            RoundedRectangle(cornerRadius: RSMSRadius.kpiCard)
                 .stroke(color.opacity(theme.isDarkMode ? 0.25 : 0.12), lineWidth: 1)
         )
     }
@@ -235,7 +235,7 @@ struct SalesDashboardView: View {
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             ))
-            .clipShape(RoundedRectangle(cornerRadius: 18))
+            .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.kpiCard))
             .shadow(color: theme.darkBurgundy.opacity(0.18), radius: 10, x: 0, y: 5)
         }
         .buttonStyle(.plain)

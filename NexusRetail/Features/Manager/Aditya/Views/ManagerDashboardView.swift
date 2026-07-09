@@ -141,7 +141,7 @@ struct ManagerDashboardView: View {
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
                                 .background(Color.black.opacity(0.05))
-                                .cornerRadius(16)
+                                .clipShape(Capsule())
                                 .foregroundColor(theme.primaryText)
                             }
                         }

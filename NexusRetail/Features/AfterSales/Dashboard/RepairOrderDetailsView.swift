@@ -14,14 +14,14 @@ struct RepairOrderDetailsView: View {
                 
                 ScrollView {
                     VStack(spacing: 24) {
-                // Header Image & Item Details
-                VStack(spacing: 16) {
+                // Product Info Card
+                HStack(alignment: .center, spacing: 16) {
                     if let imageURL = repair.itemImageURL, let url = URL(string: imageURL) {
                         CachedAsyncImage(url: url) { image in
                             image
                                 .resizable()
                                 .scaledToFill()
-                                .frame(width: 120, height: 120)
+                                .frame(width: 110, height: 110)
                                 .clipShape(RoundedRectangle(cornerRadius: 16))
                         } placeholder: {
                             placeholderImage
@@ -30,59 +30,67 @@ struct RepairOrderDetailsView: View {
                         placeholderImage
                     }
                     
-                    VStack(spacing: 4) {
+                    VStack(alignment: .leading, spacing: 10) {
                         Text(repair.itemName)
-                            .font(.title2)
-                            .fontWeight(.bold)
+                            .font(.system(size: 20, weight: .bold))
                             .foregroundColor(theme.primaryText)
+                            .fixedSize(horizontal: false, vertical: true)
                         
-                        Text("SKU: \(repair.itemSKU)")
-                            .font(.subheadline)
-                            .foregroundColor(theme.secondaryText)
-                    }
-                }
-                .padding(.top, 24)
-                
-                // Details Card
-                VStack(spacing: 20) {
-                    detailRow(title: "Customer Name", value: repair.customerName)
-                    
-                    Divider()
-                    
-                    detailRow(title: "Order ID", value: repair.id.uuidString)
-                    
-                    Divider()
-                    
-                    detailRow(title: "Request Generated", value: formatDate(repair.createdAt))
-                    
-                    Divider()
-                    
-                    detailRow(title: "Estimated Pickup", value: formatDate(repair.pickupDate))
-                    
-                    if let problemDesc = repair.problemDescription, !problemDesc.isEmpty {
                         Divider()
                         
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Problem Description")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(theme.secondaryText)
-                            
-                            Text(problemDesc)
-                                .font(.system(size: 16))
-                                .foregroundColor(theme.primaryText)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding()
-                                .background(Color.gray.opacity(0.05))
-                                .cornerRadius(12)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        Text("SKU: \(repair.itemSKU)")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(theme.secondaryText)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .padding(16)
+                .background(theme.cardBackground)
+                .cornerRadius(24)
+                .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
+                .padding(.horizontal, 12)
+                .padding(.top, 16)
+                
+                // Details Cards
+                VStack(spacing: 16) {
+                    // Customer & Order Info Card
+                    VStack(spacing: 16) {
+                        detailRow(title: "Customer Name", value: repair.customerName)
+                        
+                        Divider()
+                        
+                        detailRow(title: "Order ID", value: repair.id.uuidString)
+                    }
+                    .padding(16)
+                    .background(theme.cardBackground)
+                    .cornerRadius(24)
+                    .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
+                    .padding(.horizontal, 12)
+                    
+                    // Dates Card
+                    VStack(spacing: 16) {
+                        detailRow(title: "Request Generated", value: formatDate(repair.createdAt))
+                        
+                        Divider()
+                        
+                        detailRow(title: "Estimated Pickup", value: formatDate(repair.pickupDate))
+                    }
+                    .padding(16)
+                    .background(theme.cardBackground)
+                    .cornerRadius(24)
+                    .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
+                    .padding(.horizontal, 12)
+                    
+                    // Problem Description Card
+                    if let problemDesc = repair.problemDescription, !problemDesc.isEmpty {
+                        detailRow(title: "Problem Description", value: problemDesc)
+                            .padding(16)
+                            .background(theme.cardBackground)
+                            .cornerRadius(24)
+                            .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
+                            .padding(.horizontal, 12)
                     }
                 }
-                .padding(20)
-                .background(theme.cardBackground)
-                .cornerRadius(16)
-                .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
-                .padding(.horizontal, 20)
                 
                     Spacer()
                 }
@@ -113,8 +121,8 @@ struct RepairOrderDetailsView: View {
             Spacer()
             
             Text("Details")
-                .font(.largeTitle)
-                .fontWeight(.bold)
+                .font(.headline)
+                .fontWeight(.semibold)
                 .foregroundColor(theme.primaryText)
             
             Spacer()
@@ -130,10 +138,10 @@ struct RepairOrderDetailsView: View {
     private var placeholderImage: some View {
         RoundedRectangle(cornerRadius: 16)
             .fill(Color.gray.opacity(0.1))
-            .frame(width: 120, height: 120)
+            .frame(width: 110, height: 110)
             .overlay(
                 Image(systemName: "photo")
-                    .font(.system(size: 40))
+                    .font(.system(size: 32))
                     .foregroundColor(theme.secondaryText)
             )
     }

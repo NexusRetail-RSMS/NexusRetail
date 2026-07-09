@@ -104,9 +104,9 @@ struct KPICardView: View {
         .padding(.horizontal, RSMSSpacing.md)
         .frame(height: 94) // Fixed height to ensure all cards match
         .background(color.opacity(0.04))
-        .cornerRadius(RSMSRadius.medium)
+        .cornerRadius(RSMSRadius.kpiCard)
         .overlay(
-            RoundedRectangle(cornerRadius: RSMSRadius.medium)
+            RoundedRectangle(cornerRadius: RSMSRadius.kpiCard)
                 .stroke(color.opacity(0.12), lineWidth: 1)
         )
         .accessibilityElement(children: .combine)

@@ -58,33 +58,32 @@ struct RepairCardView: View {
             }
             
             // Bottom Section: Pickup Date
-            HStack {
+            HStack(alignment: .center) {
                 HStack(spacing: 8) {
                     Image(systemName: "calendar.badge.clock")
                         .foregroundColor(theme.burgundy)
                         .font(.system(size: 20))
                     
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("ESTIMATED PICKUP")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(theme.burgundy)
-                        
-                        Text(formatDate(pickupDate))
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(theme.primaryText)
-                    }
+                    Text("ESTIMATED PICKUP")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(theme.burgundy)
                 }
+                
                 Spacer()
+                
+                Text(formatDate(pickupDate))
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(theme.primaryText)
             }
-            .padding(12)
+            .padding(14)
             .background(theme.burgundy.opacity(0.05))
-            .cornerRadius(8)
+            .cornerRadius(16)
         }
         .padding(16)
         .background(theme.cardBackground)
-        .cornerRadius(16)
+        .cornerRadius(24)
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: 24)
                 .strokeBorder(Color.gray.opacity(0.15), lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
