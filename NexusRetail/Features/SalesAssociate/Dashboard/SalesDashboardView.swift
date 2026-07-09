@@ -80,6 +80,8 @@ struct SalesDashboardView: View {
                 case .exchangeProduct, .exchangePayment, .exchangeSummary,
                      .exchangeWarrantyCheck, .exchangeSelection, .exchangeSuccess:
                     EmptyView()
+                default:
+                    EmptyView()
                 }
             }
             .navigationDestination(for: RevenueDetailRoute.self) { _ in
