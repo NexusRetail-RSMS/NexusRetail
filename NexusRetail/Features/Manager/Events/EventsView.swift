@@ -94,15 +94,15 @@ struct EventsView: View {
                     .fadingMaterialHeader()
                 }
             }
-            .navigationBarHidden(true)
-            .sheet(isPresented: $showingCreateEvent) {
-                CreateEventView(viewModel: viewModel)
-            }
-            .task {
-                let storeID = sessionStore.currentUser?.storeID
-                await viewModel.fetchEvents(for: storeID)
-                await viewModel.fetchCustomers(for: storeID)
-            }
+        }
+        .navigationBarHidden(true)
+        .sheet(isPresented: $showingCreateEvent) {
+            CreateEventView(viewModel: viewModel)
+        }
+        .task {
+            let storeID = sessionStore.currentUser?.storeID
+            await viewModel.fetchEvents(for: storeID)
+            await viewModel.fetchCustomers(for: storeID)
         }
     }
     
@@ -117,9 +117,32 @@ struct EventsView: View {
             
             Spacer()
             
-            AddCircleButton(accessibilityLabel: "Create event") {
-                showingCreateEvent = true
+            HStack(spacing: 12) {
+                Menu {
+                    Picker("Filter", selection: $selectedFilter) {
+                        ForEach(EventFilter.allCases, id: \.self) { filter in
+                            Text(filter.rawValue).tag(filter)
+                        }
+                    }
+                } label: {
+                    Image(systemName: "line.3.horizontal.decrease")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(theme.burgundy)
+                        .frame(width: 44, height: 44)
+                }
+                
+                Button {
+                    showingCreateEvent = true
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(theme.burgundy)
+                        .frame(width: 44, height: 44)
+                }
+                .accessibilityLabel("Create event")
             }
+            .background(theme.burgundy.opacity(0.08))
+            .clipShape(Capsule())
         }
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.top, 16)
@@ -129,27 +152,7 @@ struct EventsView: View {
     // MARK: - Search Bar
     
     private var searchBar: some View {
-        HStack(spacing: 12) {
-            NexusSearchBar(text: $searchText, placeholder: "Search events...")
-            
-            Menu {
-                Picker("Filter", selection: $selectedFilter) {
-                    ForEach(EventFilter.allCases, id: \.self) { filter in
-                        Text(filter.rawValue).tag(filter)
-                    }
-                }
-            } label: {
-                ZStack {
-                    Circle()
-                        .fill(theme.burgundy.opacity(0.08))
-                        .frame(width: 48, height: 48)
-
-                    Image(systemName: "line.3.horizontal.decrease")
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(theme.burgundy)
-                }
-            }
-        }
+        NexusSearchBar(text: $searchText, placeholder: "Search events...")
     }
     
     // MARK: - Empty States
@@ -200,7 +203,7 @@ struct EventCard: View {
         switch event.status {
         case .upcoming: return .blue
         case .today: return .orange
-        case .completed: return .green
+        case .completed: return .gray
         }
     }
     
@@ -246,15 +249,7 @@ struct EventCard: View {
                         }
                     }
                     
-                    // Status Badge
-                    Text(event.status.rawValue)
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(statusColor)
-                        .cornerRadius(8)
-                        .padding(12)
+                    // Status Badge removed from here and moved to title row
                 }
                 
                 // Next Event Badge
@@ -273,15 +268,28 @@ struct EventCard: View {
             
             VStack(alignment: .leading, spacing: 12) {
                 // Event Info
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(event.title)
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(theme.primaryText)
-                        .lineLimit(1)
+                HStack(alignment: .center) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(event.title)
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(theme.primaryText)
+                            .lineLimit(1)
+                        
+                        Text(event.eventType ?? "Custom")
+                            .font(.system(size: 14))
+                            .foregroundColor(theme.burgundy)
+                    }
                     
-                    Text(event.eventType ?? "Custom")
-                        .font(.system(size: 14))
-                        .foregroundColor(theme.burgundy)
+                    Spacer()
+                    
+                    // Status Badge
+                    Text(event.status.rawValue)
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(statusColor)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(statusColor.opacity(0.15))
+                        .cornerRadius(6)
                 }
                 
                 // Date & Time
@@ -340,6 +348,8 @@ struct EventCard: View {
             x: 0,
             y: isNextEvent ? 4 : 2
         )
+        .opacity(event.status == .completed ? 0.6 : 1.0)
+        .grayscale(event.status == .completed ? 0.8 : 0.0)
         .animation(.easeInOut, value: isNextEvent)
     }
 }

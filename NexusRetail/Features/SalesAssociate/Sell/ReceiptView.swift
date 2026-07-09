@@ -23,8 +23,9 @@ struct ReceiptView: View {
     @State private var cachedClientName: String? = nil
     @State private var cachedPaymentMethod: String = ""
 
-    // Fetched from DB
     @State private var storeName: String = "NexusRetail"
+    @State private var warrantyMonths: Int = 1
+    @State private var isExchange: Bool = false
 
     @State private var generatedReceiptImage: UIImage? = nil
     @State private var showShareSheet = false
@@ -68,6 +69,7 @@ struct ReceiptView: View {
         .onAppear {
             // Cache immediately before viewModel.resetFlow() is ever called
             if cachedItems.isEmpty {
+                isExchange     = viewModel.pendingExchange != nil
                 cachedItems    = viewModel.cartItems
                 cachedTotal    = viewModel.totalAmount
                 cachedSubtotal = viewModel.subtotalAmount
@@ -83,9 +85,11 @@ struct ReceiptView: View {
             }
         }
         .task {
-            // Fetch real store name from DB
+            // Fetch real store name
             if let storeID = sessionStore.currentUser?.storeID {
-                struct StoreRow: Decodable { let name: String }
+                struct StoreRow: Decodable { 
+                    let name: String
+                }
                 if let rows: [StoreRow] = try? await SupabaseManager.shared.client
                     .from("store")
                     .select("name")
@@ -94,6 +98,23 @@ struct ReceiptView: View {
                     .value,
                    let first = rows.first {
                     storeName = first.name
+                }
+            }
+            
+            // Fetch category warranty
+            let categories = Array(Set(groupedCachedItems.map { $0.product.category }))
+            if !categories.isEmpty {
+                struct WarrantyRow: Decodable {
+                    let warranty_months: Int
+                }
+                if let rows: [WarrantyRow] = try? await SupabaseManager.shared.client
+                    .from("warranty_policy")
+                    .select("warranty_months")
+                    .in("category", values: categories)
+                    .execute()
+                    .value {
+                    let maxMonths = rows.map { $0.warranty_months }.max() ?? 1
+                    warrantyMonths = maxMonths
                 }
             }
             
@@ -176,7 +197,7 @@ struct ReceiptView: View {
             VStack(spacing: 4) {
                 Text("NEXUS RETAIL")
                     .font(.system(size: 16, weight: .black)).foregroundColor(theme.primaryText).kerning(2.0)
-                Text("Official Store Receipt")
+                Text(isExchange ? "Exchange Receipt" : "Official Store Receipt")
                     .font(.system(size: 11, weight: .bold)).foregroundColor(theme.secondaryText)
                 Text(storeName)
                     .font(.system(size: 12)).foregroundColor(theme.secondaryText)
@@ -234,7 +255,7 @@ struct ReceiptView: View {
                     Text(formatIndianCurrency(cachedTotal * 0.18)).font(.system(size: 13)).foregroundColor(theme.secondaryText)
                 }
                 HStack {
-                    Text("Total Paid").font(.system(size: 16, weight: .bold)).foregroundColor(theme.primaryText)
+                    Text(isExchange ? "Exchange Difference Paid" : "Total Paid").font(.system(size: 16, weight: .bold)).foregroundColor(theme.primaryText)
                     Spacer()
                     Text(formatIndianCurrency(cachedTotal)).font(.system(size: 18, weight: .black)).foregroundColor(theme.burgundy)
                 }
@@ -261,7 +282,7 @@ struct ReceiptView: View {
             VStack(spacing: 2) {
                 Text("Thank you for shopping at Nexus Retail")
                     .font(.system(size: 10)).foregroundColor(theme.secondaryText)
-                Text("For returns & exchanges visit any store within 30 days")
+                Text("For returns & exchanges visit any store within \(warrantyMonths) month\(warrantyMonths == 1 ? "" : "s")")
                     .font(.system(size: 9)).foregroundColor(theme.secondaryText.opacity(0.6))
                     .multilineTextAlignment(.center)
             }

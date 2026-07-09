@@ -85,31 +85,11 @@ struct AppointmentsView: View {
                 Text("Appointments")
                     .font(.largeTitle.weight(.bold))
                     .foregroundStyle(theme.primaryText)
-                if !viewModel.appointments.isEmpty {
-                    Text("\(viewModel.appointments.count) scheduled")
-                        .font(.system(size: 13))
-                        .foregroundStyle(theme.secondaryText)
-                }
             }
             Spacer()
-            Button {
+            AddCircleButton(accessibilityLabel: "New Appointment") {
                 showingNewAppointment = true
-            } label: {
-                ZStack {
-                    Circle()
-                        .fill(accent.opacity(0.14))
-                        .frame(width: 44, height: 44)
-                        .overlay(
-                            Circle()
-                                .strokeBorder(accent.opacity(0.25), lineWidth: 1)
-                        )
-                    Image(systemName: "plus")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(accent)
-                }
             }
-            .buttonStyle(BounceButtonStyle())
-            .accessibilityLabel("New Appointment")
         }
         .padding(.top, 4)
         .opacity(contentAppeared ? 1 : 0)

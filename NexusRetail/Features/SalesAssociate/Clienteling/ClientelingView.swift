@@ -35,14 +35,24 @@ struct ClientelingView: View {
         ZStack {
             theme.background.ignoresSafeArea()
             
-            ScrollView(showsIndicators: false) {
+            VStack(spacing: 0) {
                 VStack(spacing: 20) {
                     searchBar
-                    clientsSection
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 16)
-                .padding(.bottom, 56)
+                .padding(.bottom, 12)
+                .background(theme.background.ignoresSafeArea(edges: .top))
+                .zIndex(1)
+                
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 20) {
+                        clientsSection
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
+                    .padding(.bottom, 56)
+                }
             }
             .safeAreaInset(edge: .top) {
                 headerBar
@@ -66,25 +76,8 @@ struct ClientelingView: View {
                 Text("Clients")
                     .font(.system(size: 34, weight: .bold))
                     .foregroundStyle(theme.primaryText)
-                if !clients.isEmpty {
-                    Text("\(clients.count) contacts")
-                        .font(.system(size: 13))
-                        .foregroundStyle(theme.secondaryText)
-                }
             }
             Spacer()
-            // Profile avatar button
-            NavigationLink(destination: GlobalProfileView()) {
-                ZStack {
-                    Circle()
-                        .fill(theme.isDarkMode ? Color(hex: "2C0000") : theme.burgundy)
-                        .frame(width: 40, height: 40)
-                    Text(initials(for: sessionStore.currentUser?.name))
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(theme.isDarkMode ? theme.antiqueGold : .white)
-                }
-            }
-            .buttonStyle(BounceButtonStyle())
         }
         .padding(.horizontal, 20)
         .padding(.top, 16)
@@ -155,34 +148,27 @@ struct ClientelingView: View {
     // MARK: - Client Row Card (flashy, pops out)
     private func clientRow(_ client: AssociateClient) -> some View {
         HStack(alignment: .center, spacing: 14) {
-            // Avatar with antique-gold ring in dark mode
             ZStack {
                 Circle()
-                    .fill(avatarBg)
+                    .fill(theme.gold)
                     .frame(width: 52, height: 52)
                     .overlay(
-                        Circle()
-                            .strokeBorder(
-                                theme.isDarkMode
-                                    ? LinearGradient(colors: [theme.antiqueGold, theme.antiqueGold.opacity(0.4)],
-                                                     startPoint: .topLeading, endPoint: .bottomTrailing)
-                                    : LinearGradient(colors: [theme.burgundy.opacity(0.25), theme.burgundy.opacity(0.08)],
-                                                     startPoint: .topLeading, endPoint: .bottomTrailing),
-                                lineWidth: 1.5
-                            )
+                        Circle().stroke(Color.white, lineWidth: 2)
                     )
-                Text(String(client.name.prefix(1)).uppercased())
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(accent)
+                    .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
+                Text(initials(for: client.name))
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .shadow(color: .black.opacity(0.2), radius: 1, x: 0, y: 1)
             }
             
             // Name + phone
             VStack(alignment: .leading, spacing: 4) {
                 Text(client.name)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(theme.primaryText)
                 Text(client.phone)
-                    .font(.system(size: 12))
+                    .font(.system(size: 14))
                     .foregroundStyle(theme.secondaryText)
             }
             
@@ -194,21 +180,9 @@ struct ClientelingView: View {
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 14)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(cardBg)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(
-                    theme.isDarkMode
-                        ? LinearGradient(colors: [theme.antiqueGold.opacity(0.22), theme.darkWoodBrown.opacity(0.3)],
-                                         startPoint: .topLeading, endPoint: .bottomTrailing)
-                        : LinearGradient(colors: [theme.burgundy.opacity(0.10), Color.clear],
-                                         startPoint: .topLeading, endPoint: .bottomTrailing),
-                    lineWidth: 1
-                )
-        )
+        .background(theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 4)
     }
 
     // MARK: - Helpers

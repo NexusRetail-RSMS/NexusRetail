@@ -77,6 +77,7 @@ struct InventoryCatalogView: View {
                 .fadingMaterialHeader()
             }
         }
+        .toolbar(.hidden, for: .navigationBar)
         .task { await loadProducts() }
         .refreshable { await loadProducts() }
     }

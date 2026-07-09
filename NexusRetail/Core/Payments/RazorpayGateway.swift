@@ -58,11 +58,11 @@ class RazorpayGateway: NSObject, RazorpayPaymentCompletionProtocol, RazorpayPaym
     // MARK: - RazorpayPaymentCompletionProtocol (Fallback)
     
     func onPaymentSuccess(_ payment_id: String) {
-        self.onPaymentSuccess(payment_id, andData: nil)
+        self.onPaymentSuccess(payment_id, andData: [:])
     }
     
     func onPaymentError(_ code: Int32, description str: String) {
-        self.onPaymentError(code, description: str, andData: nil)
+        self.onPaymentError(code, description: str, andData: [:])
     }
     
     // MARK: - ExternalWalletSelectionProtocol

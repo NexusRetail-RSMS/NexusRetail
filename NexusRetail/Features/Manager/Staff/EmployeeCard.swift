@@ -19,6 +19,7 @@ struct DisplayEmployee: Identifiable, Hashable, Codable {
     var imageData: Data? = nil
     var storeId: UUID?
     var customerAttraction: Int
+    var isActive: Bool = true
 }
 
 // MARK: - Employee Card View
@@ -55,7 +56,8 @@ struct EmployeeCard: View {
             productsSold: productsSold,
             revenue: amount,
             imageUrl: imageUrl,
-            customerAttraction: 0
+            customerAttraction: 0,
+            isActive: true
         )
         self.onEdit = onEdit
         self.onDelete = onDelete
@@ -113,10 +115,20 @@ struct EmployeeCard: View {
 
             Spacer()
 
-            // Chevron at right edge
-            Image(systemName: "chevron.right")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(theme.secondaryText)
+            if !employee.isActive {
+                Text("Archived")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.gray)
+                    .cornerRadius(6)
+            } else {
+                // Chevron at right edge
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(theme.secondaryText)
+            }
         }
         .padding(16)
         .frame(minHeight: 85)
@@ -127,6 +139,8 @@ struct EmployeeCard: View {
             RoundedRectangle(cornerRadius: RSMSRadius.large)
                 .stroke(theme.cardBorder, lineWidth: 1)
         )
+        .opacity(employee.isActive ? 1.0 : 0.6)
+        .grayscale(employee.isActive ? 0.0 : 0.8)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .contextMenu {
@@ -147,9 +161,9 @@ struct EmployeeCard: View {
                 onDelete?()
             } label: {
                 Label {
-                    Text("Delete")
+                    Text("Archive")
                 } icon: {
-                    Image(systemName: "trash")
+                    Image(systemName: "archivebox")
                         .renderingMode(.template)
                         .foregroundColor(.red)
                 }

@@ -47,7 +47,7 @@ struct ClientsListView: View {
             prompt: "Search by name or phone"
         )
         .navigationTitle("Clients")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
         .tint(accent)
     }
 
