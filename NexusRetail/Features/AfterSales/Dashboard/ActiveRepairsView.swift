@@ -2,7 +2,7 @@ import SwiftUI
 import Supabase
 
 struct ActiveRepairsView: View {
-    @Environment(AppTheme.self) private var theme
+    @Environment(NexusRetail.AppTheme.self) private var theme
     @Environment(SessionStore.self) private var sessionStore
     
     @State private var repairOrders: [RepairOrderViewModel] = []
