@@ -22,7 +22,7 @@ struct RevenueBarChart: View {
 
             // Row 1: Title + tap-to-expand hint
             HStack {
-                Text(title)
+                Text(localized: title)
                     .font(RSMSFonts.headline)
                     .foregroundColor(theme.primaryText)
 
@@ -64,7 +64,7 @@ struct RevenueBarChart: View {
                     AxisMarks { value in
                         AxisValueLabel {
                             if let label = value.as(String.self) {
-                                Text(label)
+                                Text(localized: label)
                                     .font(.system(size: 10, weight: .medium))
                                     .foregroundColor(theme.secondaryText)
                             }
@@ -118,7 +118,7 @@ struct RevenueBarChart: View {
                     AxisMarks { value in
                         AxisValueLabel {
                             if let label = value.as(String.self) {
-                                Text(label)
+                                Text(localized: label)
                                     .font(.system(size: 10, weight: .medium))
                                     .foregroundColor(theme.secondaryText)
                             }
@@ -158,7 +158,7 @@ struct TimeRangeToggle: View {
     var body: some View {
         Picker("Time Range", selection: $selection) {
             ForEach([SalesTimeRange.weekly, SalesTimeRange.monthly], id: \.self) { range in
-                Text(range.rawValue).tag(range)
+                Text(localized: range.rawValue).tag(range)
             }
         }
         .pickerStyle(.segmented)

@@ -200,7 +200,7 @@ struct ClientDetailView: View {
             }
         } label: {
             VStack(spacing: 8) {
-                Text(title)
+                Text(localized: title)
                     .font(.system(size: 16, weight: selectedTab == index ? .bold : .medium))
                     .foregroundStyle(selectedTab == index ? theme.burgundy : theme.secondaryText)
                 

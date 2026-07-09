@@ -241,7 +241,7 @@ struct ManagerDetailView: View {
                 .foregroundColor(theme.burgundy)
                 .frame(width: 20)
             
-            Text(label)
+            Text(localized: label)
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(theme.primaryText)
             
@@ -514,4 +514,3 @@ struct EditManagerSheet: View {
         }
     }
 }
-

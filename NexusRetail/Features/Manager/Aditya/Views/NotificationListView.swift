@@ -118,7 +118,7 @@ struct NotificationListView: View {
                         .foregroundColor(theme.secondaryText)
                     
                     if let category = category {
-                        Text(category)
+                        Text(localized: category)
                             .font(.system(size: 11))
                             .foregroundColor(theme.secondaryText.opacity(0.8))
                     }
@@ -207,7 +207,7 @@ struct NotificationListView: View {
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(theme.primaryText)
             
-            Text(message)
+            Text(localized: message)
                 .font(.system(size: 13))
                 .foregroundColor(theme.secondaryText)
                 .multilineTextAlignment(.center)

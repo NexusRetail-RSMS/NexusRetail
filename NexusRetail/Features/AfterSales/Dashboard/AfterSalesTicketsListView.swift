@@ -18,10 +18,10 @@ enum AfterSalesTicketFilter: Identifiable {
 
     var title: String {
         switch self {
-        case .all: return "All Service Tickets"
-        case .pending: return "Pending Service Requests"
-        case .inProgress: return "Repairs In Progress"
-        case .exchanges: return "Exchanges & Returns"
+        case .all: return String(localized: "All Service Tickets")
+        case .pending: return String(localized: "Pending Service Requests")
+        case .inProgress: return String(localized: "Repairs In Progress")
+        case .exchanges: return String(localized: "Exchanges & Returns")
         }
     }
 }

@@ -78,7 +78,7 @@ struct EventDetailsView: View {
                                     .background(theme.burgundy)
                                     .cornerRadius(12)
                                 
-                                Text(event.status.rawValue)
+                                Text(localized: event.status.rawValue)
                                     .font(.system(size: 13, weight: .bold))
                                     .foregroundColor(.white)
                                     .padding(.horizontal, 12)
@@ -258,7 +258,7 @@ struct StatBox: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
             
-            Text(title)
+            Text(localized: title)
                 .font(.system(size: 12, weight: .medium))
                 .foregroundColor(.secondary)
                 .lineLimit(1)

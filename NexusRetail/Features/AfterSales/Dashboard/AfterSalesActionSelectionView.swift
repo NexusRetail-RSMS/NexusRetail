@@ -276,7 +276,7 @@ struct ActionSelectionView: View {
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(theme.secondaryText)
             }
-            Text(label)
+            Text(localized: label)
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(theme.secondaryText)
             Spacer()

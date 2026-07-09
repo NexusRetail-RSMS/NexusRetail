@@ -340,7 +340,7 @@ struct CheckoutView: View {
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(selected ? theme.burgundy : theme.secondaryText)
                 }
-                Text(title).font(.system(size: 14, weight: .semibold, design: .rounded)).foregroundColor(theme.primaryText)
+                Text(localized: title).font(.system(size: 14, weight: .semibold, design: .rounded)).foregroundColor(theme.primaryText)
                 Spacer()
                 ZStack {
                     Circle().stroke(selected ? theme.burgundy : Color.gray.opacity(0.4), lineWidth: 2).frame(width: 20, height: 20)

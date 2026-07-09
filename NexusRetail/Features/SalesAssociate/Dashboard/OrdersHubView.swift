@@ -35,7 +35,7 @@ struct OrdersHubView: View {
                 // Single segment control — replaces the old stacked
                 // In-Store/BOPIS + search + Pending/Waiting mess.
                 Picker("Orders", selection: $segment) {
-                    ForEach(Segment.allCases) { Text($0.rawValue).tag($0) }
+                    ForEach(Segment.allCases) { Text(localized: $0.rawValue).tag($0) }
                 }
                 .pickerStyle(.segmented)
                 .padding(.horizontal, RSMSSpacing.lg)
@@ -194,7 +194,7 @@ struct OrdersHubView: View {
 
     private func statusPill(_ status: String) -> some View {
         let isDone = status == "Completed"
-        return Text(status)
+        return Text(localized: status)
             .font(.system(size: 10, weight: .bold))
             .foregroundColor(isDone ? theme.success : theme.secondaryText)
             .padding(.horizontal, 8).padding(.vertical, 4)

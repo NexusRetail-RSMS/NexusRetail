@@ -17,15 +17,15 @@ enum PaymentProvider: String, Codable, CaseIterable, Identifiable {
     
     var displayName: String {
         switch self {
-        case .razorpay: return "Razorpay"
-        case .card: return "Card Payments (Stripe)"
+        case .razorpay: return String(localized: "Razorpay")
+        case .card: return String(localized: "Card Payments (Stripe)")
         }
     }
     
     var subtitle: String {
         switch self {
-        case .razorpay: return "Accept payments via Razorpay (UPI, Cards, Netbanking, Wallets)"
-        case .card: return "Accept card payments via Stripe"
+        case .razorpay: return String(localized: "Accept payments via Razorpay (UPI, Cards, Netbanking, Wallets)")
+        case .card: return String(localized: "Accept card payments via Stripe")
         }
     }
     
@@ -39,32 +39,32 @@ enum PaymentProvider: String, Codable, CaseIterable, Identifiable {
     /// Label for the first credential field.
     var credential1Label: String {
         switch self {
-        case .razorpay: return "Key ID"
-        case .card: return "Publishable Key"
+        case .razorpay: return String(localized: "Key ID")
+        case .card: return String(localized: "Publishable Key")
         }
     }
     
     /// Placeholder for the first credential field.
     var credential1Placeholder: String {
         switch self {
-        case .razorpay: return "Enter Razorpay Key ID"
-        case .card: return "Enter Publishable Key"
+        case .razorpay: return String(localized: "Enter Razorpay Key ID")
+        case .card: return String(localized: "Enter Publishable Key")
         }
     }
     
     /// Label for the second credential field.
     var credential2Label: String {
         switch self {
-        case .razorpay: return "Key Secret"
-        case .card: return "Secret Key"
+        case .razorpay: return String(localized: "Key Secret")
+        case .card: return String(localized: "Secret Key")
         }
     }
     
     /// Placeholder for the second credential field.
     var credential2Placeholder: String {
         switch self {
-        case .razorpay: return "Enter Razorpay Key Secret"
-        case .card: return "Enter Secret Key"
+        case .razorpay: return String(localized: "Enter Razorpay Key Secret")
+        case .card: return String(localized: "Enter Secret Key")
         }
     }
 }
@@ -87,8 +87,8 @@ enum PaymentEnvironment: String, Codable, CaseIterable {
     
     var displayName: String {
         switch self {
-        case .test: return "Test"
-        case .live: return "Live"
+        case .test: return String(localized: "Test")
+        case .live: return String(localized: "Live")
         }
     }
 }
@@ -192,4 +192,3 @@ extension PaymentConfiguration {
         self.updatedAt = terminal.config.updatedAt
     }
 }
-

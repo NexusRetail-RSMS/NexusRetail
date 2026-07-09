@@ -166,7 +166,7 @@ struct SalesDashboardView: View {
                     .foregroundColor(theme.primaryText)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
-                Text(title)
+                Text(localized: title)
                     .font(.system(size: 13))
                     .foregroundColor(theme.secondaryText)
                     .lineLimit(2)
@@ -268,7 +268,7 @@ struct SalesDashboardView: View {
                         vm.selectedChartPeriod = period
                     }
                 } label: {
-                    Text(period.rawValue)
+                    Text(localized: period.rawValue)
                         .font(.system(size: 12, weight: isSelected ? .bold : .medium))
                         .foregroundColor(
                             isSelected
@@ -409,7 +409,7 @@ struct SalesRevenueLineChart: View {
             AxisMarks { value in
                 AxisValueLabel {
                     if let label = value.as(String.self) {
-                        Text(label).font(.system(size: 10, weight: .medium)).foregroundColor(theme.secondaryText)
+                        Text(localized: label).font(.system(size: 10, weight: .medium)).foregroundColor(theme.secondaryText)
                     }
                 }
             }
@@ -661,15 +661,19 @@ struct SalesRevenueDetailView: View {
                     vm.selectedChartPeriod = period
                 } label: {
                     if vm.selectedChartPeriod == period {
-                        Label(period.rawValue, systemImage: "checkmark")
+                        Label {
+                            Text(localized: period.rawValue)
+                        } icon: {
+                            Image(systemName: "checkmark")
+                        }
                     } else {
-                        Text(period.rawValue)
+                        Text(localized: period.rawValue)
                     }
                 }
             }
         } label: {
             HStack(spacing: 6) {
-                Text(vm.selectedChartPeriod.rawValue)
+                Text(localized: vm.selectedChartPeriod.rawValue)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(theme.burgundy)
                 Image(systemName: "chevron.down")
@@ -743,7 +747,7 @@ struct SalesRevenueDetailView: View {
                 AxisMarks { value in
                     AxisValueLabel {
                         if let label = value.as(String.self) {
-                            Text(label).font(.system(size: 10, weight: .medium)).foregroundColor(theme.secondaryText)
+                            Text(localized: label).font(.system(size: 10, weight: .medium)).foregroundColor(theme.secondaryText)
                         }
                     }
                 }
@@ -757,7 +761,7 @@ struct SalesRevenueDetailView: View {
 
     private func summaryTile(title: String, value: String, caption: String? = nil) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.system(size: 12, weight: .medium)).foregroundColor(theme.secondaryText)
+            Text(localized: title).font(.system(size: 12, weight: .medium)).foregroundColor(theme.secondaryText)
             Text(value).font(.system(size: 18, weight: .bold)).foregroundColor(theme.burgundy).lineLimit(1).minimumScaleFactor(0.6)
             // Always reserve a caption line so both tiles are the same height
             Text(caption ?? " ")

@@ -13,10 +13,10 @@ func salesHero(title: String, subtitle: String, systemImage: String) -> some Vie
     let theme = AppTheme()
     return HStack(alignment: .top, spacing: 16) {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title)
+            Text(localized: title)
                 .font(.system(size: 30, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
-            Text(subtitle)
+            Text(localized: subtitle)
                 .font(RSMSFonts.body)
                 .foregroundStyle(.white.opacity(0.78))
                 .fixedSize(horizontal: false, vertical: true)
@@ -53,7 +53,7 @@ func infoRow(title: String, value: String, icon: String) -> some View {
             .clipShape(Circle())
 
         VStack(alignment: .leading, spacing: 4) {
-            Text(title)
+            Text(localized: title)
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(theme.primaryText)
             Text(value)
@@ -76,7 +76,7 @@ func emptyStateRow(title: String, icon: String) -> some View {
             .frame(width: 42, height: 42)
             .background(theme.burgundy.opacity(0.08))
             .clipShape(Circle())
-        Text(title)
+        Text(localized: title)
             .font(.system(size: 15, weight: .semibold))
             .foregroundStyle(theme.secondaryText)
         Spacer()
@@ -108,7 +108,7 @@ func appointmentRow(_ appointment: AssociateAppointment) -> some View {
         }
         Spacer()
 
-        Text(appointment.mode.title)
+        Text(localized: appointment.mode.title)
             .font(.system(size: 11, weight: .bold))
             .foregroundStyle(theme.burgundy)
             .padding(.horizontal, 9)

@@ -139,7 +139,7 @@ struct EventsView: View {
             Menu {
                 Picker("Filter", selection: $selectedFilter) {
                     ForEach(EventFilter.allCases, id: \.self) { filter in
-                        Text(filter.rawValue).tag(filter)
+                        Text(localized: filter.rawValue).tag(filter)
                     }
                 }
             } label: {
@@ -251,7 +251,7 @@ struct EventCard: View {
                     }
                     
                     // Status Badge
-                    Text(event.status.rawValue)
+                    Text(localized: event.status.rawValue)
                         .font(.system(size: 12, weight: .bold))
                         .foregroundColor(.white)
                         .padding(.horizontal, 10)
@@ -283,7 +283,7 @@ struct EventCard: View {
                         .foregroundColor(theme.primaryText)
                         .lineLimit(1)
                     
-                    Text(event.eventType ?? "Custom")
+                    Text(localized: event.eventType ?? "Custom")
                         .font(.system(size: 14))
                         .foregroundColor(theme.burgundy)
                 }

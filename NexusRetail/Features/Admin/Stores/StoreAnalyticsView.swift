@@ -457,7 +457,7 @@ struct StoreAnalyticsView: View {
             RoundedRectangle(cornerRadius: 2)
                 .fill(theme.burgundy)
                 .frame(width: 3, height: 18)
-            Text(title)
+            Text(localized: title)
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(theme.primaryText)
             Spacer()
@@ -492,7 +492,7 @@ struct StoreAnalyticsView: View {
         HStack {
             Spacer()
             HStack(spacing: 4) {
-                Text(label).font(.system(size: 12, weight: .semibold))
+                Text(localized: label).font(.system(size: 12, weight: .semibold))
                 Image(systemName: "arrow.up.right").font(.system(size: 10, weight: .bold))
             }
             .foregroundColor(theme.burgundy)

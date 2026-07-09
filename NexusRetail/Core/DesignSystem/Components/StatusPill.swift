@@ -32,7 +32,7 @@ struct StatusPill: View {
                 .fill(resolvedColor)
                 .frame(width: 8, height: 8)
             
-            Text(label)
+            Text(localized: label)
                 .font(.subheadline)
                 .foregroundColor(resolvedColor)
         }

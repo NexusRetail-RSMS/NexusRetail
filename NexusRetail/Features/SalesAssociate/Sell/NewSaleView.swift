@@ -144,11 +144,11 @@ struct NewSaleView: View {
             }
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(title)
+                Text(localized: title)
                     .font(.system(size: 16, weight: .bold, design: .rounded))
                     .foregroundColor(theme.primaryText)
                 
-                Text(subtitle)
+                Text(localized: subtitle)
                     .font(.system(size: 12))
                     .foregroundColor(theme.secondaryText)
             }

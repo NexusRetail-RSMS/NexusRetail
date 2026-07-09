@@ -5,9 +5,9 @@ enum PerformanceTier {
     
     var label: String {
         switch self {
-        case .gold:   return "Top Performer"
-        case .silver: return "Silver Tier"
-        case .bronze: return "Bronze Tier"
+        case .gold:   return String(localized: "Top Performer")
+        case .silver: return String(localized: "Silver Tier")
+        case .bronze: return String(localized: "Bronze Tier")
         case .none:   return ""
         }
     }
@@ -288,7 +288,7 @@ struct GlobalProfileView: View {
                 .foregroundColor(theme.isDarkMode ? theme.antiqueGold : theme.burgundy)
                 .frame(width: 20)
 
-            Text(label)
+            Text(localized: label)
                 .foregroundColor(theme.primaryText)
 
             Spacer()
@@ -299,6 +299,6 @@ struct GlobalProfileView: View {
                 .lineLimit(multiline ? 3 : 1)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(label), \(value)")
+        .accessibilityLabel("\(label.localizedUI), \(value)")
     }
 }

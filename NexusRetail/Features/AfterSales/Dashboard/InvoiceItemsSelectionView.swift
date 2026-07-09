@@ -64,7 +64,7 @@ struct InvoiceItemsSelectionView: View {
             Image(systemName: icon)
                 .font(.system(size: 40))
                 .foregroundColor(theme.secondaryText.opacity(0.5))
-            Text(message)
+            Text(localized: message)
                 .font(.system(size: 14))
                 .foregroundColor(theme.secondaryText)
                 .multilineTextAlignment(.center)
@@ -248,7 +248,7 @@ struct InvoiceItemsSelectionView: View {
 
     private func detailRow(label: String, value: String, isWarning: Bool = false) -> some View {
         HStack {
-            Text(label)
+            Text(localized: label)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundColor(theme.secondaryText)
 

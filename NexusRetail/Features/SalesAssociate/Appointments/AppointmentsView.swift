@@ -117,7 +117,7 @@ struct AppointmentsView: View {
                         selectedFilter = mode
                     }
                 } label: {
-                    Text(mode.rawValue)
+                    Text(localized: mode.rawValue)
                         .font(.system(size: 13, weight: isSelected ? .bold : .medium))
                         .foregroundColor(
                             isSelected
@@ -267,7 +267,11 @@ struct AppointmentsView: View {
 
     // MARK: - Status Badge
     private func statusBadge(_ status: AppointmentStatus) -> some View {
-        Label(status.title, systemImage: status.icon)
+        Label {
+            Text(localized: status.title)
+        } icon: {
+            Image(systemName: status.icon)
+        }
             .font(.system(size: 11, weight: .semibold))
             .foregroundStyle(status.color)
             .padding(.horizontal, 10)

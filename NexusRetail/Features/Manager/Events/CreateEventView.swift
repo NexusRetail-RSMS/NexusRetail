@@ -81,7 +81,7 @@ struct CreateEventView: View {
                     
                     Picker("Event Type", selection: $eventType) {
                         ForEach(EventType.allCases, id: \.self) { type in
-                            Text(type.rawValue).tag(type)
+                            Text(localized: type.rawValue).tag(type)
                         }
                     }
                     

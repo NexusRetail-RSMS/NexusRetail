@@ -169,7 +169,7 @@ struct ForgotPasswordView: View {
         Button(action: action) {
             HStack {
                 if isBusy { ProgressView().tint(.white).padding(.trailing, 6) }
-                Text(title).font(.system(size: 16, weight: .bold))
+                Text(localized: title).font(.system(size: 16, weight: .bold))
             }
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)

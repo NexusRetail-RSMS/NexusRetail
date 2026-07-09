@@ -111,7 +111,7 @@ struct InventoryDashboardView: View {
                         viewModel.sortOrder = order
                     } label: {
                         HStack {
-                            Text(order.rawValue)
+                            Text(localized: order.rawValue)
                             if viewModel.sortOrder == order {
                                 Image(systemName: "checkmark")
                             }
@@ -196,10 +196,10 @@ struct InventoryDashboardView: View {
             Image(systemName: icon)
                 .font(.system(size: 48))
                 .foregroundColor(theme.secondaryText.opacity(0.4))
-            Text(title)
+            Text(localized: title)
                 .font(RSMSFonts.headline)
                 .foregroundColor(theme.primaryText)
-            Text(message)
+            Text(localized: message)
                 .font(RSMSFonts.caption)
                 .foregroundColor(theme.secondaryText)
                 .multilineTextAlignment(.center)
@@ -217,7 +217,7 @@ struct CategoryChip: View {
     let action: () -> Void
     
     var body: some View {
-        Text(label)
+        Text(localized: label)
             .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
             .foregroundColor(isSelected ? .white : theme.primaryText)
             .padding(.horizontal, 14)

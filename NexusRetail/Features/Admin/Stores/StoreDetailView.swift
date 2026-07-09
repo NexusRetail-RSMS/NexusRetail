@@ -443,7 +443,7 @@ private struct InfoRow: View {
             }
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(title)
+                Text(localized: title)
                     .font(.system(size: 11.5, weight: .medium))
                     .foregroundColor(theme.secondaryText)
                 Text(value)
@@ -489,7 +489,7 @@ private struct ToastView: View {
         HStack(spacing: 8) {
             Image(systemName: "exclamationmark.circle.fill")
                 .font(.system(size: 14))
-            Text(message)
+            Text(localized: message)
                 .font(.system(size: 13, weight: .medium))
         }
         .foregroundColor(.white)

@@ -205,7 +205,7 @@ struct InfoColumn: View {
 
     var body: some View {
         VStack(alignment: alignment, spacing: 4) {
-            Text(title)
+            Text(localized: title)
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(textAlignment)
@@ -598,4 +598,3 @@ struct ApprovedRequestCard: View {
         }
     }
 }
-

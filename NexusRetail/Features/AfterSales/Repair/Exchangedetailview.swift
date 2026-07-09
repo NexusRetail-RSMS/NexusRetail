@@ -268,7 +268,7 @@ struct ExchangeDetailView: View {
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(theme.secondaryText)
                     .frame(width: 18)
-                Text(label)
+                Text(localized: label)
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(theme.secondaryText)
             }

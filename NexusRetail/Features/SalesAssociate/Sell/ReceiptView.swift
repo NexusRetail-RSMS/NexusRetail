@@ -294,7 +294,7 @@ struct ReceiptView: View {
 
     private func receiptMetaRow(label: String, value: String) -> some View {
         HStack {
-            Text(label).font(.system(size: 12)).foregroundColor(theme.secondaryText)
+            Text(localized: label).font(.system(size: 12)).foregroundColor(theme.secondaryText)
             Spacer()
             Text(value).font(.system(size: 12, weight: .bold)).foregroundColor(theme.primaryText)
         }

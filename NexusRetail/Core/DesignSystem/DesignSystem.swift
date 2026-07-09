@@ -91,7 +91,7 @@ struct KPICardView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
                 
-                Text(title)
+                Text(localized: title)
                     .font(.system(size: 13))
                     .foregroundColor(theme.secondaryText)
                     .lineLimit(2)
@@ -110,7 +110,7 @@ struct KPICardView: View {
                 .stroke(color.opacity(0.12), lineWidth: 1)
         )
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(title): \(value)")
+        .accessibilityLabel("\(title.localizedUI): \(value)")
     }
 }
 

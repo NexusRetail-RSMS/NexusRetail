@@ -137,7 +137,7 @@ struct AfterSalesDashboardView: View {
                 Spacer()
                 Picker("Period", selection: $vm.selectedChartPeriod) {
                     ForEach(ChartPeriod.allCases) { period in
-                        Text(period.rawValue).tag(period)
+                        Text(localized: period.rawValue).tag(period)
                     }
                 }
                 .pickerStyle(.segmented)
@@ -167,7 +167,7 @@ struct AfterSalesDashboardView: View {
                 AxisMarks { value in
                     AxisValueLabel {
                         if let label = value.as(String.self) {
-                            Text(label).font(.system(size: 10, weight: .medium)).foregroundColor(theme.secondaryText)
+                            Text(localized: label).font(.system(size: 10, weight: .medium)).foregroundColor(theme.secondaryText)
                         }
                     }
                 }

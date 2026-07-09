@@ -72,7 +72,7 @@ struct AfterSalesHistoryView: View {
             VStack(spacing: 0) {
                 Picker("History Tab", selection: $selectedTab) {
                     ForEach(HistoryTab.allCases, id: \.self) { tab in
-                        Text(tab.rawValue).tag(tab)
+                        Text(localized: tab.rawValue).tag(tab)
                     }
                 }
                 .pickerStyle(.segmented)
@@ -135,7 +135,7 @@ struct AfterSalesHistoryView: View {
 
     // MARK: - Empty state
     private func emptyState(message: String) -> some View {
-        Text(message)
+        Text(localized: message)
             .font(.system(size: 15))
             .foregroundColor(theme.secondaryText)
             .padding(.top, 40)
@@ -312,7 +312,7 @@ struct AfterSalesHistoryView: View {
     }
 
     private func tagChip(_ text: String) -> some View {
-        Text(text)
+        Text(localized: text)
             .font(.system(size: 12, weight: .semibold))
             .foregroundColor(theme.burgundy)
             .lineLimit(1)

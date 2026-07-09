@@ -154,7 +154,7 @@ struct EditEmployeeSheet: View {
     
     private func roleSelectionRow(role: UserRole, label: String) -> some View {
         HStack {
-            Text(label)
+            Text(localized: label)
                 .foregroundColor(theme.primaryText)
             Spacer()
             Image(systemName: selectedRole == role ? "checkmark.circle.fill" : "circle")

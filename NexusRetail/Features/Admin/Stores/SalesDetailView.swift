@@ -387,7 +387,7 @@ struct SalesDetailView: View {
 
     private func summaryTile(title: String, value: String, caption: String?) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.system(size: 12, weight: .medium)).foregroundColor(theme.secondaryText)
+            Text(localized: title).font(.system(size: 12, weight: .medium)).foregroundColor(theme.secondaryText)
             Text(value).font(.system(size: 18, weight: .bold)).foregroundColor(theme.burgundy).lineLimit(1).minimumScaleFactor(0.6)
             Text(caption ?? " ")
                 .font(.system(size: 11)).foregroundColor(theme.secondaryText).lineLimit(1)
@@ -448,5 +448,4 @@ struct SalesDetailView: View {
         return result
     }
 }
-
 
