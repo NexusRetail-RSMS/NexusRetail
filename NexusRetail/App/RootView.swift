@@ -18,8 +18,7 @@ struct RootView: View {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(theme.background.ignoresSafeArea())
-            } else if !localizationManager.hasSelectedLanguage && sessionStore.currentUser == nil && !hasSeenOnboarding {
-                // First-run onboarding step: choose a language before anything else.
+            } else if !localizationManager.hasSelectedLanguage {
                 LanguagePickerView(isInitialLaunch: true, initialLanguageCode: localizationManager.currentLanguage)
             } else if sessionStore.currentUser != nil && sessionStore.needsOTPVerification {
                 OTPVerificationView()
