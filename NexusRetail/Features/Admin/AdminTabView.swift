@@ -62,8 +62,7 @@ struct AdminTabView: View {
             }
             .tag(AdminTab.managers)
         }
-        .tint(theme.isDarkMode ? RSMSColors.antiqueGold : theme.burgundy)
-        .preferredColorScheme(theme.isDarkMode ? .dark : .light)
+.tint(theme.isDarkMode ? theme.antiqueGold : theme.burgundy)
         .environment(navStore)
         .environment(transfersVM)
     }
@@ -91,7 +90,6 @@ private struct TransfersTabRoot: View {
 /// A view modifier that applies the common Admin toolbar (title only).
 struct AdminToolbarModifier: ViewModifier {
     let title: String
-    @State private var isProfilePresented = false
     @Environment(SessionStore.self) private var sessionStore
     @Environment(AppTheme.self) private var theme
 
@@ -101,9 +99,7 @@ struct AdminToolbarModifier: ViewModifier {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        isProfilePresented = true
-                    } label: {
+                    NavigationLink(destination: GlobalProfileView()) {
                         ZStack {
                             Circle()
                                 .fill(theme.burgundy)
@@ -130,10 +126,6 @@ struct AdminToolbarModifier: ViewModifier {
                     .accessibilityLabel("Profile")
                     .accessibilityHint("Opens your profile and settings")
                 }
-            }
-            .sheet(isPresented: $isProfilePresented) {
-                AdminProfileSheet()
-                    .environment(theme)
             }
     }
     

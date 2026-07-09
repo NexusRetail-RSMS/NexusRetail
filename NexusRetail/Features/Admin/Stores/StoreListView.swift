@@ -167,8 +167,7 @@ struct StoreListView: View {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Stores")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
+.font(.system(size: 34, weight: .bold, design: .rounded))
                         .foregroundColor(theme.primaryText)
 
                 }
@@ -179,8 +178,18 @@ struct StoreListView: View {
                     isShowingCreateForm = true
                 } label: {
                     Image(systemName: "plus")
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(theme.secondaryText)
+.font(.system(size: 19, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(width: 48, height: 48)
+                        .background(
+                            LinearGradient(
+                                colors: [theme.burgundy, theme.burgundy.opacity(0.82)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .clipShape(Circle())
+                        .shadow(color: theme.burgundy.opacity(0.35), radius: 12, x: 0, y: 6)
                 }
                 .accessibilityLabel("Add new store")
             }

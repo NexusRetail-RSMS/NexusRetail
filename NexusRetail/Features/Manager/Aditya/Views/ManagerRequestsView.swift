@@ -106,7 +106,7 @@ struct ManagerRequestsView: View {
                                     RoundedRectangle(cornerRadius: 12)
                                         .fill(Color.gray.opacity(0.2))
                                         .frame(width: 50, height: 50)
-                                        .overlay(Image(systemName: "shippingbox").foregroundColor(.gray))
+                                        .overlay(Image(systemName: "shippingbox").foregroundColor(theme.secondaryText))
                                 }
                                 
                                 VStack(alignment: .leading, spacing: 4) {

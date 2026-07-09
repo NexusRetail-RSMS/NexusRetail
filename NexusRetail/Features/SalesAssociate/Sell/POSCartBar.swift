@@ -30,7 +30,7 @@ struct POSCartBar: View {
                             .font(.system(size: 11, weight: .heavy))
                             .foregroundColor(theme.burgundy)
                             .frame(minWidth: 18, minHeight: 18)
-                            .background(Color.white)
+                            .background(theme.cardBackground)
                             .clipShape(Circle())
                             .offset(x: 15, y: -15)
                     }

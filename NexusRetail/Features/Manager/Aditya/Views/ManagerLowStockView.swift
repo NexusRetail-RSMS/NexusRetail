@@ -101,7 +101,7 @@ struct ManagerLowStockView: View {
                                     RoundedRectangle(cornerRadius: 12)
                                         .fill(Color.gray.opacity(0.2))
                                         .frame(width: 60, height: 60)
-                                        .overlay(Image(systemName: "photo").foregroundColor(.gray))
+                                        .overlay(Image(systemName: "photo").foregroundColor(theme.secondaryText))
                                 }
                                 
                                 VStack(alignment: .leading, spacing: 4) {

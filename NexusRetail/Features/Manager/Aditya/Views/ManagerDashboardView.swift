@@ -14,7 +14,6 @@ struct ManagerDashboardView: View {
     @State private var notificationVM = LowStockNotificationViewModel()
     
     // Presentation States
-    @State private var isProfilePresented = false
     @State private var isNotificationPresented = false
     @State private var isShowingRevenueDetail = false
     @State private var isShowingRequestsDetail = false
@@ -51,9 +50,12 @@ struct ManagerDashboardView: View {
         .background(theme.background.ignoresSafeArea())
         .navigationBarHidden(true)
         .refreshable {
+            // Pick up any store reassignment made by an admin without needing re-login.
+            await sessionStore.refreshCurrentUser()
             await viewModel.fetchData(storeID: sessionStore.currentUser?.storeID)
         }
         .task {
+            await sessionStore.refreshCurrentUser()
             await viewModel.fetchData(storeID: sessionStore.currentUser?.storeID)
             await viewModel.fetchRevenueData(storeID: sessionStore.currentUser?.storeID)
             await notificationVM.load(storeID: sessionStore.currentUser?.storeID)
@@ -71,10 +73,6 @@ struct ManagerDashboardView: View {
                 await viewModel.fetchData(storeID: sessionStore.currentUser?.storeID)
                 await notificationVM.load(storeID: sessionStore.currentUser?.storeID)
             }
-        }
-        .sheet(isPresented: $isProfilePresented) {
-            AdminProfileSheet()
-                .environment(theme)
         }
         .sheet(isPresented: $isNotificationPresented) {
             NotificationListView(viewModel: notificationVM)
@@ -255,9 +253,7 @@ struct ManagerDashboardView: View {
             }
             
             // Profile avatar
-            Button {
-                isProfilePresented = true
-            } label: {
+            NavigationLink(destination: GlobalProfileView()) {
                 ZStack {
                     Circle()
                         .fill(theme.burgundy)

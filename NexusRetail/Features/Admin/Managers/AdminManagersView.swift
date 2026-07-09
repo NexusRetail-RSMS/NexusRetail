@@ -90,9 +90,10 @@ func flagEmoji(for country: String) -> String {
 }
 
 func performanceColor(for score: Int) -> Color {
-    if score >= 90 { return RSMSColors.success }
-    if score >= 75 { return RSMSColors.warning }
-    return RSMSColors.error
+    let theme = AppTheme()
+    if score >= 90 { return theme.success }
+    if score >= 75 { return theme.warning }
+    return theme.error
 }
 
 // MARK: - Bookmark Badge Shape
@@ -180,7 +181,7 @@ struct AdminManagersView: View {
                     VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
                         Text("Top Performers")
                             .font(RSMSFonts.headline)
-                            .foregroundColor(theme.primaryText)
+.foregroundColor(theme.darkBrown)
                             .padding(.horizontal, RSMSSpacing.lg)
 
                         let topManagers = Array(viewModel.managers.prefix(topCount).enumerated())
@@ -237,7 +238,7 @@ struct AdminManagersView: View {
                     HStack(alignment: .center) {
                         Text("All Managers")
                             .font(RSMSFonts.headline)
-                            .foregroundColor(theme.primaryText)
+.foregroundColor(theme.darkBrown)
                         Spacer()
                         Menu {
                             Picker(selection: $selectedCountryFilter) {
@@ -278,7 +279,12 @@ struct AdminManagersView: View {
                         } label: {
                             Image(systemName: "line.3.horizontal.decrease")
                                 .font(.system(size: 17, weight: .medium))
-                                .foregroundColor(theme.secondaryText)
+.foregroundColor(isFiltered ? theme.burgundy : theme.primaryText)
+                                .frame(width: 40, height: 40)
+                                .background(isFiltered
+                                    ? theme.burgundy.opacity(0.12)
+                                    : Color.black.opacity(0.05))
+                                .clipShape(Circle())
                         }
                         .id("\(selectedCountryFilter)_\(selectedPerformanceSort.rawValue)")
                     }
@@ -342,7 +348,10 @@ struct AdminManagersView: View {
                         } label: {
                             Image(systemName: "plus")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(theme.secondaryText)
+.foregroundColor(theme.burgundy)
+                                .frame(width: 44, height: 44)
+                                .background(theme.burgundy.opacity(0.1))
+                                .clipShape(Circle())
                         }
                         .accessibilityLabel("Add new manager")
                     }

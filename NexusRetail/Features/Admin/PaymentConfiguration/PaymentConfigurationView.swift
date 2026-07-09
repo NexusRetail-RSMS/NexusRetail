@@ -121,9 +121,8 @@ struct PaymentConfigurationView: View {
     private var pageIntroSection: some View {
         VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
             Text("Payment Gateways")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(theme.primaryText)
+.font(RSMSFonts.title)
+                .foregroundColor(theme.burgundy)
 
             Text("Configure payment gateways for your store so you can start accepting payments.")
                 .font(RSMSFonts.subheadline)

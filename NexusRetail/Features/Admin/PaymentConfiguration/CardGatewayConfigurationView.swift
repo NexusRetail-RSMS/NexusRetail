@@ -301,7 +301,7 @@ struct CardGatewayConfigurationView: View {
             if viewModel.isEditing {
                 RSMSSecondaryButton(
                     title: "Disable Card Gateway",
-                    color: theme.error
+isDestructive: true
                 ) {
                     Task {
                         await disableCardGateway()

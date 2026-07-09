@@ -53,7 +53,7 @@ struct CollectVerifyView: View {
                         .multilineTextAlignment(.center)
                         .font(.system(size: 28, weight: .bold, design: .rounded))
                         .padding(.vertical, 16)
-                        .background(Color.white)
+                        .background(theme.cardBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                         .overlay(RoundedRectangle(cornerRadius: 14).stroke(theme.inputBorder, lineWidth: 1))
                         .padding(.horizontal, RSMSSpacing.lg)

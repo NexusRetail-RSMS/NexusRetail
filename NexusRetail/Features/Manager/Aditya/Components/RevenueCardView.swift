@@ -75,6 +75,7 @@ struct RevenueCardView: View {
         .background(theme.cardBackground)
         .cornerRadius(RSMSRadius.large)
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+        .accessibilityElement(children: .combine)
     }
     
     private func metricView(title: String, value: String) -> some View {
@@ -94,7 +95,7 @@ struct RevenueCardView: View {
 
 #Preview {
     ZStack {
-        RSMSColors.background.ignoresSafeArea()
+        AppTheme().background.ignoresSafeArea()
         RevenueCardView(
             revenue: "₹1,25,000",
             trend: "+12.4% vs yesterday",

@@ -74,7 +74,7 @@ struct BOPISCardView: View {
                 }
                 .foregroundColor(theme.secondaryText)
                 .padding()
-                .background(RSMSColors.cream)
+                .background(theme.cream)
                 .cornerRadius(RSMSRadius.small)
             }
 
@@ -91,5 +91,6 @@ struct BOPISCardView: View {
             RoundedRectangle(cornerRadius: RSMSRadius.large)
                 .stroke(theme.cardBorder, lineWidth: 1)
         )
+        .accessibilityElement(children: .combine)
     }
 }

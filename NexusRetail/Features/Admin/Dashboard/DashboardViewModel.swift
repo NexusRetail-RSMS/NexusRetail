@@ -114,34 +114,37 @@ class DashboardViewModel {
     // MARK: - Chart Data Adapters
     
     var revenueChartData: [RevenueChartPoint] {
+        let calendar = Calendar.current
+        let now = Date()
+
         if revenueTimeRange == .weekly {
-            return weekly.enumerated().map { index, point in
-                let parts = point.week.split(separator: "-")
-                let label = parts.count == 2 ? "W\(parts[1])" : point.week
-                return RevenueChartPoint(
-                    label: label,
-                    index: index,
-                    revenue: point.revenue / 100000.0 // UI expects Lakhs
-                )
-            }.suffix(8) // Show last 8 weeks
+            // Backfill the last 8 ISO weeks so the line always renders
+            var revByKey: [String: Double] = [:]
+            for w in weekly { revByKey[w.week] = w.revenue }
+            var points: [RevenueChartPoint] = []
+            for i in (0..<8).reversed() {
+                guard let d = calendar.date(byAdding: .weekOfYear, value: -i, to: now) else { continue }
+                let week = calendar.component(.weekOfYear, from: d)
+                let year = calendar.component(.yearForWeekOfYear, from: d)
+                let key  = String(format: "%04d-%02d", year, week)
+                let rev  = (revByKey[key] ?? 0) / 100000.0
+                points.append(RevenueChartPoint(label: "W\(week)", index: 7 - i, revenue: rev))
+            }
+            return points
         } else {
-            return monthly.enumerated().map { index, point in
-                let label: String
-                let parts = point.month.split(separator: "-")
-                if parts.count == 2, let monthNum = Int(parts[1]) {
-                    let formatter = DateFormatter()
-                    formatter.locale = Locale(identifier: "en_US")
-                    label = formatter.shortMonthSymbols[monthNum - 1]
-                } else {
-                    label = point.month
-                }
-                
-                return RevenueChartPoint(
-                    label: label,
-                    index: index,
-                    revenue: point.revenue / 100000.0 // UI expects Lakhs
-                )
-            }.suffix(12)
+            // Backfill the last 6 months so the line always renders
+            var revByKey: [String: Double] = [:]
+            for m in monthly { revByKey[m.month] = m.revenue }
+            let keyFmt = DateFormatter(); keyFmt.locale = Locale(identifier: "en_US"); keyFmt.dateFormat = "yyyy-MM"
+            let monFmt = DateFormatter(); monFmt.locale = Locale(identifier: "en_US"); monFmt.dateFormat = "MMM"
+            var points: [RevenueChartPoint] = []
+            for i in (0..<6).reversed() {
+                guard let d = calendar.date(byAdding: .month, value: -i, to: now) else { continue }
+                let key = keyFmt.string(from: d)
+                let rev = (revByKey[key] ?? 0) / 100000.0
+                points.append(RevenueChartPoint(label: monFmt.string(from: d), index: 5 - i, revenue: rev))
+            }
+            return points
         }
     }
     
@@ -217,6 +220,12 @@ class DashboardViewModel {
             self.topProductsMonthly = try await topMonthlyTask
             self.totalProducts = try await productsCountTask
             
+        } catch is CancellationError {
+            // A newer load() superseded this one (e.g. view re-rendered or
+            // country filter changed). Not a real failure — ignore silently.
+            print("Dashboard: load cancelled, ignoring")
+        } catch let urlError as URLError where urlError.code == .cancelled {
+            print("Dashboard: request cancelled, ignoring")
         } catch {
             self.errorMessage = "Failed to load dashboard data: \(error.localizedDescription)"
             print("Dashboard Error: \(error)")

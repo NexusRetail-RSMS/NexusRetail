@@ -501,5 +501,5 @@ struct CountryShape: Shape {
         selectedCountry: nil
     )
     .padding()
-    .background(RSMSColors.background)
+    .background(AppTheme().background)
 }

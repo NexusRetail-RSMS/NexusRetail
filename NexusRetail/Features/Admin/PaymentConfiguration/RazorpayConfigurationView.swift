@@ -298,7 +298,7 @@ struct RazorpayConfigurationView: View {
             if viewModel.isEditing {
                 RSMSSecondaryButton(
                     title: "Disable Razorpay",
-                    color: theme.error
+isDestructive: true
                 ) {
                     Task {
                         await disableRazorpay()

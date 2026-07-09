@@ -20,7 +20,7 @@ struct RevenueBarChart: View {
     var body: some View {
         VStack(alignment: .leading, spacing: RSMSSpacing.md) {
 
-            // Row 1: Title + time-range toggle
+            // Row 1: Title + tap-to-expand hint
             HStack {
                 Text(title)
                     .font(RSMSFonts.headline)
@@ -28,7 +28,9 @@ struct RevenueBarChart: View {
 
                 Spacer()
 
-                TimeRangeToggle(selection: $timeRange)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(theme.secondaryText)
             }
 
             // Chart
@@ -77,19 +79,26 @@ struct RevenueBarChart: View {
                 }
             } else {
                 Chart(data) { point in
-                    BarMark(
+                    AreaMark(
                         x: .value("Period", point.label),
-                        y: .value("Revenue", point.revenue),
-                        width: .ratio(0.45) // Makes bars noticeably thinner and more modern
+                        y: .value("Revenue", point.revenue)
                     )
+                    .interpolationMethod(.catmullRom)
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [theme.burgundy.opacity(0.6), theme.burgundy],
+colors: [theme.burgundy.opacity(0.22), theme.burgundy.opacity(0.02)],
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
-                    .cornerRadius(8) // More rounded cap
+
+                    LineMark(
+                        x: .value("Period", point.label),
+                        y: .value("Revenue", point.revenue)
+                    )
+                    .interpolationMethod(.catmullRom)
+                    .lineStyle(StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+                    .foregroundStyle(theme.burgundy)
                 }
                 .chartYScale(domain: 0...maxValue)
                 .chartYAxis {
@@ -133,6 +142,8 @@ struct RevenueBarChart: View {
         .background(theme.cardBackground)
         .cornerRadius(RSMSRadius.large)
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Revenue Chart")
         .animation(.easeInOut(duration: 0.3), value: data)
     }
 }
@@ -141,6 +152,7 @@ struct RevenueBarChart: View {
 
 /// A segmented toggle used by both charts independently.
 struct TimeRangeToggle: View {
+    @Environment(AppTheme.self) private var theme
     @Binding var selection: SalesTimeRange
 
     var body: some View {
@@ -163,5 +175,5 @@ struct TimeRangeToggle: View {
         timeRange: $range
     )
     .padding()
-    .background(RSMSColors.background)
+    .background(AppTheme().background)
 }

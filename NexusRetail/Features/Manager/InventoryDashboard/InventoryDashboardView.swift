@@ -89,7 +89,7 @@ struct InventoryDashboardView: View {
                     
                     Image(systemName: "shippingbox.and.arrow.backward")
                         .font(.title3)
-                        .foregroundColor(RSMSColors.cream)
+                        .foregroundColor(theme.cream)
                 }
             }
             .accessibilityLabel("Stock Requests")

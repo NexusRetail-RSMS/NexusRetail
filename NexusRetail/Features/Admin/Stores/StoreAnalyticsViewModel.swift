@@ -16,7 +16,6 @@ class StoreAnalyticsViewModel {
         didSet {
             // When the segmented picker changes, reset the calendar-based filter
             // so both controls stay in sync
-            let cal = Calendar.current
             let now = Date()
             switch timeRange {
             case "This Month":

@@ -31,14 +31,16 @@ struct TopProductsDetailView: View {
     @Environment(\.dismiss) private var dismiss
 
     // Colors for the donut slices
-    static let sliceColors: [Color] = [
-        Color(hex: "8B0000"),
-        Color(hex: "2A9D8F"),
-        Color(hex: "F4A261"),
-        Color(hex: "2E7D32"),
-        Color(hex: "E76F51"),
-        Color(hex: "264653"),
-    ]
+var sliceColors: [Color] {
+        [
+            theme.burgundy,
+            theme.success,
+            theme.warning,
+            theme.gold,
+            theme.error,
+            theme.primaryAction
+        ]
+    }
 
     @State private var products: [TopProduct] = []
     @State private var isLoading = false
@@ -70,8 +72,7 @@ struct TopProductsDetailView: View {
 
                 HStack {
                     Text("Top Products")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
+.font(.system(size: 28, weight: .bold))
                         .foregroundColor(theme.primaryText)
                     
                     Spacer()
@@ -166,6 +167,8 @@ struct TopProductsDetailView: View {
                 .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.top, RSMSSpacing.xl)
                 .animation(.easeInOut(duration: 0.3), value: selectedRange)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Top Products Chart, Total Units Sold: \(totalUnits)")
                 }
 
                 // Legend (2-column grid)
@@ -234,6 +237,7 @@ struct TopProductsDetailView: View {
                                     .foregroundColor(theme.primaryText)
                             }
                             .padding(.vertical, RSMSSpacing.md)
+                            .accessibilityElement(children: .combine)
 
                             if index < products.count - 1 {
                                 Divider()
@@ -310,7 +314,7 @@ struct TopProductsDetailView: View {
                     name: p.name,
                     unitsSold: p.units,
                     revenue: p.revenue,
-                    color: TopProductsDetailView.sliceColors[index % TopProductsDetailView.sliceColors.count]
+                    color: sliceColors[index % sliceColors.count]
                 )
             }
             

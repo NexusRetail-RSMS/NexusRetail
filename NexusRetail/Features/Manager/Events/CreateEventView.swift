@@ -53,10 +53,10 @@ struct CreateEventView: View {
                                 VStack(spacing: 8) {
                                     Image(systemName: "photo.badge.plus")
                                         .font(.system(size: 32))
-                                        .foregroundColor(.gray)
+                                        .foregroundColor(theme.secondaryText)
                                     Text("Tap to add event banner")
                                         .font(.subheadline)
-                                        .foregroundColor(.gray)
+                                        .foregroundColor(theme.secondaryText)
                                 }
                             }
 

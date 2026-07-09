@@ -42,8 +42,7 @@ struct ManagerTabView: View {
                 Label("Employees", systemImage: "person.2")
             }
         }
-        .tint(theme.isDarkMode ? RSMSColors.antiqueGold : theme.burgundy)
-        .preferredColorScheme(theme.isDarkMode ? .dark : .light)
+.tint(theme.isDarkMode ? theme.antiqueGold : theme.burgundy)
         .environment(theme)
     }
 }
@@ -53,7 +52,6 @@ struct ManagerToolbarModifier: ViewModifier {
     let title: String
     @Environment(SessionStore.self) private var sessionStore
     @Environment(AppTheme.self) private var theme
-    @State private var isProfilePresented = false
 
     func body(content: Content) -> some View {
         content
@@ -61,9 +59,7 @@ struct ManagerToolbarModifier: ViewModifier {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        isProfilePresented = true
-                    } label: {
+                    NavigationLink(destination: GlobalProfileView()) {
                         ZStack {
                             Circle()
                                 .fill(theme.burgundy)
@@ -88,10 +84,6 @@ struct ManagerToolbarModifier: ViewModifier {
                         }
                     }
                 }
-            }
-            .sheet(isPresented: $isProfilePresented) {
-                AdminProfileSheet()
-                    .environment(theme)
             }
     }
     

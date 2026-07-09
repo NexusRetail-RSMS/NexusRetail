@@ -59,7 +59,10 @@ struct ProductCatalogueView: View {
                 } label: {
                     Image(systemName: "plus")
                         .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(theme.secondaryText)
+.foregroundColor(theme.burgundy)
+                        .frame(width: 44, height: 44)
+                        .background(theme.burgundy.opacity(0.1))
+                        .clipShape(Circle())
                 }
             }
 
@@ -232,7 +235,7 @@ struct ProductCatalogueView: View {
         HStack {
             Text("Products")
                 .font(.system(size: 20, weight: .bold, design: .rounded))
-                .foregroundStyle(theme.primaryText)
+.foregroundStyle(theme.darkBrown)
             Spacer()
             Menu {
                 ForEach(viewModel.categoryOptions, id: \.self) { option in

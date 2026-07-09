@@ -329,7 +329,7 @@ struct EventCard: View {
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 24)
-                    .fill(Color.white)
+                    .fill(theme.cardBackground)
                 
                 if isNextEvent {
                     RoundedRectangle(cornerRadius: 24)

@@ -9,6 +9,7 @@ import SwiftUI
 /// A full-width primary action button styled with the RSMS brand.
 /// Supports a loading state that replaces the label with a spinner.
 struct RSMSPrimaryButton: View {
+    @Environment(AppTheme.self) private var theme
     let title: String
     var isLoading: Bool = false
     var isDisabled: Bool = false
@@ -28,7 +29,7 @@ struct RSMSPrimaryButton: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(isDisabled ? RSMSColors.disabled : RSMSColors.burgundy)
+            .background(isDisabled ? theme.disabled : theme.primaryAction)
             .foregroundColor(.white)
             .cornerRadius(RSMSRadius.medium)
         }
@@ -39,15 +40,16 @@ struct RSMSPrimaryButton: View {
 
 /// A secondary / destructive link-style button (e.g., "Disable Razorpay").
 struct RSMSSecondaryButton: View {
+    @Environment(AppTheme.self) private var theme
     let title: String
-    var color: Color = RSMSColors.burgundy
+    var isDestructive: Bool = false
     let action: () -> Void
     
     var body: some View {
         Button(action: action) {
             Text(title)
                 .font(.subheadline)
-                .foregroundColor(color)
+                .foregroundColor(isDestructive ? theme.error : theme.primaryAction)
         }
         .buttonStyle(.plain)
     }
@@ -56,9 +58,13 @@ struct RSMSSecondaryButton: View {
 #Preview {
     VStack(spacing: 20) {
         RSMSPrimaryButton(title: "Save Configuration", action: {})
+            .environment(AppTheme())
         RSMSPrimaryButton(title: "Saving...", isLoading: true, action: {})
+            .environment(AppTheme())
         RSMSPrimaryButton(title: "Disabled", isDisabled: true, action: {})
-        RSMSSecondaryButton(title: "Disable Razorpay", color: .red, action: {})
+            .environment(AppTheme())
+        RSMSSecondaryButton(title: "Disable Razorpay", isDestructive: true, action: {})
+            .environment(AppTheme())
     }
     .padding()
 }

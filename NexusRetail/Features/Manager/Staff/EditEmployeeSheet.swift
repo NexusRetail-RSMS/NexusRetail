@@ -101,14 +101,14 @@ struct EditEmployeeSheet: View {
                     }
                 }
 
-                Section(header: Text("Employee Details").font(.system(size: 17, weight: .medium)).foregroundColor(.gray)) {
+                Section(header: Text("Employee Details").font(.system(size: 17, weight: .medium)).foregroundColor(theme.secondaryText)) {
                     TextField("First Name", text: $firstName)
                         .autocorrectionDisabled()
                     TextField("Last Name", text: $lastName)
                         .autocorrectionDisabled()
                 }
 
-                Section(header: Text("Contact Details").font(.system(size: 17, weight: .medium)).foregroundColor(.gray)) {
+                Section(header: Text("Contact Details").font(.system(size: 17, weight: .medium)).foregroundColor(theme.secondaryText)) {
                     TextField("Email", text: $email)
                         .keyboardType(.emailAddress)
                         .autocapitalization(.none)
@@ -117,7 +117,7 @@ struct EditEmployeeSheet: View {
                         .keyboardType(.phonePad)
                 }
 
-                Section(header: Text("Role").font(.system(size: 17, weight: .medium)).foregroundColor(.gray)) {
+                Section(header: Text("Role").font(.system(size: 17, weight: .medium)).foregroundColor(theme.secondaryText)) {
                     roleSelectionRow(role: .salesAssociate, label: "Sales Associate")
                     roleSelectionRow(role: .afterSales, label: "After Sales Associate")
                 }

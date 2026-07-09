@@ -24,5 +24,5 @@ struct SegmentControlView: View {
     @Previewable @State var selection = SalesTimeRange.weekly
     SegmentControlView(selection: $selection)
         .padding()
-        .background(RSMSColors.background)
+        .background(AppTheme().background)
 }

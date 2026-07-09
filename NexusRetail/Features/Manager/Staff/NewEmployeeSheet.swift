@@ -84,7 +84,7 @@ struct NewEmployeeSheet: View {
                 }
 
                 // ── Basic Info ────────────────────────────
-                Section(header: Text("Employee Details").font(.system(size: 17, weight: .medium)).foregroundColor(.gray)) {
+                Section(header: Text("Employee Details").font(.system(size: 17, weight: .medium)).foregroundColor(theme.secondaryText)) {
                     TextField("First Name", text: $firstName)
                         .autocorrectionDisabled()
                     TextField("Last Name", text: $lastName)
@@ -92,7 +92,7 @@ struct NewEmployeeSheet: View {
                 }
 
                 // ── Contact Info ──────────────────────────
-                Section(header: Text("Contact Details").font(.system(size: 17, weight: .medium)).foregroundColor(.gray)) {
+                Section(header: Text("Contact Details").font(.system(size: 17, weight: .medium)).foregroundColor(theme.secondaryText)) {
                     TextField("Email", text: $email)
                         .keyboardType(.emailAddress)
                         .autocapitalization(.none)
@@ -102,7 +102,7 @@ struct NewEmployeeSheet: View {
                 }
 
                 // ── Role ──────────────────────────────────
-                Section(header: Text("Role").font(.system(size: 17, weight: .medium)).foregroundColor(.gray)) {
+                Section(header: Text("Role").font(.system(size: 17, weight: .medium)).foregroundColor(theme.secondaryText)) {
                     roleSelectionRow(role: .salesAssociate, label: "Sales Associate")
                     roleSelectionRow(role: .afterSales, label: "After Sales Associate")
                 }

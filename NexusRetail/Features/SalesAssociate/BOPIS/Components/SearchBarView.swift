@@ -28,7 +28,7 @@ struct SearchBarView: View {
         }
         .padding(.horizontal, RSMSSpacing.md)
         .padding(.vertical, RSMSSpacing.sm)
-        .background(Color.white)
+        .background(theme.cardBackground)
         .cornerRadius(RSMSRadius.small)
         .overlay(
             RoundedRectangle(cornerRadius: RSMSRadius.small)

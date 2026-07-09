@@ -44,6 +44,7 @@ enum SalesPeriod: String {
     case today = "Today"
     case week  = "This Week"
     case month = "This Month"
+    case allTime = "All Time"
 }
 
 enum ChartPeriod: String, CaseIterable, Identifiable {
@@ -62,7 +63,7 @@ enum RevenueFilter: String, CaseIterable, Identifiable {
 
 // MARK: - Dashboard chart data point
 
-struct StoreRevenueChartPoint: Identifiable {
+struct StoreRevenueChartPoint: Identifiable, Equatable {
     var id: String { label }
     let label: String
     let revenue: Double

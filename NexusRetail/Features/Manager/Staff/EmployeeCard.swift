@@ -128,6 +128,7 @@ struct EmployeeCard: View {
                 .stroke(theme.cardBorder, lineWidth: 1)
         )
         .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
         .contextMenu {
             Button {
                 onEdit?()
@@ -137,7 +138,7 @@ struct EmployeeCard: View {
                 } icon: {
                     Image(systemName: "square.and.pencil")
                         .renderingMode(.template)
-                        .foregroundColor(.black)
+                        .foregroundColor(theme.primaryText)
                 }
             }
             .tint(.black)
@@ -160,7 +161,7 @@ struct EmployeeCard: View {
 
 #Preview {
     ZStack {
-        RSMSColors.background.ignoresSafeArea()
+        AppTheme().background.ignoresSafeArea()
         VStack(spacing: 16) {
             EmployeeCard(
                 name: "Sarah Jenkins",

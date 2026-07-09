@@ -309,7 +309,7 @@ struct GuestRow: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis")
-                        .foregroundColor(.gray)
+                        .foregroundColor(theme.secondaryText)
                         .padding(.horizontal, 4)
                 }
             }

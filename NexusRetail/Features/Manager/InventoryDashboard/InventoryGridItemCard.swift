@@ -66,6 +66,7 @@ struct InventoryGridItemCard: View {
         .background(theme.cardBackground)
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.05), radius: 6, y: 2)
+        .accessibilityElement(children: .combine)
         .contextMenu {
             Button(action: { showQR = true }) {
                 Label("Show QR Code", systemImage: "qrcode")

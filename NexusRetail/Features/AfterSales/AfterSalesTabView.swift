@@ -12,6 +12,7 @@ struct AfterSalesTabView: View {
     @State private var selectedTab: Int = 0
     @State private var dashboardPath = NavigationPath()
     @State private var posViewModel = SellViewModel()
+    @State private var showScanner = false
     @Namespace private var namespace
     @Environment(AppTheme.self) private var theme
 
@@ -20,7 +21,7 @@ struct AfterSalesTabView: View {
             TabView(selection: $selectedTab) {
                 // 1. Dashboard (hosts the after-sales scan/invoice/action flow)
                 NavigationStack(path: $dashboardPath) {
-                    AfterSalesDashboardView(path: $dashboardPath, namespace: namespace)
+                    AfterSalesDashboardView(path: $dashboardPath, namespace: namespace, showScanner: $showScanner)
                         .navigationBarHidden(true)
                         .navigationDestination(for: POSFlowDestination.self) { dest in
                             flowDestination(dest)
@@ -37,50 +38,15 @@ struct AfterSalesTabView: View {
                 .tabItem { Label("Repairs", systemImage: "wrench.and.screwdriver.fill") }
                 .tag(1)
             }
-            .tint(theme.isDarkMode ? RSMSColors.antiqueGold : theme.burgundy)
-            .preferredColorScheme(theme.isDarkMode ? .dark : .light)
+            .tint(theme.isDarkMode ? theme.antiqueGold : theme.burgundy)
         }
         .environment(theme)
         .environment(posViewModel)
+.qrScanner(isScanning: $showScanner, showInvoiceOptions: true) { code in
+            handleScannedInvoice(code)
+        }
         .task { updateTabBarAppearance() }
         .onChange(of: theme.isDarkMode) { _, _ in updateTabBarAppearance() }
-    }
-
-    private func updateTabBarAppearance() {
-        let appearance = UITabBarAppearance()
-        appearance.configureWithDefaultBackground()
-
-        if theme.isDarkMode {
-            appearance.backgroundColor = UIColor(Color(hex: "1A1A1A"))
-            appearance.shadowColor = UIColor(Color(hex: "3D0000").opacity(0.6))
-
-            let itemAppearance = UITabBarItemAppearance()
-            itemAppearance.normal.iconColor = UIColor(Color(hex: "7A5C3A"))
-            itemAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor(Color(hex: "7A5C3A"))]
-            itemAppearance.selected.iconColor = UIColor(Color(hex: "C9A84C"))
-            itemAppearance.selected.titleTextAttributes = [.foregroundColor: UIColor(Color(hex: "C9A84C")),
-                                                           .font: UIFont.systemFont(ofSize: 10, weight: .semibold)]
-            appearance.stackedLayoutAppearance = itemAppearance
-            appearance.inlineLayoutAppearance = itemAppearance
-            appearance.compactInlineLayoutAppearance = itemAppearance
-        } else {
-            appearance.backgroundColor = UIColor(red: 0.98, green: 0.97, blue: 0.95, alpha: 0.98)
-            appearance.shadowColor = UIColor(Color(hex: "8B0000").opacity(0.18))
-
-            let itemAppearance = UITabBarItemAppearance()
-            itemAppearance.normal.iconColor = UIColor(Color(hex: "9E8E7A"))
-            itemAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor(Color(hex: "9E8E7A"))]
-            let burgundyColor = UIColor(red: 0.55, green: 0.0, blue: 0.01, alpha: 1.0)
-            itemAppearance.selected.iconColor = burgundyColor
-            itemAppearance.selected.titleTextAttributes = [.foregroundColor: burgundyColor,
-                                                           .font: UIFont.systemFont(ofSize: 10, weight: .semibold)]
-            appearance.stackedLayoutAppearance = itemAppearance
-            appearance.inlineLayoutAppearance = itemAppearance
-            appearance.compactInlineLayoutAppearance = itemAppearance
-        }
-
-        UITabBar.appearance().standardAppearance = appearance
-        UITabBar.appearance().scrollEdgeAppearance = appearance
     }
 
     // MARK: - Flow destinations (tab bar hidden across the scan flow)
@@ -142,7 +108,6 @@ struct AfterSalesToolbarModifier: ViewModifier {
     
     @Environment(AppTheme.self) private var theme
     @Environment(SessionStore.self) private var sessionStore
-    @State private var isProfilePresented = false
     
     func body(content: Content) -> some View {
         content
@@ -150,9 +115,7 @@ struct AfterSalesToolbarModifier: ViewModifier {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        isProfilePresented = true
-                    } label: {
+                    NavigationLink(destination: GlobalProfileView()) {
                         ZStack {
                             Circle()
                                 .fill(theme.burgundy)
@@ -179,9 +142,6 @@ struct AfterSalesToolbarModifier: ViewModifier {
                     .accessibilityLabel("Profile")
                     .accessibilityHint("Opens your after-sales specialist profile")
                 }
-            }
-            .sheet(isPresented: $isProfilePresented) {
-                AdminProfileSheet()
             }
     }
     
@@ -269,7 +229,13 @@ struct AfterSalesProfileSheet: View {
                             .foregroundColor(theme.secondaryText)
                     }
                     .padding(.top, RSMSSpacing.xxl)
-                    
+LanguageSettingsButton()
+                        .padding()
+                        .background(theme.cardBackground)
+                        .cornerRadius(RSMSRadius.large)
+                        .padding(.horizontal, RSMSSpacing.lg)
+                        .padding(.top, RSMSSpacing.md)
+
                     // Dark Mode Toggle
                     VStack(spacing: 0) {
                         Divider()
@@ -299,7 +265,6 @@ struct AfterSalesProfileSheet: View {
                     .background(theme.cardBackground)
                     .cornerRadius(RSMSRadius.medium)
                     .padding(.horizontal, RSMSSpacing.lg)
-                    
                     Spacer()
                     
                     Button {

@@ -59,12 +59,13 @@ struct LowStockNotification: Identifiable {
     }
     
     var urgencyColor: Color {
+        let theme = AppTheme()
         if case .lowStock(let qty, _, _) = type {
-            if qty == 0 { return RSMSColors.error }
-            if qty <= 2 { return Color(hex: "E76F51") }
-            return RSMSColors.warning
+            if qty == 0 { return theme.error }
+            if qty <= 2 { return theme.error.opacity(0.8) } // Using theme error instead of hardcoded hex
+            return theme.warning
         }
-        return RSMSColors.success
+        return theme.success
     }
 }
 
@@ -131,7 +132,15 @@ final class LowStockNotificationViewModel {
     var errorMessage: String? = nil
     
     /// IDs the manager has already seen/dismissed
-    private var readIDs: Set<UUID> = []
+    private var readIDs: Set<UUID> = {
+        let saved = UserDefaults.standard.stringArray(forKey: "readNotificationIDs") ?? []
+        return Set(saved.compactMap { UUID(uuidString: $0) })
+    }() {
+        didSet {
+            let stringArray = readIDs.map { $0.uuidString }
+            UserDefaults.standard.set(stringArray, forKey: "readNotificationIDs")
+        }
+    }
     
     /// The store we're monitoring — kept so the realtime callback can reload.
     private var monitoredStoreID: UUID?

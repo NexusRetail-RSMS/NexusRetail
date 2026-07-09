@@ -98,7 +98,7 @@ struct StoreAnalyticsView: View {
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.white)
                         .frame(width: 36, height: 36)
-                        .glassEffect(.regular.interactive(), in: .circle)
+                        .background(.ultraThinMaterial, in: .circle)
                 }
                 .accessibilityLabel("More options")
             }
@@ -382,6 +382,8 @@ struct StoreAnalyticsView: View {
                 .onTapGesture { isShowingSalesDetail = true }
         }
         .analyticsCard()
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Sales Report Chart")
     }
 
     private func percentage(for units: Int) -> Double {
@@ -446,6 +448,8 @@ struct StoreAnalyticsView: View {
                 .onTapGesture { isShowingProductsDetail = true }
         }
         .analyticsCard()
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Top Products Chart")
     }
 
     private func sectionHeader(_ title: String) -> some View {
@@ -578,7 +582,7 @@ struct StoreAnalyticsView: View {
         case "Leather","Leather Goods","Bags":               return theme.burgundy.opacity(0.3)
         case "Watches":                                     return theme.secondaryText
         case "Accessories":                                 return theme.cardBorder
-        default:                                            return RSMSColors.chartBar
+default:                                            return theme.chartBar
         }
     }
 
@@ -632,10 +636,12 @@ private struct PremiumKPICard: View {
         .background(theme.cardBackground)
         .cornerRadius(RSMSRadius.medium)
         .overlay(RoundedRectangle(cornerRadius: RSMSRadius.medium).stroke(theme.cardBorder, lineWidth: 0.5))
+.accessibilityElement(children: .combine)
     }
 }
 
 private struct SparklineView: View {
+    @Environment(AppTheme.self) private var theme
     let values: [Double]
     let color: Color
 
@@ -652,6 +658,7 @@ private struct SparklineView: View {
         .chartYAxis(.hidden)
         .chartPlotStyle { plot in plot.padding(0) }
         .frame(height: 22)
+        .accessibilityHidden(true)
     }
 }
 
@@ -659,10 +666,8 @@ private extension View {
     func analyticsCard() -> some View {
         self
             .padding(RSMSSpacing.lg)
-            .background(RSMSColors.cardBackground)
-            .cornerRadius(RSMSRadius.large)
-            .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 4)
-            .overlay(RoundedRectangle(cornerRadius: RSMSRadius.large).stroke(RSMSColors.cardBorder, lineWidth: 1))
+            .standardCard(cornerRadius: RSMSRadius.large, shadowRadius: 10, shadowY: 4)
+            .overlay(RoundedRectangle(cornerRadius: RSMSRadius.large).stroke(Color.gray.opacity(0.15), lineWidth: 1))
     }
 }
 

@@ -21,5 +21,5 @@ struct SectionHeaderView: View {
 
 #Preview {
     SectionHeaderView(title: "Sales Performance")
-        .background(RSMSColors.background)
+        .background(AppTheme().background)
 }

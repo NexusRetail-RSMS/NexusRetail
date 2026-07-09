@@ -88,6 +88,8 @@ struct RepairCardView: View {
                 .strokeBorder(theme.cardBorder, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(customerName), \(itemName), SKU \(itemSKU). Estimated pickup: \(formatDate(pickupDate))")
     }
     
     private func formatDate(_ date: Date) -> String {

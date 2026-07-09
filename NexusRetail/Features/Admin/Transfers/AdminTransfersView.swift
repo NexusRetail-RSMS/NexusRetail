@@ -66,9 +66,15 @@ struct AdminTransfersView: View {
             NavigationLink {
                 HistoryView()
             } label: {
-                Image(systemName: "clock.arrow.circlepath")
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundColor(theme.secondaryText)
+ZStack {
+                    Circle()
+                        .fill(theme.burgundy.opacity(0.1))
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundColor(theme.burgundy)
+                }
             }
             .accessibilityLabel("History")
         }
@@ -210,7 +216,7 @@ struct SkeletonCardView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 24)
-                .fill(Color.white)
+                .fill(theme.cardBackground)
                 .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
         )
         .opacity(opacity)
@@ -251,7 +257,7 @@ struct WaitingRequestsView: View {
         VStack(spacing: 16) {
             Image(systemName: "clock.badge.checkmark")
                 .font(.system(size: 48))
-                .foregroundColor(.gray)
+                .foregroundColor(theme.secondaryText)
             Text("No scheduled requests")
                 .foregroundColor(.secondary)
         }
