@@ -2,10 +2,10 @@
 //  TopProductsSemiCard.swift
 //  NexusRetail
 //
-//  A semicircle (half-donut) "Top Products" card: the top 5 products fanned
-//  across the top with leader-line callouts (name / units / share pill),
-//  a center total, and a bottom stats bar. Press-and-hold a segment to
-//  highlight it and read its details.
+//  A semicircle (half-donut) "Top Products" card: the top 3 products plus a
+//  grouped "Others" slice, fanned across the top with leader-line callouts
+//  (name / units / share pill) and a center total. Press-and-hold a segment
+//  to highlight it and read its details.
 //
 
 import SwiftUI
@@ -16,7 +16,7 @@ struct TopProductsSemiCard: View {
     let products: [ProductChartPoint]      // name, category, sales
     var onViewAll: () -> Void = {}
 
-    // MARK: - Derived data
+    // MARK: - Slice model
 
     private struct Slice: Identifiable {
         let id = UUID()
@@ -26,37 +26,33 @@ struct TopProductsSemiCard: View {
         let start: CGFloat    // cumulative fraction (0 = left)
         let end: CGFloat
         var mid: CGFloat { (start + end) / 2 }
-        let share: Int        // % of the shown top-5 total
+        let share: Int
     }
 
-    private static let palette: [Color] = [
-        Color(hex: "6C4CC4"),  // purple
-        Color(hex: "4C8DE8"),  // blue
-        Color(hex: "E4574C"),  // red
-        Color(hex: "4FA895"),  // teal
-        Color(hex: "EAB13F")   // gold
-    ]
-
-    private var top5: [ProductChartPoint] {
-        Array(products.sorted { $0.sales > $1.sales }.prefix(5))
+    // Theme palette (burgundy / gold / warm accent + grey for Others)
+    private var paletteColors: [Color] {
+        [theme.burgundy, theme.gold, Color(hex: "C0705B")]
     }
+    private var othersColor: Color { Color.gray.opacity(0.45) }
 
-    private var shownTotal: Int { top5.reduce(0) { $0 + $1.sales } }
-    private var overallTotal: Int { products.reduce(0) { $0 + $1.sales } }
-
-    private var contributePercent: Int {
-        guard overallTotal > 0 else { return 0 }
-        return Int((Double(shownTotal) / Double(overallTotal) * 100).rounded())
-    }
+    private var ranked: [ProductChartPoint] { products.sorted { $0.sales > $1.sales } }
+    private var total: Int { products.reduce(0) { $0 + $1.sales } }
 
     private var slices: [Slice] {
-        guard shownTotal > 0 else { return [] }
+        guard total > 0 else { return [] }
+        var raw: [(name: String, units: Int, color: Color)] = []
+        for (i, p) in ranked.prefix(3).enumerated() {
+            raw.append((p.name, p.sales, paletteColors[i % paletteColors.count]))
+        }
+        let othersUnits = ranked.dropFirst(3).reduce(0) { $0 + $1.sales }
+        if othersUnits > 0 { raw.append(("Others", othersUnits, othersColor)) }
+
         var result: [Slice] = []
         var cursor: CGFloat = 0
-        for (i, p) in top5.enumerated() {
-            let frac = CGFloat(p.sales) / CGFloat(shownTotal)
-            let share = Int((Double(p.sales) / Double(shownTotal) * 100).rounded())
-            result.append(Slice(name: p.name, units: p.sales, color: Self.palette[i % Self.palette.count],
+        for item in raw {
+            let frac = CGFloat(item.units) / CGFloat(total)
+            let share = Int((Double(item.units) / Double(total) * 100).rounded())
+            result.append(Slice(name: item.name, units: item.units, color: item.color,
                                  start: cursor, end: cursor + frac, share: share))
             cursor += frac
         }
@@ -72,10 +68,8 @@ struct TopProductsSemiCard: View {
                 emptyState
             } else {
                 chart
-                    .frame(height: 300)
-                    .padding(.top, 8)
-                bottomBar
-                    .padding(.top, 8)
+                    .frame(height: 360)
+                    .padding(.top, 12)
             }
         }
         .padding(RSMSSpacing.lg)
@@ -116,33 +110,34 @@ struct TopProductsSemiCard: View {
         GeometryReader { geo in
             let w = geo.size.width
             let h = geo.size.height
-            let center = CGPoint(x: w / 2, y: h * 0.92)
-            let outerR = min(w * 0.30, h * 0.66)
-            let innerR = outerR * 0.58
+            let center = CGPoint(x: w / 2, y: h * 0.88)
+            let outerR = min(w * 0.34, h * 0.74)
+            let innerR = outerR * 0.60
             let midR = (outerR + innerR) / 2
             let band = outerR - innerR
 
             ZStack {
                 // Segments
                 ForEach(Array(slices.enumerated()), id: \.element.id) { i, slice in
-                    let dimmed = activeIndex != nil && activeIndex != i
-                    SemiArc(center: center, radius: activeIndex == i ? midR + 4 : midR,
-                            start: slice.start, end: slice.end, gap: 0.012)
+                    let isActive = activeIndex == i
+                    let dimmed = activeIndex != nil && !isActive
+                    SemiArc(center: center, radius: isActive ? midR + 5 : midR,
+                            start: slice.start, end: slice.end, gap: 0.02)
                         .stroke(
-                            LinearGradient(colors: [slice.color.opacity(0.9), slice.color],
+                            LinearGradient(colors: [slice.color.opacity(0.88), slice.color],
                                            startPoint: .top, endPoint: .bottom),
-                            style: StrokeStyle(lineWidth: activeIndex == i ? band + 6 : band, lineCap: .round)
+                            style: StrokeStyle(lineWidth: isActive ? band + 8 : band, lineCap: .round)
                         )
-                        .opacity(dimmed ? 0.3 : 1.0)
+                        .opacity(dimmed ? 0.28 : 1.0)
                 }
 
                 // Leader lines + callout labels
                 ForEach(Array(slices.enumerated()), id: \.element.id) { i, slice in
                     let arcPt = pointOnSemicircle(slice.mid, radius: outerR, center: center)
-                    let labelPt = pointOnSemicircle(slice.mid, radius: outerR + 34, center: center)
+                    let labelPt = pointOnSemicircle(slice.mid, radius: outerR + 40, center: center)
 
                     Path { p in
-                        p.move(to: pointOnSemicircle(slice.mid, radius: outerR + 2, center: center))
+                        p.move(to: pointOnSemicircle(slice.mid, radius: outerR + 3, center: center))
                         p.addLine(to: labelPt)
                     }
                     .stroke(slice.color.opacity(0.55), style: StrokeStyle(lineWidth: 1.2))
@@ -150,7 +145,7 @@ struct TopProductsSemiCard: View {
                     Circle().fill(slice.color).frame(width: 5, height: 5).position(arcPt)
 
                     calloutLabel(slice)
-                        .position(x: labelPt.x, y: labelPt.y - 16)
+                        .position(x: clampedX(labelPt.x, width: w), y: labelPt.y - 18)
                         .opacity(activeIndex != nil && activeIndex != i ? 0.35 : 1.0)
                 }
 
@@ -172,6 +167,11 @@ struct TopProductsSemiCard: View {
         }
     }
 
+    /// Keeps callout labels from spilling off the card edges.
+    private func clampedX(_ x: CGFloat, width: CGFloat) -> CGFloat {
+        min(max(x, 62), width - 62)
+    }
+
     private func calloutLabel(_ slice: Slice) -> some View {
         VStack(spacing: 3) {
             Text(slice.name)
@@ -187,7 +187,7 @@ struct TopProductsSemiCard: View {
                 .padding(.horizontal, 8).padding(.vertical, 2)
                 .background(slice.color.opacity(0.14), in: Capsule())
         }
-        .frame(width: 120)
+        .frame(width: 116)
     }
 
     private var centerContent: some View {
@@ -195,54 +195,24 @@ struct TopProductsSemiCard: View {
             if let idx = activeIndex, idx < slices.count {
                 let s = slices[idx]
                 ZStack {
-                    Circle().fill(s.color.opacity(0.14)).frame(width: 44, height: 44)
+                    Circle().fill(s.color.opacity(0.16)).frame(width: 46, height: 46)
                     Image(systemName: "bag.fill").font(.system(size: 18)).foregroundColor(s.color)
                 }
                 Text(s.name).font(.system(size: 12, weight: .medium)).foregroundColor(theme.secondaryText).lineLimit(1)
-                Text("\(s.units)").font(.system(size: 30, weight: .bold)).foregroundColor(theme.primaryText)
+                Text("\(s.units)").font(.system(size: 32, weight: .bold)).foregroundColor(theme.primaryText)
                 Text("units · \(s.share)%").font(.system(size: 11)).foregroundColor(s.color)
             } else {
                 ZStack {
-                    Circle().fill(theme.burgundy.opacity(0.12)).frame(width: 44, height: 44)
+                    Circle().fill(theme.burgundy.opacity(0.12)).frame(width: 46, height: 46)
                     Image(systemName: "bag.fill").font(.system(size: 18)).foregroundColor(theme.burgundy)
                 }
                 Text("Total Units Sold").font(.system(size: 12, weight: .medium)).foregroundColor(theme.secondaryText)
-                Text("\(shownTotal)").font(.system(size: 30, weight: .bold)).foregroundColor(theme.primaryText)
-                RoundedRectangle(cornerRadius: 2).fill(theme.burgundy).frame(width: 26, height: 3)
+                Text("\(total)").font(.system(size: 32, weight: .bold)).foregroundColor(theme.primaryText)
+                RoundedRectangle(cornerRadius: 2).fill(theme.burgundy).frame(width: 28, height: 3)
             }
         }
         .frame(width: 150)
         .multilineTextAlignment(.center)
-    }
-
-    // MARK: - Bottom stats bar
-
-    private var bottomBar: some View {
-        HStack(spacing: 0) {
-            statCell(icon: "chart.bar.fill", title: "Top 5 Products Contribute", value: "\(contributePercent)%")
-            Divider().frame(height: 40)
-            statCell(icon: "star.fill", title: "Best Selling Product", value: top5.first?.name ?? "—", valueColor: theme.burgundy)
-        }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 8)
-        .background(theme.burgundy.opacity(0.05))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-    }
-
-    private func statCell(icon: String, title: String, value: String, valueColor: Color? = nil) -> some View {
-        HStack(spacing: 10) {
-            ZStack {
-                Circle().fill(theme.burgundy.opacity(0.12)).frame(width: 36, height: 36)
-                Image(systemName: icon).font(.system(size: 14, weight: .semibold)).foregroundColor(theme.burgundy)
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.system(size: 11)).foregroundColor(theme.secondaryText).lineLimit(1)
-                Text(value).font(.system(size: 16, weight: .bold)).foregroundColor(valueColor ?? theme.primaryText).lineLimit(1)
-            }
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.horizontal, 8)
     }
 
     private var emptyState: some View {
@@ -250,7 +220,7 @@ struct TopProductsSemiCard: View {
             Image(systemName: "bag").font(.system(size: 32)).foregroundColor(theme.secondaryText.opacity(0.5))
             Text("No product data").font(.system(size: 14)).foregroundColor(theme.secondaryText)
         }
-        .frame(maxWidth: .infinity, minHeight: 200)
+        .frame(maxWidth: .infinity, minHeight: 220)
     }
 
     // MARK: - Geometry helpers
@@ -265,9 +235,9 @@ struct TopProductsSemiCard: View {
     private func segmentIndex(at pt: CGPoint, center: CGPoint, innerR: CGFloat, outerR: CGFloat) -> Int? {
         let dx = pt.x - center.x
         let dy = center.y - pt.y            // up is positive
-        guard dy >= -8 else { return nil }  // must be in the upper half
+        guard dy >= -8 else { return nil }
         let dist = sqrt(dx * dx + dy * dy)
-        guard dist >= innerR - 12, dist <= outerR + 40 else { return nil }
+        guard dist >= innerR - 16, dist <= outerR + 44 else { return nil }
         var deg = atan2(dy, dx) * 180 / .pi // 0=right, 90=top, 180=left
         deg = max(0, min(180, deg))
         let fraction = 1 - CGFloat(deg) / 180
@@ -282,14 +252,14 @@ private struct SemiArc: Shape {
     let radius: CGFloat
     let start: CGFloat   // fraction 0(left)…1(right)
     let end: CGFloat
-    var gap: CGFloat = 0.012
+    var gap: CGFloat = 0.02
 
     func path(in rect: CGRect) -> Path {
         var path = Path()
         let a0 = start + gap
         let a1 = end - gap
         guard a1 > a0 else { return path }
-        let steps = max(2, Int((a1 - a0) * 240))
+        let steps = max(2, Int((a1 - a0) * 260))
         for i in 0...steps {
             let f = a0 + (a1 - a0) * CGFloat(i) / CGFloat(steps)
             let theta = Double(180 * (1 - f)) * .pi / 180
