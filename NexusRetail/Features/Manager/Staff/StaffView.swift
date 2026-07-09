@@ -10,16 +10,26 @@ import SwiftUI
 struct StaffView: View {
     @Environment(AppTheme.self) private var theme
     @State private var viewModel = StaffViewModel()
+    @Environment(SessionStore.self) private var sessionStore
     @State private var isAddEmployeePresented = false
     @State private var searchText = ""
     @State private var selectedRoleFilter: EmployeeRoleFilter = .sales
     @State private var editingEmployee: DisplayEmployee? = nil
-    
+    @State private var employeeToDelete: DisplayEmployee? = nil
+    @State private var showDeleteConfirmation = false
+
     enum EmployeeRoleFilter: String, CaseIterable {
         case sales = "Sales Associate"
         case afterSales = "After Sales Associate"
+
+        var displayName: String {
+            switch self {
+            case .sales: return "Sales Associate"
+            case .afterSales: return "After Sales Specialist"
+            }
+        }
     }
-    
+
     var filteredEmployees: [DisplayEmployee] {
         viewModel.employees.filter { emp in
             let matchesSearch = searchText.isEmpty || emp.name.localizedCaseInsensitiveContains(searchText) || emp.email.localizedCaseInsensitiveContains(searchText)
@@ -27,18 +37,18 @@ struct StaffView: View {
             return matchesSearch && matchesRole
         }
     }
-    
+
     private var currentRoleEmployees: [DisplayEmployee] {
         viewModel.employees.filter { $0.role == selectedRoleFilter.rawValue }
     }
-    
+
     private var formattedTotalProducts: String {
         let total = currentRoleEmployees.reduce(0) { $0 + $1.productsSold }
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         return formatter.string(from: NSNumber(value: total)) ?? "\(total)"
     }
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // MARK: - Custom Header
@@ -47,9 +57,9 @@ struct StaffView: View {
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundColor(theme.primaryText)
-                
+
                 Spacer()
-                
+
                 AddCircleButton(accessibilityLabel: "Add new employee") {
                     isAddEmployeePresented = true
                 }
@@ -57,12 +67,12 @@ struct StaffView: View {
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.top, RSMSSpacing.sm)
             .padding(.bottom, RSMSSpacing.sm)
-            
+
             // MARK: - Search Bar
             NexusSearchBar(text: $searchText, placeholder: "Search employees…")
                 .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.bottom, RSMSSpacing.md)
-            
+
             // MARK: - Role Segmented Control
             Picker("Role Filter", selection: $selectedRoleFilter) {
                 ForEach(EmployeeRoleFilter.allCases, id: \.self) { role in
@@ -72,73 +82,12 @@ struct StaffView: View {
             .pickerStyle(.segmented)
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.bottom, RSMSSpacing.md)
-            
+
             // MARK: - Content List
             ScrollView {
                 VStack(spacing: RSMSSpacing.md) {
-                    // MARK: - Team Overview
-                    VStack(alignment: .leading, spacing: RSMSSpacing.md) {
-                        Text("Team Overview")
-                            .font(.system(size: 20, weight: .semibold))
-                            .foregroundColor(theme.primaryText)
-                        
-                        HStack(spacing: 0) {
-                            // Left column
-                            VStack(spacing: 8) {
-                                Circle()
-                                    .fill(theme.burgundy.opacity(0.12))
-                                    .frame(width: 50, height: 50)
-                                    .overlay(
-                                        Image(systemName: "person.2")
-                                            .font(.system(size: 20, weight: .semibold))
-                                            .foregroundColor(theme.burgundy)
-                                    )
-                                
-                                Text("Total Employees")
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(theme.secondaryText)
-                                
-                                Text("\(currentRoleEmployees.count)")
-                                    .font(.system(size: 24, weight: .bold, design: .rounded))
-                                    .foregroundColor(theme.primaryText)
-                            }
-                            .frame(maxWidth: .infinity)
-                            
-                            Divider()
-                                .frame(height: 85)
-                            
-                            // Right column
-                            VStack(spacing: 8) {
-                                Circle()
-                                    .fill(Color(red: 0.96, green: 0.93, blue: 0.84))
-                                    .frame(width: 50, height: 50)
-                                    .overlay(
-                                        Image(systemName: selectedRoleFilter == .afterSales ? "wrench.and.screwdriver" : "bag")
-                                            .font(.system(size: 20, weight: .semibold))
-                                            .foregroundColor(Color(red: 0.55, green: 0.35, blue: 0.15))
-                                    )
-                                
-                                Text(selectedRoleFilter == .afterSales ? "Product Aftercare" : "Products Sold")
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(theme.secondaryText)
-                                
-                                Text(formattedTotalProducts)
-                                    .font(.system(size: 24, weight: .bold, design: .rounded))
-                                    .foregroundColor(theme.primaryText)
-                            }
-                            .frame(maxWidth: .infinity)
-                        }
-                        .padding(.vertical, 16)
-                        .background(theme.cardBackground)
-                        .cornerRadius(RSMSRadius.extraLarge)
-                        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: RSMSRadius.extraLarge)
-                                .stroke(theme.cardBorder, lineWidth: 1)
-                        )
-                    }
-                    .padding(.bottom, RSMSSpacing.xs)
-                    
+                    // Team Overview removed
+
                     if filteredEmployees.isEmpty {
                         VStack(spacing: RSMSSpacing.md) {
                             Image(systemName: "person.slash")
@@ -167,9 +116,8 @@ struct StaffView: View {
                                     }
                                 },
                                 onDelete: {
-                                    Task {
-                                        _ = await viewModel.deleteEmployee(id: employee.id)
-                                    }
+                                    employeeToDelete = employee
+                                    showDeleteConfirmation = true
                                 }
                             )) {
                                 EmployeeCard(
@@ -178,9 +126,8 @@ struct StaffView: View {
                                         editingEmployee = employee
                                     },
                                     onDelete: {
-                                        Task {
-                                            _ = await viewModel.deleteEmployee(id: employee.id)
-                                        }
+                                        employeeToDelete = employee
+                                        showDeleteConfirmation = true
                                     }
                                 )
                             }
@@ -195,10 +142,10 @@ struct StaffView: View {
         .background(theme.background.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .task {
-            await viewModel.loadStaff()
+            await viewModel.loadStaff(storeID: sessionStore.currentUser?.storeID)
         }
         .refreshable {
-            await viewModel.loadStaff()
+            await viewModel.loadStaff(storeID: sessionStore.currentUser?.storeID)
         }
         .sheet(isPresented: $isAddEmployeePresented) {
             NewEmployeeSheet(initialRole: selectedRoleFilter == .afterSales ? .afterSales : .salesAssociate, onCreate: { newEmployee, password in
@@ -222,6 +169,22 @@ struct StaffView: View {
                     selectedRoleFilter = .sales
                 }
             })
+        }
+        .alert("Archive Employee", isPresented: $showDeleteConfirmation) {
+            Button("Cancel", role: .cancel) {
+                employeeToDelete = nil
+            }
+            Button("Archive", role: .destructive) {
+                if let employee = employeeToDelete {
+                    Task {
+                        _ = await viewModel.deleteEmployee(id: employee.id)
+                        await viewModel.loadStaff(storeID: sessionStore.currentUser?.storeID)
+                    }
+                    employeeToDelete = nil
+                }
+            }
+        } message: {
+            Text("Are you sure you want to archive this employee? Their access will be revoked but their records will remain.")
         }
     }
 }

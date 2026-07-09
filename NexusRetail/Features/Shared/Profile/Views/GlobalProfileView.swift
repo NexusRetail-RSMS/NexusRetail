@@ -69,6 +69,7 @@ struct GlobalProfileView: View {
     
     @State private var ringRotation: Double = 0
     @State private var performanceTier: PerformanceTier = .gold
+    @State private var showEditProfile = false
     
     private var effectivePerformanceTier: PerformanceTier {
         if sessionStore.currentRole == .manager || sessionStore.currentUser?.role == .manager {
@@ -197,35 +198,42 @@ struct GlobalProfileView: View {
                             value: profile.country,
                             valueColor: theme.isDarkMode ? theme.antiqueGold : theme.burgundy)
                 }
+                
+                // MARK: - Pill 3: Settings
+                Section {
+                    NavigationLink(destination: SettingsView(viewModel: viewModel)) {
+                        HStack(spacing: 12) {
+                            Image(systemName: "gearshape.fill")
+                                .foregroundColor(theme.burgundy)
+                                .font(.system(size: 16, weight: .semibold))
+                                .frame(width: 20)
+                            
+                            Text("Settings")
+                                .font(RSMSFonts.body)
+                                .foregroundColor(theme.primaryText)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
             }
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
         .background(theme.groupedBackground)
         .navigationTitle("Profile")
-        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                HStack(spacing: 16) {
-                    NavigationLink(destination: EditProfileView(viewModel: viewModel)) {
-                        Image(systemName: "square.and.pencil")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(theme.primaryAction)
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .accessibilityLabel("Edit Profile")
-                    
-                    NavigationLink(destination: SettingsView(viewModel: viewModel)) {
-                        Image(systemName: "gearshape")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(theme.primaryAction)
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .accessibilityLabel("Settings")
+                Button {
+                    showEditProfile = true
+                } label: {
+                    Image(systemName: "square.and.pencil")
+                        .font(.system(size: 16, weight: .semibold))
                 }
+                .accessibilityLabel("Edit Profile")
             }
+        }
+        .navigationDestination(isPresented: $showEditProfile) {
+            EditProfileView(viewModel: viewModel)
         }
         .task {
             if viewModel.profile == nil {

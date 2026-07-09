@@ -84,6 +84,7 @@ struct CreateEventView: View {
                             Text(localized: type.rawValue).tag(type)
                         }
                     }
+                    .pickerStyle(.menu)
                     
                     TextField("Venue", text: $venue)
                         .font(.body)

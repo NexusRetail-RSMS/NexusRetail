@@ -61,7 +61,7 @@ struct InventoryCatalogView: View {
                 }
             }
             .navigationTitle("Search")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $searchText, prompt: "Search products by name, SKU, or category...")
             .task { await loadProducts() }
             .refreshable { await loadProducts() }

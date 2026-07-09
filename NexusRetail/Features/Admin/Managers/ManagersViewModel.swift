@@ -17,7 +17,21 @@ class ManagersViewModel {
                 .execute()
                 .value
             
-            // Map RPC model to DisplayManager
+            // Fetch isActive statuses from app_user table
+            struct UserStatus: Decodable {
+                let id: UUID
+                let is_active: Bool?
+                enum CodingKeys: String, CodingKey {
+                    case id
+                    case is_active
+                }
+            }
+            let statuses: [UserStatus] = try await SupabaseManager.shared.client
+                .from("app_user")
+                .select("id, is_active")
+                .execute()
+                .value
+            let statusMap = Dictionary(uniqueKeysWithValues: statuses.map { ($0.id, $0.is_active ?? true) })
 
             self.managers = stats.map { stat in
                 let revString = formatIndianCurrency(stat.revenue ?? 0)
@@ -49,7 +63,8 @@ class ManagersViewModel {
                     email: stat.email ?? "",
                     address: stat.address ?? "",
                     productsSold: stat.productsSold ?? 0,
-                    createdAt: parsedDate
+                    createdAt: parsedDate,
+                    isActive: statusMap[stat.id] ?? true
                 )
             }
             // Sort by performance score descending
@@ -220,13 +235,18 @@ class ManagersViewModel {
         isLoading = true
         errorMessage = nil
         do {
-            struct Params: Encodable {
-                let manager_id: UUID
-            }
-            let params = Params(manager_id: id)
-            
+            struct UpdateUser: Encodable { let is_active: Bool }
             try await SupabaseManager.shared.client
-                .rpc("delete_manager", params: params)
+                .from("app_user")
+                .update(UpdateUser(is_active: false))
+                .eq("id", value: id)
+                .execute()
+                
+            struct StoreManagerUpdate: Encodable { let manager_id: UUID? }
+            try? await SupabaseManager.shared.client
+                .from("store")
+                .update(StoreManagerUpdate(manager_id: nil))
+                .eq("manager_id", value: id)
                 .execute()
                 
             await loadManagers()

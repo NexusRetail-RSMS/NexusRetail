@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import Supabase
 
 @Observable
 class ProfileViewModel {
@@ -18,10 +19,38 @@ class ProfileViewModel {
         try? await Task.sleep(nanoseconds: 800_000_000)
         
         let role = appUser?.role ?? .manager
-        let rawAddress = appUser?.address ?? ""
-        let parts = rawAddress.components(separatedBy: ",")
-        let country = parts.last?.trimmingCharacters(in: .whitespaces) ?? "United States"
-        let addressStr = parts.dropLast().joined(separator: ",").trimmingCharacters(in: .whitespaces)
+        var addressStr = "123 Retail Ave"
+        var countryStr = "United States"
+        var storeNameStr = "Nexus Flagship Store"
+        
+        // Fetch real store address if available
+        if let storeId = appUser?.storeID {
+            struct StoreRow: Decodable {
+                let name: String
+                let address: String?
+                let country: String?
+            }
+            if let store: StoreRow = try? await SupabaseManager.shared.client
+                .from("store")
+                .select("name, address, country")
+                .eq("id", value: storeId)
+                .single()
+                .execute()
+                .value {
+                storeNameStr = store.name
+                if let addr = store.address, !addr.isEmpty { addressStr = addr }
+                if let c = store.country, !c.isEmpty { countryStr = c }
+            }
+        } else {
+            // Fallback parsing from appUser if no store assigned
+            let rawAddress = appUser?.address ?? ""
+            let parts = rawAddress.components(separatedBy: ",")
+            if !parts.isEmpty && !rawAddress.isEmpty {
+                countryStr = parts.last?.trimmingCharacters(in: .whitespaces) ?? "United States"
+                let remaining = parts.dropLast().joined(separator: ",").trimmingCharacters(in: .whitespaces)
+                addressStr = remaining.isEmpty ? "123 Retail Ave" : remaining
+            }
+        }
         
         let nameParts = (appUser?.name ?? "Admin User").components(separatedBy: .whitespaces)
         let firstName = nameParts.first ?? ""
@@ -39,9 +68,9 @@ class ProfileViewModel {
             reportingManager: role == .admin ? "Board of Directors" : "Regional Director",
             phone: appUser?.phone ?? "+1 (555) 012-3456",
             email: appUser?.email ?? "employee@nexusretail.com",
-            address: addressStr.isEmpty ? "123 Retail Ave" : addressStr,
-            country: country,
-            store: "Nexus Flagship Store"
+            address: addressStr,
+            country: countryStr,
+            store: storeNameStr
         )
         
         isLoading = false

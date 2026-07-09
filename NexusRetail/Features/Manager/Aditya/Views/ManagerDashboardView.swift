@@ -19,7 +19,18 @@ struct ManagerDashboardView: View {
     @State private var isShowingRequestsDetail = false
     @State private var isShowingLowStockDetail = false
     @State private var isShowingReturnsDetail = false
+    @State private var isShowingProductsDetail = false
     @State private var selectedRange: StoreChartTimeRange = .monthly(Date())
+
+    /// A lightweight Store for this manager's store, used to drill into the
+    /// Top Products detail (which fetches by store id).
+    private var managerStore: Store? {
+        guard let id = sessionStore.currentUser?.storeID else { return nil }
+        return Store(id: id, name: "Store Sales", address: nil, locale: "en_IN",
+                     currencyCode: "INR", timezone: nil, phone: nil, managerID: nil,
+                     isWarehouse: false, status: .active, latitude: nil, longitude: nil,
+                     city: nil, country: nil, imageURL: nil)
+    }
     
     var body: some View {
         ScrollView {
@@ -38,6 +49,8 @@ struct ManagerDashboardView: View {
                     timeRange: $viewModel.topProductsTimeRange,
                     allowsYearly: true
                 )
+                .contentShape(Rectangle())
+                .onTapGesture { isShowingProductsDetail = true }
                 
                 // MARK: - Staff Performance
                 StaffPerformanceChart(
@@ -76,6 +89,13 @@ struct ManagerDashboardView: View {
         }
         .sheet(isPresented: $isNotificationPresented) {
             NotificationListView(viewModel: notificationVM)
+        }
+        .fullScreenCover(isPresented: $isShowingProductsDetail) {
+            if let store = managerStore {
+                NavigationStack {
+                    TopProductsDetailView(store: store)
+                }
+            }
         }
         .fullScreenCover(isPresented: $isShowingRevenueDetail) {
             NavigationStack {

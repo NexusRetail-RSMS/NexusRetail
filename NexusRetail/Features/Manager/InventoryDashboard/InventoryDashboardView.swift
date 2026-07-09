@@ -12,7 +12,7 @@ struct InventoryDashboardView: View {
     @Environment(AppTheme.self) private var theme
     @State private var viewModel = InventoryViewModel()
     @Environment(SessionStore.self) private var sessionStore
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // ── Pinned top area: header + search + chips ──
@@ -28,7 +28,7 @@ struct InventoryDashboardView: View {
                     .padding(.bottom, RSMSSpacing.sm)
             }
             .fadingMaterialHeader()
-            
+
             // ── Scrollable content: grid only ──
             Group {
                 if viewModel.isLoading && viewModel.items.isEmpty {
@@ -69,41 +69,60 @@ struct InventoryDashboardView: View {
             }
         }
     }
-    
+
     // MARK: - Header
-    
+
     private var headerSection: some View {
         HStack(alignment: .center) {
             Text("Inventory")
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .foregroundColor(theme.primaryText)
-            
+
             Spacer()
-            
-            NavigationLink(destination: ManagerPendingRequestsView(viewModel: viewModel)) {
-                ZStack {
-                    Circle()
-                        .fill(theme.burgundy)
+
+            HStack(spacing: 0) {
+                Menu {
+                    ForEach(InventorySortOrder.allCases, id: \.self) { order in
+                        Button {
+                            viewModel.sortOrder = order
+                        } label: {
+                            HStack {
+                                Text(order.rawValue)
+                                if viewModel.sortOrder == order {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    Image(systemName: "line.3.horizontal.decrease")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(theme.burgundy)
                         .frame(width: 44, height: 44)
-                    
-                    Image(systemName: "shippingbox.and.arrow.backward")
-                        .font(.title3)
-                        .foregroundColor(theme.cream)
                 }
+
+                NavigationLink(destination: ManagerPendingRequestsView(viewModel: viewModel)) {
+                    Image(systemName: "shippingbox.and.arrow.backward")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(theme.burgundy)
+                        .frame(width: 44, height: 44)
+                }
+                .accessibilityLabel("Stock Requests")
             }
-            .accessibilityLabel("Stock Requests")
+            .background(theme.burgundy.opacity(0.08))
+            .clipShape(Capsule())
         }
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.top, 50) // safe area top
     }
-    
+
     // MARK: - Search Bar
-    
+
     private var searchBar: some View {
         HStack(spacing: 12) {
             NexusSearchBar(text: $viewModel.searchText, placeholder: "Search by name or SKU…")
-            
+
             // Filter Menu
             Menu {
                 ForEach(InventorySortOrder.allCases, id: \.self) { order in
@@ -132,16 +151,16 @@ struct InventoryDashboardView: View {
         }
         .padding(.horizontal, RSMSSpacing.lg)
     }
-    
+
     // MARK: - Filter Section
-    
+
     private var filterSection: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 CategoryChip(label: "All", isSelected: viewModel.selectedCategory == nil) {
                     viewModel.selectedCategory = nil
                 }
-                
+
                 ForEach(InventoryCategory.allCases, id: \.self) { cat in
                     CategoryChip(label: cat.rawValue, isSelected: viewModel.selectedCategory == cat) {
                         viewModel.selectedCategory = viewModel.selectedCategory == cat ? nil : cat
@@ -151,9 +170,9 @@ struct InventoryDashboardView: View {
             .padding(.horizontal, RSMSSpacing.lg)
         }
     }
-    
+
     // MARK: - Inventory List
-    
+
     private var inventoryList: some View {
         Group {
             if viewModel.filteredItems.isEmpty {
@@ -188,9 +207,9 @@ struct InventoryDashboardView: View {
             }
         }
     }
-    
+
     // MARK: - Empty State
-    
+
     private func emptyState(icon: String, title: String, message: String) -> some View {
         VStack(spacing: 16) {
             Image(systemName: icon)
@@ -215,7 +234,7 @@ struct CategoryChip: View {
     let label: String
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Text(localized: label)
             .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
@@ -240,7 +259,7 @@ struct CategoryChip: View {
 struct ManagerTransferRequestCard: View {
     @Environment(AppTheme.self) private var theme
     let request: TransferRequestRow
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Product info + status + units row
@@ -249,28 +268,28 @@ struct ManagerTransferRequestCard: View {
                     Text(request.productName)
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(theme.primaryText)
-                    
+
                     Text(request.skuCode)
                         .font(.system(size: 12))
                         .foregroundColor(theme.secondaryText)
                 }
-                
+
                 Spacer()
-                
+
                 VStack(alignment: .trailing, spacing: 6) {
-                    
+
                     // Units
                     Label("\(request.quantity) units", systemImage: "cube.box")
                         .font(.system(size: 12))
                         .foregroundColor(theme.secondaryText)
-                    
-                    
+
+
                     Text(request.formattedDate)
                         .font(.system(size: 12))
                         .foregroundColor(theme.secondaryText)
                 }
             }
-            
+
         }
         .padding(14)
         .background(theme.cardBackground)

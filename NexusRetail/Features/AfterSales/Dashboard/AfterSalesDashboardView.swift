@@ -111,19 +111,9 @@ struct AfterSalesDashboardView: View {
     // MARK: - KPI Section
     private var kpiSection: some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: RSMSSpacing.md) {
-            Button {
-                ticketFilter = .pending
-            } label: {
-                KPICardView(title: "Pending Service Requests", value: "\(vm.pendingServiceRequests)", icon: "wrench.and.screwdriver.fill", trend: nil, color: theme.warning)
-            }
-            .buttonStyle(.plain)
-
-            Button {
-                ticketFilter = .inProgress
-            } label: {
-                KPICardView(title: "Repairs In Progress", value: "\(vm.repairsInProgress)", icon: "hammer.fill", trend: nil, color: Color(hex: "2A9D8F"))
-            }
-            .buttonStyle(.plain)
+            KPICardView(title: "Pending Service Requests", value: "\(vm.pendingServiceRequests)", icon: "wrench.and.screwdriver.fill", trend: nil, color: theme.warning)
+            
+            KPICardView(title: "Completed Services", value: "\(vm.completedServices)", icon: "checkmark.seal.fill", trend: nil, color: Color(hex: "2A9D8F"))
         }
     }
     

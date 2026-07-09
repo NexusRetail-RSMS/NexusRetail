@@ -65,6 +65,9 @@ struct AdminTabView: View {
         .tint(theme.isDarkMode ? theme.antiqueGold : theme.burgundy)
         .environment(navStore)
         .environment(transfersVM)
+        .task {
+            await transfersVM.load()
+        }
     }
 }
 

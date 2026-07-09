@@ -83,35 +83,48 @@ struct TopProductsDonut: View {
     }
 
     var body: some View {
-        Chart(slices) { slice in
-            SectorMark(
-                angle: .value("Units", slice.value),
-                innerRadius: .ratio(0.62),
-                outerRadius: selectedSlice == slice ? .ratio(1.0) : .ratio(0.92),
-                angularInset: 2
-            )
-            .cornerRadius(6)
-            .foregroundStyle(
-                LinearGradient(
-                    colors: [slice.color.opacity(0.82), slice.color],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
+        VStack(spacing: 6) {
+            Chart(slices) { slice in
+                SectorMark(
+                    angle: .value("Units", slice.value),
+                    innerRadius: .ratio(0.62),
+                    outerRadius: selectedSlice == slice ? .ratio(1.0) : .ratio(0.92),
+                    angularInset: 2
                 )
-            )
-            .opacity(selectedSlice == nil || selectedSlice == slice ? 1.0 : 0.3)
-        }
-        .chartAngleSelection(value: $selectedValue)
-        .chartLegend(.hidden)
-        .frame(height: height)
-        .animation(.easeInOut(duration: 0.25), value: selectedSlice)
-        .chartBackground { proxy in
-            GeometryReader { geo in
-                if let anchor = proxy.plotFrame {
-                    let frame = geo[anchor]
-                    centerContent
-                        .frame(width: frame.width * 0.6)
-                        .position(x: frame.midX, y: frame.midY)
+                .cornerRadius(6)
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [slice.color.opacity(0.82), slice.color],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .opacity(selectedSlice == nil || selectedSlice == slice ? 1.0 : 0.3)
+            }
+            .chartAngleSelection(value: $selectedValue)
+            .chartLegend(.hidden)
+            .frame(height: height)
+            .animation(.easeInOut(duration: 0.25), value: selectedSlice)
+            .chartBackground { proxy in
+                GeometryReader { geo in
+                    if let anchor = proxy.plotFrame {
+                        let frame = geo[anchor]
+                        centerContent
+                            .frame(width: frame.width * 0.6)
+                            .position(x: frame.midX, y: frame.midY)
+                    }
                 }
+            }
+
+            // Small hint — tapping/holding a segment reveals its details
+            if !slices.isEmpty {
+                HStack(spacing: 4) {
+                    Image(systemName: "hand.tap.fill")
+                        .font(.system(size: 9))
+                    Text(selectedSlice == nil ? "Touch & hold a segment for details" : "Release to dismiss")
+                        .font(.system(size: 10, weight: .medium))
+                }
+                .foregroundColor(theme.secondaryText.opacity(0.7))
             }
         }
     }

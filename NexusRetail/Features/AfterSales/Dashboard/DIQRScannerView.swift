@@ -129,6 +129,24 @@ fileprivate struct DIQRScannerView: View {
                         toggle(false)
                     }
 
+                if isExpanding {
+                    Button {
+                        invoiceFocused = false
+                        toggle(false)
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(theme.primaryText)
+                            .padding(16)
+                            .background(Circle().fill(theme.cardBackground).shadow(color: .black.opacity(0.1), radius: 4))
+                    }
+                    .padding(.leading, 16)
+                    .padding(.top, safeArea.top > 0 ? safeArea.top : 16)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .transition(.opacity)
+                    .zIndex(10)
+                }
+
                 // Scanner Animated View
                 if showContent {
                     RoundedRectangle(cornerRadius: 30, style: .continuous)
