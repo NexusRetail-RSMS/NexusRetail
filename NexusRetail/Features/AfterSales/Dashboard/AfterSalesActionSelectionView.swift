@@ -326,7 +326,15 @@ struct ActionSelectionView: View {
     private var actionsSection: some View {
         VStack(spacing: 6) {
             HStack(spacing: 12) {
-                Button(action: { showExchangeConfirm = true }) {
+                Button(action: {
+                    path.append(POSFlowDestination.exchangeWarrantyCheck(
+                        invoiceId: invoiceId,
+                        selectedItem: selectedItem,
+                        purchaseDate: purchaseDate,
+                        warrantyEndDate: warrantyEndDate,
+                        customer: customer
+                    ))
+                }) {
                     Label("Exchange", systemImage: "arrow.triangle.2.circlepath")
                         .font(.system(size: 16, weight: .semibold))
                         .frame(maxWidth: .infinity)

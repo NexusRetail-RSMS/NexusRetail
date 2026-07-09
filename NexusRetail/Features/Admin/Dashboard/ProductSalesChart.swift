@@ -34,17 +34,9 @@ struct ProductSalesChart: View {
 
                 Spacer()
 
-                if allowsYearly {
-                    Picker("Time Range", selection: $timeRange) {
-                        ForEach(SalesTimeRange.allCases, id: \.self) { range in
-                            Text(LocalizedStringKey(range.rawValue)).tag(range)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .frame(width: 200)
-                } else {
-                    TimeRangeToggle(selection: $timeRange)
-                }
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(theme.secondaryText)
             }
 
             if data.isEmpty {
@@ -60,16 +52,13 @@ struct ProductSalesChart: View {
                 .frame(maxWidth: .infinity, minHeight: 150)
                 .padding(.top, RSMSSpacing.sm)
             } else {
-                VStack(spacing: RSMSSpacing.sm) {
-                    ForEach(Array(data.prefix(4).enumerated()), id: \.element.id) { index, point in
-                        ProductRankRow(
-                            rank: index + 1,
-                            point: point,
-                            maxValue: max(1, data.map(\.sales).max() ?? 1)
-                        )
-                    }
-                }
-                .padding(.top, RSMSSpacing.xs)
+                let slices = TopProductsPalette.makeSlices(
+                    from: data.map { (label: $0.name, value: $0.sales) },
+                    maxSlices: 5,
+                    dark: theme.isDarkMode
+                )
+                TopProductsDonut(slices: slices, height: 280, centerCaption: "Units sold")
+                    .padding(.top, RSMSSpacing.sm)
             }
         }
         .padding(RSMSSpacing.lg)

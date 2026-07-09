@@ -193,6 +193,22 @@ struct AfterSalesDashboardView: View {
         .frame(maxWidth: .infinity, minHeight: 180)
     }
     
+    // Maps the service-status breakdown into colored donut slices.
+    private var serviceStatusSlices: [DonutSlice] {
+        func color(for label: String) -> Color {
+            switch label {
+            case "Pending":   return Color(hex: "E9C46A")
+            case "Repair":    return Color(hex: "2A9D8F")
+            case "Completed": return Color(hex: "264653")
+            case "Returned":  return Color(hex: "8A2BE2")
+            default:           return theme.burgundy
+            }
+        }
+        return vm.serviceStatusChartData
+            .filter { $0.value > 0 }
+            .map { DonutSlice(label: $0.label, value: Int($0.value), color: color(for: $0.label)) }
+    }
+
     // MARK: - Service Status Donut Chart
     private var serviceStatusDonutSection: some View {
         VStack(alignment: .leading, spacing: RSMSSpacing.md) {
@@ -203,38 +219,7 @@ struct AfterSalesDashboardView: View {
             if vm.totalServiceRequests == 0 {
                 emptyChartPlaceholder(text: "No service tickets yet")
             } else {
-            Chart(vm.serviceStatusChartData) { point in
-                SectorMark(
-                    angle: .value("Requests", point.value),
-                    innerRadius: .ratio(0.65),
-                    angularInset: 1.5
-                )
-                .foregroundStyle(by: .value("Status", point.label))
-                .cornerRadius(4)
-            }
-            .chartForegroundStyleScale([
-                "Pending": Color(hex: "E9C46A"),
-                "Repair": Color(hex: "2A9D8F"),
-                "Completed": Color(hex: "264653"),
-                "Returned": Color(hex: "8A2BE2")
-            ])
-            .chartBackground { chartProxy in
-                GeometryReader { geometry in
-                    if let anchor = chartProxy.plotFrame {
-                        let frame = geometry[anchor]
-                        VStack(spacing: 2) {
-                            Text("\(vm.totalServiceRequests)")
-                                .font(.system(size: 28, weight: .bold, design: .rounded))
-                                .foregroundColor(theme.primaryText)
-                            Text("Total")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(theme.secondaryText)
-                        }
-                        .position(x: frame.midX, y: frame.midY)
-                    }
-                }
-            }
-            .frame(height: 220)
+                TopProductsDonut(slices: serviceStatusSlices, height: 220, centerCaption: "Total", unitLabel: "requests")
             }
         }
         .padding(RSMSSpacing.lg)

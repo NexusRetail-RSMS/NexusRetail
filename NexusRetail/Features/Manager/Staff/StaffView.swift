@@ -50,17 +50,9 @@ struct StaffView: View {
                 
                 Spacer()
                 
-                Button {
+                AddCircleButton(accessibilityLabel: "Add new employee") {
                     isAddEmployeePresented = true
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(theme.burgundy)
-                        .frame(width: 44, height: 44)
-                        .background(theme.burgundy.opacity(0.1))
-                        .clipShape(Circle())
                 }
-                .accessibilityLabel("Add new employee")
             }
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.top, RSMSSpacing.sm)

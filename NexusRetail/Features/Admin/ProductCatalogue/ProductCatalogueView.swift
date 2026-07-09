@@ -54,15 +54,8 @@ struct ProductCatalogueView: View {
 
                 Spacer()
 
-                Button {
+                AddCircleButton(accessibilityLabel: "Add product") {
                     showAddProduct = true
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(theme.burgundy)
-                        .frame(width: 44, height: 44)
-                        .background(theme.burgundy.opacity(0.1))
-                        .clipShape(Circle())
                 }
             }
 
@@ -111,7 +104,7 @@ struct ProductCatalogueView: View {
                 .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.top, 16)
                 .padding(.bottom, 8)
-                .background(.ultraThinMaterial)
+                .fadingMaterialHeader()
         }
         .scrollIndicators(.hidden)
         .background(theme.background)

@@ -107,39 +107,14 @@ struct AppointmentsView: View {
         .animation(.spring(response: 0.55, dampingFraction: 0.82), value: contentAppeared)
     }
 
-    // MARK: - Custom pill toggle (replaces segmented Picker)
+    // MARK: - Native segmented filter (consistent with the rest of the app)
     private var filterToggle: some View {
-        HStack(spacing: 0) {
+        Picker("Filter", selection: $selectedFilter) {
             ForEach(FilterMode.allCases) { mode in
-                let isSelected = selectedFilter == mode
-                Button {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.72)) {
-                        selectedFilter = mode
-                    }
-                } label: {
-                    Text(localized: mode.rawValue)
-                        .font(.system(size: 13, weight: isSelected ? .bold : .medium))
-                        .foregroundColor(
-                            isSelected
-                                ? (theme.isDarkMode ? Color(hex: "1A0A0A") : .white)
-                                : theme.secondaryText
-                        )
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 9)
-                        .background(isSelected ? accent : Color.clear)
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(.plain)
-                .animation(.spring(response: 0.3, dampingFraction: 0.72), value: selectedFilter)
+                Text(localized: mode.rawValue).tag(mode)
             }
         }
-        .padding(4)
-        .background(
-            theme.isDarkMode
-                ? Color.white.opacity(0.07)
-                : theme.burgundy.opacity(0.07)
-        )
-        .clipShape(Capsule())
+        .pickerStyle(.segmented)
         .opacity(contentAppeared ? 1 : 0)
         .animation(.spring(response: 0.55, dampingFraction: 0.82).delay(0.08), value: contentAppeared)
     }

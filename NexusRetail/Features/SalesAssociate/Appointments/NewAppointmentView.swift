@@ -5,6 +5,7 @@
 
 import SwiftUI
 import MessageUI
+import Supabase
 
 // MARK: - Client Directory (in-memory lookup source)
 
@@ -27,8 +28,11 @@ enum ClientDirectory {
 
     private static func matchKey(_ raw: String) -> String? {
         let digits = normalize(raw)
-        guard digits.count >= 10 else { return nil }
-        return String(digits.suffix(10))
+        // For full numbers, match on the last 10 digits (ignores country code).
+        // For shorter stored numbers, fall back to the whole digit string so
+        // they're still matchable. Require at least 6 digits to avoid noise.
+        guard digits.count >= 6 else { return nil }
+        return digits.count >= 10 ? String(digits.suffix(10)) : digits
     }
 
     /// Looks up a client by phone number.
@@ -65,6 +69,32 @@ enum ClientDirectory {
         didSeed = true
         for appt in appointments {
             upsert(name: appt.clientName, email: appt.clientEmail, phone: appt.clientPhone)
+        }
+    }
+
+    /// Loads every client from the Supabase `client` table into the directory
+    /// so ANY client in the database is autofillable by phone — not just those
+    /// who already have appointments.
+    static func loadFromDatabase() async {
+        struct ClientRow: Decodable {
+            let name: String
+            let phone: String?
+            let email: String?
+        }
+        do {
+            let rows: [ClientRow] = try await SupabaseManager.shared.client
+                .from("client")
+                .select("name, phone, email")
+                .execute()
+                .value
+            await MainActor.run {
+                for row in rows {
+                    guard let phone = row.phone else { continue }
+                    upsert(name: row.name, email: row.email ?? "", phone: phone)
+                }
+            }
+        } catch {
+            print("ClientDirectory: DB load failed — \(error)")
         }
     }
 }
@@ -171,6 +201,7 @@ struct NewAppointmentView: View {
             }
             .tint(theme.burgundy)
             .disabled(isSendingEmail)
+            .task { await ClientDirectory.loadFromDatabase() }
             .alert("Email Sent", isPresented: $showingSuccessAlert) {
                 Button("OK", role: .cancel) {
                     dismiss()
