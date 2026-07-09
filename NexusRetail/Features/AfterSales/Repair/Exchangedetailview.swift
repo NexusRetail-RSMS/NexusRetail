@@ -275,7 +275,7 @@ struct ExchangeDetailView: View {
 
             Spacer()
 
-            Text(value)
+            Text(localized: value)
                 .font(.system(size: 14, weight: .bold))
                 .foregroundColor(theme.primaryText)
         }

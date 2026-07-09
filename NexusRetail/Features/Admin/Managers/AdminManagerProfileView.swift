@@ -84,7 +84,7 @@ struct ContactRow: View {
                 .foregroundColor(.nexusGold)
                 .frame(width: 24)
             
-            Text(text)
+            Text(localized: text)
                 .font(.body)
                 .foregroundColor(.primary)
             
@@ -108,7 +108,7 @@ struct StatCard: View {
                 Spacer()
             }
             
-            Text(value)
+            Text(localized: value)
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.primary)

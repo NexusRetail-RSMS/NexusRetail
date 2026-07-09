@@ -85,7 +85,7 @@ struct AfterSalesHistoryView: View {
                         ProgressView()
                             .padding(.top, 40)
                     } else if let error = viewModel.errorMessage {
-                        Text(error)
+                        Text(localized: error)
                             .font(.system(size: 15))
                             .foregroundColor(theme.error)
                             .padding(.top, 40)
@@ -271,10 +271,10 @@ struct AfterSalesHistoryView: View {
         var alignment: HorizontalAlignment = .leading
         var body: some View {
             VStack(alignment: alignment, spacing: 4) {
-                Text(title)
+                Text(localized: title)
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.secondary)
-                Text(value)
+                Text(localized: value)
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(theme.primaryText)
                     .lineLimit(1)

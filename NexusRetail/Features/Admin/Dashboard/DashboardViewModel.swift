@@ -247,7 +247,7 @@ class DashboardViewModel {
     func startListening() {
         if realtimeChannel != nil { return }
         
-        realtimeChannel = SupabaseManager.shared.client.channel("admin_dashboard_products")
+        realtimeChannel = SupabaseManager.shared.client.realtimeV2.channel("admin_dashboard_products")
         
         let insertions = realtimeChannel?.postgresChange(
             InsertAction.self,

@@ -249,7 +249,7 @@ struct NewAppointmentView: View {
             date: combinedDateTime(),
             mode: mode,
             status: status,
-            productOrNote: productOrNote.isEmpty ? "Appointment" : productOrNote
+            productOrNote: productOrNote.isEmpty ? String(localized: "Appointment") : productOrNote
         )
     }
 
@@ -307,7 +307,7 @@ struct NewAppointmentView: View {
             let meetLink = "https://meet.google.com/\(p1)-\(p2)-\(p3)"
             meetingHtml = "<p><b>Meeting Link:</b> <a href='\(meetLink)'>\(meetLink)</a></p>"
         }
-        let associateName = sessionStore.currentUser?.name ?? "Your Sales Associate"
+        let associateName = sessionStore.currentUser?.name ?? String(localized: "Your Sales Associate")
         
         let htmlBody = """
         <h2>Appointment Confirmation – \(appt.mode.title)</h2>
@@ -327,7 +327,7 @@ struct NewAppointmentView: View {
         let payload: [String: Any] = [
             "from": "Nexus Admin <admin@updates.nexusretail.tech>",
             "to": [appt.clientEmail],
-            "subject": "Appointment Confirmation – \(appt.mode.title)",
+            "subject": String(localized: "Appointment Confirmation – \(appt.mode.title)"),
             "html": htmlBody
         ]
         

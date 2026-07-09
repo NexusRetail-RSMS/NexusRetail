@@ -139,7 +139,7 @@ struct OrdersHubView: View {
     private func typeBadge(_ text: String, systemImage: String) -> some View {
         HStack(spacing: 5) {
             Image(systemName: systemImage).font(.system(size: 10, weight: .bold))
-            Text(text).font(.system(size: 11, weight: .bold))
+            Text(localized: text).font(.system(size: 11, weight: .bold))
         }
         .foregroundColor(theme.burgundy)
         .padding(.horizontal, 10)
@@ -235,7 +235,7 @@ struct OrdersHubView: View {
             Image(systemName: icon)
                 .font(.system(size: 40))
                 .foregroundColor(theme.secondaryText.opacity(0.4))
-            Text(text)
+            Text(localized: text)
                 .font(.system(size: 14))
                 .foregroundColor(theme.secondaryText)
         }

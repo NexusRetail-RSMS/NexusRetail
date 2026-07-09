@@ -210,7 +210,7 @@ struct InfoColumn: View {
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(textAlignment)
 
-            Text(value)
+            Text(localized: value)
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(theme.primaryText)
                 .lineLimit(1)

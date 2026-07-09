@@ -86,7 +86,7 @@ class InventoryViewModel {
                 self.items = []
                 self.requests = []
                 self.isLoading = false
-                self.errorMessage = "No store is associated with your account."
+                self.errorMessage = String(localized: "No store is associated with your account.")
             }
             return
         }
@@ -126,7 +126,7 @@ class InventoryViewModel {
             await MainActor.run {
                 self.items = []
                 self.requests = []
-                self.errorMessage = "Couldn't load inventory. Pull to refresh."
+                self.errorMessage = String(localized: "Couldn't load inventory. Pull to refresh.")
                 self.isLoading = false
             }
         }

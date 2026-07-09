@@ -4,7 +4,6 @@ struct RootView: View {
     @Environment(AppTheme.self) private var theme
     @Environment(SessionStore.self) private var sessionStore
     @Environment(LocalizationManager.self) private var localizationManager
-    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @State private var isRestoring = true
 
     var body: some View {
@@ -13,8 +12,6 @@ struct RootView: View {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(theme.background.ignoresSafeArea())
-            } else if !localizationManager.hasSelectedLanguage {
-                LanguagePickerView(isInitialLaunch: true, initialLanguageCode: localizationManager.currentLanguage)
             } else if sessionStore.currentUser != nil && sessionStore.needsOTPVerification {
                 otpGate
             } else if let role = sessionStore.currentRole {
@@ -28,8 +25,6 @@ struct RootView: View {
                 case .afterSales:
                     AfterSalesTabView()
                 }
-            } else if !hasSeenOnboarding {
-                OnboardingView()
             } else {
                 NavigationStack {
                     Login()

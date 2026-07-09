@@ -182,7 +182,7 @@ struct SalesDashboardView: View {
                     .font(.system(size: 20, weight: .semibold))
             }
             VStack(alignment: .leading, spacing: 3) {
-                Text(value)
+                Text(localized: value)
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(theme.primaryText)
                     .lineLimit(1)
@@ -789,7 +789,7 @@ struct SalesRevenueDetailView: View {
     private func summaryTile(title: String, value: String, caption: String? = nil) -> some View {
         VStack(spacing: 6) {
             Text(localized: title).font(.system(size: 13, weight: .medium)).foregroundColor(theme.secondaryText)
-            Text(value).font(.system(size: 22, weight: .bold)).foregroundColor(theme.burgundy).lineLimit(1).minimumScaleFactor(0.6)
+            Text(localized: value).font(.system(size: 22, weight: .bold)).foregroundColor(theme.burgundy).lineLimit(1).minimumScaleFactor(0.6)
             // Always reserve a caption line so both tiles are the same height
             Text(caption ?? " ")
                 .font(.system(size: 11)).foregroundColor(theme.secondaryText).lineLimit(1)
@@ -877,7 +877,7 @@ struct SalesRevenueDetailView: View {
                     .fill(color)
                     .frame(width: 8, height: 8)
                 
-                Text(cat.category)
+                Text(localized: cat.category)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(theme.primaryText)
                     .lineLimit(1)

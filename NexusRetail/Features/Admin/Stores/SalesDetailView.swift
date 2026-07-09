@@ -88,7 +88,7 @@ struct SalesDetailView: View {
                     Button("Yearly") { selectedRange = .yearly(Date()) }
                 } label: {
                     HStack(spacing: 4) {
-                        Text(selectedRange.isWeekly ? "Weekly" : (selectedRange.isMonthly ? "Monthly" : "Yearly"))
+                        Text(localized: selectedRange.isWeekly ? "Weekly" : (selectedRange.isMonthly ? "Monthly" : "Yearly"))
                         Image(systemName: "chevron.down")
                             .font(.system(size: 12))
                     }
@@ -247,7 +247,7 @@ struct SalesDetailView: View {
                     // Clean native-style list: category name + revenue
                     ForEach(Array(categorySales.enumerated()), id: \.element.id) { index, cat in
                         HStack {
-                            Text(cat.category)
+                            Text(localized: cat.category)
                                 .font(.system(size: 16))
                                 .foregroundColor(theme.primaryText)
                                 .lineLimit(1)
@@ -350,7 +350,7 @@ struct SalesDetailView: View {
     private func summaryTile(title: String, value: String, caption: String?) -> some View {
         VStack(spacing: 6) {
             Text(localized: title).font(.system(size: 13, weight: .medium)).foregroundColor(theme.secondaryText)
-            Text(value).font(.system(size: 22, weight: .bold)).foregroundColor(theme.burgundy).lineLimit(1).minimumScaleFactor(0.6)
+            Text(localized: value).font(.system(size: 22, weight: .bold)).foregroundColor(theme.burgundy).lineLimit(1).minimumScaleFactor(0.6)
             Text(caption ?? " ")
                 .font(.system(size: 11)).foregroundColor(theme.secondaryText).lineLimit(1)
         }

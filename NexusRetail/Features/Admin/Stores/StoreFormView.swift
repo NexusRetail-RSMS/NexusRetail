@@ -190,7 +190,7 @@ struct StoreFormView: View {
                         HStack(spacing: 10) {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .foregroundColor(theme.error)
-                            Text(errorMessage)
+                            Text(localized: errorMessage)
                                 .font(.system(size: 13, weight: .medium))
                                 .foregroundColor(theme.error)
                         }
@@ -592,7 +592,7 @@ private struct PremiumMenuRow: View {
                     Text(localized: title)
                         .font(.system(size: 11.5, weight: .medium))
                         .foregroundColor(theme.secondaryText)
-                    Text(value)
+                    Text(localized: value)
                         .font(.system(size: 14.5, weight: .medium))
                         .foregroundColor(theme.primaryText)
                 }

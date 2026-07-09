@@ -46,12 +46,12 @@ struct ForgotPasswordSheet: View {
                     }
 
                     if !errorMessage.isEmpty {
-                        Text(errorMessage)
+                        Text(localized: errorMessage)
                             .font(.footnote)
                             .foregroundStyle(RSMSColors.error)
                             .accessibilityLabel("Error: \(errorMessage)")
                     } else if !infoMessage.isEmpty {
-                        Text(infoMessage)
+                        Text(localized: infoMessage)
                             .font(.footnote)
                             .foregroundStyle(RSMSColors.secondaryText)
                     }
@@ -89,12 +89,12 @@ struct ForgotPasswordSheet: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(title)
+                Text(localized: title)
                     .font(.title2.bold())
                     .foregroundStyle(RSMSColors.primaryText)
                     .accessibilityAddTraits(.isHeader)
 
-                Text(subtitle)
+                Text(localized: subtitle)
                     .font(.callout)
                     .foregroundStyle(RSMSColors.secondaryText)
             }

@@ -44,10 +44,10 @@ struct ForgotPasswordView: View {
                         }
 
                         if !errorMessage.isEmpty {
-                            Text(errorMessage).font(.system(size: 13)).foregroundColor(theme.error)
+                            Text(localized: errorMessage).font(.system(size: 13)).foregroundColor(theme.error)
                                 .multilineTextAlignment(.center)
                         } else if !infoMessage.isEmpty {
-                            Text(infoMessage).font(.system(size: 13)).foregroundColor(theme.secondaryText)
+                            Text(localized: infoMessage).font(.system(size: 13)).foregroundColor(theme.secondaryText)
                                 .multilineTextAlignment(.center)
                         }
                         if let debugCode {
@@ -76,7 +76,7 @@ struct ForgotPasswordView: View {
                     .font(.system(size: 30))
                     .foregroundColor(step == .done ? theme.success : theme.burgundy)
             }
-            Text(headerText)
+            Text(localized: headerText)
                 .font(.system(size: 14))
                 .foregroundColor(theme.secondaryText)
                 .multilineTextAlignment(.center)

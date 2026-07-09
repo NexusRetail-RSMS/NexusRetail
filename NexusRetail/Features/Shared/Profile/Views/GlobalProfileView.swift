@@ -301,7 +301,7 @@ struct GlobalProfileView: View {
 
             Spacer()
 
-            Text(value)
+            Text(localized: value)
                 .foregroundColor(valueColor)
                 .multilineTextAlignment(.trailing)
                 .lineLimit(multiline ? 3 : 1)

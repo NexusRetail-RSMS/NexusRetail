@@ -446,7 +446,7 @@ private struct InfoRow: View {
                 Text(localized: title)
                     .font(.system(size: 11.5, weight: .medium))
                     .foregroundColor(theme.secondaryText)
-                Text(value)
+                Text(localized: value)
                     .font(.system(size: 14.5, weight: .medium))
                     .foregroundColor(theme.primaryText)
                     .fixedSize(horizontal: false, vertical: true)

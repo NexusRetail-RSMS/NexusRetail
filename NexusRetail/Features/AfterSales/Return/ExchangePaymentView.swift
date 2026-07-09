@@ -317,7 +317,7 @@ struct ExchangePaymentView: View {
     }
     
     private func keypadAction(_ text: String, color: Color) -> some View {
-        Text(text)
+        Text(localized: text)
             .font(.system(size: 14, weight: .black))
             .foregroundColor(.white)
             .frame(width: 44, height: 32)

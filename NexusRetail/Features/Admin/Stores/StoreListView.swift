@@ -66,7 +66,7 @@ struct StoreListView: View {
                                     .font(.system(size: 28))
                                     .foregroundColor(theme.error)
                             }
-                            Text(errorMessage)
+                            Text(localized: errorMessage)
                                 .font(RSMSFonts.subheadline)
                                 .foregroundColor(theme.secondaryText)
                                 .multilineTextAlignment(.center)

@@ -80,7 +80,7 @@ struct RevenueCardView: View {
     
     private func metricView(title: LocalizedStringKey, value: String) -> some View {
         VStack(alignment: .center, spacing: 4) {
-            Text(value)
+            Text(localized: value)
                 .font(RSMSFonts.headline)
                 .foregroundColor(theme.primaryText)
             

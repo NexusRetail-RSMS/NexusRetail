@@ -105,7 +105,7 @@ struct Login: View {
                     }
 
                     if !viewModel.errorMessage.isEmpty {
-                        Text(viewModel.errorMessage)
+                        Text(localized: viewModel.errorMessage)
                             .font(.callout)
                             .foregroundStyle(RSMSColors.error)
                             .hSpacing(.leading)

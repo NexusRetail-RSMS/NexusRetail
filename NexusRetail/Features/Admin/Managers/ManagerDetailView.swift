@@ -247,7 +247,7 @@ struct ManagerDetailView: View {
             
             Spacer()
             
-            Text(value)
+            Text(localized: value)
                 .font(.system(size: 16))
                 .foregroundColor(valueColor)
                 .multilineTextAlignment(.trailing)
@@ -509,7 +509,7 @@ struct EditManagerSheet: View {
             .alert("Error Updating Manager", isPresented: $showErrorAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text(errorMessage)
+                Text(localized: errorMessage)
             }
         }
     }

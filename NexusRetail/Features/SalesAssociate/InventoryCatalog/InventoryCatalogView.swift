@@ -135,7 +135,7 @@ struct InventoryCatalogView: View {
             return ("In Stock: \(stock)", Color(hex: "2A9D8F"))
         }()
 
-        return Text(text)
+        return Text(localized: text)
             .font(.system(size: 10, weight: .bold))
             .foregroundColor(color)
             .padding(.horizontal, 8)

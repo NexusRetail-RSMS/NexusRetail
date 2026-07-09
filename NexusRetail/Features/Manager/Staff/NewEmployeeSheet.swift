@@ -139,12 +139,12 @@ struct NewEmployeeSheet: View {
                     dismiss()
                 }
             } message: {
-                Text(successAlertMessage)
+                Text(localized: successAlertMessage)
             }
             .alert("Error", isPresented: $showErrorAlert) {
                 Button("OK") {}
             } message: {
-                Text(errorMessage)
+                Text(localized: errorMessage)
             }
             .onAppear {
                 if selectedRole == nil {

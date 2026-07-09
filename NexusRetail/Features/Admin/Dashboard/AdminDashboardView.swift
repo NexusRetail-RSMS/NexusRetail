@@ -56,7 +56,7 @@ struct AdminDashboardView: View {
                         HStack {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .foregroundColor(.white)
-                            Text(errorMessage)
+                            Text(localized: errorMessage)
                                 .font(RSMSFonts.caption)
                                 .foregroundColor(.white)
                             Spacer()

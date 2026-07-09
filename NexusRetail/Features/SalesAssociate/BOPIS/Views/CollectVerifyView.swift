@@ -60,7 +60,7 @@ struct CollectVerifyView: View {
                         .onChange(of: code) { _, _ in errorMessage = nil }
 
                     if let errorMessage {
-                        Text(errorMessage)
+                        Text(localized: errorMessage)
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(theme.error)
                     }

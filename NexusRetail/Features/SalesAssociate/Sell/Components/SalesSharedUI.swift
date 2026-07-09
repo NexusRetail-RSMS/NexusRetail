@@ -56,7 +56,7 @@ func infoRow(title: String, value: String, icon: String) -> some View {
             Text(localized: title)
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(theme.primaryText)
-            Text(value)
+            Text(localized: value)
                 .font(RSMSFonts.subheadline)
                 .foregroundStyle(theme.secondaryText)
         }

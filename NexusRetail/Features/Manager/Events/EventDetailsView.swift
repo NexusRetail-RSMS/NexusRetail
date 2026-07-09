@@ -252,7 +252,7 @@ struct StatBox: View {
                 .foregroundColor(theme.burgundy)
                 .padding(.bottom, 4)
             
-            Text(value)
+            Text(localized: value)
                 .font(.system(size: 16, weight: .bold))
                 .foregroundColor(theme.primaryText)
                 .lineLimit(1)

@@ -55,12 +55,12 @@ struct OTPSheetView: View {
             resendRow
 
             if !errorMessage.isEmpty {
-                Text(errorMessage)
+                Text(localized: errorMessage)
                     .font(.footnote)
                     .foregroundStyle(RSMSColors.error)
                     .accessibilityLabel("Error: \(errorMessage)")
             } else if !infoMessage.isEmpty {
-                Text(infoMessage)
+                Text(localized: infoMessage)
                     .font(.footnote)
                     .foregroundStyle(RSMSColors.secondaryText)
             }

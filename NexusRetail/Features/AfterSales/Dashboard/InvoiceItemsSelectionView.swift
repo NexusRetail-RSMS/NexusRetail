@@ -234,7 +234,7 @@ struct InvoiceItemsSelectionView: View {
 
             Spacer()
 
-            Text(value)
+            Text(localized: value)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(isWarning ? theme.burgundy : theme.primaryText)
         }

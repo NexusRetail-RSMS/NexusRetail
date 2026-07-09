@@ -288,7 +288,7 @@ struct InvoiceScannerView: View {
 
             Spacer()
 
-            Text(tag)
+            Text(localized: tag)
                 .font(.system(size: 12, weight: .semibold, design: .monospaced))
                 .tracking(0.5)
                 .foregroundColor(theme.secondaryText.opacity(0.55))

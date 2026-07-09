@@ -144,7 +144,7 @@ struct RepairOrderDetailsView: View {
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(theme.secondaryText)
             
-            Text(value)
+            Text(localized: value)
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(theme.primaryText)
         }

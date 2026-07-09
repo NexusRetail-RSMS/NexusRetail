@@ -72,7 +72,7 @@ struct ManagerReturnsView: View {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.largeTitle)
                         .foregroundColor(.red)
-                    Text(error)
+                    Text(localized: error)
                         .multilineTextAlignment(.center)
                         .padding()
                 }

@@ -85,7 +85,7 @@ struct KPICardView: View {
             
             // Value + label on the right
             VStack(alignment: .leading, spacing: 3) {
-                Text(value)
+                Text(localized: value)
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(theme.primaryText)
                     .lineLimit(1)

@@ -431,7 +431,7 @@ struct TopLocationsChartView: View {
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(color)
 
-            Text(value)
+            Text(localized: value)
                 .font(.system(size: 17, weight: .bold))
                 .foregroundColor(theme.primaryText)
 
@@ -448,7 +448,7 @@ struct TopLocationsChartView: View {
                 .font(.system(size: 11))
                 .foregroundColor(theme.burgundy)
 
-            Text(value)
+            Text(localized: value)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(theme.primaryText)
 

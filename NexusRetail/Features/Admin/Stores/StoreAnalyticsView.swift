@@ -614,7 +614,7 @@ private struct PremiumKPICard: View {
                     .foregroundColor(theme.secondaryText.opacity(0.5))
             }
 
-            Text(value)
+            Text(localized: value)
                 .font(.system(size: 22, weight: .bold, design: .rounded))
                 .foregroundColor(theme.primaryText)
                 .lineLimit(1)

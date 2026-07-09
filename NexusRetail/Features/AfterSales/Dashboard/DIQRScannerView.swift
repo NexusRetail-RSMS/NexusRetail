@@ -286,7 +286,7 @@ fileprivate struct DIQRScannerView: View {
             .shadow(color: Color.black.opacity(0.06), radius: 10, y: 3)
 
             if let optionsMessage {
-                Text(optionsMessage)
+                Text(localized: optionsMessage)
                     .font(.system(size: 12))
                     .foregroundColor(theme.secondaryText)
             }
@@ -310,7 +310,7 @@ fileprivate struct DIQRScannerView: View {
                 Text(localized: subtitle).font(.system(size: 14)).foregroundColor(theme.secondaryText)
             }
             Spacer()
-            Text(tag)
+            Text(localized: tag)
                 .font(.system(size: 12, weight: .semibold, design: .monospaced))
                 .tracking(0.5)
                 .foregroundColor(theme.secondaryText.opacity(0.6))

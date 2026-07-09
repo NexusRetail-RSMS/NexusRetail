@@ -382,7 +382,7 @@ struct ProductSearchView: View {
         HStack(spacing: 4) {
             Image(systemName: "checkmark")
                 .font(.system(size: 10, weight: .bold))
-            Text(text)
+            Text(localized: text)
                 .font(.system(size: 11, weight: .semibold))
         }
         .foregroundColor(theme.burgundy)
