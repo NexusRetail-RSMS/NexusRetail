@@ -8,17 +8,18 @@
 import SwiftUI
 
 struct NotificationListView: View {
+    @Environment(AppTheme.self) private var theme
     @Bindable var viewModel: LowStockNotificationViewModel
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         NavigationStack {
             ZStack {
-                RSMSColors.background.ignoresSafeArea()
+                theme.background.ignoresSafeArea()
                 
                 if viewModel.isLoading {
                     ProgressView()
-                        .tint(RSMSColors.burgundy)
+                        .tint(theme.burgundy)
                 } else if let error = viewModel.errorMessage {
                     errorView(error)
                 } else if viewModel.notifications.isEmpty {
@@ -34,7 +35,7 @@ struct NotificationListView: View {
                     Button(action: { dismiss() }) {
                         Image(systemName: "xmark")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                     }
                 }
             }
@@ -50,17 +51,17 @@ struct NotificationListView: View {
                 HStack {
                     Image(systemName: "bell.badge.fill")
                         .font(.system(size: 14))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                     
                     Text("Alerts")
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     
                     Spacer()
                     
                     Text("\(viewModel.notifications.count) item\(viewModel.notifications.count == 1 ? "" : "s")")
                         .font(.system(size: 12))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
                 .padding(.horizontal, 4)
                 .padding(.bottom, 4)
@@ -85,7 +86,7 @@ struct NotificationListView: View {
         HStack(spacing: 14) {
             // Unread indicator dot
             Circle()
-                .fill(viewModel.isRead(notification) ? Color.clear : RSMSColors.burgundy)
+                .fill(viewModel.isRead(notification) ? Color.clear : theme.burgundy)
                 .frame(width: 8, height: 8)
             
             // Product image
@@ -107,24 +108,24 @@ struct NotificationListView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(notification.productName)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                     .lineLimit(1)
                 
                 switch notification.type {
                 case .lowStock(_, let sku, let category):
                     Text("SKU: \(sku)")
                         .font(.system(size: 12))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                     
                     if let category = category {
                         Text(category)
                             .font(.system(size: 11))
-                            .foregroundColor(RSMSColors.secondaryText.opacity(0.8))
+                            .foregroundColor(theme.secondaryText.opacity(0.8))
                     }
                 case .transferApproved(_):
                     Text("Transfer Request Approved")
                         .font(.system(size: 12))
-                        .foregroundColor(RSMSColors.success)
+                        .foregroundColor(theme.success)
                 }
             }
             
@@ -150,13 +151,13 @@ struct NotificationListView: View {
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(RSMSColors.cardBackground)
+                .fill(theme.cardBackground)
                 .shadow(color: .black.opacity(0.04), radius: 4, x: 0, y: 2)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 14)
                 .stroke(
-                    viewModel.isRead(notification) ? Color.clear : RSMSColors.burgundy.opacity(0.15),
+                    viewModel.isRead(notification) ? Color.clear : theme.burgundy.opacity(0.15),
                     lineWidth: 1
                 )
         )
@@ -169,15 +170,15 @@ struct NotificationListView: View {
         VStack(spacing: 16) {
             Image(systemName: "bell.slash.fill")
                 .font(.system(size: 50))
-                .foregroundColor(RSMSColors.secondaryText.opacity(0.4))
+                .foregroundColor(theme.secondaryText.opacity(0.4))
             
             Text("No Alerts")
                 .font(.system(size: 20, weight: .bold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
             
             Text("No items are below 5 units.")
                 .font(.system(size: 14))
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
         }
@@ -200,15 +201,15 @@ struct NotificationListView: View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 40))
-                .foregroundColor(RSMSColors.error)
+                .foregroundColor(theme.error)
             
             Text("Couldn't Load Notifications")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
             
             Text(message)
                 .font(.system(size: 13))
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
         }

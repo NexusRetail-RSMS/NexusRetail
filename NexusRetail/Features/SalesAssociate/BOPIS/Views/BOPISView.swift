@@ -30,7 +30,7 @@ struct BOPISView: View {
                 }
                 .padding(.top, RSMSSpacing.md)
                 .padding(.bottom, RSMSSpacing.sm)
-                .background(Color.white)
+                .background(theme.cardBackground)
                 .shadow(color: Color.black.opacity(0.05), radius: 4, y: 2)
                 
                 // Main Content — always a ScrollView so pull-to-refresh works
@@ -114,7 +114,7 @@ struct BOPISView: View {
                     .offset(x: -8, y: -8)
                 
                 ZStack {
-                    Circle().fill(Color.white).frame(width: 36, height: 36)
+                    Circle().fill(theme.cardBackground).frame(width: 36, height: 36)
                     Image(systemName: "questionmark.circle.fill")
                         .font(.system(size: 34))
                         .foregroundColor(theme.burgundy.opacity(0.6))

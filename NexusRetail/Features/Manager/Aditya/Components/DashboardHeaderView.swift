@@ -9,7 +9,6 @@ struct DashboardHeaderView: View {
     @Environment(AppTheme.self) private var theme
     let name: String
     @Environment(SessionStore.self) private var sessionStore
-    @State private var showProfile = false
     
     var body: some View {
         HStack(alignment: .center) {
@@ -20,12 +19,10 @@ struct DashboardHeaderView: View {
             Spacer()
             
             // Profile Avatar Button
-            Button {
-                showProfile = true
-            } label: {
+            NavigationLink(destination: GlobalProfileView()) {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy)
+                        .fill(theme.burgundy)
                         .frame(width: 40, height: 40)
                     
                     Text(initials(for: name))
@@ -38,11 +35,6 @@ struct DashboardHeaderView: View {
         .padding(.top, RSMSSpacing.lg)
         .padding(.bottom, RSMSSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .sheet(isPresented: $showProfile) {
-            ProfileView()
-                .environment(sessionStore)
-                .presentationDetents([.fraction(0.6), .large])
-        }
     }
     
     private func initials(for name: String) -> String {
@@ -64,7 +56,7 @@ struct DashboardHeaderView: View {
         DashboardHeaderView(name: "Alex")
         Spacer()
     }
-    .background(RSMSColors.background)
+    .background(AppTheme().background)
     .ignoresSafeArea(edges: .bottom)
     .environment(SessionStore())
 }

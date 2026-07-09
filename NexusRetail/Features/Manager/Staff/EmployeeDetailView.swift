@@ -6,6 +6,7 @@
 import SwiftUI
 import Supabase
 struct EmployeeDetailView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     @State var employee: DisplayEmployee
     var onUpdate: ((DisplayEmployee) -> Void)? = nil
@@ -86,7 +87,7 @@ struct EmployeeDetailView: View {
                 HStack(spacing: 16) {
                     ZStack {
                         Circle()
-                            .fill(RSMSColors.burgundy)
+                            .fill(theme.burgundy)
                             .frame(width: 68, height: 68)
                         
                         if let data = employee.imageData, let uiImage = UIImage(data: data) {
@@ -122,15 +123,15 @@ struct EmployeeDetailView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(employee.name)
                             .font(.system(size: 24, weight: .bold, design: .rounded))
-                            .foregroundStyle(RSMSColors.primaryText)
+                            .foregroundStyle(theme.primaryText)
                         
                         Text(employee.phone.isEmpty ? "Not Available" : employee.phone)
                             .font(RSMSFonts.body)
-                            .foregroundStyle(RSMSColors.secondaryText)
+                            .foregroundStyle(theme.secondaryText)
                             
                         Text(employee.email.isEmpty ? "Not Available" : employee.email)
                             .font(RSMSFonts.body)
-                            .foregroundStyle(RSMSColors.secondaryText)
+                            .foregroundStyle(theme.secondaryText)
                     }
                     Spacer()
                 }
@@ -143,20 +144,20 @@ struct EmployeeDetailView: View {
                     HStack(alignment: .center, spacing: 12) {
                         Image(systemName: "briefcase.fill")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(RSMSColors.burgundy)
+                            .foregroundStyle(theme.burgundy)
                             .frame(width: 34, height: 34)
-                            .background(RSMSColors.burgundy.opacity(0.08))
+                            .background(theme.burgundy.opacity(0.08))
                             .clipShape(Circle())
                         
                         Text("Role")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(RSMSColors.primaryText)
+                            .foregroundStyle(theme.primaryText)
                         
                         Spacer()
                         
                         Text(employee.role)
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(RSMSColors.secondaryText)
+                            .foregroundStyle(theme.secondaryText)
                     }
                     
                     Divider()
@@ -165,20 +166,20 @@ struct EmployeeDetailView: View {
                     HStack(alignment: .center, spacing: 12) {
                         Image(systemName: isAfterSales ? "wrench.and.screwdriver" : "bag")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(RSMSColors.burgundy)
+                            .foregroundStyle(theme.burgundy)
                             .frame(width: 34, height: 34)
-                            .background(RSMSColors.burgundy.opacity(0.08))
+                            .background(theme.burgundy.opacity(0.08))
                             .clipShape(Circle())
                         
                         Text(isAfterSales ? "Product Aftercare" : "Products Sold")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(RSMSColors.primaryText)
+                            .foregroundStyle(theme.primaryText)
                         
                         Spacer()
                         
                         Text("\(employee.productsSold)")
                             .font(.system(size: 14, weight: .bold))
-                            .foregroundStyle(RSMSColors.primaryText)
+                            .foregroundStyle(theme.primaryText)
                     }
                     
                     Divider()
@@ -187,20 +188,20 @@ struct EmployeeDetailView: View {
                     HStack(alignment: .center, spacing: 12) {
                         Image(systemName: "person.2.fill")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(RSMSColors.burgundy)
+                            .foregroundStyle(theme.burgundy)
                             .frame(width: 34, height: 34)
-                            .background(RSMSColors.burgundy.opacity(0.08))
+                            .background(theme.burgundy.opacity(0.08))
                             .clipShape(Circle())
                         
                         Text("Customer Attraction")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(RSMSColors.primaryText)
+                            .foregroundStyle(theme.primaryText)
                         
                         Spacer()
                         
                         Text("\(employee.customerAttraction)")
                             .font(.system(size: 14, weight: .bold))
-                            .foregroundStyle(RSMSColors.burgundy)
+                            .foregroundStyle(theme.burgundy)
                     }
                 }
                 .padding(14)
@@ -211,7 +212,7 @@ struct EmployeeDetailView: View {
                     HStack {
                         Text("Sales Report")
                             .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                         Spacer()
                         Picker("Time Range", selection: $revenueTimeRange) {
                             Text("Weekly").tag(SalesTimeRange.weekly)
@@ -245,7 +246,7 @@ struct EmployeeDetailView: View {
                             .foregroundColor(.red)
                             .frame(maxWidth: .infinity)
                             .padding(16)
-                            .background(RSMSColors.cardBackground)
+                            .background(theme.cardBackground)
                             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                             .shadow(color: .black.opacity(0.045), radius: 18, x: 0, y: 8)
                     }
@@ -253,7 +254,7 @@ struct EmployeeDetailView: View {
             }
             .screenPadding()
         }
-        .background(RSMSColors.background.ignoresSafeArea())
+        .background(theme.background.ignoresSafeArea())
         .task {
             await fetchRevenueData()
         }
@@ -268,7 +269,7 @@ struct EmployeeDetailView: View {
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                 }
             }
             
@@ -278,7 +279,7 @@ struct EmployeeDetailView: View {
                 } label: {
                     Text("Edit")
                         .font(.system(.body, design: .default).weight(.semibold))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                 }
             }
         }

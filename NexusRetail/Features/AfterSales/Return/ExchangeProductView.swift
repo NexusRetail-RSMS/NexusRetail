@@ -152,7 +152,7 @@ struct ExchangeProductView: View {
                 Spacer()
             }
             .padding(16)
-            .background(.white)
+            .background(theme.cardBackground)
             .cornerRadius(16)
             .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
             .padding(.horizontal, RSMSSpacing.lg)
@@ -177,7 +177,7 @@ struct ExchangeProductView: View {
             }
         }
         .padding(14)
-        .background(.white)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .shadow(color: Color.black.opacity(0.02), radius: 4, x: 0, y: 2)
     }

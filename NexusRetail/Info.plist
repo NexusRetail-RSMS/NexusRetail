@@ -17,7 +17,5 @@
 	<string>$(SUPABASE_ANON_KEY)</string>
 	<key>SUPABASE_URL</key>
 	<string>$(SUPABASE_URL)</string>
-	<key>NSCameraUsageDescription</key>
-	<string>Nexus Retail needs camera access to scan barcodes and QR codes for quick checkout and stock checks.</string>
 </dict>
 </plist>

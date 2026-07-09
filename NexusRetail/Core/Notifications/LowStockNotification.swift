@@ -59,12 +59,13 @@ struct LowStockNotification: Identifiable {
     }
     
     var urgencyColor: Color {
+        let theme = AppTheme()
         if case .lowStock(let qty, _, _) = type {
-            if qty == 0 { return RSMSColors.error }
-            if qty <= 2 { return Color(hex: "E76F51") }
-            return RSMSColors.warning
+            if qty == 0 { return theme.error }
+            if qty <= 2 { return theme.error.opacity(0.8) } // Using theme error instead of hardcoded hex
+            return theme.warning
         }
-        return RSMSColors.success
+        return theme.success
     }
 }
 

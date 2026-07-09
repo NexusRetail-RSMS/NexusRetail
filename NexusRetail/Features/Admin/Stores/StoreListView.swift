@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct StoreListView: View {
+    @Environment(AppTheme.self) private var theme
     @State private var viewModel = StoresViewModel()
     @State private var managersViewModel = ManagersViewModel()
     @State private var isShowingCreateForm = false
@@ -27,21 +28,21 @@ struct StoreListView: View {
         VStack(spacing: RSMSSpacing.md) {
             Image(systemName: "building.2.crop.circle")
                 .font(.system(size: 64))
-                .foregroundColor(RSMSColors.burgundy)
+                .foregroundColor(theme.burgundy)
             Text("No Stores Found")
                 .font(RSMSFonts.title)
                 .fontWeight(.bold)
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
             Text("Tap + to add your first store.")
                 .font(RSMSFonts.subheadline)
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
         }
         .frame(maxWidth: .infinity, minHeight: 300)
     }
     
     var body: some View {
         ZStack {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
 
             ScrollView {
@@ -49,25 +50,25 @@ struct StoreListView: View {
                     if viewModel.isLoading && viewModel.stores.isEmpty {
                         VStack(spacing: 14) {
                             ProgressView()
-                                .tint(RSMSColors.burgundy)
+                                .tint(theme.burgundy)
                             Text("Loading stores…")
                                 .font(.system(size: 13, weight: .medium))
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                         }
                         .frame(maxWidth: .infinity, minHeight: 300)
                     } else if let errorMessage = viewModel.errorMessage, viewModel.stores.isEmpty {
                         VStack(spacing: RSMSSpacing.md) {
                             ZStack {
                                 Circle()
-                                    .fill(RSMSColors.error.opacity(0.1))
+                                    .fill(theme.error.opacity(0.1))
                                     .frame(width: 76, height: 76)
                                 Image(systemName: "exclamationmark.triangle.fill")
                                     .font(.system(size: 28))
-                                    .foregroundColor(RSMSColors.error)
+                                    .foregroundColor(theme.error)
                             }
                             Text(errorMessage)
                                 .font(RSMSFonts.subheadline)
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                                 .multilineTextAlignment(.center)
                             Button {
                                 Task { await viewModel.load() }
@@ -78,14 +79,14 @@ struct StoreListView: View {
                                     .padding(.vertical, 11)
                                     .background(
                                         LinearGradient(
-                                            colors: [RSMSColors.burgundy, RSMSColors.burgundy.opacity(0.85)],
+                                            colors: [theme.burgundy, theme.burgundy.opacity(0.85)],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
                                         )
                                     )
                                     .foregroundColor(.white)
                                     .clipShape(Capsule())
-                                    .shadow(color: RSMSColors.burgundy.opacity(0.3), radius: 10, x: 0, y: 5)
+                                    .shadow(color: theme.burgundy.opacity(0.3), radius: 10, x: 0, y: 5)
                             }
                             .buttonStyle(PremiumPressStyle())
                         }
@@ -97,7 +98,7 @@ struct StoreListView: View {
                                 Circle()
                                     .fill(
                                         LinearGradient(
-                                            colors: [RSMSColors.burgundy.opacity(0.14), RSMSColors.burgundy.opacity(0.04)],
+                                            colors: [theme.burgundy.opacity(0.14), theme.burgundy.opacity(0.04)],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
                                         )
@@ -105,16 +106,16 @@ struct StoreListView: View {
                                     .frame(width: 104, height: 104)
                                 Image(systemName: "building.2.crop.circle")
                                     .font(.system(size: 46))
-                                    .foregroundColor(RSMSColors.burgundy)
+                                    .foregroundColor(theme.burgundy)
                             }
                             VStack(spacing: 4) {
                                 Text("No Stores Found")
                                     .font(RSMSFonts.title)
                                     .fontWeight(.bold)
-                                    .foregroundColor(RSMSColors.primaryText)
+                                    .foregroundColor(theme.primaryText)
                                 Text("Tap + to add your first store.")
                                     .font(RSMSFonts.subheadline)
-                                    .foregroundColor(RSMSColors.secondaryText)
+                                    .foregroundColor(theme.secondaryText)
                             }
                         }
                         .frame(maxWidth: .infinity, minHeight: 320)
@@ -167,7 +168,7 @@ struct StoreListView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Stores")
                         .font(.system(size: 34, weight: .bold, design: .rounded))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
 
                 }
 
@@ -182,13 +183,13 @@ struct StoreListView: View {
                         .frame(width: 48, height: 48)
                         .background(
                             LinearGradient(
-                                colors: [RSMSColors.burgundy, RSMSColors.burgundy.opacity(0.82)],
+                                colors: [theme.burgundy, theme.burgundy.opacity(0.82)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
                         .clipShape(Circle())
-                        .shadow(color: RSMSColors.burgundy.opacity(0.35), radius: 12, x: 0, y: 6)
+                        .shadow(color: theme.burgundy.opacity(0.35), radius: 12, x: 0, y: 6)
                 }
                 .buttonStyle(PremiumPressStyle())
                 .accessibilityLabel("Add new store")
@@ -213,6 +214,7 @@ struct PremiumPressStyle: ButtonStyle {
 }
 
 private struct StoreImageCard: View {
+    @Environment(AppTheme.self) private var theme
     let store: Store
     let manager: DisplayManager?
 
@@ -319,7 +321,7 @@ private struct StoreImageCard: View {
 
                 // MARK: Burgundy accent bar
 //                RoundedRectangle(cornerRadius: 2)
-//                    .fill(RSMSColors.burgundy)
+//                    .fill(theme.burgundy)
 //                    .frame(width: 32, height: 3)
 //                    .padding(.top, 2)
             }
@@ -343,7 +345,7 @@ private struct StoreImageCard: View {
             LinearGradient(
                 colors: [
                     Color(hex: "2C1010"),
-                    RSMSColors.burgundy.opacity(0.4),
+                    theme.burgundy.opacity(0.4),
                     Color(hex: "1C1C1E")
                 ],
                 startPoint: .topLeading,
@@ -352,13 +354,13 @@ private struct StoreImageCard: View {
 
             // Subtle noise texture via overlapping semi-transparent circles
             Circle()
-                .fill(RSMSColors.burgundy.opacity(0.12))
+                .fill(theme.burgundy.opacity(0.12))
                 .frame(width: 200, height: 200)
                 .blur(radius: 40)
                 .offset(x: 60, y: -30)
 
             Circle()
-                .fill(RSMSColors.burgundy.opacity(0.08))
+                .fill(theme.burgundy.opacity(0.08))
                 .frame(width: 140, height: 140)
                 .blur(radius: 30)
                 .offset(x: -50, y: 40)

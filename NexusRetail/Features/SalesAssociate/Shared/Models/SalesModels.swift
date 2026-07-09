@@ -62,7 +62,7 @@ enum RevenueFilter: String, CaseIterable, Identifiable {
 
 // MARK: - Dashboard chart data point
 
-struct StoreRevenueChartPoint: Identifiable {
+struct StoreRevenueChartPoint: Identifiable, Equatable {
     var id: String { label }
     let label: String
     let revenue: Double

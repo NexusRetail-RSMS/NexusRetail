@@ -14,7 +14,6 @@ struct ManagerDashboardView: View {
     @State private var notificationVM = LowStockNotificationViewModel()
     
     // Presentation States
-    @State private var isProfilePresented = false
     @State private var isNotificationPresented = false
     @State private var isShowingRevenueDetail = false
     @State private var isShowingRequestsDetail = false
@@ -51,9 +50,12 @@ struct ManagerDashboardView: View {
         .background(theme.background.ignoresSafeArea())
         .navigationBarHidden(true)
         .refreshable {
+            // Pick up any store reassignment made by an admin without needing re-login.
+            await sessionStore.refreshCurrentUser()
             await viewModel.fetchData(storeID: sessionStore.currentUser?.storeID)
         }
         .task {
+            await sessionStore.refreshCurrentUser()
             await viewModel.fetchData(storeID: sessionStore.currentUser?.storeID)
             await viewModel.fetchRevenueData(storeID: sessionStore.currentUser?.storeID)
             await notificationVM.load(storeID: sessionStore.currentUser?.storeID)
@@ -72,10 +74,6 @@ struct ManagerDashboardView: View {
                 await notificationVM.load(storeID: sessionStore.currentUser?.storeID)
             }
         }
-        .sheet(isPresented: $isProfilePresented) {
-            AdminProfileSheet()
-                .environment(theme)
-        }
         .sheet(isPresented: $isNotificationPresented) {
             NotificationListView(viewModel: notificationVM)
         }
@@ -88,10 +86,10 @@ struct ManagerDashboardView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Sales Report")
                                     .font(.system(size: 26, weight: .bold))
-                                    .foregroundColor(RSMSColors.primaryText)
+                                    .foregroundColor(theme.primaryText)
                                 Text("Total: \(viewModel.sixMonthTotal)")
                                     .font(.system(size: 14))
-                                    .foregroundColor(RSMSColors.secondaryText)
+                                    .foregroundColor(theme.secondaryText)
                             }
                             Spacer()
                             Menu {
@@ -121,7 +119,7 @@ struct ManagerDashboardView: View {
                                 .padding(.vertical, 8)
                                 .background(Color.black.opacity(0.05))
                                 .cornerRadius(16)
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                             }
                         }
                         .padding(.horizontal, RSMSSpacing.lg)
@@ -171,7 +169,7 @@ struct ManagerDashboardView: View {
                     ToolbarItem(placement: .navigationBarLeading) {
                         Button(action: { isShowingRevenueDetail = false }) {
                             Image(systemName: "xmark")
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                         }
                     }
                 }
@@ -191,7 +189,7 @@ struct ManagerDashboardView: View {
                     ToolbarItem(placement: .navigationBarLeading) {
                         Button(action: { isShowingRequestsDetail = false }) {
                             Image(systemName: "xmark")
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                         }
                     }
                 }
@@ -211,7 +209,7 @@ struct ManagerDashboardView: View {
                     ToolbarItem(placement: .navigationBarLeading) {
                         Button(action: { isShowingLowStockDetail = false }) {
                             Image(systemName: "xmark")
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                         }
                     }
                 }
@@ -231,7 +229,7 @@ struct ManagerDashboardView: View {
                     ToolbarItem(placement: .navigationBarLeading) {
                         Button(action: { isShowingReturnsDetail = false }) {
                             Image(systemName: "xmark")
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                         }
                     }
                 }
@@ -245,7 +243,7 @@ struct ManagerDashboardView: View {
             Text("Dashboard")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
 
             Spacer()
 
@@ -255,12 +253,10 @@ struct ManagerDashboardView: View {
             }
             
             // Profile avatar
-            Button {
-                isProfilePresented = true
-            } label: {
+            NavigationLink(destination: GlobalProfileView()) {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy)
+                        .fill(theme.burgundy)
                         .frame(width: 44, height: 44)
 
                     if let urlString = sessionStore.currentUser?.imageUrl, let url = URL(string: urlString) {
@@ -293,7 +289,7 @@ struct ManagerDashboardView: View {
                 .contentShape(Rectangle())
                 .onTapGesture { isShowingRevenueDetail = true }
             
-            KPICardView(title: "Pending Requests", value: viewModel.pendingRequests, icon: "doc.text.fill", trend: nil, color: RSMSColors.burgundy)
+            KPICardView(title: "Pending Requests", value: viewModel.pendingRequests, icon: "doc.text.fill", trend: nil, color: theme.burgundy)
                 .contentShape(Rectangle())
                 .onTapGesture { isShowingRequestsDetail = true }
             

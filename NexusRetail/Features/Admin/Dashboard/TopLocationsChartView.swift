@@ -15,6 +15,7 @@ import CoreLocation
 // MARK: - Main View
 
 struct TopLocationsChartView: View {
+    @Environment(AppTheme.self) private var theme
     let revenueByCountry: [CountryRevenue]
     let selectedCountry: String?
 
@@ -51,7 +52,7 @@ struct TopLocationsChartView: View {
 
             Spacer().frame(height: RSMSSpacing.lg)
         }
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .cornerRadius(RSMSRadius.large)
         .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
         .task {
@@ -86,12 +87,12 @@ struct TopLocationsChartView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(selectedCountry != nil ? "\(CountryMapRegion.flags[selectedCountry ?? ""] ?? "📍") \(selectedCountry ?? "")" : "Top Customer Locations")
                     .font(RSMSFonts.headline)
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
 
                 if selectedCountry == nil {
                     Text("Stores across all regions")
                         .font(.system(size: 12))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
             }
 
@@ -124,7 +125,7 @@ struct TopLocationsChartView: View {
             // Loading indicator
             if mapVM.isLoadingStores {
                 ProgressView()
-                    .tint(RSMSColors.burgundy)
+                    .tint(theme.burgundy)
                     .padding(8)
                     .background(.ultraThinMaterial)
                     .clipShape(Circle())
@@ -142,7 +143,7 @@ struct TopLocationsChartView: View {
             // Icon
             ZStack {
                 Circle()
-                    .fill(RSMSColors.burgundy)
+                    .fill(theme.burgundy)
                     .frame(width: 36, height: 36)
                 Image(systemName: "building.2.fill")
                     .font(.system(size: 14, weight: .semibold))
@@ -152,25 +153,25 @@ struct TopLocationsChartView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(store.name)
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                     .lineLimit(1)
 
                 HStack(spacing: RSMSSpacing.sm) {
                     if let city = store.city {
                         Label(city, systemImage: "mappin")
                             .font(.system(size: 11))
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                     }
                     Text("·")
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                     Text(StoreMapViewModel.shortCurrency(store.revenue, symbol: currency))
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                     Text("·")
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                     Text("\(store.orderCount) orders")
                         .font(.system(size: 11))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
             }
 
@@ -184,7 +185,7 @@ struct TopLocationsChartView: View {
             } label: {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 18))
-                    .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                    .foregroundColor(theme.secondaryText.opacity(0.5))
             }
         }
         .padding(.horizontal, RSMSSpacing.md)
@@ -218,7 +219,7 @@ struct TopLocationsChartView: View {
                     icon: "building.2.fill",
                     value: "\(stats.storeCount)",
                     label: "Total Stores",
-                    color: RSMSColors.burgundy
+                    color: theme.burgundy
                 )
 
                 Spacer()
@@ -255,17 +256,17 @@ struct TopLocationsChartView: View {
                         HStack(spacing: 4) {
                             Text("Top Region:")
                                 .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                             Text("\(CountryMapRegion.flags[topCountry] ?? "") \(topCountry)")
                                 .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                         }
                         
                         Text(topDetail)
                             .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(RSMSColors.burgundy)
+                            .foregroundColor(theme.burgundy)
                     }
                     Spacer()
                 }
@@ -283,11 +284,11 @@ struct TopLocationsChartView: View {
             HStack(alignment: .lastTextBaseline, spacing: RSMSSpacing.sm) {
                 Text(StoreMapViewModel.shortCurrency(stats.revenue, symbol: stats.currencySymbol))
                     .font(.system(size: 32, weight: .bold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
 
                 Text("Revenue")
                     .font(RSMSFonts.subheadline)
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
 
                 Spacer()
             }
@@ -314,17 +315,17 @@ struct TopLocationsChartView: View {
                         HStack(spacing: 4) {
                             Text("Top Store:")
                                 .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                             Text(topStore)
                                 .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                         }
                         
                         Text(topDetail)
                             .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(RSMSColors.burgundy)
+                            .foregroundColor(theme.burgundy)
                     }
                     Spacer()
                 }
@@ -342,7 +343,7 @@ struct TopLocationsChartView: View {
         HStack {
             Text("Store Locations")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
             
             Spacer()
             
@@ -390,13 +391,13 @@ struct TopLocationsChartView: View {
                             .font(.system(size: 14))
                     }
                 }
-                .foregroundColor(mapVM.stores.isEmpty ? RSMSColors.secondaryText : RSMSColors.burgundy)
+                .foregroundColor(mapVM.stores.isEmpty ? theme.secondaryText : theme.burgundy)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
                 .background(
                     mapVM.stores.isEmpty
-                        ? RSMSColors.secondaryText.opacity(0.08)
-                        : RSMSColors.burgundy.opacity(0.12)
+                        ? theme.secondaryText.opacity(0.08)
+                        : theme.burgundy.opacity(0.12)
                 )
                 .clipShape(Capsule())
             }
@@ -414,11 +415,11 @@ struct TopLocationsChartView: View {
 
             Text(value)
                 .font(.system(size: 17, weight: .bold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
 
             Text(label)
                 .font(.system(size: 11))
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
         }
         .frame(maxWidth: .infinity)
     }
@@ -427,19 +428,19 @@ struct TopLocationsChartView: View {
         HStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.system(size: 11))
-                .foregroundColor(RSMSColors.burgundy)
+                .foregroundColor(theme.burgundy)
 
             Text(value)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
 
             Text(label)
                 .font(.system(size: 12))
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(RSMSColors.burgundy.opacity(0.05))
+        .background(theme.burgundy.opacity(0.05))
         .clipShape(Capsule())
     }
 }
@@ -500,5 +501,5 @@ struct CountryShape: Shape {
         selectedCountry: nil
     )
     .padding()
-    .background(RSMSColors.background)
+    .background(AppTheme().background)
 }

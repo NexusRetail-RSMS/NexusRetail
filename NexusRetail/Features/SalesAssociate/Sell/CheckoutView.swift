@@ -152,7 +152,7 @@ struct CheckoutView: View {
                 .disabled(phoneText.filter(\.isNumber).count < 6 || lookupState == .searching)
             }
             .padding(12)
-            .background(Color.white)
+            .background(theme.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(theme.inputBorder, lineWidth: 1))
 
@@ -182,7 +182,7 @@ struct CheckoutView: View {
                         .autocorrectionDisabled()
                         .font(.system(size: 15))
                         .padding(12)
-                        .background(Color.white)
+                        .background(theme.cardBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .overlay(RoundedRectangle(cornerRadius: 12).stroke(theme.inputBorder, lineWidth: 1))
                         
@@ -193,7 +193,7 @@ struct CheckoutView: View {
                         .autocorrectionDisabled()
                         .font(.system(size: 15))
                         .padding(12)
-                        .background(Color.white)
+                        .background(theme.cardBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .overlay(RoundedRectangle(cornerRadius: 12).stroke(theme.inputBorder, lineWidth: 1))
 

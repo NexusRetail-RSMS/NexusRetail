@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct InviteGuestsView: View {
+    @Environment(AppTheme.self) private var theme
     @Bindable var viewModel: EventsViewModel
     let eventId: UUID
     @Environment(\.dismiss) private var dismiss
@@ -43,11 +44,11 @@ struct InviteGuestsView: View {
                         HStack {
                             Text("Select All")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(RSMSColors.burgundy)
+                                .foregroundColor(theme.burgundy)
                             Spacer()
                             if selectedGuestIds.count == availableCustomers.count && !availableCustomers.isEmpty {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(RSMSColors.burgundy)
+                                    .foregroundColor(theme.burgundy)
                                     .font(.title3)
                             } else {
                                 Image(systemName: "circle")
@@ -75,18 +76,18 @@ struct InviteGuestsView: View {
                         HStack(spacing: 16) {
                             ZStack {
                                 Circle()
-                                    .fill(RSMSColors.burgundy.opacity(0.1))
+                                    .fill(theme.burgundy.opacity(0.1))
                                     .frame(width: 44, height: 44)
                                 
                                 Text(guest.avatarName)
                                     .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(RSMSColors.burgundy)
+                                    .foregroundColor(theme.burgundy)
                             }
                             
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(guest.name ?? "Unknown")
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(RSMSColors.primaryText)
+                                    .foregroundColor(theme.primaryText)
                                 
                                 Text(guest.email ?? "No Email")
                                     .font(.system(size: 13))
@@ -97,7 +98,7 @@ struct InviteGuestsView: View {
                             
                             if selectedGuestIds.contains(guest.id) {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(RSMSColors.burgundy)
+                                    .foregroundColor(theme.burgundy)
                                     .font(.title3)
                             } else {
                                 Image(systemName: "circle")
@@ -138,7 +139,7 @@ struct InviteGuestsView: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -150,7 +151,7 @@ struct InviteGuestsView: View {
                         }
                     }
                     .fontWeight(.bold)
-                    .foregroundColor(selectedGuestIds.isEmpty ? .gray : RSMSColors.burgundy)
+                    .foregroundColor(selectedGuestIds.isEmpty ? .gray : theme.burgundy)
                     .disabled(selectedGuestIds.isEmpty)
                 }
             }

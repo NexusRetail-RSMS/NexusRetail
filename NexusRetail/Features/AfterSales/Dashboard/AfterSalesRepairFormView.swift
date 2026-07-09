@@ -206,7 +206,7 @@ struct AfterSalesRepairFormView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(Color.white)
+                        .fill(theme.cardBackground)
                         .frame(width: 44, height: 44)
                         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
 
@@ -260,7 +260,7 @@ struct AfterSalesRepairFormView: View {
             Spacer()
         }
         .padding(16)
-        .background(Color.white)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -283,7 +283,7 @@ struct AfterSalesRepairFormView: View {
                     .focused($isInputFocused)
                     .frame(height: 120)
                     .padding(12)
-                    .background(Color.white)
+                    .background(theme.cardBackground)
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
@@ -331,7 +331,7 @@ struct AfterSalesRepairFormView: View {
                             .focused($isInputFocused)
                             .keyboardType(.decimalPad)
                             .padding()
-                            .background(Color.white)
+                            .background(theme.cardBackground)
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)

@@ -55,16 +55,17 @@ class ManagerRequestsViewModel: ObservableObject {
 }
 
 struct ManagerRequestsView: View {
+    @Environment(AppTheme.self) private var theme
     @StateObject private var viewModel = ManagerRequestsViewModel()
     @Environment(SessionStore.self) private var sessionStore
     
     var body: some View {
         ZStack {
-            RSMSColors.background.ignoresSafeArea()
+            theme.background.ignoresSafeArea()
             
             if viewModel.isLoading {
                 ProgressView()
-                    .tint(RSMSColors.burgundy)
+                    .tint(theme.burgundy)
             } else if let error = viewModel.errorMessage {
                 VStack {
                     Image(systemName: "exclamationmark.triangle")
@@ -81,7 +82,7 @@ struct ManagerRequestsView: View {
                     VStack(spacing: 12) {
                         Image(systemName: "tray")
                             .font(.system(size: 48))
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                         Text("No Pending Requests")
                             .font(.headline)
                         Text("There are currently no store transfer requests.")
@@ -105,13 +106,13 @@ struct ManagerRequestsView: View {
                                     RoundedRectangle(cornerRadius: 12)
                                         .fill(Color.gray.opacity(0.2))
                                         .frame(width: 50, height: 50)
-                                        .overlay(Image(systemName: "shippingbox").foregroundColor(.gray))
+                                        .overlay(Image(systemName: "shippingbox").foregroundColor(theme.secondaryText))
                                 }
                                 
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(request.products?.item_name ?? "Unknown Item")
                                         .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(RSMSColors.primaryText)
+                                        .foregroundColor(theme.primaryText)
                                         .lineLimit(1)
                                     
                                     HStack {
@@ -120,11 +121,11 @@ struct ManagerRequestsView: View {
                                         
                                         Text("•")
                                             .font(.system(size: 12))
-                                            .foregroundColor(RSMSColors.secondaryText)
+                                            .foregroundColor(theme.secondaryText)
                                             
                                         Text((request.urgency ?? "Normal").capitalized)
                                             .font(.system(size: 12, weight: .bold))
-                                            .foregroundColor((request.urgency ?? "") == "high" ? .red : RSMSColors.secondaryText)
+                                            .foregroundColor((request.urgency ?? "") == "high" ? .red : theme.secondaryText)
                                     }
                                 }
                                 
@@ -142,12 +143,12 @@ struct ManagerRequestsView: View {
                                     if let date = request.created_at {
                                         Text(date, style: .date)
                                             .font(.system(size: 10))
-                                            .foregroundColor(RSMSColors.secondaryText)
+                                            .foregroundColor(theme.secondaryText)
                                     }
                                 }
                             }
                             .padding()
-                            .background(RSMSColors.cardBackground)
+                            .background(theme.cardBackground)
                             .clipShape(RoundedRectangle(cornerRadius: 16))
                         }
                     }

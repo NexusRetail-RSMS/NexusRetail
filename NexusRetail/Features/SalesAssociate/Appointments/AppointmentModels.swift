@@ -37,9 +37,9 @@ enum AppointmentStatus: String, CaseIterable, Identifiable {
     }
     var color: Color {
         switch self {
-        case .confirmed: return RSMSColors.success
-        case .pending: return RSMSColors.warning
-        case .cancelled: return RSMSColors.error
+        case .confirmed: return AppTheme().success
+        case .pending: return AppTheme().warning
+        case .cancelled: return AppTheme().error
         }
     }
 }

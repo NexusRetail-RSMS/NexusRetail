@@ -124,7 +124,7 @@ struct ClientDetailView: View {
                             .frame(maxWidth: .infinity)
                         }
                         .padding(20)
-                        .background(Color.white)
+                        .background(theme.cardBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                         .overlay(
                             RoundedRectangle(cornerRadius: 24, style: .continuous)

@@ -74,7 +74,7 @@ struct BOPISCardView: View {
                 }
                 .foregroundColor(theme.secondaryText)
                 .padding()
-                .background(RSMSColors.cream)
+                .background(theme.cream)
                 .cornerRadius(RSMSRadius.small)
             }
 

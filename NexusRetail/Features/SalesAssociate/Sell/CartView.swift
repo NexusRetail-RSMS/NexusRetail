@@ -64,7 +64,7 @@ struct CartView: View {
                                 .foregroundColor(theme.burgundy)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 16)
-                                .background(Color.white)
+                                .background(theme.cardBackground)
                                 .clipShape(RoundedRectangle(cornerRadius: 16))
                                 .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.burgundy, lineWidth: 1))
                             }

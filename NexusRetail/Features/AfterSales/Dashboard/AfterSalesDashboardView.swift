@@ -11,9 +11,9 @@ struct AfterSalesDashboardView: View {
     @Environment(AppTheme.self) private var theme
     @Binding var path: NavigationPath
     var namespace: Namespace.ID
+    @Binding var showScanner: Bool
 
     @State private var vm = AfterSalesDashboardViewModel()
-    @State private var isProfilePresented = false
     @State private var ticketFilter: AfterSalesTicketFilter? = nil
 
     // Content-only view. Navigation lives in AfterSalesTabView.
@@ -40,10 +40,6 @@ struct AfterSalesDashboardView: View {
             } else {
                 floatingQRButton
             }
-        }
-        .sheet(isPresented: $isProfilePresented) {
-            AdminProfileSheet()
-                .environment(theme)
         }
         .sheet(item: $ticketFilter) { filter in
             AfterSalesTicketsListView(filter: filter, storeID: sessionStore.currentUser?.storeID)
@@ -72,7 +68,7 @@ struct AfterSalesDashboardView: View {
             .buttonStyle(.plain)
             .accessibilityLabel("History")
 
-            Button { isProfilePresented = true } label: {
+            NavigationLink(destination: GlobalProfileView()) {
                 ZStack {
                     Circle().fill(theme.burgundy).frame(width: 44, height: 44)
                     if let urlString = sessionStore.currentUser?.imageUrl, let url = URL(string: urlString) {
@@ -250,9 +246,7 @@ struct AfterSalesDashboardView: View {
     // MARK: - Floating QR Button
     private var floatingQRButton: some View {
         Button {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                path.append(POSFlowDestination.invoiceScanner)
-            }
+            showScanner = true
         } label: {
             ZStack {
                 Circle()
