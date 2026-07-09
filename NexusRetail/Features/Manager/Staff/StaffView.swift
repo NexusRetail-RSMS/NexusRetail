@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct StaffView: View {
+    @Environment(AppTheme.self) private var theme
     @State private var viewModel = StaffViewModel()
     @State private var isAddEmployeePresented = false
     @State private var searchText = ""
@@ -45,7 +46,7 @@ struct StaffView: View {
                 Text("Employees")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                 
                 Spacer()
                 
@@ -54,9 +55,9 @@ struct StaffView: View {
                 } label: {
                     Image(systemName: "plus")
                         .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                         .frame(width: 44, height: 44)
-                        .background(RSMSColors.burgundy.opacity(0.1))
+                        .background(theme.burgundy.opacity(0.1))
                         .clipShape(Circle())
                 }
                 .accessibilityLabel("Add new employee")
@@ -87,27 +88,27 @@ struct StaffView: View {
                     VStack(alignment: .leading, spacing: RSMSSpacing.md) {
                         Text("Team Overview")
                             .font(.system(size: 20, weight: .semibold))
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                         
                         HStack(spacing: 0) {
                             // Left column
                             VStack(spacing: 8) {
                                 Circle()
-                                    .fill(RSMSColors.burgundy.opacity(0.12))
+                                    .fill(theme.burgundy.opacity(0.12))
                                     .frame(width: 50, height: 50)
                                     .overlay(
                                         Image(systemName: "person.2")
                                             .font(.system(size: 20, weight: .semibold))
-                                            .foregroundColor(RSMSColors.burgundy)
+                                            .foregroundColor(theme.burgundy)
                                     )
                                 
                                 Text("Total Employees")
                                     .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(RSMSColors.secondaryText)
+                                    .foregroundColor(theme.secondaryText)
                                 
                                 Text("\(currentRoleEmployees.count)")
                                     .font(.system(size: 24, weight: .bold, design: .rounded))
-                                    .foregroundColor(RSMSColors.primaryText)
+                                    .foregroundColor(theme.primaryText)
                             }
                             .frame(maxWidth: .infinity)
                             
@@ -127,21 +128,21 @@ struct StaffView: View {
                                 
                                 Text(selectedRoleFilter == .afterSales ? "Product Aftercare" : "Products Sold")
                                     .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(RSMSColors.secondaryText)
+                                    .foregroundColor(theme.secondaryText)
                                 
                                 Text(formattedTotalProducts)
                                     .font(.system(size: 24, weight: .bold, design: .rounded))
-                                    .foregroundColor(RSMSColors.primaryText)
+                                    .foregroundColor(theme.primaryText)
                             }
                             .frame(maxWidth: .infinity)
                         }
                         .padding(.vertical, 16)
-                        .background(RSMSColors.cardBackground)
+                        .background(theme.cardBackground)
                         .cornerRadius(RSMSRadius.extraLarge)
                         .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
                         .overlay(
                             RoundedRectangle(cornerRadius: RSMSRadius.extraLarge)
-                                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                                .stroke(theme.cardBorder, lineWidth: 1)
                         )
                     }
                     .padding(.bottom, RSMSSpacing.xs)
@@ -150,13 +151,13 @@ struct StaffView: View {
                         VStack(spacing: RSMSSpacing.md) {
                             Image(systemName: "person.slash")
                                 .font(.system(size: 44))
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                             Text("No Employees Found")
                                 .font(RSMSFonts.headline)
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                             Text("No employee matches your search or role filter.")
                                 .font(RSMSFonts.subheadline)
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                                 .multilineTextAlignment(.center)
                         }
                         .frame(maxWidth: .infinity)
@@ -199,7 +200,7 @@ struct StaffView: View {
                 .padding(.bottom, RSMSSpacing.xl)
             }
         }
-        .background(RSMSColors.background.ignoresSafeArea())
+        .background(theme.background.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .task {
             await viewModel.loadStaff()

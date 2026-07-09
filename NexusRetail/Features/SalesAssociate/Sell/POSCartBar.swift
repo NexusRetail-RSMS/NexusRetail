@@ -7,6 +7,7 @@ import SwiftUI
 /// checkout are always one tap away. Reads `SellViewModel` from the environment
 /// and appends `POSFlowDestination.cart` to the bound navigation path on tap.
 struct POSCartBar: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(SellViewModel.self) private var viewModel
     @Binding var path: NavigationPath
 
@@ -27,9 +28,9 @@ struct POSCartBar: View {
                         // Item-count bubble
                         Text("\(viewModel.cartItems.count)")
                             .font(.system(size: 11, weight: .heavy))
-                            .foregroundColor(RSMSColors.burgundy)
+                            .foregroundColor(theme.burgundy)
                             .frame(minWidth: 18, minHeight: 18)
-                            .background(Color.white)
+                            .background(theme.cardBackground)
                             .clipShape(Circle())
                             .offset(x: 15, y: -15)
                     }
@@ -57,13 +58,13 @@ struct POSCartBar: View {
                 .padding(.vertical, 14)
                 .background(
                     LinearGradient(
-                        colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
+                        colors: [theme.burgundy, theme.darkBurgundy],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 18))
-                .shadow(color: RSMSColors.burgundy.opacity(0.25), radius: 12, x: 0, y: 6)
+                .shadow(color: theme.burgundy.opacity(0.25), radius: 12, x: 0, y: 6)
             }
             .buttonStyle(.plain)
             .padding(.horizontal, RSMSSpacing.lg)

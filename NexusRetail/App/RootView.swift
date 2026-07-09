@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct RootView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(SessionStore.self) private var sessionStore
     @Environment(LocalizationManager.self) private var localizationManager
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
@@ -16,8 +17,9 @@ struct RootView: View {
             if isRestoring {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(RSMSColors.background.ignoresSafeArea())
-            } else if !localizationManager.hasSelectedLanguage {
+                    .background(theme.background.ignoresSafeArea())
+            } else if !localizationManager.hasSelectedLanguage && sessionStore.currentUser == nil && !hasSeenOnboarding {
+                // First-run onboarding step: choose a language before anything else.
                 LanguagePickerView(isInitialLaunch: true, initialLanguageCode: localizationManager.currentLanguage)
             } else if sessionStore.currentUser != nil && sessionStore.needsOTPVerification {
                 OTPVerificationView()
@@ -41,9 +43,13 @@ struct RootView: View {
             }
         }
         .animation(.easeInOut, value: sessionStore.currentRole)
+        .onChange(of: sessionStore.currentUser?.id) { _, newID in
+            theme.currentUserId = newID
+        }
         .task {
             await sessionStore.restore()
             isRestoring = false
+            theme.currentUserId = sessionStore.currentUser?.id
         }
     }
 }

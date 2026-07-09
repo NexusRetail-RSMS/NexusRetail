@@ -26,6 +26,7 @@ struct SalesGranularPoint: Identifiable {
 // MARK: - View
 
 struct SalesDetailView: View {
+    @Environment(AppTheme.self) private var theme
     let store: Store
     // Default to yearly so there's always data visible on open.
     // Weekly default caused "no data" because current week may have no orders.
@@ -40,6 +41,10 @@ struct SalesDetailView: View {
 
     private var totalSales: Double {
         dataPoints.reduce(0) { $0 + $1.online + $1.offline }
+    }
+
+    private var peakPoint: SalesPeriodResult? {
+        dataPoints.max { ($0.online + $0.offline) < ($1.online + $1.offline) }
     }
 
     private var maxValue: Double {
@@ -73,7 +78,7 @@ struct SalesDetailView: View {
             HStack {
                 Text("Sales Report")
                     .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                 
                 Spacer()
                 
@@ -88,7 +93,7 @@ struct SalesDetailView: View {
                             .font(.system(size: 12))
                     }
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .background(Color.gray.opacity(0.1))
@@ -107,32 +112,26 @@ struct SalesDetailView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("TOTAL")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
                     .tracking(1)
 
                 Text("₹\(formatNumber(Int(totalSales)))")
                     .font(.system(size: 32, weight: .bold))
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
             }
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.top, RSMSSpacing.lg)
 
             Text(periodLabel)
                 .font(RSMSFonts.subheadline)
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
                 .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.top, RSMSSpacing.xs)
 
             // Legend
-            HStack(spacing: RSMSSpacing.lg) {
-                HStack(spacing: 6) {
-                    Circle().fill(RSMSColors.burgundy).frame(width: 8, height: 8)
-                    Text("Online").font(.system(size: 12)).foregroundColor(RSMSColors.secondaryText)
-                }
-                HStack(spacing: 6) {
-                    Circle().fill(Color(hex: "2A9D8F")).frame(width: 8, height: 8)
-                    Text("Offline").font(.system(size: 12)).foregroundColor(RSMSColors.secondaryText)
-                }
+            HStack(spacing: RSMSSpacing.sm) {
+                RoundedRectangle(cornerRadius: 2).fill(theme.burgundy).frame(width: 16, height: 8)
+                Text("Revenue (₹)").font(.system(size: 12)).foregroundColor(theme.secondaryText)
             }
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.top, RSMSSpacing.md)
@@ -142,7 +141,7 @@ struct SalesDetailView: View {
                 VStack {
                     Spacer()
                     ProgressView()
-                        .tint(RSMSColors.burgundy)
+                        .tint(theme.burgundy)
                     Spacer()
                 }
                 .frame(height: 300)
@@ -151,67 +150,32 @@ struct SalesDetailView: View {
                     let hasData = dataPoints.contains { $0.online + $0.offline > 0 }
                     
                     if hasData {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            Chart(dataPoints) { point in
-                                BarMark(
-                                    x: .value("Period", point.label),
-                                    y: .value("Sales", point.online)
-                                )
-                                .foregroundStyle(RSMSColors.burgundy)
-                                .cornerRadius(4)
-                                .position(by: .value("Type", "Online"))
-
-                                BarMark(
-                                    x: .value("Period", point.label),
-                                    y: .value("Sales", point.offline)
-                                )
-                                .foregroundStyle(Color(hex: "2A9D8F"))
-                                .cornerRadius(4)
-                                .position(by: .value("Type", "Offline"))
-                            }
-                            .chartYScale(domain: 0...maxValue)
-                            .chartYAxis {
-                                AxisMarks(position: .leading) { value in
-                                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
-                                        .foregroundStyle(RSMSColors.divider)
-                                    AxisValueLabel {
-                                        if let v = value.as(Double.self) {
-                                            Text(shortCurrency(v))
-                                                .font(.system(size: 10))
-                                                .foregroundStyle(RSMSColors.secondaryText)
-                                        }
-                                    }
-                                }
-                            }
-                            .chartXAxis {
-                                AxisMarks { _ in
-                                    AxisValueLabel()
-                                        .font(.system(size: 10))
-                                        .foregroundStyle(RSMSColors.secondaryText)
-                                }
-                            }
-                            .frame(width: max(geo.size.width, CGFloat(dataPoints.count * 30)))
-                        }
-                    } else {
-                        // Empty state: show faint placeholder bars
                         Chart(dataPoints) { point in
-                            BarMark(
+                            AreaMark(
                                 x: .value("Period", point.label),
-                                y: .value("Sales", 8.0)
+                                y: .value("Revenue", point.online + point.offline)
                             )
-                            .foregroundStyle(RSMSColors.burgundy.opacity(0.15))
-                            .cornerRadius(4)
+                            .interpolationMethod(.catmullRom)
+                            .foregroundStyle(LinearGradient(colors: [theme.burgundy.opacity(0.22), theme.burgundy.opacity(0.02)], startPoint: .top, endPoint: .bottom))
+
+                            LineMark(
+                                x: .value("Period", point.label),
+                                y: .value("Revenue", point.online + point.offline)
+                            )
+                            .interpolationMethod(.catmullRom)
+                            .lineStyle(StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+                            .foregroundStyle(theme.burgundy)
                         }
-                        .chartYScale(domain: 0...100)
+                        .chartYScale(domain: 0...maxValue)
                         .chartYAxis {
                             AxisMarks(position: .leading) { value in
                                 AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
-                                    .foregroundStyle(RSMSColors.divider)
+                                    .foregroundStyle(theme.divider)
                                 AxisValueLabel {
                                     if let v = value.as(Double.self) {
                                         Text(shortCurrency(v))
                                             .font(.system(size: 10))
-                                            .foregroundStyle(RSMSColors.secondaryText)
+                                            .foregroundStyle(theme.secondaryText)
                                     }
                                 }
                             }
@@ -220,13 +184,44 @@ struct SalesDetailView: View {
                             AxisMarks { _ in
                                 AxisValueLabel()
                                     .font(.system(size: 10))
-                                    .foregroundStyle(RSMSColors.secondaryText)
+                                    .foregroundStyle(theme.secondaryText)
+                            }
+                        }
+                    } else {
+                        // Empty state: faint flat placeholder line
+                        Chart(dataPoints) { point in
+                            LineMark(
+                                x: .value("Period", point.label),
+                                y: .value("Revenue", 8.0)
+                            )
+                            .foregroundStyle(theme.burgundy.opacity(0.15))
+                            .lineStyle(StrokeStyle(lineWidth: 2))
+                        }
+                        .chartYScale(domain: 0...100)
+                        .chartYAxis {
+                            AxisMarks(position: .leading) { value in
+                                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
+                                    .foregroundStyle(theme.divider)
+                                AxisValueLabel {
+                                    if let v = value.as(Double.self) {
+                                        Text(shortCurrency(v))
+                                            .font(.system(size: 10))
+                                            .foregroundStyle(theme.secondaryText)
+                                    }
+                                }
+                            }
+                        }
+                        .chartXAxis {
+                            AxisMarks { _ in
+                                AxisValueLabel()
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(theme.secondaryText)
                             }
                         }
                         .overlay {
                             Text("No sales this period")
                                 .font(RSMSFonts.subheadline)
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                         }
                     }
                 }
@@ -234,13 +229,25 @@ struct SalesDetailView: View {
                 .padding(.top, RSMSSpacing.lg)
                 .animation(.easeInOut(duration: 0.3), value: selectedRange)
                 .frame(height: 300)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Sales Chart, Total sales: \(formatNumber(Int(totalSales)))")
             }
+
+            // Total + Peak cards (matching the Sales Associate detail view)
+            HStack(spacing: 12) {
+                summaryTile(title: "Total", value: shortCurrency(totalSales), caption: periodLabel)
+                summaryTile(title: "Peak",
+                            value: shortCurrency(peakPoint.map { $0.online + $0.offline } ?? 0),
+                            caption: (peakPoint.map { $0.online + $0.offline } ?? 0) > 0 ? peakPoint?.label : "—")
+            }
+            .padding(.horizontal, RSMSSpacing.lg)
+            .padding(.top, RSMSSpacing.lg)
 
             // Ranked Category list
             VStack(alignment: .leading, spacing: 0) {
                 Text("Sales by Category")
                     .font(RSMSFonts.headline)
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                     .padding(.bottom, RSMSSpacing.md)
 
                 if isLoading {
@@ -250,43 +257,54 @@ struct SalesDetailView: View {
                     VStack(spacing: RSMSSpacing.sm) {
                         Image(systemName: "chart.bar.xaxis")
                             .font(.system(size: 28))
-                            .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                            .foregroundColor(theme.secondaryText.opacity(0.5))
                         Text("No sales data available.")
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, RSMSSpacing.xl)
                 } else {
+                    let maxRev = categorySales.map(\.revenue).max() ?? 0
+                    let totalRev = categorySales.reduce(0) { $0 + $1.revenue }
                     ForEach(Array(categorySales.enumerated()), id: \.element.id) { index, cat in
-                        HStack(spacing: RSMSSpacing.md) {
-                            Text("#\(index + 1)")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.white)
-                                .frame(width: 32, height: 32)
-                                .background(getColor(for: index))
-                                .clipShape(Circle())
-                                
-                            Text(cat.category)
-                            .font(RSMSFonts.body)
-                            .foregroundColor(RSMSColors.primaryText)
-                            
-                        Spacer()
-                        
-                        Text("₹\(formatNumber(Int(cat.revenue)))")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(RSMSColors.primaryText)
+                        let frac  = maxRev > 0 ? CGFloat(cat.revenue / maxRev) : 0
+                        let share = totalRev > 0 ? Int((cat.revenue / totalRev) * 100) : 0
+                        VStack(spacing: 8) {
+                            HStack {
+                                Text(cat.category)
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundColor(theme.primaryText)
+                                    .lineLimit(1)
+                                Spacer()
+                                Text("₹\(formatNumber(Int(cat.revenue)))")
+                                    .font(.system(size: 15, weight: .bold))
+                                    .foregroundColor(theme.burgundy)
+                            }
+                            GeometryReader { geo in
+                                ZStack(alignment: .leading) {
+                                    Capsule().fill(theme.cardBorder.opacity(0.35)).frame(height: 8)
+                                    Capsule().fill(theme.burgundy).frame(width: max(6, geo.size.width * frac), height: 8)
+                                }
+                            }
+                            .frame(height: 8)
+                            HStack {
+                                Spacer()
+                                Text("\(share)%")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(theme.secondaryText)
+                            }
+                        }
+                        .padding(.vertical, RSMSSpacing.md)
+                        .accessibilityElement(children: .combine)
+
+                        if index < categorySales.count - 1 {
+                            Divider().foregroundColor(theme.divider)
+                        }
                     }
-                    .padding(.vertical, RSMSSpacing.md)
-                    
-                    if index < categorySales.count - 1 {
-                        Divider()
-                            .foregroundColor(RSMSColors.divider)
-                    }
-                }
                 }
             }
             .padding(RSMSSpacing.lg)
-            .background(RSMSColors.cardBackground)
+            .background(theme.cardBackground)
             .cornerRadius(RSMSRadius.large)
             .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
             .padding(.horizontal, RSMSSpacing.lg)
@@ -294,7 +312,7 @@ struct SalesDetailView: View {
             .padding(.bottom, RSMSSpacing.xxl)
         }
         }
-        .background(RSMSColors.background.ignoresSafeArea())
+        .background(theme.background.ignoresSafeArea())
         .navigationBarBackButtonHidden(true)
         .toolbar(.visible, for: .navigationBar)
         .toolbar {
@@ -306,7 +324,7 @@ struct SalesDetailView: View {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 16, weight: .semibold))
                     }
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
                 }
             }
         }
@@ -367,6 +385,21 @@ struct SalesDetailView: View {
 
     // MARK: - Helpers
 
+    private func summaryTile(title: String, value: String, caption: String?) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title).font(.system(size: 12, weight: .medium)).foregroundColor(theme.secondaryText)
+            Text(value).font(.system(size: 18, weight: .bold)).foregroundColor(theme.burgundy).lineLimit(1).minimumScaleFactor(0.6)
+            Text(caption ?? " ")
+                .font(.system(size: 11)).foregroundColor(theme.secondaryText).lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.cardBorder.opacity(0.6), lineWidth: 1))
+        .accessibilityElement(children: .combine)
+    }
+
     private func formatNumber(_ value: Int) -> String {
         let f = NumberFormatter()
         f.numberStyle = .decimal
@@ -382,7 +415,7 @@ struct SalesDetailView: View {
     
     private func getColor(for index: Int) -> Color {
         let colors: [Color] = [
-            RSMSColors.burgundy,
+            theme.burgundy,
             Color(hex: "2A9D8F"),
             Color(hex: "E76F51"),
             Color(hex: "E9C46A"),

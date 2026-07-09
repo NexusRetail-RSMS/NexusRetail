@@ -22,6 +22,7 @@ struct VisitorSource: Identifiable {
 }
 
 struct StoreAnalyticsView: View {
+    @Environment(AppTheme.self) private var theme
     let store: Store
     let manager: DisplayManager?
     @Bindable var viewModel: StoresViewModel
@@ -97,7 +98,7 @@ struct StoreAnalyticsView: View {
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.white)
                         .frame(width: 36, height: 36)
-                        .glassEffect(.regular.interactive(), in: .circle)
+                        .background(.ultraThinMaterial, in: .circle)
                 }
                 .accessibilityLabel("More options")
             }
@@ -112,7 +113,7 @@ struct StoreAnalyticsView: View {
                     .toolbar {
                         ToolbarItem(placement: .topBarLeading) {
                             Button("Done") { isShowingStoreInfo = false }
-                                .tint(RSMSColors.burgundy)
+                                .tint(theme.burgundy)
                         }
                     }
             }
@@ -210,16 +211,16 @@ struct StoreAnalyticsView: View {
     private var heroBrandedPlaceholder: some View {
         ZStack {
             LinearGradient(
-                colors: [Color(hex: "2C1010"), RSMSColors.burgundy.opacity(0.5), Color(hex: "1C1C1E")],
+                colors: [Color(hex: "2C1010"), theme.burgundy.opacity(0.5), Color(hex: "1C1C1E")],
                 startPoint: .topLeading, endPoint: .bottomTrailing
             )
             Circle()
-                .fill(RSMSColors.burgundy.opacity(0.15))
+                .fill(theme.burgundy.opacity(0.15))
                 .frame(width: 200, height: 200)
                 .blur(radius: 55)
                 .offset(x: 60, y: -20)
             Circle()
-                .fill(RSMSColors.burgundy.opacity(0.09))
+                .fill(theme.burgundy.opacity(0.09))
                 .frame(width: 140, height: 140)
                 .blur(radius: 38)
                 .offset(x: -60, y: 40)
@@ -230,16 +231,16 @@ struct StoreAnalyticsView: View {
         VStack(alignment: .leading, spacing: RSMSSpacing.xl) {
             if analyticsVM.isLoading && analyticsVM.orders.isEmpty {
                 VStack(spacing: 14) {
-                    ProgressView().tint(RSMSColors.burgundy)
+                    ProgressView().tint(theme.burgundy)
                     Text("Loading analytics…")
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
                 .frame(maxWidth: .infinity, minHeight: 320)
             } else {
                 if let err = analyticsVM.errorMessage {
                     Text(err)
-                        .foregroundColor(RSMSColors.error)
+                        .foregroundColor(theme.error)
                         .font(RSMSFonts.caption)
                 }
                 timeRangePicker
@@ -252,7 +253,7 @@ struct StoreAnalyticsView: View {
         .padding(.top, RSMSSpacing.xl)
         .padding(.bottom, 120)
         .frame(maxWidth: .infinity)
-        .background(RSMSColors.background)
+        .background(theme.background)
         .clipShape(
             UnevenRoundedRectangle(
                 topLeadingRadius: 24,
@@ -271,7 +272,7 @@ struct StoreAnalyticsView: View {
                 }
             }
             .pickerStyle(.segmented)
-            .tint(RSMSColors.burgundy)
+            .tint(theme.burgundy)
             .frame(maxWidth: .infinity)
 
             // Swipeable calendar — bound directly to the VM's calendarRange
@@ -323,10 +324,10 @@ struct StoreAnalyticsView: View {
             sectionHeader("Sales Report")
 
             HStack(spacing: 6) {
-                Circle().fill(RSMSColors.burgundy).frame(width: 7, height: 7)
+                Circle().fill(theme.burgundy).frame(width: 7, height: 7)
                 Text("Total Sales")
                     .font(.system(size: 12))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             }
 
             if analyticsVM.salesData.isEmpty {
@@ -339,7 +340,7 @@ struct StoreAnalyticsView: View {
                         x: .value("Month", item.month),
                         y: .value("Sales", item.onlineSales)
                     )
-                    .foregroundStyle(item.month == peakMonth ? RSMSColors.burgundy : RSMSColors.burgundy.opacity(0.22))
+                    .foregroundStyle(item.month == peakMonth ? theme.burgundy : theme.burgundy.opacity(0.22))
                     .cornerRadius(4)
                     .annotation(position: .top) {
                         if item.month == peakMonth {
@@ -348,7 +349,7 @@ struct StoreAnalyticsView: View {
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 3)
-                                .background(RSMSColors.primaryText, in: RoundedRectangle(cornerRadius: 5))
+                                .background(theme.primaryText, in: RoundedRectangle(cornerRadius: 5))
                         }
                     }
                 }
@@ -356,12 +357,12 @@ struct StoreAnalyticsView: View {
                 .chartYAxis {
                     AxisMarks { value in
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
-                            .foregroundStyle(RSMSColors.divider)
+                            .foregroundStyle(theme.divider)
                         AxisValueLabel {
                             if let i = value.as(Int.self) {
                                 Text(i >= 1000 ? "₹\(i / 1000)k" : "₹\(i)")
                                     .font(.system(size: 10))
-                                    .foregroundStyle(RSMSColors.secondaryText)
+                                    .foregroundStyle(theme.secondaryText)
                             }
                         }
                     }
@@ -370,7 +371,7 @@ struct StoreAnalyticsView: View {
                     AxisMarks { _ in
                         AxisValueLabel()
                             .font(.system(size: 11))
-                            .foregroundStyle(RSMSColors.secondaryText)
+                            .foregroundStyle(theme.secondaryText)
                     }
                 }
                 .frame(height: 200)
@@ -381,6 +382,8 @@ struct StoreAnalyticsView: View {
                 .onTapGesture { isShowingSalesDetail = true }
         }
         .analyticsCard()
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Sales Report Chart")
     }
 
     private func percentage(for units: Int) -> Double {
@@ -413,10 +416,10 @@ struct StoreAnalyticsView: View {
                         VStack(spacing: 2) {
                             Text(formatNum(analyticsVM.totalUnits))
                                 .font(.system(size: 17, weight: .bold))
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                             Text("units")
                                 .font(.system(size: 9.5))
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                         }
                     }
 
@@ -426,12 +429,12 @@ struct StoreAnalyticsView: View {
                                 HStack {
                                     Text(p.category)
                                         .font(.system(size: 11.5))
-                                        .foregroundColor(RSMSColors.primaryText)
+                                        .foregroundColor(theme.primaryText)
                                         .lineLimit(1)
                                     Spacer()
                                     Text("\(Int(percentage(for: p.units)))%")
                                         .font(.system(size: 11.5))
-                                        .foregroundColor(RSMSColors.secondaryText)
+                                        .foregroundColor(theme.secondaryText)
                                 }
                                 ProgressView(value: percentage(for: p.units), total: 100)
                                     .tint(colorFor(p.category))
@@ -445,21 +448,23 @@ struct StoreAnalyticsView: View {
                 .onTapGesture { isShowingProductsDetail = true }
         }
         .analyticsCard()
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Top Products Chart")
     }
 
     private func sectionHeader(_ title: String) -> some View {
         HStack(spacing: 10) {
             RoundedRectangle(cornerRadius: 2)
-                .fill(RSMSColors.burgundy)
+                .fill(theme.burgundy)
                 .frame(width: 3, height: 18)
             Text(title)
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
             Spacer()
             // Show the resolved period label from the calendar range
             Text(calendarPeriodLabel)
                 .font(.system(size: 11))
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
         }
     }
 
@@ -490,7 +495,7 @@ struct StoreAnalyticsView: View {
                 Text(label).font(.system(size: 12, weight: .semibold))
                 Image(systemName: "arrow.up.right").font(.system(size: 10, weight: .bold))
             }
-            .foregroundColor(RSMSColors.burgundy)
+            .foregroundColor(theme.burgundy)
         }
     }
 
@@ -498,24 +503,24 @@ struct StoreAnalyticsView: View {
         Chart {
             ForEach(["Jan", "Feb", "Mar", "Apr", "May", "Jun"], id: \.self) { m in
                 BarMark(x: .value("Month", m), y: .value("Sales", 5.0))
-                    .foregroundStyle(RSMSColors.burgundy.opacity(0.12))
+                    .foregroundStyle(theme.burgundy.opacity(0.12))
                     .cornerRadius(4)
             }
         }
         .chartYScale(domain: 0...100)
         .chartYAxis {
             AxisMarks(values: [0, 50, 100]) { v in
-                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4])).foregroundStyle(RSMSColors.divider)
+                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4])).foregroundStyle(theme.divider)
                 AxisValueLabel {
                     if let i = v.as(Int.self) {
-                        Text("₹\(i)").font(.system(size: 10)).foregroundStyle(RSMSColors.secondaryText)
+                        Text("₹\(i)").font(.system(size: 10)).foregroundStyle(theme.secondaryText)
                     }
                 }
             }
         }
         .chartXAxis {
             AxisMarks { _ in
-                AxisValueLabel().font(.system(size: 11)).foregroundStyle(RSMSColors.secondaryText)
+                AxisValueLabel().font(.system(size: 11)).foregroundStyle(theme.secondaryText)
             }
         }
         .frame(height: 200)
@@ -523,10 +528,10 @@ struct StoreAnalyticsView: View {
             VStack(spacing: 6) {
                 Image(systemName: "chart.bar")
                     .font(.system(size: 22))
-                    .foregroundColor(RSMSColors.secondaryText.opacity(0.35))
+                    .foregroundColor(theme.secondaryText.opacity(0.35))
                 Text("No sales data for this period")
                     .font(.system(size: 12))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             }
         }
     }
@@ -535,15 +540,15 @@ struct StoreAnalyticsView: View {
         VStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .stroke(RSMSColors.burgundy.opacity(0.08), lineWidth: 28)
+                    .stroke(theme.burgundy.opacity(0.08), lineWidth: 28)
                     .frame(width: 110, height: 110)
                 VStack(spacing: 4) {
                     Image(systemName: "bag")
                         .font(.system(size: 20))
-                        .foregroundColor(RSMSColors.secondaryText.opacity(0.4))
+                        .foregroundColor(theme.secondaryText.opacity(0.4))
                     Text("No data")
                         .font(.system(size: 11))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
             }
         }
@@ -553,31 +558,31 @@ struct StoreAnalyticsView: View {
 
     private var categoryColorScale: KeyValuePairs<String, Color> {
         [
-            "Couture": RSMSColors.burgundy,
-            "Clothes": RSMSColors.burgundy,
-            "Perfume": RSMSColors.burgundy.opacity(0.65),
-            "Perfumes": RSMSColors.burgundy.opacity(0.65),
-            "Fragrances": RSMSColors.burgundy.opacity(0.65),
-            "Fragrance": RSMSColors.burgundy.opacity(0.65),
-            "Jewellery": RSMSColors.burgundy.opacity(0.45),
-            "Jewelry": RSMSColors.burgundy.opacity(0.45),
-            "Leather Goods": RSMSColors.burgundy.opacity(0.3),
-            "Leather": RSMSColors.burgundy.opacity(0.3),
-            "Bags": RSMSColors.burgundy.opacity(0.3),
-            "Watches": RSMSColors.secondaryText,
-            "Accessories": RSMSColors.cardBorder
+            "Couture": theme.burgundy,
+            "Clothes": theme.burgundy,
+            "Perfume": theme.burgundy.opacity(0.65),
+            "Perfumes": theme.burgundy.opacity(0.65),
+            "Fragrances": theme.burgundy.opacity(0.65),
+            "Fragrance": theme.burgundy.opacity(0.65),
+            "Jewellery": theme.burgundy.opacity(0.45),
+            "Jewelry": theme.burgundy.opacity(0.45),
+            "Leather Goods": theme.burgundy.opacity(0.3),
+            "Leather": theme.burgundy.opacity(0.3),
+            "Bags": theme.burgundy.opacity(0.3),
+            "Watches": theme.secondaryText,
+            "Accessories": theme.cardBorder
         ]
     }
 
     private func colorFor(_ category: String) -> Color {
         switch category {
-        case "Couture", "Clothes":                          return RSMSColors.burgundy
-        case "Perfume","Perfumes","Fragrance","Fragrances": return RSMSColors.burgundy.opacity(0.65)
-        case "Jewellery","Jewelry":                         return RSMSColors.burgundy.opacity(0.45)
-        case "Leather","Leather Goods","Bags":               return RSMSColors.burgundy.opacity(0.3)
-        case "Watches":                                     return RSMSColors.secondaryText
-        case "Accessories":                                 return RSMSColors.cardBorder
-        default:                                            return RSMSColors.chartBar
+        case "Couture", "Clothes":                          return theme.burgundy
+        case "Perfume","Perfumes","Fragrance","Fragrances": return theme.burgundy.opacity(0.65)
+        case "Jewellery","Jewelry":                         return theme.burgundy.opacity(0.45)
+        case "Leather","Leather Goods","Bags":               return theme.burgundy.opacity(0.3)
+        case "Watches":                                     return theme.secondaryText
+        case "Accessories":                                 return theme.cardBorder
+        default:                                            return theme.chartBar
         }
     }
 
@@ -590,6 +595,7 @@ struct StoreAnalyticsView: View {
 }
 
 private struct PremiumKPICard: View {
+    @Environment(AppTheme.self) private var theme
     let icon: String
     let value: String
     let title: LocalizedStringKey
@@ -601,25 +607,25 @@ private struct PremiumKPICard: View {
             HStack {
                 Text(title)
                     .font(.system(size: 11.5))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
                 Spacer()
                 Image(systemName: icon)
                     .font(.system(size: 13))
-                    .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                    .foregroundColor(theme.secondaryText.opacity(0.5))
             }
 
             Text(value)
                 .font(.system(size: 22, weight: .bold, design: .rounded))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
 
             if let trend, trend.count > 1 {
-                SparklineView(values: trend, color: RSMSColors.burgundy.opacity(0.55))
+                SparklineView(values: trend, color: theme.burgundy.opacity(0.55))
             } else if let emptyCaption {
                 Text(emptyCaption)
                     .font(.system(size: 10.5))
-                    .foregroundColor(RSMSColors.secondaryText.opacity(0.6))
+                    .foregroundColor(theme.secondaryText.opacity(0.6))
                     .frame(height: 22, alignment: .center)
             } else {
                 Spacer().frame(height: 22)
@@ -627,13 +633,15 @@ private struct PremiumKPICard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(RSMSSpacing.md)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .cornerRadius(RSMSRadius.medium)
-        .overlay(RoundedRectangle(cornerRadius: RSMSRadius.medium).stroke(RSMSColors.cardBorder, lineWidth: 0.5))
+        .overlay(RoundedRectangle(cornerRadius: RSMSRadius.medium).stroke(theme.cardBorder, lineWidth: 0.5))
+        .accessibilityElement(children: .combine)
     }
 }
 
 private struct SparklineView: View {
+    @Environment(AppTheme.self) private var theme
     let values: [Double]
     let color: Color
 
@@ -650,6 +658,7 @@ private struct SparklineView: View {
         .chartYAxis(.hidden)
         .chartPlotStyle { plot in plot.padding(0) }
         .frame(height: 22)
+        .accessibilityHidden(true)
     }
 }
 
@@ -657,10 +666,8 @@ private extension View {
     func analyticsCard() -> some View {
         self
             .padding(RSMSSpacing.lg)
-            .background(RSMSColors.cardBackground)
-            .cornerRadius(RSMSRadius.large)
-            .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 4)
-            .overlay(RoundedRectangle(cornerRadius: RSMSRadius.large).stroke(RSMSColors.cardBorder, lineWidth: 1))
+            .standardCard(cornerRadius: RSMSRadius.large, shadowRadius: 10, shadowY: 4)
+            .overlay(RoundedRectangle(cornerRadius: RSMSRadius.large).stroke(Color.gray.opacity(0.15), lineWidth: 1))
     }
 }
 

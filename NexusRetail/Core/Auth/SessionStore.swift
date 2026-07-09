@@ -63,6 +63,14 @@ class SessionStore {
         }
     }
     
+    /// Re-fetches the signed-in user's app_user row (e.g. after an admin changes their
+    /// store) without disturbing the 2FA gate. Safe to call on dashboard appear/refresh.
+    func refreshCurrentUser() async {
+        if let user = await authService.restoreSession() {
+            await MainActor.run { self.currentUser = user }
+        }
+    }
+
     func restore() async {
         if let user = await authService.restoreSession() {
             // Only skip OTP if this exact user completed 2FA previously on this device.

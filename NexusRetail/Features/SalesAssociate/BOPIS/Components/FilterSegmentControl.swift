@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct FilterSegmentControl: View {
+    @Environment(AppTheme.self) private var theme
     @Binding var selectedFilter: BOPISOrderStatus
     
     var body: some View {

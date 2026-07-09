@@ -35,4 +35,11 @@ enum AppointmentStatus: String, CaseIterable, Identifiable {
         case .cancelled: return "xmark.circle.fill"
         }
     }
+    var color: Color {
+        switch self {
+        case .confirmed: return AppTheme().success
+        case .pending: return AppTheme().warning
+        case .cancelled: return AppTheme().error
+        }
+    }
 }

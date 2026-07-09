@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ProductSearchView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     @Environment(SellViewModel.self) private var viewModel
     @Environment(SessionStore.self) private var sessionStore
@@ -29,7 +30,7 @@ struct ProductSearchView: View {
     
     var body: some View {
         ZStack {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
             
             ScrollView {
@@ -120,7 +121,7 @@ struct ProductSearchView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             LinearGradient(
-                colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
+                colors: [theme.burgundy, theme.darkBurgundy],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -132,7 +133,7 @@ struct ProductSearchView: View {
     private var searchBarSection: some View {
         HStack(spacing: 12) {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
             
             TextField("Search by name, SKU, or category...", text: $searchText)
                 .textFieldStyle(.plain)
@@ -143,7 +144,7 @@ struct ProductSearchView: View {
                     searchText = ""
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(RSMSColors.secondaryText.opacity(0.6))
+                        .foregroundColor(theme.secondaryText.opacity(0.6))
                 }
             }
         }
@@ -152,7 +153,7 @@ struct ProductSearchView: View {
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.02), radius: 4, x: 0, y: 2)
     }
@@ -163,7 +164,7 @@ struct ProductSearchView: View {
                 HStack {
                     Spacer()
                     ProgressView("Loading products...")
-                        .tint(RSMSColors.burgundy)
+                        .tint(theme.burgundy)
                     Spacer()
                 }
                 .padding(.top, 40)
@@ -171,16 +172,16 @@ struct ProductSearchView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     Text(searchText.isEmpty ? "All Products" : "Search Results")
                         .font(.system(size: 16, weight: .bold, design: .rounded))
-                        .foregroundColor(RSMSColors.darkBrown)
+                        .foregroundColor(theme.darkBrown)
                     
                     if filteredProducts.isEmpty {
                         VStack(spacing: 12) {
                             Image(systemName: "barcode.viewfinder")
                                 .font(.system(size: 40))
-                                .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                                .foregroundColor(theme.secondaryText.opacity(0.5))
                             Text("No products found matching '\(searchText)'")
                                 .font(.system(size: 14))
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                         }
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.top, 40)
@@ -221,7 +222,7 @@ struct ProductSearchView: View {
                         Color.gray.opacity(0.1)
                             .overlay(
                                 Image(systemName: "shippingbox")
-                                    .foregroundColor(RSMSColors.secondaryText.opacity(0.4))
+                                    .foregroundColor(theme.secondaryText.opacity(0.4))
                             )
                     }
                 }
@@ -231,15 +232,15 @@ struct ProductSearchView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(product.name)
                         .font(.system(size: 15, weight: .bold, design: .rounded))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     
                     Text("SKU: \(product.sku)  •  Size: \(product.size)")
                         .font(.system(size: 12))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
 
                     Text(formatIndianCurrency(product.price))
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                 }
                 
                 Spacer()
@@ -249,40 +250,40 @@ struct ProductSearchView: View {
                     if product.stock > 10 {
                         Text("In Stock")
                             .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(RSMSColors.success)
+                            .foregroundColor(theme.success)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(RSMSColors.success.opacity(0.08))
+                            .background(theme.success.opacity(0.08))
                             .clipShape(Capsule())
                     } else if product.stock > 0 {
                         Text("Only \(product.stock) left")
                             .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(RSMSColors.warning)
+                            .foregroundColor(theme.warning)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(RSMSColors.warning.opacity(0.08))
+                            .background(theme.warning.opacity(0.08))
                             .clipShape(Capsule())
                     } else {
                         Text("Out of Stock")
                             .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(RSMSColors.error)
+                            .foregroundColor(theme.error)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(RSMSColors.error.opacity(0.08))
+                            .background(theme.error.opacity(0.08))
                             .clipShape(Capsule())
                     }
                     
                     Image(systemName: "chevron.right")
                         .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(RSMSColors.secondaryText.opacity(0.4))
+                        .foregroundColor(theme.secondaryText.opacity(0.4))
                 }
             }
             .padding(14)
-            .background(RSMSColors.cardBackground)
+            .background(theme.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                    .stroke(theme.cardBorder, lineWidth: 1)
             )
             .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 3)
         }
@@ -309,15 +310,15 @@ struct ProductSearchView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(product.name)
                         .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     
                     Text("Category: \(product.category)  •  Size: \(product.size)")
                         .font(.system(size: 13))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
 
                     Text(formatIndianCurrency(product.price))
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
 
                     // Out of stock banner
                     HStack(spacing: 4) {
@@ -325,21 +326,21 @@ struct ProductSearchView: View {
                         Text("Out of Stock")
                     }
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(RSMSColors.error)
+                    .foregroundColor(theme.error)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
-                    .background(RSMSColors.error.opacity(0.08))
+                    .background(theme.error.opacity(0.08))
                     .clipShape(Capsule())
                     .padding(.top, 4)
                 }
                 Spacer()
             }
             .padding(18)
-            .background(RSMSColors.cardBackground)
+            .background(theme.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 20))
             .overlay(
                 RoundedRectangle(cornerRadius: 20)
-                    .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                    .stroke(theme.cardBorder, lineWidth: 1)
             )
             .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 3)
             
@@ -347,7 +348,7 @@ struct ProductSearchView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Suggested Alternatives")
                     .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.darkBrown)
+                    .foregroundColor(theme.darkBrown)
                 
                 HStack(spacing: 12) {
                     checklistBadge("Same Category")
@@ -361,7 +362,7 @@ struct ProductSearchView: View {
                 if alternatives.isEmpty {
                     Text("No suitable alternatives found in stock.")
                         .font(.system(size: 14))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                         .padding(.vertical, 10)
                 } else {
                     VStack(spacing: 12) {
@@ -384,10 +385,10 @@ struct ProductSearchView: View {
             Text(text)
                 .font(.system(size: 11, weight: .semibold))
         }
-        .foregroundColor(RSMSColors.burgundy)
+        .foregroundColor(theme.burgundy)
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
-        .background(RSMSColors.burgundy.opacity(0.08))
+        .background(theme.burgundy.opacity(0.08))
         .clipShape(Capsule())
     }
     
@@ -407,11 +408,11 @@ struct ProductSearchView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(alt.name)
                     .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                 
                 Text("Price: \(formatIndianCurrency(alt.price))  •  Size: \(alt.size)")
                     .font(.system(size: 11))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             }
             
             Spacer()
@@ -427,16 +428,16 @@ struct ProductSearchView: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(RSMSColors.burgundy)
+                    .background(theme.burgundy)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
             }
         }
         .padding(12)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
     }
     

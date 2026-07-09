@@ -7,6 +7,7 @@ import SwiftUI
 
 /// Manager shell: Inventory, Requests, Pricing, Events, Staff.
 struct ManagerTabView: View {
+    @Environment(AppTheme.self) private var theme
     var body: some View {
         TabView {
             // 0. Dashboard
@@ -14,7 +15,7 @@ struct ManagerTabView: View {
                 ManagerDashboardView()
             }
             .tabItem {
-                Label("Dashboard", systemImage: "squareshape.split.2x2")
+                Label("Dashboard", systemImage: "house")
             }
 
             // 1. Inventory
@@ -41,15 +42,16 @@ struct ManagerTabView: View {
                 Label("Employees", systemImage: "person.2")
             }
         }
-        .tint(RSMSColors.burgundy)
+        .tint(theme.isDarkMode ? theme.antiqueGold : theme.burgundy)
+        .environment(theme)
     }
 }
 
 /// A view modifier that applies the common Manager toolbar (title + profile button).
 struct ManagerToolbarModifier: ViewModifier {
-    let title: LocalizedStringKey
+    let title: String
     @Environment(SessionStore.self) private var sessionStore
-    @State private var isProfilePresented = false
+    @Environment(AppTheme.self) private var theme
 
     func body(content: Content) -> some View {
         content
@@ -57,12 +59,10 @@ struct ManagerToolbarModifier: ViewModifier {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        isProfilePresented = true
-                    } label: {
+                    NavigationLink(destination: GlobalProfileView()) {
                         ZStack {
                             Circle()
-                                .fill(RSMSColors.burgundy)
+                                .fill(theme.burgundy)
                                 .frame(width: 32, height: 32)
                             
                             if let urlString = sessionStore.currentUser?.imageUrl, let url = URL(string: urlString) {
@@ -85,9 +85,6 @@ struct ManagerToolbarModifier: ViewModifier {
                     }
                 }
             }
-            .sheet(isPresented: $isProfilePresented) {
-                AdminProfileSheet()
-            }
     }
     
     private func initials(for name: String?) -> String {
@@ -106,28 +103,29 @@ struct ManagerToolbarModifier: ViewModifier {
 
 /// A reusable placeholder view for the manager tabs.
 struct ManagerPlaceholderView: View {
-    let title: LocalizedStringKey
-    let message: LocalizedStringKey
+    @Environment(AppTheme.self) private var theme
+    let title: String
+    let message: String
     let icon: String
     
     var body: some View {
         ZStack {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
             
             VStack(spacing: 24) {
                 Image(systemName: icon)
                     .font(.system(size: 60))
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
                 
                 Text(title)
                     .font(RSMSFonts.title)
                     .fontWeight(.bold)
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                 
                 Text(message)
                     .font(RSMSFonts.body)
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
                 
@@ -137,7 +135,7 @@ struct ManagerPlaceholderView: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(RSMSColors.burgundy)
+                    .background(theme.burgundy)
                     .cornerRadius(RSMSRadius.small)
             }
         }

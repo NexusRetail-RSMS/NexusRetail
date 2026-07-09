@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct PickupActionButton: View {
+    @Environment(AppTheme.self) private var theme
     let status: BOPISOrderStatus
     let action: () -> Void
     
@@ -17,7 +18,7 @@ struct PickupActionButton: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, RSMSSpacing.md)
-                .background(RSMSColors.burgundy)
+                .background(theme.burgundy)
                 .cornerRadius(RSMSRadius.medium)
         }
     }

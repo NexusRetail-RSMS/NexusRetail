@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct BOPISCardView: View {
+    @Environment(AppTheme.self) private var theme
     let order: BOPISOrder
     let action: () -> Void
     
@@ -15,28 +16,28 @@ struct BOPISCardView: View {
             HStack {
                 Text(order.orderId)
                     .font(RSMSFonts.headline)
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                 Spacer()
                 PickupStatusBadge(status: order.status)
             }
             
             Divider()
-                .background(RSMSColors.divider)
+                .background(theme.divider)
             
             // Customer Details & Order Summary
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
                     Label(order.customerName, systemImage: "person.fill")
                         .font(RSMSFonts.body)
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     
                     Label(order.phoneNumber, systemImage: "phone.fill")
                         .font(RSMSFonts.subheadline)
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                     
                     Label(order.pickupTime, systemImage: "clock.fill")
                         .font(RSMSFonts.subheadline)
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
                 
                 Spacer()
@@ -45,51 +46,51 @@ struct BOPISCardView: View {
                     VStack(alignment: .trailing, spacing: 0) {
                         Text("Items")
                             .font(RSMSFonts.caption)
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                         Text("\(order.itemCount)")
                             .font(RSMSFonts.headline)
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                     }
                     
                     VStack(alignment: .trailing, spacing: 0) {
                         Text("Total")
                             .font(RSMSFonts.caption)
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                         Text(formatIndianCurrency(order.totalAmount))
                             .font(RSMSFonts.headline)
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                     }
                 }
             }
             
-            // Verification Code (if applicable)
-            if let code = order.verificationCode {
-                HStack {
-                    Text("Verification Code:")
+            // The pickup code is emailed to the customer only — never shown here.
+            if order.status == .waitingForCustomer {
+                HStack(spacing: 6) {
+                    Image(systemName: "envelope.badge.fill")
+                        .font(.system(size: 12))
+                    Text("Pickup code sent to customer")
                         .font(RSMSFonts.subheadline)
-                        .foregroundColor(RSMSColors.secondaryText)
                     Spacer()
-                    Text(code)
-                        .font(RSMSFonts.headline)
-                        .foregroundColor(RSMSColors.burgundy)
                 }
+                .foregroundColor(theme.secondaryText)
                 .padding()
-                .background(RSMSColors.cream)
+                .background(theme.cream)
                 .cornerRadius(RSMSRadius.small)
             }
-            
+
             // Action Button
             if order.status != .collected {
                 PickupActionButton(status: order.status, action: action)
             }
         }
         .padding(RSMSSpacing.lg)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .cornerRadius(RSMSRadius.large)
         .shadow(color: Color.black.opacity(0.05), radius: 8, y: 4)
         .overlay(
             RoundedRectangle(cornerRadius: RSMSRadius.large)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
+        .accessibilityElement(children: .combine)
     }
 }

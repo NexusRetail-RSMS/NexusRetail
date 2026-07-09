@@ -3,21 +3,23 @@ import PhotosUI
 import CoreImage
 
 struct BarcodeScannerView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     @Environment(SellViewModel.self) private var viewModel
     @Environment(SessionStore.self) private var sessionStore
     @Binding var path: NavigationPath
     
-    @State private var allProducts: [POSProduct] = []
+
     @State private var scannedProduct: POSProduct? = nil   // set only for out-of-stock (alternatives)
     @State private var isScanning = true
     @State private var selectedPhoto: PhotosPickerItem? = nil
     @State private var stockLimitReached = false   // shown when scan hits stock limit
     @State private var toastMessage: String? = nil // brief add-to-cart confirmation
+    @State private var invoiceNumber: String = ""
     
     var body: some View {
         ZStack(alignment: .top) {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
             
             ScrollView {
@@ -46,7 +48,7 @@ struct BarcodeScannerView: View {
                             .font(.system(size: 13, weight: .bold)).foregroundColor(.white)
                     }
                     .padding(.vertical, 12).padding(.horizontal, 20)
-                    .background(RSMSColors.success)
+                    .background(theme.success)
                     .clipShape(Capsule())
                     .shadow(radius: 6)
                     .padding(.bottom, 96) // clear the sticky cart bar
@@ -65,7 +67,7 @@ struct BarcodeScannerView: View {
                             .font(.system(size: 13, weight: .bold)).foregroundColor(.white)
                     }
                     .padding(.vertical, 12).padding(.horizontal, 20)
-                    .background(RSMSColors.error)
+                    .background(theme.error)
                     .clipShape(Capsule())
                     .shadow(radius: 6)
                     .padding(.bottom, 96) // clear the sticky cart bar
@@ -83,8 +85,9 @@ struct BarcodeScannerView: View {
             scannedProduct = nil
             isScanning = true
         }
+        .toolbar(.hidden, for: .tabBar)
         .task {
-            allProducts = await POSProductRepository.shared.fetchProducts(storeID: sessionStore.currentUser?.storeID)
+            _ = await POSProductRepository.shared.fetchProducts(storeID: sessionStore.currentUser?.storeID)
         }
     }
     
@@ -103,25 +106,27 @@ struct BarcodeScannerView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy.opacity(0.1))
+                        .fill(theme.burgundy.opacity(0.1))
                         .frame(width: 44, height: 44)
 
                     Image(systemName: "chevron.left")
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                 }
             }
             .accessibilityLabel("Back")
             
             VStack(alignment: .leading, spacing: 2) {
-                Text(scannedProduct == nil ? "Scan Barcode" : scannedProduct!.name)
+                Text(scannedProduct == nil ? "Scan QR Code" : scannedProduct!.name)
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                     .lineLimit(1)
                 
-                Text(scannedProduct == nil ? "Barcode Scanner" : scannedProduct!.sku)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
+                if let product = scannedProduct {
+                    Text(product.sku)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(theme.secondaryText)
+                }
             }
             
             Spacer()
@@ -136,11 +141,6 @@ struct BarcodeScannerView: View {
     
     private var scannerViewSection: some View {
         VStack(spacing: 32) {
-            Text("Point camera at product barcode")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(RSMSColors.secondaryText)
-                .multilineTextAlignment(.center)
-            
             // Live Camera Viewfinder
             ZStack {
                 CameraScannerView { scannedCode in
@@ -158,13 +158,13 @@ struct BarcodeScannerView: View {
                 
                 // Overlay outline
                 RoundedRectangle(cornerRadius: 20)
-                    .stroke(RSMSColors.burgundy, lineWidth: 2)
+                    .stroke(theme.burgundy, lineWidth: 2)
                     .frame(height: 300)
             }
             .padding(.horizontal, RSMSSpacing.lg)
             
             // Simulator Controls
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .center, spacing: 16) {
                 // Photo picker for simulator QR testing
                 PhotosPicker(selection: $selectedPhoto, matching: .images) {
                     HStack {
@@ -172,7 +172,7 @@ struct BarcodeScannerView: View {
                         Text("Upload QR Code Image")
                     }
                     .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .background(Color.gray.opacity(0.15))
@@ -181,6 +181,35 @@ struct BarcodeScannerView: View {
                 .onChange(of: selectedPhoto) { _, newItem in
                     processSelectedPhoto(newItem)
                 }
+                
+                Text("OR")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(theme.secondaryText)
+                    .padding(.vertical, 4)
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Invoice Number")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(theme.primaryText)
+                    
+                    TextField("Enter invoice number", text: $invoiceNumber)
+                        .font(.system(size: 15, weight: .medium))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 14)
+                        .background(Color.gray.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(theme.cardBorder, lineWidth: 1)
+                        )
+                        .onSubmit {
+                            if !invoiceNumber.isEmpty {
+                                simulateScan(forSku: invoiceNumber)
+                                invoiceNumber = ""
+                            }
+                        }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.horizontal, RSMSSpacing.lg)
         }
@@ -189,7 +218,7 @@ struct BarcodeScannerView: View {
     }
     
     private func simulateScan(forSku sku: String) {
-        guard let match = allProducts.first(where: { $0.sku == sku }) else { return }
+        guard let match = POSProductRepository.shared.products.first(where: { $0.sku == sku }) else { return }
 
         // Out of stock — show detail so the associate can pick an alternative.
         if match.stock == 0 {
@@ -217,6 +246,9 @@ struct BarcodeScannerView: View {
         viewModel.addToCart(product: match)
         showToast(alreadyInCart ? "Quantity increased in cart" : "Added to cart")
         UINotificationFeedbackGenerator().notificationOccurred(.success)
+        
+        // Automatically move to the next screen (Cart) after scanning
+        path.append(POSFlowDestination.cart)
     }
 
     /// Shows a brief confirmation toast, auto-dismissing after 1.5s.
@@ -275,15 +307,15 @@ struct BarcodeScannerView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(product.name)
                         .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     
                     Text("Category: \(product.category)  •  Size: \(product.size)")
                         .font(.system(size: 13))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
 
                     Text(formatIndianCurrency(product.price))
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
 
                     // This detail screen is only reached for out-of-stock items now
                     // (in-stock scans add straight to the cart).
@@ -292,21 +324,21 @@ struct BarcodeScannerView: View {
                         Text("Out of Stock")
                     }
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(RSMSColors.error)
+                    .foregroundColor(theme.error)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
-                    .background(RSMSColors.error.opacity(0.08))
+                    .background(theme.error.opacity(0.08))
                     .clipShape(Capsule())
                     .padding(.top, 4)
                 }
                 Spacer()
             }
             .padding(18)
-            .background(RSMSColors.cardBackground)
+            .background(theme.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 20))
             .overlay(
                 RoundedRectangle(cornerRadius: 20)
-                    .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                    .stroke(theme.cardBorder, lineWidth: 1)
             )
             .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 3)
             
@@ -315,7 +347,7 @@ struct BarcodeScannerView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Suggested Alternatives")
                     .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.darkBrown)
+                    .foregroundColor(theme.darkBrown)
 
                 HStack(spacing: 12) {
                     checklistBadge("Same Category")
@@ -329,7 +361,7 @@ struct BarcodeScannerView: View {
                 if alternatives.isEmpty {
                     Text("No suitable alternatives found in stock.")
                         .font(.system(size: 14))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                         .padding(.vertical, 10)
                 } else {
                     VStack(spacing: 12) {
@@ -352,10 +384,10 @@ struct BarcodeScannerView: View {
             Text(text)
                 .font(.system(size: 11, weight: .semibold))
         }
-        .foregroundColor(RSMSColors.burgundy)
+        .foregroundColor(theme.burgundy)
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
-        .background(RSMSColors.burgundy.opacity(0.08))
+        .background(theme.burgundy.opacity(0.08))
         .clipShape(Capsule())
     }
     
@@ -375,11 +407,11 @@ struct BarcodeScannerView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(alt.name)
                     .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                 
                 Text("Price: \(formatIndianCurrency(alt.price))  •  Size: \(alt.size)")
                     .font(.system(size: 11))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             }
             
             Spacer()
@@ -395,16 +427,16 @@ struct BarcodeScannerView: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(RSMSColors.burgundy)
+                    .background(theme.burgundy)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
             }
         }
         .padding(12)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
     }
     
@@ -412,7 +444,7 @@ struct BarcodeScannerView: View {
         // Try ML-powered recommendations first
         let mlRecommendations = RecommendationService.shared.getRecommendedProducts(
             for: product,
-            from: allProducts,
+            from: POSProductRepository.shared.products,
             count: 5
         )
         
@@ -421,7 +453,7 @@ struct BarcodeScannerView: View {
         }
         
         // Fallback: same category, stock > 0, not itself, similar price
-        return allProducts.filter { item in
+        return POSProductRepository.shared.products.filter { item in
             item.id != product.id &&
             item.category == product.category &&
             item.stock > 0 &&
@@ -437,6 +469,7 @@ struct CameraScannerView: UIViewControllerRepresentable {
     
     class Coordinator: NSObject, AVCaptureMetadataOutputObjectsDelegate {
         var parent: CameraScannerView
+        var lastScanTime: Date = Date.distantPast
         
         init(parent: CameraScannerView) {
             self.parent = parent
@@ -446,6 +479,12 @@ struct CameraScannerView: UIViewControllerRepresentable {
             if let metadataObject = metadataObjects.first {
                 guard let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject else { return }
                 guard let stringValue = readableObject.stringValue else { return }
+                
+                // Debounce scans by 1.5 seconds to prevent runaway cart additions
+                if Date().timeIntervalSince(lastScanTime) < 1.5 {
+                    return
+                }
+                lastScanTime = Date()
                 
                 // Vibrate on successful scan
                 AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))

@@ -6,6 +6,7 @@ enum OrderType: String, CaseIterable {
 }
 
 struct NewSaleView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     @Environment(SellViewModel.self) private var viewModel
     @Binding var path: NavigationPath
@@ -14,7 +15,7 @@ struct NewSaleView: View {
     
     var body: some View {
         ZStack {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
@@ -37,7 +38,7 @@ struct NewSaleView: View {
                         VStack(alignment: .leading, spacing: 28) {
                             Text("How would you like to add products?")
                                 .font(.system(size: 18, weight: .bold, design: .rounded))
-                                .foregroundColor(RSMSColors.darkBrown)
+                                .foregroundColor(theme.darkBrown)
                                 .padding(.horizontal, 4)
                             
                             VStack(spacing: 16) {
@@ -122,7 +123,7 @@ struct NewSaleView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             LinearGradient(
-                colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
+                colors: [theme.burgundy, theme.darkBurgundy],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -145,25 +146,25 @@ struct NewSaleView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                 
                 Text(subtitle)
                     .font(.system(size: 12))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             }
             
             Spacer()
             
             Image(systemName: "chevron.right")
                 .font(.system(size: 14, weight: .bold))
-                .foregroundColor(RSMSColors.secondaryText.opacity(0.4))
+                .foregroundColor(theme.secondaryText.opacity(0.4))
         }
         .padding(RSMSSpacing.lg)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 18))
         .overlay(
             RoundedRectangle(cornerRadius: 18)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
     }

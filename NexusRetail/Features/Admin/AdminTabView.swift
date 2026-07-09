@@ -11,6 +11,7 @@ struct AdminTabView: View {
     @State private var isAddManagerPresented = false
     @State private var navStore = AdminNavigationStore()
     @State private var transfersVM = AdminTransfersViewModel()
+    @Environment(AppTheme.self) private var theme
     
     var body: some View {
         TabView(selection: $navStore.selectedTab) {
@@ -61,7 +62,7 @@ struct AdminTabView: View {
             }
             .tag(AdminTab.managers)
         }
-        .tint(RSMSColors.burgundy)
+        .tint(theme.isDarkMode ? theme.antiqueGold : theme.burgundy)
         .environment(navStore)
         .environment(transfersVM)
     }
@@ -88,9 +89,9 @@ private struct TransfersTabRoot: View {
 
 /// A view modifier that applies the common Admin toolbar (title only).
 struct AdminToolbarModifier: ViewModifier {
-    let title: LocalizedStringKey
-    @State private var isProfilePresented = false
+    let title: String
     @Environment(SessionStore.self) private var sessionStore
+    @Environment(AppTheme.self) private var theme
 
     func body(content: Content) -> some View {
         content
@@ -98,12 +99,10 @@ struct AdminToolbarModifier: ViewModifier {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        isProfilePresented = true
-                    } label: {
+                    NavigationLink(destination: GlobalProfileView()) {
                         ZStack {
                             Circle()
-                                .fill(RSMSColors.burgundy)
+                                .fill(theme.burgundy)
                                 .frame(width: 32, height: 32)
                             
                             if let urlString = sessionStore.currentUser?.imageUrl, let url = URL(string: urlString) {
@@ -128,9 +127,6 @@ struct AdminToolbarModifier: ViewModifier {
                     .accessibilityHint("Opens your profile and settings")
                 }
             }
-            .sheet(isPresented: $isProfilePresented) {
-                AdminProfileSheet()
-            }
     }
     
     private func initials(for name: String?) -> String {
@@ -150,28 +146,29 @@ struct AdminToolbarModifier: ViewModifier {
 
 /// A reusable placeholder view for the admin tabs.
 struct AdminPlaceholderView: View {
-    let title: LocalizedStringKey
-    let message: LocalizedStringKey
+    @Environment(AppTheme.self) private var theme
+    let title: String
+    let message: String
 
     var body: some View {
         ZStack {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
 
             VStack(spacing: 24) {
                 Image(systemName: "hammer.fill")
                     .font(.system(size: 60))
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
                     .accessibilityHidden(true)
 
                 Text("Coming Soon")
                     .font(RSMSFonts.title)
                     .fontWeight(.semibold)
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
 
                 Text(message)
                     .font(RSMSFonts.body)
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
             }

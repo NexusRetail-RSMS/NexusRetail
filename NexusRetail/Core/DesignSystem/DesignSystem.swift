@@ -63,11 +63,12 @@ struct PrimaryButtonStyle: ButtonStyle {
 
 /// A reusable KPI card for dashboards.
 struct KPICardView: View {
-    let title: LocalizedStringKey
+    @Environment(AppTheme.self) private var theme
+    let title: String
     let value: String
     let icon: String
     let trend: String?
-    var color: Color = RSMSColors.burgundy
+    var color: Color = Color(hex: "8B0000")
     
     var body: some View {
         HStack(spacing: RSMSSpacing.sm) {
@@ -86,13 +87,13 @@ struct KPICardView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(value)
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
                 
                 Text(title)
                     .font(.system(size: 13))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
                     .minimumScaleFactor(0.8)
@@ -136,19 +137,20 @@ public struct HeaderCurve: Shape {
 /// Rounded pill with a magnifying glass on the left and a mic icon
 /// on the right (collapses to xmark when text is present).
 struct NexusSearchBar: View {
+    @Environment(AppTheme.self) private var theme
     @Binding var text: String
-    var placeholder: LocalizedStringKey = "Search"
+    var placeholder: String = "Search"
     @FocusState private var isFocused: Bool
 
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(RSMSColors.secondaryText)
+                .foregroundStyle(theme.secondaryText)
 
             TextField(placeholder, text: $text)
                 .font(.system(size: 17))
-                .foregroundStyle(RSMSColors.primaryText)
+                .foregroundStyle(theme.primaryText)
                 .focused($isFocused)
                 .submitLabel(.search)
 
@@ -157,7 +159,7 @@ struct NexusSearchBar: View {
             if text.isEmpty {
                 Image(systemName: "mic.fill")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(RSMSColors.secondaryText)
+                    .foregroundStyle(theme.secondaryText)
                     .transition(.opacity.combined(with: .scale))
             } else {
                 Button {
@@ -165,7 +167,7 @@ struct NexusSearchBar: View {
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 17))
-                        .foregroundStyle(RSMSColors.secondaryText)
+                        .foregroundStyle(theme.secondaryText)
                 }
                 .transition(.opacity.combined(with: .scale))
             }

@@ -16,9 +16,10 @@ import SwiftUI
 import Supabase
 
 struct AdminDashboardView: View {
+    @Environment(AdminNavigationStore.self) private var navStore
     @Environment(SessionStore.self) private var sessionStore
+    @Environment(AppTheme.self) private var theme
     @State private var viewModel = DashboardViewModel()
-    @State private var isProfilePresented = false
     
     // Drill-down states
     @State private var isShowingSalesDetail = false
@@ -40,7 +41,7 @@ struct AdminDashboardView: View {
 
     var body: some View {
         ZStack {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
 
             ScrollView {
@@ -76,7 +77,7 @@ struct AdminDashboardView: View {
                         VStack {
                             Spacer()
                             ProgressView("Loading Dashboard...")
-                                .tint(RSMSColors.burgundy)
+                                .tint(theme.burgundy)
                                 .padding()
                             Spacer()
                         }
@@ -130,9 +131,6 @@ struct AdminDashboardView: View {
             }
             viewModel.startListening()
         }
-        .sheet(isPresented: $isProfilePresented) {
-            AdminProfileSheet()
-        }
         .fullScreenCover(isPresented: $isShowingSalesDetail) {
             NavigationStack {
                 SalesDetailView(store: globalStore)
@@ -153,7 +151,7 @@ struct AdminDashboardView: View {
             Text("Dashboard")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
 
             Spacer()
 
@@ -164,7 +162,7 @@ struct AdminDashboardView: View {
                         viewModel.selectedCountry = nil
                     }
                 } label: {
-                    Text("🌍 All Global")
+                    Text("All Global")
                 }
                 ForEach(viewModel.countries, id: \.self) { country in
                     Button {
@@ -172,38 +170,52 @@ struct AdminDashboardView: View {
                             viewModel.selectedCountry = country
                         }
                     } label: {
-                        Text("\(countryFlag(for: country)) \(country)")
+                        Text(country)
                     }
                 }
             } label: {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy.opacity(0.1))
+                        .fill(theme.burgundy.opacity(0.1))
                         .frame(width: 44, height: 44)
 
                     if let selected = viewModel.selectedCountry {
-                        Text(countryFlag(for: selected))
-                            .font(.system(size: 22))
+                        Text(countryCode(for: selected))
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(theme.burgundy)
                     } else {
-                        Text("🌍")
-                            .font(.system(size: 22))
+                        Text("ALL")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(theme.burgundy)
                     }
                 }
             }
             .accessibilityLabel("Country filter")
 
             // Profile avatar
-            Button {
-                isProfilePresented = true
-            } label: {
+            NavigationLink(destination: GlobalProfileView()) {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy)
+                        .fill(theme.burgundy)
                         .frame(width: 44, height: 44)
 
-                    Text(initials(for: sessionStore.currentUser?.name))
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white)
+                    if let urlString = sessionStore.currentUser?.imageUrl, let url = URL(string: urlString) {
+                        CachedAsyncImage(url: url) { image in
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 44, height: 44)
+                                .clipShape(Circle())
+                        } placeholder: {
+                            Text(initials(for: sessionStore.currentUser?.name))
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                    } else {
+                        Text(initials(for: sessionStore.currentUser?.name))
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                    }
                 }
             }
             .accessibilityLabel("Profile")
@@ -225,24 +237,23 @@ struct AdminDashboardView: View {
         return "AD"
     }
 
-    /// Maps a country name to its flag emoji.
-    private func countryFlag(for country: String) -> String {
+    private func countryCode(for country: String) -> String {
         let map: [String: String] = [
-            "United States":        "🇺🇸",
-            "USA":                  "🇺🇸",
-            "United Kingdom":       "🇬🇧",
-            "UK":                   "🇬🇧",
-            "Canada":               "🇨🇦",
-            "Australia":            "🇦🇺",
-            "Germany":              "🇩🇪",
-            "France":               "🇫🇷",
-            "Japan":                "🇯🇵",
-            "India":                "🇮🇳",
-            "Singapore":            "🇸🇬",
-            "United Arab Emirates": "🇦🇪",
-            "UAE":                  "🇦🇪",
+            "United States":        "US",
+            "USA":                  "US",
+            "United Kingdom":       "UK",
+            "UK":                   "UK",
+            "Canada":               "CA",
+            "Australia":            "AU",
+            "Germany":              "DE",
+            "France":               "FR",
+            "Japan":                "JP",
+            "India":                "IN",
+            "Singapore":            "SG",
+            "United Arab Emirates": "AE",
+            "UAE":                  "AE",
         ]
-        return map[country] ?? "🌍"
+        return map[country] ?? "ALL"
     }
 
     // MARK: - KPI Cards
@@ -263,7 +274,7 @@ struct AdminDashboardView: View {
                 value: viewModel.activeStoresText,
                 icon: "building.2.fill",
                 trend: nil,
-                color: RSMSColors.burgundy
+                color: theme.burgundy
             )
             KPICardView(
                 title: "Pending Transfers",

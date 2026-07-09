@@ -7,6 +7,7 @@ import SwiftUI
 import Charts
 
 struct StaffPerformanceChart: View {
+    @Environment(AppTheme.self) private var theme
     let data: [StaffPerformancePoint]
 
     var body: some View {
@@ -18,7 +19,7 @@ struct StaffPerformanceChart: View {
             HStack {
                 Text("Staff Performance")
                     .font(RSMSFonts.headline)
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
 
                 Spacer()
             }
@@ -27,10 +28,10 @@ struct StaffPerformanceChart: View {
                 VStack(spacing: 8) {
                     Image(systemName: "chart.bar.xaxis")
                         .font(.system(size: 24))
-                        .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                        .foregroundColor(theme.secondaryText.opacity(0.5))
                     Text("No staff data available")
                         .font(.system(size: 12))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .frame(height: 220)
@@ -44,8 +45,8 @@ struct StaffPerformanceChart: View {
                     .foregroundStyle(
                         LinearGradient(
                             gradient: Gradient(colors: [
-                                RSMSColors.burgundy,
-                                RSMSColors.burgundy.opacity(0.7)
+                                theme.primaryAction,
+                                theme.primaryAction.opacity(0.7)
                             ]),
                             startPoint: .bottom,
                             endPoint: .top
@@ -56,7 +57,7 @@ struct StaffPerformanceChart: View {
                         if point.score > 0 {
                             Text("\(point.score)%")
                                 .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                         }
                     }
                 }
@@ -64,25 +65,27 @@ struct StaffPerformanceChart: View {
                 .chartYAxis {
                     AxisMarks(position: .leading, values: .automatic(desiredCount: 5)) {
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [4, 4]))
-                            .foregroundStyle(Color.gray.opacity(0.2))
+                            .foregroundStyle(theme.secondaryText.opacity(0.2))
                         AxisValueLabel()
                             .font(.system(size: 11))
-                            .foregroundStyle(RSMSColors.secondaryText)
+                            .foregroundStyle(theme.secondaryText)
                     }
                 }
                 .chartXAxis {
                     AxisMarks {
                         AxisValueLabel()
                             .font(.system(size: 11))
-                            .foregroundStyle(RSMSColors.secondaryText)
+                            .foregroundStyle(theme.secondaryText)
                     }
                 }
                 .frame(height: 220)
             }
         }
         .padding(RSMSSpacing.lg)
-        .background(Color.white)
+        .background(theme.cardBackground)
         .cornerRadius(RSMSRadius.large)
-        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
+        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Staff Performance Chart")
     }
 }

@@ -1,16 +1,14 @@
 import SwiftUI
 
 struct InviteGuestsView: View {
+    @Environment(AppTheme.self) private var theme
     @Bindable var viewModel: EventsViewModel
     let eventId: UUID
     @Environment(\.dismiss) private var dismiss
     @Environment(SessionStore.self) private var sessionStore
     
     @State private var searchText = ""
-    @State private var invitingGuestIds = Set<UUID>()
-    @State private var failedGuestIds = Set<UUID>()
-    @State private var showingInviteSuccess = false
-    @State private var invitedGuestName = ""
+    @State private var selectedGuestIds = Set<UUID>()
     
     private var storeCustomers: [SupabaseClientModel] {
         viewModel.storeCustomers
@@ -34,57 +32,83 @@ struct InviteGuestsView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
+                // Select All Row
+                if !availableCustomers.isEmpty {
+                    Button {
+                        if selectedGuestIds.count == availableCustomers.count {
+                            selectedGuestIds.removeAll()
+                        } else {
+                            selectedGuestIds = Set(availableCustomers.map { $0.id })
+                        }
+                    } label: {
+                        HStack {
+                            Text("Select All")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(theme.burgundy)
+                            Spacer()
+                            if selectedGuestIds.count == availableCustomers.count && !availableCustomers.isEmpty {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(theme.burgundy)
+                                    .font(.title3)
+                            } else {
+                                Image(systemName: "circle")
+                                    .foregroundColor(.gray.opacity(0.5))
+                                    .font(.title3)
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 16)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    Divider()
+                }
+                
                 // Customer List
                 List(availableCustomers) { guest in
-                    HStack(spacing: 16) {
-                        ZStack {
-                            Circle()
-                                .fill(RSMSColors.burgundy.opacity(0.1))
-                                .frame(width: 44, height: 44)
-                            
-                            Text(guest.avatarName)
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(RSMSColors.burgundy)
+                    Button {
+                        if selectedGuestIds.contains(guest.id) {
+                            selectedGuestIds.remove(guest.id)
+                        } else {
+                            selectedGuestIds.insert(guest.id)
                         }
-                        
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(guest.name ?? "Unknown")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(RSMSColors.primaryText)
-                            
-                            Text(guest.email ?? "No Email")
-                                .font(.system(size: 13))
-                                .foregroundColor(.secondary)
-                            
-                            if failedGuestIds.contains(guest.id) {
-                                Text("Email failed. Try again.")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(.red)
+                    } label: {
+                        HStack(spacing: 16) {
+                            ZStack {
+                                Circle()
+                                    .fill(theme.burgundy.opacity(0.1))
+                                    .frame(width: 44, height: 44)
+                                
+                                Text(guest.avatarName)
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(theme.burgundy)
                             }
-                        }
-                        
-                        Spacer()
-                        
-                        Button {
-                            Task {
-                                await invite(guest)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(guest.name ?? "Unknown")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(theme.primaryText)
+                                
+                                Text(guest.email ?? "No Email")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.secondary)
                             }
-                        } label: {
-                            if invitingGuestIds.contains(guest.id) {
-                                ProgressView()
-                                    .tint(.white)
-                                    .frame(width: 58, height: 32)
+                            
+                            Spacer()
+                            
+                            if selectedGuestIds.contains(guest.id) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(theme.burgundy)
+                                    .font(.title3)
                             } else {
-                                Text(failedGuestIds.contains(guest.id) ? "Retry" : "Invite")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .frame(width: 58, height: 32)
+                                Image(systemName: "circle")
+                                    .foregroundColor(.gray.opacity(0.5))
+                                    .font(.title3)
                             }
                         }
-                        .buttonStyle(.borderedProminent)
-                        .tint(RSMSColors.burgundy)
-                        .disabled(!hasValidEmail(guest.email) || invitingGuestIds.contains(guest.id))
+                        .contentShape(Rectangle())
                     }
-                    .padding(.vertical, 6)
+                    .buttonStyle(PlainButtonStyle())
                 }
                 .listStyle(PlainListStyle())
                 .searchable(text: $searchText, prompt: "Search customers")
@@ -115,45 +139,28 @@ struct InviteGuestsView: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Invite (\(selectedGuestIds.count))") {
+                        Task {
+                            let storeID = sessionStore.currentUser?.storeID
+                            await viewModel.inviteGuests(
+                                to: eventId,
+                                guestIds: selectedGuestIds,
+                                storeID: storeID,
+                                managerName: sessionStore.currentUser?.name,
+                                managerEmail: sessionStore.currentUser?.email
+                            )
+                            dismiss()
+                        }
+                    }
+                    .fontWeight(.bold)
+                    .foregroundColor(selectedGuestIds.isEmpty ? .gray : theme.burgundy)
+                    .disabled(selectedGuestIds.isEmpty)
                 }
             }
-            .alert("Invitation Sent", isPresented: $showingInviteSuccess) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text("The invitation has been sent to \(invitedGuestName).")
-            }
         }
-    }
-
-    @MainActor
-    private func invite(_ guest: SupabaseClientModel) async {
-        invitingGuestIds.insert(guest.id)
-        failedGuestIds.remove(guest.id)
-
-        let currentUser = sessionStore.currentUser
-        let didInvite = await viewModel.inviteGuest(
-            guest,
-            to: eventId,
-            storeID: currentUser?.storeID,
-            managerName: currentUser?.name,
-            managerEmail: currentUser?.email
-        )
-
-        invitingGuestIds.remove(guest.id)
-        if !didInvite {
-            failedGuestIds.insert(guest.id)
-        } else {
-            invitedGuestName = guest.name?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ? guest.name! : "the client"
-            showingInviteSuccess = true
-        }
-    }
-
-    private func hasValidEmail(_ email: String?) -> Bool {
-        guard let email = email?.trimmingCharacters(in: .whitespacesAndNewlines) else {
-            return false
-        }
-        let regex = #"^\S+@\S+\.\S+$"#
-        return email.range(of: regex, options: .regularExpression) != nil
     }
 }

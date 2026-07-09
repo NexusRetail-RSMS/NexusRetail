@@ -469,7 +469,7 @@ final class ProductCatalogueViewModel: ObservableObject {
     }
 
     func stockColor(for product: TrendingProduct) -> Color {
-        product.stockStatus.lowercased().contains("low") ? RSMSColors.warning : RSMSColors.success
+        product.stockStatus.lowercased().contains("low") ? AppTheme().warning : AppTheme().success
     }
 
     private func formatPrice(_ value: Double) -> String {

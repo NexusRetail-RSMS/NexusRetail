@@ -31,8 +31,11 @@ enum POSFlowDestination: Hashable {
     case invoiceScanner
     case invoiceItemsSelection(invoiceId: String)
     case actionSelection(invoiceId: String, selectedItem: POSProduct, purchaseDate: Date?, warrantyEndDate: Date?, customer: RequestCustomer?)
+    case exchangeProduct(invoiceId: String, selectedItemIds: Set<UUID>)
     case repairForm(invoiceId: String, selectedItem: POSProduct, warrantyEndDate: Date?)
     case afterSalesHistory
+    case exchangePayment(originalProductId: UUID, replacementProductId: UUID, amount: Double)
+    case exchangeSummary(originalProductId: UUID, replacementProductId: UUID, amount: Double)
 }
 
 // MARK: - Chart / Period
@@ -41,6 +44,7 @@ enum SalesPeriod: String {
     case today = "Today"
     case week  = "This Week"
     case month = "This Month"
+    case allTime = "All Time"
 }
 
 enum ChartPeriod: String, CaseIterable, Identifiable {
@@ -59,7 +63,7 @@ enum RevenueFilter: String, CaseIterable, Identifiable {
 
 // MARK: - Dashboard chart data point
 
-struct StoreRevenueChartPoint: Identifiable {
+struct StoreRevenueChartPoint: Identifiable, Equatable {
     var id: String { label }
     let label: String
     let revenue: Double

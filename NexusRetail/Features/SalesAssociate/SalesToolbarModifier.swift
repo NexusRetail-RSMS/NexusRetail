@@ -3,7 +3,7 @@ import SwiftUI
 struct SalesToolbarModifier: ViewModifier {
     let title: LocalizedStringKey
     @Environment(SessionStore.self) private var sessionStore
-    @State private var isProfilePresented = false
+    @Environment(AppTheme.self) private var theme
 
     func body(content: Content) -> some View {
         content
@@ -11,16 +11,15 @@ struct SalesToolbarModifier: ViewModifier {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { isProfilePresented = true } label: {
+                    NavigationLink(destination: GlobalProfileView()) {
                         ZStack {
-                            Circle().fill(RSMSColors.burgundy).frame(width: 32, height: 32)
+                            Circle().fill(theme.headerBackground).frame(width: 32, height: 32)
                             Text(initials(for: sessionStore.currentUser?.name))
                                 .font(.system(size: 11, weight: .bold)).foregroundStyle(.white)
                         }
                     }
                 }
             }
-            .sheet(isPresented: $isProfilePresented) { AdminProfileSheet() }
     }
 
     private func initials(for name: String?) -> String {

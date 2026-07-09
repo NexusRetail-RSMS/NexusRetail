@@ -2,6 +2,7 @@ import SwiftUI
 import Supabase
 
 struct ActiveRepairsView: View {
+    @Environment(NexusRetail.AppTheme.self) private var theme
     @Environment(SessionStore.self) private var sessionStore
     
     @State private var repairOrders: [RepairOrderViewModel] = []
@@ -20,7 +21,7 @@ struct ActiveRepairsView: View {
     
     var body: some View {
         ZStack {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
@@ -29,17 +30,17 @@ struct ActiveRepairsView: View {
                 if isLoading {
                     Spacer()
                     ProgressView("Loading Repairs...")
-                        .tint(RSMSColors.burgundy)
+                        .tint(theme.burgundy)
                     Spacer()
                 } else if repairOrders.isEmpty {
                     Spacer()
                     VStack(spacing: 16) {
                         Image(systemName: "wrench.and.screwdriver.fill")
                             .font(.system(size: 48))
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                         Text("No Active Repairs")
                             .font(RSMSFonts.title)
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                     }
                     Spacer()
                 } else {
@@ -77,7 +78,7 @@ struct ActiveRepairsView: View {
             Text("Repairs")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
             Spacer()
         }
         .padding(.horizontal, RSMSSpacing.lg)

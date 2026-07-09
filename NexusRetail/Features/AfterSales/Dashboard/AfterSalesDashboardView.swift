@@ -8,11 +8,12 @@ import Charts
 
 struct AfterSalesDashboardView: View {
     @Environment(SessionStore.self) private var sessionStore
+    @Environment(AppTheme.self) private var theme
     @Binding var path: NavigationPath
     var namespace: Namespace.ID
+    @Binding var showScanner: Bool
 
     @State private var vm = AfterSalesDashboardViewModel()
-    @State private var isProfilePresented = false
     @State private var ticketFilter: AfterSalesTicketFilter? = nil
 
     // Content-only view. Navigation lives in AfterSalesTabView.
@@ -29,7 +30,7 @@ struct AfterSalesDashboardView: View {
                 .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.top, 16)
             }
-            .background(RSMSColors.background.ignoresSafeArea())
+            .background(theme.background.ignoresSafeArea())
             .refreshable { await vm.fetch(storeID: sessionStore.currentUser?.storeID) }
             .task { await vm.fetch(storeID: sessionStore.currentUser?.storeID) }
             
@@ -39,9 +40,6 @@ struct AfterSalesDashboardView: View {
             } else {
                 floatingQRButton
             }
-        }
-        .sheet(isPresented: $isProfilePresented) {
-            AdminProfileSheet()
         }
         .sheet(item: $ticketFilter) { filter in
             AfterSalesTicketsListView(filter: filter, storeID: sessionStore.currentUser?.storeID)
@@ -54,25 +52,25 @@ struct AfterSalesDashboardView: View {
             Text("Dashboard")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
             Spacer()
             
             Button {
                 path.append(POSFlowDestination.afterSalesHistory)
             } label: {
                 ZStack {
-                    Circle().fill(RSMSColors.burgundy.opacity(0.1)).frame(width: 44, height: 44)
+                    Circle().fill(theme.burgundy.opacity(0.1)).frame(width: 44, height: 44)
                     Image(systemName: "clock.arrow.circlepath")
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                 }
             }
             .buttonStyle(.plain)
             .accessibilityLabel("History")
 
-            Button { isProfilePresented = true } label: {
+            NavigationLink(destination: GlobalProfileView()) {
                 ZStack {
-                    Circle().fill(RSMSColors.burgundy).frame(width: 44, height: 44)
+                    Circle().fill(theme.burgundy).frame(width: 44, height: 44)
                     if let urlString = sessionStore.currentUser?.imageUrl, let url = URL(string: urlString) {
                         CachedAsyncImage(url: url) { image in
                             image
@@ -116,7 +114,7 @@ struct AfterSalesDashboardView: View {
             Button {
                 ticketFilter = .pending
             } label: {
-                KPICardView(title: "Pending Service Requests", value: "\(vm.pendingServiceRequests)", icon: "wrench.and.screwdriver.fill", trend: nil, color: RSMSColors.warning)
+                KPICardView(title: "Pending Service Requests", value: "\(vm.pendingServiceRequests)", icon: "wrench.and.screwdriver.fill", trend: nil, color: theme.warning)
             }
             .buttonStyle(.plain)
 
@@ -135,7 +133,7 @@ struct AfterSalesDashboardView: View {
             HStack {
                 Text("Service Requests")
                     .font(RSMSFonts.headline)
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                 Spacer()
                 Picker("Period", selection: $vm.selectedChartPeriod) {
                     ForEach(ChartPeriod.allCases) { period in
@@ -151,16 +149,16 @@ struct AfterSalesDashboardView: View {
             } else {
             Chart(vm.serviceRequestChartData) { point in
                 BarMark(x: .value("Period", point.label), y: .value("Requests", point.value), width: .ratio(0.45))
-                    .foregroundStyle(LinearGradient(colors: [RSMSColors.burgundy.opacity(0.8), RSMSColors.burgundy], startPoint: .top, endPoint: .bottom))
+                    .foregroundStyle(LinearGradient(colors: [theme.burgundy.opacity(0.8), theme.burgundy], startPoint: .top, endPoint: .bottom))
                     .cornerRadius(8)
             }
             .chartYAxis {
                 AxisMarks(position: .leading, values: .automatic(desiredCount: 5)) { value in
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4])).foregroundStyle(RSMSColors.divider)
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4])).foregroundStyle(theme.divider)
                     AxisValueLabel {
                         if let v = value.as(Double.self) {
                             Text("\(Int(v))")
-                                .font(.system(size: 9)).foregroundColor(RSMSColors.secondaryText)
+                                .font(.system(size: 9)).foregroundColor(theme.secondaryText)
                         }
                     }
                 }
@@ -169,7 +167,7 @@ struct AfterSalesDashboardView: View {
                 AxisMarks { value in
                     AxisValueLabel {
                         if let label = value.as(String.self) {
-                            Text(label).font(.system(size: 10, weight: .medium)).foregroundColor(RSMSColors.secondaryText)
+                            Text(label).font(.system(size: 10, weight: .medium)).foregroundColor(theme.secondaryText)
                         }
                     }
                 }
@@ -178,7 +176,7 @@ struct AfterSalesDashboardView: View {
             }
         }
         .padding(RSMSSpacing.lg)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .cornerRadius(RSMSRadius.large)
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
     }
@@ -187,10 +185,10 @@ struct AfterSalesDashboardView: View {
         VStack(spacing: 8) {
             Image(systemName: "chart.bar.xaxis")
                 .font(.system(size: 32))
-                .foregroundColor(RSMSColors.secondaryText.opacity(0.4))
+                .foregroundColor(theme.secondaryText.opacity(0.4))
             Text(text)
                 .font(.system(size: 13))
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
         }
         .frame(maxWidth: .infinity, minHeight: 180)
     }
@@ -200,7 +198,7 @@ struct AfterSalesDashboardView: View {
         VStack(alignment: .leading, spacing: RSMSSpacing.md) {
             Text("Service Status")
                 .font(RSMSFonts.headline)
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
             
             if vm.totalServiceRequests == 0 {
                 emptyChartPlaceholder(text: "No service tickets yet")
@@ -227,10 +225,10 @@ struct AfterSalesDashboardView: View {
                         VStack(spacing: 2) {
                             Text("\(vm.totalServiceRequests)")
                                 .font(.system(size: 28, weight: .bold, design: .rounded))
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                             Text("Total")
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                         }
                         .position(x: frame.midX, y: frame.midY)
                     }
@@ -240,17 +238,17 @@ struct AfterSalesDashboardView: View {
             }
         }
         .padding(RSMSSpacing.lg)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .cornerRadius(RSMSRadius.large)
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Service Status Chart, Total service tickets: \(vm.totalServiceRequests)")
     }
     
     // MARK: - Floating QR Button
     private var floatingQRButton: some View {
         Button {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                path.append(POSFlowDestination.invoiceScanner)
-            }
+            showScanner = true
         } label: {
             ZStack {
                 Circle()
@@ -269,4 +267,3 @@ struct AfterSalesDashboardView: View {
         .accessibilityLabel("Scan QR Code")
     }
 }
-

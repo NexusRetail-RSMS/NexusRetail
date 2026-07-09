@@ -33,6 +33,7 @@ enum StoreChartTimeRange: Equatable {
 }
 
 struct SwipeableCalendarView: View {
+    @Environment(AppTheme.self) private var theme
     @Binding var selectedRange: StoreChartTimeRange
 
     // Current page offsets — 0 = today/this week/this month/this year
@@ -120,7 +121,7 @@ struct SwipeableCalendarView: View {
         HStack(spacing: 8) {
             Button(action: goBack) {
                 Image(systemName: "chevron.left")
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
                     .font(.system(size: 14, weight: .bold))
                     .frame(width: 32, height: 44)
                     .contentShape(Rectangle())
@@ -137,7 +138,7 @@ struct SwipeableCalendarView: View {
 
             Button(action: goForward) {
                 Image(systemName: "chevron.right")
-                    .foregroundColor(canGoForward ? RSMSColors.secondaryText : RSMSColors.secondaryText.opacity(0.3))
+                    .foregroundColor(canGoForward ? theme.secondaryText : theme.secondaryText.opacity(0.3))
                     .font(.system(size: 14, weight: .bold))
                     .frame(width: 32, height: 44)
                     .contentShape(Rectangle())
@@ -168,10 +169,10 @@ struct SwipeableCalendarView: View {
                         VStack(spacing: 3) {
                             Text(dayLetter(date))
                                 .font(.system(size: 11, weight: .bold))
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                             Text(String(calendar.component(.day, from: date)))
                                 .font(.system(size: 15, weight: isToday(date) ? .bold : .regular))
-                                .foregroundColor(isToday(date) ? RSMSColors.burgundy : RSMSColors.primaryText)
+                                .foregroundColor(isToday(date) ? theme.burgundy : theme.primaryText)
                         }
                         .frame(maxWidth: .infinity)
                     }
@@ -192,7 +193,7 @@ struct SwipeableCalendarView: View {
             ForEach(-120...0, id: \.self) { offset in
                 Text(formattedMonthYear(monthStart(offset: offset)))
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                     .frame(maxWidth: .infinity)
                     .tag(offset)
             }
@@ -210,7 +211,7 @@ struct SwipeableCalendarView: View {
             ForEach(-20...0, id: \.self) { offset in
                 Text(formattedYear(yearStart(offset: offset)))
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                     .frame(maxWidth: .infinity)
                     .tag(offset)
             }

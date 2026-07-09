@@ -9,6 +9,7 @@
 import SwiftUI
 
 struct InventoryDashboardView: View {
+    @Environment(AppTheme.self) private var theme
     @State private var viewModel = InventoryViewModel()
     @Environment(SessionStore.self) private var sessionStore
     
@@ -34,7 +35,7 @@ struct InventoryDashboardView: View {
                     Spacer()
                     ProgressView("Loading inventory…")
                         .font(RSMSFonts.body)
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                     Spacer()
                 } else {
                     ScrollView {
@@ -48,10 +49,10 @@ struct InventoryDashboardView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(RSMSColors.background)
+            .background(theme.background)
         }
         .ignoresSafeArea(edges: .top)
-        .background(RSMSColors.background.ignoresSafeArea())
+        .background(theme.background.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .task {
             await viewModel.load(storeID: sessionStore.currentUser?.storeID)
@@ -76,19 +77,19 @@ struct InventoryDashboardView: View {
             Text("Inventory")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
             
             Spacer()
             
             NavigationLink(destination: ManagerPendingRequestsView(viewModel: viewModel)) {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy)
+                        .fill(theme.burgundy)
                         .frame(width: 44, height: 44)
                     
                     Image(systemName: "shippingbox.and.arrow.backward")
                         .font(.title3)
-                        .foregroundColor(RSMSColors.cream)
+                        .foregroundColor(theme.cream)
                 }
             }
             .accessibilityLabel("Stock Requests")
@@ -110,7 +111,7 @@ struct InventoryDashboardView: View {
                         viewModel.sortOrder = order
                     } label: {
                         HStack {
-                            Text(LocalizedStringKey(order.rawValue))
+                            Text(order.rawValue)
                             if viewModel.sortOrder == order {
                                 Image(systemName: "checkmark")
                             }
@@ -120,12 +121,12 @@ struct InventoryDashboardView: View {
             } label: {
                 ZStack {
                         Circle()
-                            .fill(RSMSColors.burgundy.opacity(0.08))
+                            .fill(theme.burgundy.opacity(0.08))
                             .frame(width: 48, height: 48)
 
                         Image(systemName: "line.3.horizontal.decrease")
                             .font(.system(size: 20, weight: .medium))
-                            .foregroundColor(RSMSColors.burgundy)
+                            .foregroundColor(theme.burgundy)
                     }
             }
         }
@@ -142,7 +143,7 @@ struct InventoryDashboardView: View {
                 }
                 
                 ForEach(InventoryCategory.allCases, id: \.self) { cat in
-                    CategoryChip(label: LocalizedStringKey(cat.rawValue), isSelected: viewModel.selectedCategory == cat) {
+                    CategoryChip(label: cat.rawValue, isSelected: viewModel.selectedCategory == cat) {
                         viewModel.selectedCategory = viewModel.selectedCategory == cat ? nil : cat
                     }
                 }
@@ -160,14 +161,14 @@ struct InventoryDashboardView: View {
                     emptyState(
                         icon: "exclamationmark.triangle",
                         title: "Couldn't load inventory",
-                        message: LocalizedStringKey(errorMessage)
+                        message: errorMessage
                     )
                     .padding(.top, 40)
                 } else {
                     emptyState(
                         icon: "shippingbox",
                         title: "No items found",
-                        message: LocalizedStringKey(viewModel.searchText.isEmpty ? "No inventory items match the current filter." : "No results for \"\(viewModel.searchText)\".")
+                        message: viewModel.searchText.isEmpty ? "No inventory items match the current filter." : "No results for \"\(viewModel.searchText)\"."
                     )
                     .padding(.top, 40)
                 }
@@ -190,17 +191,17 @@ struct InventoryDashboardView: View {
     
     // MARK: - Empty State
     
-    private func emptyState(icon: String, title: LocalizedStringKey, message: LocalizedStringKey) -> some View {
+    private func emptyState(icon: String, title: String, message: String) -> some View {
         VStack(spacing: 16) {
             Image(systemName: icon)
                 .font(.system(size: 48))
-                .foregroundColor(RSMSColors.secondaryText.opacity(0.4))
+                .foregroundColor(theme.secondaryText.opacity(0.4))
             Text(title)
                 .font(RSMSFonts.headline)
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
             Text(message)
                 .font(RSMSFonts.caption)
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
                 .multilineTextAlignment(.center)
         }
         .padding(.vertical, 40)
@@ -210,21 +211,22 @@ struct InventoryDashboardView: View {
 // MARK: - Category Chip
 
 struct CategoryChip: View {
-    let label: LocalizedStringKey
+    @Environment(AppTheme.self) private var theme
+    let label: String
     let isSelected: Bool
     let action: () -> Void
     
     var body: some View {
         Text(label)
             .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
-            .foregroundColor(isSelected ? .white : RSMSColors.primaryText)
+            .foregroundColor(isSelected ? .white : theme.primaryText)
             .padding(.horizontal, 14)
             .padding(.vertical, 7)
-            .background(isSelected ? RSMSColors.burgundy : Color.white)
+            .background(isSelected ? theme.burgundy : theme.cardBackground)
             .clipShape(Capsule())
             .overlay(
                 Capsule()
-                    .stroke(isSelected ? Color.clear : RSMSColors.inputBorder, lineWidth: 1)
+                    .stroke(isSelected ? Color.clear : theme.inputBorder, lineWidth: 1)
             )
             .contentShape(Capsule())
             .highPriorityGesture(
@@ -236,6 +238,7 @@ struct CategoryChip: View {
 // MARK: - Transfer Request Card
 
 struct ManagerTransferRequestCard: View {
+    @Environment(AppTheme.self) private var theme
     let request: TransferRequestRow
     
     var body: some View {
@@ -245,11 +248,11 @@ struct ManagerTransferRequestCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(request.productName)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     
                     Text(request.skuCode)
                         .font(.system(size: 12))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
                 
                 Spacer()
@@ -259,18 +262,18 @@ struct ManagerTransferRequestCard: View {
                     // Units
                     Label("\(request.quantity) units", systemImage: "cube.box")
                         .font(.system(size: 12))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                     
                     
                     Text(request.formattedDate)
                         .font(.system(size: 12))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
             }
             
         }
         .padding(14)
-        .background(Color.white)
+        .background(theme.cardBackground)
         .cornerRadius(RSMSRadius.medium)
         .shadow(color: Color.black.opacity(0.04), radius: 6, y: 2)
     }

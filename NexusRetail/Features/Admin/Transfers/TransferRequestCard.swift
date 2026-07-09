@@ -4,6 +4,7 @@ import Combine
 // MARK: - Requests Card
 
 struct TransferRequestCard: View {
+    @Environment(AppTheme.self) private var theme
     let request: AdminStockRequest
 
     @Environment(AdminTransfersViewModel.self) private var viewModel
@@ -11,6 +12,13 @@ struct TransferRequestCard: View {
 
     private var productImageURL: URL? {
         request.products.imageUrl.flatMap { URL(string: $0) }
+    }
+
+    private var sourceDescription: String {
+        guard let sourceStoreId = request.sourceStoreId else {
+            return "Best available store"
+        }
+        return "Store \(sourceStoreId.uuidString.prefix(8).uppercased())"
     }
 
     private var formattedDate: String {
@@ -38,16 +46,23 @@ struct TransferRequestCard: View {
             requestInfoRow
                 .padding(.top, 18)
 
-            // MARK: Actions
-            actionButtons
-                .padding(.top, 20)
+            if request.status == .pending {
+                // MARK: Sourcing Prediction
+                sourcingPredictionRow
+                    .padding(.top, 14)
+            }
+
+            // MARK: Action Buttons
+            if request.status == .pending {
+                actionButtons
+                    .padding(.top, 24)
+            }
         }
         .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 24)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
-        )
+        .background(theme.cardBackground)
+        .cornerRadius(24)
+        .shadow(color: Color.black.opacity(0.04), radius: 15, x: 0, y: 8)
+        .accessibilityElement(children: .combine)
         .sheet(isPresented: $showingScheduleSheet) {
             ScheduleSheet(request: request)
         }
@@ -59,7 +74,7 @@ struct TransferRequestCard: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(request.managerName)
                 .font(.system(size: 17, weight: .bold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
                 .lineLimit(1)
 
             Text(request.storeName)
@@ -85,12 +100,12 @@ struct TransferRequestCard: View {
             .clipShape(RoundedRectangle(cornerRadius: 16))
         } else {
             RoundedRectangle(cornerRadius: 16)
-                .fill(RSMSColors.burgundy.opacity(0.05))
+                .fill(theme.burgundy.opacity(0.05))
                 .frame(width: 70, height: 70)
                 .overlay(
                     Image(systemName: "bag")
                         .font(.system(size: 24))
-                        .foregroundColor(RSMSColors.burgundy.opacity(0.25))
+                        .foregroundColor(theme.burgundy.opacity(0.25))
                 )
         }
     }
@@ -101,7 +116,7 @@ struct TransferRequestCard: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(request.productName)
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
                 .lineLimit(1)
                 .truncationMode(.tail)
 
@@ -116,10 +131,35 @@ struct TransferRequestCard: View {
 
     private var requestInfoRow: some View {
         HStack(spacing: 0) {
-            InfoColumn(title: LocalizedStringKey("Requested"), value: "\(request.quantity)")
+            InfoColumn(title: "Requested", value: "\(request.quantity)")
             Spacer()
-            InfoColumn(title: LocalizedStringKey("Requested On"), value: formattedDate, alignment: .trailing)
+            InfoColumn(title: "Requested On", value: formattedDate, alignment: .trailing)
         }
+    }
+
+    // MARK: - Sourcing Prediction Row
+    
+    private var sourcingPredictionRow: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "box.truck.badge.clock.fill")
+                .foregroundColor(Color.nexusRed)
+                .font(.system(size: 16))
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Smart Routing")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(Color.nexusRed)
+                    .textCase(.uppercase)
+                
+                Text("From: \(sourceDescription)")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.primary)
+            }
+            Spacer()
+        }
+        .padding(12)
+        .background(Color.nexusRed.opacity(0.06))
+        .cornerRadius(12)
     }
 
     // MARK: - Actions
@@ -129,7 +169,7 @@ struct TransferRequestCard: View {
             Button {
                 withAnimation { viewModel.approveRequest(request) }
             } label: {
-                Text(LocalizedStringKey("Approve"))
+                Text("Approve")
                     .font(.system(size: 15, weight: .semibold))
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)
@@ -141,7 +181,7 @@ struct TransferRequestCard: View {
             Button {
                 showingScheduleSheet = true
             } label: {
-                Text(LocalizedStringKey("Schedule"))
+                Text("Schedule")
                     .font(.system(size: 15, weight: .semibold))
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)
@@ -154,7 +194,8 @@ struct TransferRequestCard: View {
 }
 
 struct InfoColumn: View {
-    let title: LocalizedStringKey
+    @Environment(AppTheme.self) private var theme
+    let title: String
     let value: String
     var alignment: HorizontalAlignment = .leading
 
@@ -171,7 +212,7 @@ struct InfoColumn: View {
 
             Text(value)
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
                 .lineLimit(1)
                 .multilineTextAlignment(textAlignment)
         }
@@ -182,6 +223,7 @@ struct InfoColumn: View {
 // MARK: - Schedule Sheet
 
 struct ScheduleSheet: View {
+    @Environment(AppTheme.self) private var theme
     let request: AdminStockRequest
     @Environment(AdminTransfersViewModel.self) private var viewModel
     @Environment(\.dismiss) private var dismiss
@@ -206,7 +248,7 @@ struct ScheduleSheet: View {
             VStack(spacing: 8) {
                 Image(systemName: "calendar.badge.clock")
                     .font(.system(size: 40))
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
 
                 Text("Schedule Request")
                     .font(.title2)
@@ -273,7 +315,7 @@ struct ScheduleSheet: View {
             .padding(.horizontal, 24)
             .padding(.bottom, 32)
         }
-        .background(RSMSColors.background)
+        .background(theme.background)
         .presentationDetents([.large])
     }
 }
@@ -281,6 +323,7 @@ struct ScheduleSheet: View {
 // MARK: - Waiting Card
 
 struct WaitingRequestCard: View {
+    @Environment(AppTheme.self) private var theme
     let request: AdminStockRequest
 
     @Environment(AdminTransfersViewModel.self) private var viewModel
@@ -304,15 +347,15 @@ struct WaitingRequestCard: View {
                 // Auto Approve Badge
                 if let autoApprove = request.autoApproveAt {
                     VStack(alignment: .center, spacing: 2) {
-                        Text(LocalizedStringKey("Auto Approves On"))
+                        Text("Auto Approves On")
                             .font(.system(size: 10, weight: .semibold))
                         Text(autoApprove.formatted(date: .abbreviated, time: .omitted))
                             .font(.system(size: 12, weight: .bold))
                     }
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(RSMSColors.burgundy.opacity(0.1))
+                    .background(theme.burgundy.opacity(0.1))
                     .clipShape(Capsule())
                 }
             }
@@ -329,10 +372,10 @@ struct WaitingRequestCard: View {
 
             // MARK: Bottom Information
             HStack(spacing: 0) {
-                InfoColumn(title: LocalizedStringKey("Requested"), value: "\(request.quantity)")
+                InfoColumn(title: "Requested", value: "\(request.quantity)")
                 Spacer()
                 if let scheduledAt = request.scheduledAt {
-                    InfoColumn(title: LocalizedStringKey("Scheduled On"), value: scheduledAt.formatted(date: .abbreviated, time: .omitted), alignment: .trailing)
+                    InfoColumn(title: "Scheduled On", value: scheduledAt.formatted(date: .abbreviated, time: .omitted), alignment: .trailing)
                 }
             }
             .padding(.top, 18)
@@ -341,7 +384,7 @@ struct WaitingRequestCard: View {
             Button {
                 showingApproveEarlyAlert = true
             } label: {
-                Text(LocalizedStringKey("Approve Early"))
+                Text("Approve Early")
                     .font(.system(size: 15, weight: .semibold))
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)
@@ -354,9 +397,10 @@ struct WaitingRequestCard: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 24)
-                .fill(Color.white)
+                .fill(theme.cardBackground)
                 .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
         )
+        .accessibilityElement(children: .combine)
         .alert("Approve Early", isPresented: $showingApproveEarlyAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Approve", role: .none) {
@@ -379,7 +423,7 @@ struct WaitingRequestCard: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(request.managerName)
                 .font(.system(size: 17, weight: .bold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
                 .lineLimit(1)
 
             Text(request.storeName)
@@ -403,12 +447,12 @@ struct WaitingRequestCard: View {
             .clipShape(RoundedRectangle(cornerRadius: 16))
         } else {
             RoundedRectangle(cornerRadius: 16)
-                .fill(RSMSColors.burgundy.opacity(0.05))
+                .fill(theme.burgundy.opacity(0.05))
                 .frame(width: 70, height: 70)
                 .overlay(
                     Image(systemName: "bag")
                         .font(.system(size: 24))
-                        .foregroundColor(RSMSColors.burgundy.opacity(0.25))
+                        .foregroundColor(theme.burgundy.opacity(0.25))
                 )
         }
     }
@@ -417,7 +461,7 @@ struct WaitingRequestCard: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(request.productName)
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
                 .lineLimit(1)
                 .truncationMode(.tail)
 
@@ -432,14 +476,15 @@ struct WaitingRequestCard: View {
 // MARK: - Approved Card
 
 struct ApprovedRequestCard: View {
+    @Environment(AppTheme.self) private var theme
     let request: AdminStockRequest
 
     private var badgeTitle: String {
-        guard let method = request.approvalMethod else { return String(localized: "Approved") }
+        guard let method = request.approvalMethod else { return "Approved" }
         switch method {
-        case .immediate: return String(localized: "Approved")
-        case .scheduled: return String(localized: "Auto Approved")
-        case .early: return String(localized: "Approved Early")
+        case .immediate: return "Approved"
+        case .scheduled: return "Auto Approved"
+        case .early: return "Approved Early"
         }
     }
 
@@ -462,10 +507,10 @@ struct ApprovedRequestCard: View {
                     Text(badgeTitle)
                         .font(.system(size: 12, weight: .semibold))
                 }
-                .foregroundColor(RSMSColors.burgundy)
+                .foregroundColor(theme.burgundy)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
-                .background(RSMSColors.burgundy.opacity(0.1))
+                .background(theme.burgundy.opacity(0.1))
                 .cornerRadius(8)
             }
 
@@ -481,10 +526,10 @@ struct ApprovedRequestCard: View {
 
             // MARK: Bottom Information
             HStack(spacing: 0) {
-                InfoColumn(title: LocalizedStringKey("Requested"), value: "\(request.quantity)")
+                InfoColumn(title: "Requested", value: "\(request.quantity)")
                 Spacer()
                 if let approvedAt = request.approvedAt {
-                    InfoColumn(title: LocalizedStringKey("Approved On"), value: approvedAt.formatted(date: .abbreviated, time: .omitted), alignment: .trailing)
+                    InfoColumn(title: "Approved On", value: approvedAt.formatted(date: .abbreviated, time: .omitted), alignment: .trailing)
                 }
             }
             .padding(.top, 18)
@@ -492,9 +537,10 @@ struct ApprovedRequestCard: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 24)
-                .fill(Color.white)
+                .fill(theme.cardBackground)
                 .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
         )
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Subviews
@@ -503,7 +549,7 @@ struct ApprovedRequestCard: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(request.managerName)
                 .font(.system(size: 17, weight: .bold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
                 .lineLimit(1)
 
             Text(request.storeName)
@@ -527,12 +573,12 @@ struct ApprovedRequestCard: View {
             .clipShape(RoundedRectangle(cornerRadius: 16))
         } else {
             RoundedRectangle(cornerRadius: 16)
-                .fill(RSMSColors.burgundy.opacity(0.05))
+                .fill(theme.burgundy.opacity(0.05))
                 .frame(width: 70, height: 70)
                 .overlay(
                     Image(systemName: "bag")
                         .font(.system(size: 24))
-                        .foregroundColor(RSMSColors.burgundy.opacity(0.25))
+                        .foregroundColor(theme.burgundy.opacity(0.25))
                 )
         }
     }
@@ -541,7 +587,7 @@ struct ApprovedRequestCard: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(request.productName)
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
                 .lineLimit(1)
                 .truncationMode(.tail)
 
@@ -552,5 +598,4 @@ struct ApprovedRequestCard: View {
         }
     }
 }
-
 

@@ -14,6 +14,7 @@ struct OnboardingPageData {
 }
 
 struct OnboardingView: View {
+    @Environment(AppTheme.self) private var theme
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @State private var stage = 0
     @State private var morphFirstPair = false
@@ -98,7 +99,7 @@ struct OnboardingView: View {
 
     private var background: some View {
         ZStack {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
 
             GeometryReader { geometry in
@@ -112,7 +113,7 @@ struct OnboardingView: View {
             .ignoresSafeArea()
 
             RadialGradient(
-                colors: [RSMSColors.burgundy.opacity(0.08), .clear],
+                colors: [theme.burgundy.opacity(0.08), .clear],
                 center: .top,
                 startRadius: 0,
                 endRadius: 420
@@ -127,10 +128,10 @@ struct OnboardingView: View {
         HStack(spacing: 8) {
             ForEach(0..<pages.count, id: \.self) { index in
                 Capsule()
-                    .fill(index == currentIndex ? RSMSColors.burgundy : RSMSColors.cardBorder)
+                    .fill(index == currentIndex ? theme.burgundy : theme.cardBorder)
                     .frame(width: index == currentIndex ? 24 : 7, height: 7)
                     .shadow(
-                        color: index == currentIndex ? RSMSColors.burgundy.opacity(0.35) : .clear,
+                        color: index == currentIndex ? theme.burgundy.opacity(0.35) : .clear,
                         radius: 4, x: 0, y: 2
                     )
                     .animation(.spring(response: 0.4, dampingFraction: 0.75), value: currentIndex)
@@ -155,9 +156,9 @@ struct OnboardingView: View {
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(RSMSColors.burgundy)
+            .background(theme.burgundy)
             .cornerRadius(24)
-            .shadow(color: RSMSColors.burgundy.opacity(0.25), radius: 10, x: 0, y: 5)
+            .shadow(color: theme.burgundy.opacity(0.25), radius: 10, x: 0, y: 5)
         }
         .buttonStyle(.plain)
     }
@@ -184,6 +185,7 @@ struct OnboardingView: View {
 // MARK: - Page Content
 
 private struct OnboardingPageView: View {
+    @Environment(AppTheme.self) private var theme
     enum Role {
         case from, to
     }
@@ -210,13 +212,13 @@ private struct OnboardingPageView: View {
         VStack(spacing: RSMSSpacing.xxl) {
             ZStack {
                 Circle()
-                    .fill(RSMSColors.burgundy.opacity(0.05))
+                    .fill(theme.burgundy.opacity(0.05))
                     .frame(width: 200, height: 200)
 
                 Circle()
                     .fill(
                         LinearGradient(
-                            colors: [RSMSColors.burgundy.opacity(0.20), RSMSColors.burgundy.opacity(0.06)],
+                            colors: [theme.burgundy.opacity(0.20), theme.burgundy.opacity(0.06)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -224,15 +226,15 @@ private struct OnboardingPageView: View {
                     .frame(width: 148, height: 148)
                     .overlay(
                         Circle()
-                            .stroke(RSMSColors.burgundy.opacity(0.15), lineWidth: 1)
+                            .stroke(theme.burgundy.opacity(0.15), lineWidth: 1)
                     )
-                    .shadow(color: RSMSColors.burgundy.opacity(0.18), radius: 24, x: 0, y: 14)
+                    .shadow(color: theme.burgundy.opacity(0.18), radius: 24, x: 0, y: 14)
 
                 Image(systemName: data.icon)
                     .font(.system(size: 150, weight: .medium))
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [RSMSColors.burgundy, RSMSColors.burgundy.opacity(0.75)],
+                            colors: [theme.burgundy, theme.burgundy.opacity(0.75)],
                             startPoint: .top,
                             endPoint: .bottom
                         )
@@ -242,13 +244,13 @@ private struct OnboardingPageView: View {
             VStack(spacing: RSMSSpacing.sm) {
                 Text(data.title)
                     .font(.system(size: 30, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(data.subtitle)
                     .font(.system(size: 15, weight: .regular))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
                     .multilineTextAlignment(.center)
                     .lineSpacing(3)
                     .padding(.horizontal, RSMSSpacing.xxl)

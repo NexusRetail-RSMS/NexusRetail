@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct OrdersHubView: View {
+    @Environment(AppTheme.self) private var theme
     @Binding var path: NavigationPath
     @Environment(\.dismiss) private var dismiss
     @Environment(SellViewModel.self) private var sellVM
@@ -10,23 +11,23 @@ struct OrdersHubView: View {
 
     // BOPIS pack/collect flow (pulled up from BOPISView so the hub is self-contained)
     @State private var orderToPack: BOPISOrder?
+    @State private var orderToCollect: BOPISOrder?
     @State private var showNotifiedAlert = false
-    @State private var notifiedCustomerName = ""
+    @State private var notifiedMessage = ""
 
     enum Segment: String, CaseIterable, Identifiable {
-        case all = "All"
         case instore = "In-Store"
         case bopis = "BOPIS"
         var id: String { rawValue }
     }
-    @State private var segment: Segment = .all
+    @State private var segment: Segment = .instore
 
-    private var showInStore: Bool { segment == .all || segment == .instore }
-    private var showBOPIS: Bool { segment == .all || segment == .bopis }
+    private var showInStore: Bool { segment == .instore }
+    private var showBOPIS: Bool { segment == .bopis }
 
     var body: some View {
         ZStack {
-            RSMSColors.background.ignoresSafeArea()
+            theme.background.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 headerBar
@@ -50,14 +51,22 @@ struct OrdersHubView: View {
         .sheet(item: $orderToPack) { order in
             BOPISPackOrderView(order: order) {
                 bopisVM.packAndNotify(id: order.id, associateID: sessionStore.currentUser?.id)
-                notifiedCustomerName = order.customerName
+                notifiedMessage = "Order packed and moved to waiting for customer pickup."
                 showNotifiedAlert = true
             }
         }
-        .alert("Customer Notified", isPresented: $showNotifiedAlert) {
+        .sheet(item: $orderToCollect) { order in
+            CollectVerifyView(order: order) { code in
+                let expectedCode = bopisVM.orders.first(where: { $0.id == order.id })?.verificationCode
+                guard expectedCode == code else { return false }
+                bopisVM.markCollected(id: order.id)
+                return true
+            }
+        }
+        .alert("Ready for Pickup", isPresented: $showNotifiedAlert) {
             Button("OK", role: .cancel) { }
         } message: {
-            Text("\(notifiedCustomerName) has been sent a verification code for pickup.")
+            Text(notifiedMessage)
         }
     }
 
@@ -66,23 +75,18 @@ struct OrdersHubView: View {
         HStack(alignment: .center, spacing: RSMSSpacing.md) {
             Button { dismiss() } label: {
                 ZStack {
-                    Circle().fill(RSMSColors.burgundy.opacity(0.1)).frame(width: 44, height: 44)
+                    Circle().fill(theme.burgundy.opacity(0.1)).frame(width: 44, height: 44)
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 18, weight: .bold)).foregroundColor(RSMSColors.burgundy)
+                        .font(.system(size: 18, weight: .bold)).foregroundColor(theme.burgundy)
                 }
             }
             .accessibilityLabel("Back")
 
             Text("Orders Hub")
-                .font(.system(size: 24, weight: .bold)).foregroundColor(RSMSColors.primaryText)
-
+                .font(.system(size: 24, weight: .bold)).foregroundColor(theme.primaryText)
+                
             Spacer()
 
-            ZStack {
-                Circle().fill(RSMSColors.burgundy).frame(width: 40, height: 40)
-                Text(initials(for: sessionStore.currentUser?.name))
-                    .font(.system(size: 15, weight: .semibold)).foregroundColor(.white)
-            }
         }
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.top, 60)
@@ -119,25 +123,6 @@ struct OrdersHubView: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: RSMSSpacing.lg) {
                 switch segment {
-                case .all:
-                    if mergedEntries.isEmpty {
-                        emptyRow(icon: "bag", text: "No orders yet")
-                    } else {
-                        ForEach(mergedEntries) { entry in
-                            switch entry {
-                            case .pos(let order):
-                                VStack(alignment: .leading, spacing: 6) {
-                                    typeBadge("In-Store", systemImage: "bag.fill")
-                                    posOrderRow(order)
-                                }
-                            case .bopis(let order):
-                                VStack(alignment: .leading, spacing: 6) {
-                                    typeBadge("BOPIS", systemImage: "shippingbox.fill")
-                                    BOPISCardView(order: order) { handleBOPISAction(order) }
-                                }
-                            }
-                        }
-                    }
                 case .instore:
                     inStoreContent
                 case .bopis:
@@ -156,10 +141,10 @@ struct OrdersHubView: View {
             Image(systemName: systemImage).font(.system(size: 10, weight: .bold))
             Text(text).font(.system(size: 11, weight: .bold))
         }
-        .foregroundColor(RSMSColors.burgundy)
+        .foregroundColor(theme.burgundy)
         .padding(.horizontal, 10)
         .padding(.vertical, 4)
-        .background(RSMSColors.burgundy.opacity(0.08))
+        .background(theme.burgundy.opacity(0.08))
         .clipShape(Capsule())
     }
 
@@ -180,40 +165,40 @@ struct OrdersHubView: View {
     private func posOrderRow(_ order: DBOrder) -> some View {
         HStack(spacing: 16) {
             ZStack {
-                Circle().fill(RSMSColors.burgundy.opacity(0.08)).frame(width: 44, height: 44)
+                Circle().fill(theme.burgundy.opacity(0.08)).frame(width: 44, height: 44)
                 Image(systemName: "shippingbox.fill")
-                    .foregroundColor(RSMSColors.burgundy).font(.system(size: 16))
+                    .foregroundColor(theme.burgundy).font(.system(size: 16))
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(order.id)
                     .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                 Text("\(order.formattedDate) · \(order.formattedTime)")
-                    .font(.system(size: 12)).foregroundColor(RSMSColors.secondaryText)
+                    .font(.system(size: 12)).foregroundColor(theme.secondaryText)
             }
 
             Spacer()
 
             VStack(alignment: .trailing, spacing: 6) {
                 Text(formatIndianCurrency(order.amount))
-                    .font(.system(size: 14, weight: .bold)).foregroundColor(RSMSColors.primaryText)
+                    .font(.system(size: 14, weight: .bold)).foregroundColor(theme.primaryText)
                 statusPill(order.status)
             }
         }
         .padding(14)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(RSMSColors.cardBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.cardBorder, lineWidth: 1))
     }
 
     private func statusPill(_ status: String) -> some View {
         let isDone = status == "Completed"
         return Text(status)
             .font(.system(size: 10, weight: .bold))
-            .foregroundColor(isDone ? RSMSColors.success : RSMSColors.secondaryText)
+            .foregroundColor(isDone ? theme.success : theme.secondaryText)
             .padding(.horizontal, 8).padding(.vertical, 4)
-            .background(isDone ? RSMSColors.success.opacity(0.08) : Color.gray.opacity(0.08))
+            .background(isDone ? theme.success.opacity(0.08) : Color.gray.opacity(0.08))
             .clipShape(Capsule())
     }
 
@@ -233,7 +218,7 @@ struct OrdersHubView: View {
         withAnimation {
             switch order.status {
             case .pending:            orderToPack = order
-            case .waitingForCustomer: bopisVM.markCollected(id: order.id)
+            case .waitingForCustomer: orderToCollect = order
             case .collected:          break
             }
         }
@@ -241,7 +226,7 @@ struct OrdersHubView: View {
 
     // MARK: - Shared bits
     private func loadingRow(_ text: String) -> some View {
-        HStack { Spacer(); ProgressView(text).tint(RSMSColors.burgundy); Spacer() }
+        HStack { Spacer(); ProgressView(text).tint(theme.burgundy); Spacer() }
             .padding(.vertical, 40)
     }
 
@@ -249,10 +234,10 @@ struct OrdersHubView: View {
         VStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 40))
-                .foregroundColor(RSMSColors.secondaryText.opacity(0.4))
+                .foregroundColor(theme.secondaryText.opacity(0.4))
             Text(text)
                 .font(.system(size: 14))
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40)
