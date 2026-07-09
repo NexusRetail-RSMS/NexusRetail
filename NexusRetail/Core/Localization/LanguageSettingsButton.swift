@@ -30,17 +30,24 @@ struct LanguageSettingsButton: View {
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: "globe")
-                    .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(theme.burgundy)
+                    .font(.system(size: 16, weight: .semibold))
+                    .frame(width: 20)
+                
                 Text("Language")
+                    .font(RSMSFonts.body)
                     .foregroundColor(theme.primaryText)
+                
                 Spacer()
+                
                 Text(currentDisplayName)
                     .foregroundColor(theme.secondaryText)
+                
                 Image(systemName: "chevron.right")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(theme.secondaryText)
             }
+            .padding(.vertical, 4)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

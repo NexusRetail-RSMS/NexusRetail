@@ -123,7 +123,7 @@ struct AfterSalesHistoryView: View {
             }
         }
         .navigationTitle("History")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
         .tint(theme.burgundy)
         .task {
             await viewModel.fetchHistory(storeID: sessionStore.currentUser?.storeID)
@@ -143,85 +143,144 @@ struct AfterSalesHistoryView: View {
 
     // MARK: - Cards
     private func exchangeCard(_ item: ExchangeItem) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top, spacing: 12) {
-                monogram(for: item.customerName)
-
-                VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top, spacing: 0) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text(item.customerName)
-                        .font(.system(size: 16, weight: .bold))
+                        .font(.system(size: 17, weight: .bold))
                         .foregroundColor(theme.primaryText)
-                    Text("#\(referenceCode(item.orderId, fallback: item.id))")
-                        .font(.system(size: 12, weight: .medium, design: .monospaced))
-                        .foregroundColor(theme.secondaryText)
+                        .lineLimit(1)
+                    Text("#\\(referenceCode(item.orderId, fallback: item.id))")
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
                 }
+                Spacer(minLength: 12)
+                HStack(spacing: 4) {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 10, weight: .bold))
+                    Text(item.status)
+                        .font(.system(size: 12, weight: .semibold))
+                }
+                .foregroundColor(theme.burgundy)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(theme.burgundy.opacity(0.1))
+                .cornerRadius(8)
             }
 
             Divider()
+                .padding(.top, 14)
+                .padding(.bottom, 14)
 
-            HStack(alignment: .center, spacing: 10) {
-                productVisual(imageUrl: item.imageUrl, productName: item.productName)
-
-                Text(item.productName)
-                    .font(.system(size: 15.5, weight: .bold))
-                    .foregroundColor(theme.primaryText)
-
-                Spacer()
-
-                Text(Self.dateFormatter.string(from: item.date))
-                    .font(.system(size: 12.5, weight: .medium))
-                    .foregroundColor(theme.secondaryText)
+            HStack(spacing: 14) {
+                productVisualLarge(imageUrl: item.imageUrl, productName: item.productName)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(item.productName)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(theme.primaryText)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                    Text("Qty: 1")
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
             }
+
+            HStack(spacing: 0) {
+                InfoColumnView(title: "Type", value: "Exchange", alignment: .leading)
+                Spacer()
+                InfoColumnView(title: "Date", value: Self.dateFormatter.string(from: item.date), alignment: .trailing)
+            }
+            .padding(.top, 18)
         }
-        .padding(16)
-        .background(theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.large))
-        .overlay(
-            RoundedRectangle(cornerRadius: RSMSRadius.large)
-                .stroke(theme.cardBorder, lineWidth: 1)
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 24)
+                .fill(theme.cardBackground)
+                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
         )
-        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
     }
 
     private func repairCard(_ item: RepairItem) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top, spacing: 12) {
-                monogram(for: item.customerName)
-
-                VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top, spacing: 0) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text(item.customerName)
-                        .font(.system(size: 16, weight: .bold))
+                        .font(.system(size: 17, weight: .bold))
                         .foregroundColor(theme.primaryText)
-                    Text("#\(referenceCode(item.orderId, fallback: item.id))")
-                        .font(.system(size: 12, weight: .medium, design: .monospaced))
-                        .foregroundColor(theme.secondaryText)
+                        .lineLimit(1)
+                    Text("#\\(referenceCode(item.orderId, fallback: item.id))")
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
                 }
+                Spacer(minLength: 12)
+                HStack(spacing: 4) {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 10, weight: .bold))
+                    Text(item.status)
+                        .font(.system(size: 12, weight: .semibold))
+                }
+                .foregroundColor(theme.burgundy)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(theme.burgundy.opacity(0.1))
+                .cornerRadius(8)
             }
 
             Divider()
+                .padding(.top, 14)
+                .padding(.bottom, 14)
 
-            HStack(alignment: .center, spacing: 10) {
-                productVisual(imageUrl: item.imageUrl, productName: item.productName)
-
-                VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 14) {
+                productVisualLarge(imageUrl: item.imageUrl, productName: item.productName)
+                VStack(alignment: .leading, spacing: 3) {
                     Text(item.productName)
-                        .font(.system(size: 15.5, weight: .bold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(theme.primaryText)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                    Text(item.issueDescription ?? "No issue description")
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
                 }
-                Spacer()
-                Text(Self.dateFormatter.string(from: item.date))
-                    .font(.system(size: 12.5, weight: .medium))
-                    .foregroundColor(theme.secondaryText)
             }
+
+            HStack(spacing: 0) {
+                InfoColumnView(title: "Type", value: "Repair", alignment: .leading)
+                Spacer()
+                InfoColumnView(title: "Date", value: Self.dateFormatter.string(from: item.date), alignment: .trailing)
+            }
+            .padding(.top, 18)
         }
-        .padding(16)
-        .background(theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.large))
-        .overlay(
-            RoundedRectangle(cornerRadius: RSMSRadius.large)
-                .stroke(theme.cardBorder, lineWidth: 1)
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 24)
+                .fill(theme.cardBackground)
+                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
         )
-        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+    }
+
+    struct InfoColumnView: View {
+        @Environment(AppTheme.self) private var theme
+        let title: String
+        let value: String
+        var alignment: HorizontalAlignment = .leading
+        var body: some View {
+            VStack(alignment: alignment, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.secondary)
+                Text(value)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(theme.primaryText)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: Alignment(horizontal: alignment, vertical: .center))
+        }
     }
 
     // MARK: - Shared subviews
@@ -235,6 +294,31 @@ struct AfterSalesHistoryView: View {
                     .font(.system(size: 14, weight: .bold))
                     .foregroundColor(.white)
             )
+    }
+
+    private func productVisualLarge(imageUrl: String?, productName: String) -> some View {
+        Group {
+            if let imageUrl, let url = URL(string: imageUrl) {
+                CachedAsyncImage(url: url) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 70, height: 70)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                } placeholder: {
+                    Color.gray.opacity(0.1).frame(width: 70, height: 70).clipShape(RoundedRectangle(cornerRadius: 16))
+                }
+            } else {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(theme.burgundy.opacity(0.05))
+                    .frame(width: 70, height: 70)
+                    .overlay(
+                        Image(systemName: iconName(for: productName))
+                            .font(.system(size: 24))
+                            .foregroundColor(theme.burgundy.opacity(0.25))
+                    )
+            }
+        }
     }
 
     private func productVisual(imageUrl: String?, productName: String) -> some View {

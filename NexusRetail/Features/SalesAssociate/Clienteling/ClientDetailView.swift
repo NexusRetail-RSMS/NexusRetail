@@ -57,7 +57,7 @@ struct ClientDetailView: View {
                         
                         // Avatar
                         Circle()
-                            .fill(LinearGradient(colors: [theme.gold, theme.gold.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .fill(theme.gold)
                             .frame(width: 120, height: 120)
                             .overlay(
                                 Circle().stroke(Color.white, lineWidth: 6)
@@ -101,30 +101,30 @@ struct ClientDetailView: View {
                         // Style Preferences & Purchase Pattern Card
                         HStack(alignment: .top, spacing: 20) {
                             VStack(spacing: 8) {
+                                Text("Style Preferences")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(theme.secondaryText)
+                                
                                 Text(dynamicPreferences ?? "Analyzing shopping history...")
                                     .font(.system(size: 16, weight: .bold))
                                     .foregroundStyle(theme.burgundy)
                                     .multilineTextAlignment(.center)
                                     .lineLimit(3)
-                                
-                                Text("Style Preferences")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(theme.secondaryText)
                             }
                             .frame(maxWidth: .infinity)
                             
                             Divider()
                             
                             VStack(spacing: 8) {
+                                Text("Purchase Pattern")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(theme.secondaryText)
+
                                 Text(dynamicPurchasePattern ?? "Loading pattern...")
                                     .font(.system(size: 16, weight: .bold))
                                     .foregroundStyle(theme.burgundy)
                                     .multilineTextAlignment(.center)
                                     .lineLimit(3)
-                                
-                                Text("Purchase Pattern")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(theme.secondaryText)
                             }
                             .frame(maxWidth: .infinity)
                         }
@@ -176,11 +176,13 @@ struct ClientDetailView: View {
         .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Edit") {
+                Button {
                     startEditing()
+                } label: {
+                    Image(systemName: "pencil")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.white)
                 }
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(.white)
             }
         }
         .sheet(isPresented: $isNewClientPresented) { newClientSheet }
@@ -226,11 +228,7 @@ struct ClientDetailView: View {
                 return
             }
 
-            let totalSpend = orders.reduce(0) { $0 + $1.total }
-            let avgSpend = totalSpend / Double(orders.count)
-            let formattedAvg = String(format: "₹%.0f", avgSpend)
-
-            dynamicPurchasePattern = "Frequent buyer (\(orders.count) orders) averaging \(formattedAvg) per visit."
+            dynamicPurchasePattern = "Frequent buyer with \(orders.count) total orders."
 
             var categoryCounts: [String: Int] = [:]
             for order in orders {
@@ -480,7 +478,7 @@ fileprivate struct ProductCardView: View {
     }
 }
 
-fileprivate struct TopWaveShape: Shape {
+struct TopWaveShape: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
         path.move(to: CGPoint(x: 0, y: 0))

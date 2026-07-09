@@ -133,8 +133,6 @@ struct CartView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Shopping Cart").font(.system(size: 24, weight: .bold)).foregroundColor(.white)
-                Text("\(groupedItems.count) SKU\(groupedItems.count == 1 ? "" : "s")  •  \(viewModel.cartItems.count) item\(viewModel.cartItems.count == 1 ? "" : "s")")
-                    .font(.system(size: 14, weight: .medium)).foregroundColor(.white.opacity(0.8))
             }
             Spacer()
         }

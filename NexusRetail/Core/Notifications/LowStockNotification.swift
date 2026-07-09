@@ -246,16 +246,17 @@ final class LowStockNotificationViewModel {
         // Remove any existing subscription first
         await stopListening()
         
-        let channel = SupabaseManager.shared.client.realtimeV2.channel("inventory-low-stock")
+        let channelName = "inventory-low-stock-\(UUID().uuidString)"
+        let channel = SupabaseManager.shared.client.realtimeV2.channel(channelName)
         
         let changes = channel.postgresChange(
             AnyAction.self,
             schema: "public",
             table: "inventory_item",
-            filter: "store_id=eq.\(storeID.uuidString)"
+            filter: .eq("store_id", value: storeID.uuidString)
         )
         
-        await channel.subscribe()
+        try? await channel.subscribeWithError()
         self.realtimeChannel = channel
         
         // Listen for any inventory changes and reload notifications

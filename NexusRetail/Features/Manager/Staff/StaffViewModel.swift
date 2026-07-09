@@ -89,6 +89,17 @@ class StaffViewModel {
                 .execute()
                 .value
             
+            struct UserStatus: Decodable {
+                let id: UUID
+                let is_active: Bool?
+                enum CodingKeys: String, CodingKey { case id, is_active }
+            }
+            let statuses: [UserStatus] = try await SupabaseManager.shared.client
+                .from("app_user")
+                .select("id, is_active")
+                .execute()
+                .value
+            let statusMap = Dictionary(uniqueKeysWithValues: statuses.map { ($0.id, $0.is_active ?? true) })
 
             let deleted = self.deletedIDs
             
@@ -119,7 +130,8 @@ class StaffViewModel {
                     email: stat.email ?? "",
                     imageData: finalImageData,
                     storeId: stat.storeId,
-                    customerAttraction: stat.customerAttraction ?? 0
+                    customerAttraction: stat.customerAttraction ?? 0,
+                    isActive: statusMap[stat.id] ?? true
                 )
             }
             
@@ -132,61 +144,20 @@ class StaffViewModel {
     }
     
     func deleteEmployee(id: UUID) async -> Bool {
-        // Optimistically hide from the in-memory list for a responsive UI, but do
-        // NOT persist to deletedIDs yet — otherwise a failed server delete would
-        // filter the still-live employee out of every future load permanently.
-        await MainActor.run {
-            self.employees.removeAll { $0.id == id }
-            self.saveToCache()
-        }
-
         var deleted = false
         do {
-            struct Params: Encodable { let staff_id: UUID }
+            struct UpdateUser: Encodable { let is_active: Bool }
             try await SupabaseManager.shared.client
-                .rpc("delete_staff", params: Params(staff_id: id))
+                .from("app_user")
+                .update(UpdateUser(is_active: false))
+                .eq("id", value: id.uuidString)
                 .execute()
             deleted = true
         } catch {
-            print("delete_staff RPC failed: \(error)")
+            print("Direct app_user update failed: \(error)")
         }
 
-        if !deleted {
-            do {
-                struct Params: Encodable { let manager_id: UUID }
-                try await SupabaseManager.shared.client
-                    .rpc("delete_manager", params: Params(manager_id: id))
-                    .execute()
-                deleted = true
-            } catch {
-                print("delete_manager RPC failed: \(error)")
-            }
-        }
-
-        if !deleted {
-            do {
-                try await SupabaseManager.shared.client
-                    .from("app_user")
-                    .delete()
-                    .eq("id", value: id.uuidString)
-                    .execute()
-                deleted = true
-            } catch {
-                print("Direct app_user delete failed: \(error)")
-            }
-        }
-
-        // Only record the tombstone once the server has actually deleted the row.
-        if deleted {
-            await MainActor.run {
-                var currentDeleted = self.deletedIDs
-                currentDeleted.insert(id)
-                self.deletedIDs = currentDeleted
-            }
-        }
-
-        // brings the still-live employee back into the list. (storeID is not updated here, it relies on the View calling loadStaff directly if needed, or we just pass nil to reload all cached ones and they will be filtered by the view)
-        // Wait, if we just pass nil, it won't filter by store_id. But since it's an internal refresh, let's keep it.
+        // reload instead of removing from cache
         await loadStaff(storeID: nil)
         return deleted
     }
