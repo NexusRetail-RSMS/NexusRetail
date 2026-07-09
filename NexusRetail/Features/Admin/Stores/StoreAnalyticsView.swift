@@ -268,7 +268,7 @@ struct StoreAnalyticsView: View {
         VStack(spacing: RSMSSpacing.sm) {
             Picker("Time range", selection: $analyticsVM.timeRange) {
                 ForEach(timeRanges, id: \.self) { range in
-                    Text(range).tag(range)
+                    Text(LocalizedStringKey(range)).tag(range)
                 }
             }
             .pickerStyle(.segmented)
@@ -427,7 +427,7 @@ struct StoreAnalyticsView: View {
                         ForEach(analyticsVM.topProducts) { p in
                             VStack(alignment: .leading, spacing: 4) {
                                 HStack {
-                                    Text(p.category)
+                                    Text(LocalizedStringKey(p.category))
                                         .font(.system(size: 11.5))
                                         .foregroundColor(theme.primaryText)
                                         .lineLimit(1)
@@ -488,11 +488,11 @@ struct StoreAnalyticsView: View {
         }
     }
 
-    private func drillFooter(_ label: String) -> some View {
+    private func drillFooter(_ label: LocalizedStringKey) -> some View {
         HStack {
             Spacer()
             HStack(spacing: 4) {
-                Text(localized: label).font(.system(size: 12, weight: .semibold))
+                Text(label).font(.system(size: 12, weight: .semibold))
                 Image(systemName: "arrow.up.right").font(.system(size: 10, weight: .bold))
             }
             .foregroundColor(theme.burgundy)

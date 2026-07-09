@@ -19,6 +19,7 @@ struct AdminDashboardView: View {
     @Environment(AdminNavigationStore.self) private var navStore
     @Environment(SessionStore.self) private var sessionStore
     @Environment(AppTheme.self) private var theme
+    @Environment(\.locale) private var locale
     @State private var viewModel = DashboardViewModel()
     
     // Drill-down states
@@ -170,7 +171,7 @@ struct AdminDashboardView: View {
                             viewModel.selectedCountry = country
                         }
                     } label: {
-                        Text(country)
+                        Text(CountryLocalizer.shared.localizedName(for: country, in: locale))
                     }
                 }
             } label: {

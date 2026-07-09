@@ -139,7 +139,7 @@ public struct HeaderCurve: Shape {
 struct NexusSearchBar: View {
     @Environment(AppTheme.self) private var theme
     @Binding var text: String
-    var placeholder: String = "Search"
+    var placeholder: LocalizedStringKey = "Search"
     @FocusState private var isFocused: Bool
 
     var body: some View {

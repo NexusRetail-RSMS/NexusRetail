@@ -9,6 +9,7 @@ import CoreLocation
 struct TopLocationsDetailView: View {
     @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
     
     let countryPolygons: [CountryPolygon]
     let revenueByCountry: [CountryRevenue]
@@ -111,7 +112,7 @@ struct TopLocationsDetailView: View {
                     // Details
                     if let selected = selectedCountry, let data = revenueByCountry.first(where: { $0.country == selected }) {
                         VStack(spacing: RSMSSpacing.sm) {
-                            Text(selected)
+                            Text(CountryLocalizer.shared.localizedName(for: selected, in: locale))
                                 .font(RSMSFonts.headline)
                                 .foregroundColor(theme.primaryText)
                             
@@ -154,8 +155,8 @@ struct TopLocationsDetailView: View {
                                     .fill(getColor(for: item.revenue))
                                     .frame(width: 12, height: 12)
                                 
-                                Text(item.country)
-                                    .font(.system(size: 16))
+                                Text(CountryLocalizer.shared.localizedName(for: item.country, in: locale))
+                                    .font(RSMSFonts.body)
                                     .foregroundColor(theme.primaryText)
                                 
                                 Spacer()

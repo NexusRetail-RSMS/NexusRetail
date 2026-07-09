@@ -171,7 +171,7 @@ struct EmployeeDetailView: View {
                             .background(theme.burgundy.opacity(0.08))
                             .clipShape(Circle())
                         
-                        Text(isAfterSales ? "Product Aftercare" : "Products Sold")
+                        Text(isAfterSales ? LocalizedStringKey("Product Aftercare") : LocalizedStringKey("Products Sold"))
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(theme.primaryText)
                         

@@ -225,8 +225,9 @@ struct RepairDetailView: View {
             )
     }
 
-    private func sectionLabel(_ text: String) -> some View {
-        Text(text.uppercased())
+    private func sectionLabel(_ text: LocalizedStringKey) -> some View {
+        Text(text)
+            .textCase(.uppercase)
             .font(.system(size: 11.5, weight: .bold))
             .foregroundColor(theme.secondaryText)
             .tracking(0.5)

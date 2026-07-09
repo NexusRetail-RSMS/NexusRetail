@@ -3,11 +3,11 @@ import SwiftUI
 enum PerformanceTier {
     case gold, silver, bronze, none
     
-    var label: String {
+    var label: LocalizedStringKey {
         switch self {
-        case .gold:   return String(localized: "Top Performer")
-        case .silver: return String(localized: "Silver Tier")
-        case .bronze: return String(localized: "Bronze Tier")
+        case .gold:   return "Top Performer"
+        case .silver: return "Silver Tier"
+        case .bronze: return "Bronze Tier"
         case .none:   return ""
         }
     }

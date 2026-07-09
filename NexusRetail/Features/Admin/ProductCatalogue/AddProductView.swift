@@ -130,7 +130,7 @@ struct AddProductView: View {
                         .foregroundStyle(theme.secondaryText)
 
                     Picker("Category", selection: $category) {
-                        ForEach(categories, id: \.self) { Text($0) }
+                        ForEach(categories, id: \.self) { Text(LocalizedStringKey($0)) }
                     }
                     .tint(theme.burgundy)
                 }

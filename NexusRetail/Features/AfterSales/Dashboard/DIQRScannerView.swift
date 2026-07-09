@@ -228,7 +228,8 @@ fileprivate struct DIQRScannerView: View {
     @ViewBuilder
     private var invoiceOptions: some View {
         VStack(spacing: 12) {
-            Text("OR ENTER MANUALLY")
+            Text("Or enter manually")
+                .textCase(.uppercase)
                 .font(.system(size: 11, weight: .semibold, design: .monospaced))
                 .tracking(1)
                 .foregroundColor(theme.secondaryText)

@@ -159,7 +159,7 @@ struct AfterSalesHistoryView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "checkmark")
                         .font(.system(size: 10, weight: .bold))
-                    Text(item.status)
+                    Text(LocalizedStringKey(item.status))
                         .font(.system(size: 12, weight: .semibold))
                 }
                 .foregroundColor(theme.burgundy)
@@ -220,7 +220,7 @@ struct AfterSalesHistoryView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "checkmark")
                         .font(.system(size: 10, weight: .bold))
-                    Text(item.status)
+                    Text(LocalizedStringKey(item.status))
                         .font(.system(size: 12, weight: .semibold))
                 }
                 .foregroundColor(theme.burgundy)

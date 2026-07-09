@@ -65,8 +65,8 @@ struct TopProductsDonut: View {
     @Environment(AppTheme.self) private var theme
     let slices: [DonutSlice]
     var height: CGFloat = 220
-    var centerCaption: String = "Units sold"
-    var unitLabel: String = "units"
+    var centerCaption: LocalizedStringKey = "Units sold"
+    var unitLabel: LocalizedStringKey = "units"
 
     @State private var selectedValue: Int?
 
