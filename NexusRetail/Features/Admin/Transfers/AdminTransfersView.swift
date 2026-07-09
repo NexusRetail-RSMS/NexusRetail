@@ -15,30 +15,31 @@ struct AdminTransfersView: View {
             theme.background
                 .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                // Header
-                headerSection
-                    .padding(.top, 16)
-                    .padding(.bottom, 16)
-
-                // Tabs
-                Picker("Tabs", selection: $selectedTab) {
-                    ForEach(TransferTab.allCases, id: \.self) { tab in
-                        Text(tab.rawValue).tag(tab)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, RSMSSpacing.lg)
-                .padding(.bottom, RSMSSpacing.md)
-
-                // Content
-                TabView(selection: $selectedTab) {
+            Group {
+                switch selectedTab {
+                case .requests:
                     RequestsListView()
-                        .tag(TransferTab.requests)
+                case .waiting:
                     WaitingRequestsView()
-                        .tag(TransferTab.waiting)
                 }
-                .tabViewStyle(.page(indexDisplayMode: .never))
+            }
+            .safeAreaInset(edge: .top) {
+                VStack(spacing: 0) {
+                    headerSection
+                        .padding(.horizontal, RSMSSpacing.lg)
+                        .padding(.top, 16)
+                        .padding(.bottom, 12)
+
+                    Picker("Tabs", selection: $selectedTab) {
+                        ForEach(TransferTab.allCases, id: \.self) { tab in
+                            Text(tab.rawValue).tag(tab)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal, RSMSSpacing.lg)
+                    .padding(.bottom, 12)
+                }
+                .fadingMaterialHeader()
             }
         }
         .toolbar(.hidden, for: .navigationBar)
@@ -78,7 +79,6 @@ struct AdminTransfersView: View {
             }
             .accessibilityLabel("History")
         }
-        .padding(.horizontal, RSMSSpacing.lg)
     }
 }
 
@@ -106,7 +106,6 @@ struct RequestsListView: View {
         .refreshable {
             await viewModel.load()
         }
-        .background(theme.background)
     }
 
     private var skeletonSection: some View {
@@ -250,7 +249,6 @@ struct WaitingRequestsView: View {
         .refreshable {
             await viewModel.load()
         }
-        .background(theme.background)
     }
 
     private var emptyState: some View {

@@ -43,13 +43,23 @@ struct AppointmentsView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 22) {
-                        headerSection
-                        filterToggle
                         contentSection
                     }
-                    .padding(.horizontal, 18)
+                    .padding(.horizontal, RSMSSpacing.lg)
                     .padding(.top, 8)
                     .padding(.bottom, 40)
+                }
+                .safeAreaInset(edge: .top) {
+                    VStack(spacing: 0) {
+                        headerSection
+                            .padding(.horizontal, RSMSSpacing.lg)
+                            .padding(.top, 16)
+                            .padding(.bottom, 8)
+                        filterToggle
+                            .padding(.horizontal, RSMSSpacing.lg)
+                            .padding(.bottom, RSMSSpacing.sm)
+                    }
+                    .fadingMaterialHeader()
                 }
             }
             .navigationBarHidden(true)

@@ -53,23 +53,17 @@ struct EventsView: View {
             ZStack {
                 theme.background.ignoresSafeArea()
                 
-                VStack(spacing: 0) {
-                    // Fixed Header
-                    headerRow
-                    
-                    // Fixed Search Bar
-                    searchBar
-                        .padding(.horizontal, RSMSSpacing.lg)
-                        .padding(.bottom, 16)
-                    
+                Group {
                     if filteredEvents.isEmpty {
-                        Spacer()
-                        if searchText.isEmpty {
-                            emptyState
-                        } else {
-                            emptySearchState
+                        VStack {
+                            Spacer()
+                            if searchText.isEmpty {
+                                emptyState
+                            } else {
+                                emptySearchState
+                            }
+                            Spacer()
                         }
-                        Spacer()
                     } else {
                         ScrollView {
                             VStack(spacing: 24) {
@@ -89,6 +83,15 @@ struct EventsView: View {
                             .padding(.bottom, 32)
                         }
                     }
+                }
+                .safeAreaInset(edge: .top) {
+                    VStack(spacing: 0) {
+                        headerRow
+                        searchBar
+                            .padding(.horizontal, RSMSSpacing.lg)
+                            .padding(.bottom, 16)
+                    }
+                    .fadingMaterialHeader()
                 }
             }
             .navigationBarHidden(true)
@@ -119,7 +122,7 @@ struct EventsView: View {
             }
         }
         .padding(.horizontal, RSMSSpacing.lg)
-        .padding(.top, RSMSSpacing.sm)
+        .padding(.top, 16)
         .padding(.bottom, 8)
     }
     

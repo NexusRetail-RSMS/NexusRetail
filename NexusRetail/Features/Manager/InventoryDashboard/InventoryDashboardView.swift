@@ -14,45 +14,35 @@ struct InventoryDashboardView: View {
     @Environment(SessionStore.self) private var sessionStore
     
     var body: some View {
-        VStack(spacing: 0) {
-            // ── Pinned top area: header + search + chips ──
-            // Completely outside the ScrollView so chips NEVER
-            // overlap grid items and can never leak taps.
-            VStack(spacing: 0) {
-                headerSection
-                    .padding(.top, RSMSSpacing.sm)
-                    .padding(.bottom, RSMSSpacing.md)
-                searchBar
-                    .padding(.bottom, RSMSSpacing.md)
-                filterSection
-                    .padding(.bottom, RSMSSpacing.sm)
-            }
-            .fadingMaterialHeader()
+        ZStack {
+            theme.background
+                .ignoresSafeArea()
             
-            // ── Scrollable content: grid only ──
-            Group {
-                if viewModel.isLoading && viewModel.items.isEmpty {
+            if viewModel.isLoading && viewModel.items.isEmpty {
+                VStack {
                     Spacer()
                     ProgressView("Loading inventory…")
                         .font(RSMSFonts.body)
                         .foregroundColor(theme.secondaryText)
                     Spacer()
-                } else {
-                    ScrollView {
-                        inventoryList
-                            .padding(.top, RSMSSpacing.md)
-                            .padding(.bottom, RSMSSpacing.xxxl)
-                    }
-                    .refreshable {
-                        await viewModel.load(storeID: sessionStore.currentUser?.storeID)
-                    }
+                }
+                .safeAreaInset(edge: .top) {
+                    topBarHeader
+                }
+            } else {
+                ScrollView {
+                    inventoryList
+                        .padding(.top, RSMSSpacing.md)
+                        .padding(.bottom, RSMSSpacing.xxxl)
+                }
+                .safeAreaInset(edge: .top) {
+                    topBarHeader
+                }
+                .refreshable {
+                    await viewModel.load(storeID: sessionStore.currentUser?.storeID)
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(theme.background)
         }
-        .ignoresSafeArea(edges: .top)
-        .background(theme.background.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .task {
             await viewModel.load(storeID: sessionStore.currentUser?.storeID)
@@ -68,6 +58,19 @@ struct InventoryDashboardView: View {
                 .presentationDetents([.height(590)])
             }
         }
+    }
+    
+    private var topBarHeader: some View {
+        VStack(spacing: 0) {
+            headerSection
+                .padding(.top, 16)
+                .padding(.bottom, 8)
+            searchBar
+                .padding(.bottom, 12)
+            filterSection
+                .padding(.bottom, 8)
+        }
+        .fadingMaterialHeader()
     }
     
     // MARK: - Header
@@ -95,7 +98,6 @@ struct InventoryDashboardView: View {
             .accessibilityLabel("Stock Requests")
         }
         .padding(.horizontal, RSMSSpacing.lg)
-        .padding(.top, 50) // safe area top
     }
     
     // MARK: - Search Bar

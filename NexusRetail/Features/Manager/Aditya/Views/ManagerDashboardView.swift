@@ -24,10 +24,6 @@ struct ManagerDashboardView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: RSMSSpacing.xl) {
-                // MARK: - Header
-                headerSection
-                    .padding(.top, RSMSSpacing.sm)
-                
                 // MARK: - KPI Cards
                 kpiSection
                 
@@ -46,6 +42,13 @@ struct ManagerDashboardView: View {
             }
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.bottom, RSMSSpacing.xxxl)
+        }
+        .safeAreaInset(edge: .top) {
+            headerSection
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, 16)
+                .padding(.bottom, 8)
+                .fadingMaterialHeader()
         }
         .background(theme.background.ignoresSafeArea())
         .navigationBarHidden(true)

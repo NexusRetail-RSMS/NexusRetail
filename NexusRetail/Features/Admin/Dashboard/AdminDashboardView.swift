@@ -47,10 +47,6 @@ struct AdminDashboardView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
 
-                    // MARK: - Header (scrolls with content)
-                    headerSection
-                        .padding(.top, 16)
-
                     // MARK: - Error Banner
                     if let errorMessage = viewModel.errorMessage {
                         HStack {
@@ -115,6 +111,13 @@ struct AdminDashboardView: View {
                         .padding(.bottom, RSMSSpacing.xxl)
                     }
                 }
+            }
+            .safeAreaInset(edge: .top) {
+                headerSection
+                    .padding(.horizontal, RSMSSpacing.lg)
+                    .padding(.top, 16)
+                    .padding(.bottom, 8)
+                    .fadingMaterialHeader()
             }
             .refreshable {
                 await viewModel.load()
@@ -221,7 +224,6 @@ struct AdminDashboardView: View {
             .accessibilityLabel("Profile")
             .accessibilityHint("Opens your profile and settings")
         }
-        .padding(.horizontal, RSMSSpacing.lg)
     }
 
     private func initials(for name: String?) -> String {

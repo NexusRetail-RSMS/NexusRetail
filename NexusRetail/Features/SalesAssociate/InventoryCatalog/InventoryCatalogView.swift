@@ -31,41 +31,54 @@ struct InventoryCatalogView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                theme.background.ignoresSafeArea()
+        ZStack {
+            theme.background.ignoresSafeArea()
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: RSMSSpacing.lg) {
-                        if isLoading {
-                            HStack {
-                                Spacer()
-                                ProgressView("Loading catalog...")
-                                    .tint(theme.burgundy)
-                                Spacer()
-                            }
-                            .padding(.top, 40)
-                        } else if filteredProducts.isEmpty {
-                            emptyState
-                        } else {
-                            VStack(spacing: 12) {
-                                ForEach(filteredProducts) { product in
-                                    catalogRow(product)
-                                }
+            ScrollView {
+                VStack(alignment: .leading, spacing: RSMSSpacing.lg) {
+                    if isLoading {
+                        HStack {
+                            Spacer()
+                            ProgressView("Loading catalog...")
+                                .tint(theme.burgundy)
+                            Spacer()
+                        }
+                        .padding(.top, 40)
+                    } else if filteredProducts.isEmpty {
+                        emptyState
+                    } else {
+                        VStack(spacing: 12) {
+                            ForEach(filteredProducts) { product in
+                                catalogRow(product)
                             }
                         }
                     }
+                }
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, 16)
+                .padding(.bottom, RSMSSpacing.xxl)
+            }
+            .safeAreaInset(edge: .top) {
+                VStack(spacing: 0) {
+                    HStack {
+                        Text("Search")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(theme.primaryText)
+                        Spacer()
+                    }
                     .padding(.horizontal, RSMSSpacing.lg)
                     .padding(.top, 16)
-                    .padding(.bottom, RSMSSpacing.xxl)
+                    .padding(.bottom, 8)
+                    NexusSearchBar(text: $searchText, placeholder: "Search products by name, SKU, or category...")
+                        .padding(.horizontal, RSMSSpacing.lg)
+                        .padding(.bottom, 12)
                 }
+                .fadingMaterialHeader()
             }
-            .navigationTitle("Search")
-            .navigationBarTitleDisplayMode(.large)
-            .searchable(text: $searchText, prompt: "Search products by name, SKU, or category...")
-            .task { await loadProducts() }
-            .refreshable { await loadProducts() }
         }
+        .task { await loadProducts() }
+        .refreshable { await loadProducts() }
     }
 
 

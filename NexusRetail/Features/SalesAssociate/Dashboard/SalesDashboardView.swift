@@ -33,13 +33,19 @@ struct SalesDashboardView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
-                        headerSection
                         kpiSection
                         revenueChartSection
                         Spacer(minLength: 80)
                     }
                     .padding(.horizontal, RSMSSpacing.lg)
                     .padding(.top, 16)
+                }
+                .safeAreaInset(edge: .top) {
+                    headerSection
+                        .padding(.horizontal, RSMSSpacing.lg)
+                        .padding(.top, 16)
+                        .padding(.bottom, 8)
+                        .fadingMaterialHeader()
                 }
 
                 if #available(iOS 18.0, *) {
@@ -153,7 +159,6 @@ struct SalesDashboardView: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Profile")
         }
-        .padding(.vertical, 4)
     }
 
     // MARK: - Top Actions & KPIs
