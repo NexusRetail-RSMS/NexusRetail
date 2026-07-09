@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SalesAssociateDashboardView: View {
     @Environment(SessionStore.self) private var sessionStore
+    @Environment(AppTheme.self) private var theme
 
     @State private var searchText = ""
     @State private var clientName = ""
@@ -9,7 +10,6 @@ struct SalesAssociateDashboardView: View {
     @State private var stylePreferences = ""
     @State private var hasConsent = true
     @State private var isNewClientPresented = false
-    @State private var isProfilePresented = false
     @State private var contentAppeared = false
 
     @State private var clients: [AssociateClient] = [
@@ -48,7 +48,7 @@ struct SalesAssociateDashboardView: View {
                 .padding(.bottom, 48)
             }
         }
-        .background(RSMSColors.background.ignoresSafeArea())
+        .background(theme.background.ignoresSafeArea())
         .navigationBarHidden(true)
         .onAppear {
             withAnimation(.spring(response: 0.65, dampingFraction: 0.82).delay(0.05)) {
@@ -56,7 +56,6 @@ struct SalesAssociateDashboardView: View {
             }
         }
         .sheet(isPresented: $isNewClientPresented) { newClientSheet }
-        .sheet(isPresented: $isProfilePresented) { AdminProfileSheet() }
     }
 
     private var headerBar: some View {
@@ -64,16 +63,16 @@ struct SalesAssociateDashboardView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(sessionStore.currentUser?.name?.components(separatedBy: " ").first ?? "Clienteling")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundStyle(RSMSColors.primaryText)
+                    .foregroundStyle(theme.primaryText)
             }
 
             Spacer()
 
             HStack(spacing: 10) {
-                Button { isProfilePresented = true } label: {
+                NavigationLink(destination: GlobalProfileView()) {
                     ZStack {
                         Circle()
-                            .fill(RSMSColors.burgundy)
+                            .fill(theme.burgundy)
                             .frame(width: 40, height: 40)
                         Text(initials(for: sessionStore.currentUser?.name))
                             .font(.system(size: 13, weight: .bold))
@@ -92,16 +91,16 @@ struct SalesAssociateDashboardView: View {
             HStack(alignment: .firstTextBaseline) {
                 Text("Clients")
                     .font(.system(size: 17, weight: .semibold, design: .rounded))
-                    .foregroundStyle(RSMSColors.darkBrown)
+                    .foregroundStyle(theme.darkBrown)
                 Spacer()
                 Button {
                     isNewClientPresented = true
                 } label: {
                     Image(systemName: "plus")
                         .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(RSMSColors.burgundy)
+                        .foregroundStyle(theme.burgundy)
                         .frame(width: 30, height: 30)
-                        .background(RSMSColors.burgundy.opacity(0.09))
+                        .background(theme.burgundy.opacity(0.09))
                         .clipShape(Circle())
                 }
                 .buttonStyle(BounceButtonStyle())
@@ -144,22 +143,22 @@ struct SalesAssociateDashboardView: View {
                     HStack {
                         Text("See all \(clients.count) clients")
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(RSMSColors.burgundy)
+                            .foregroundStyle(theme.burgundy)
                         Spacer()
                         Image(systemName: "chevron.right")
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(RSMSColors.burgundy.opacity(0.5))
+                            .foregroundStyle(theme.burgundy.opacity(0.5))
                     }
                     .padding(.horizontal, 18)
                     .padding(.vertical, 14)
                 }
             }
         }
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(RSMSColors.cardBorder, lineWidth: 0.5)
+                .strokeBorder(theme.cardBorder, lineWidth: 0.5)
         )
         .shadow(color: .black.opacity(0.05), radius: 14, x: 0, y: 5)
     }
@@ -168,29 +167,29 @@ struct SalesAssociateDashboardView: View {
         HStack(spacing: 14) {
             ZStack {
                 Circle()
-                    .fill(RSMSColors.burgundy.opacity(0.1))
+                    .fill(theme.burgundy.opacity(0.1))
                     .frame(width: 46, height: 46)
                 Text(String(client.name.prefix(1)))
                     .font(.system(size: 17, weight: .bold, design: .rounded))
-                    .foregroundStyle(RSMSColors.burgundy)
+                    .foregroundStyle(theme.burgundy)
             }
             VStack(alignment: .leading, spacing: 3) {
                 Text(client.name)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(RSMSColors.primaryText)
+                    .foregroundStyle(theme.primaryText)
                 Text(client.preferences)
                     .font(.system(size: 12))
-                    .foregroundStyle(RSMSColors.secondaryText)
+                    .foregroundStyle(theme.secondaryText)
                     .lineLimit(1)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 4) {
                 Text(client.phone)
                     .font(.system(size: 11))
-                    .foregroundStyle(RSMSColors.secondaryText)
+                    .foregroundStyle(theme.secondaryText)
                 Image(systemName: "chevron.right")
                     .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(RSMSColors.secondaryText.opacity(0.28))
+                    .foregroundStyle(theme.secondaryText.opacity(0.28))
             }
         }
         .padding(.horizontal, 18)
@@ -217,7 +216,7 @@ struct SalesAssociateDashboardView: View {
 
                 Section {
                     Toggle("Client consent received", isOn: $hasConsent)
-                        .tint(RSMSColors.burgundy)
+                        .tint(theme.burgundy)
                 } footer: {
                     Text("Required before saving personal details.")
                 }

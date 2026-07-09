@@ -47,6 +47,7 @@ struct AfterSalesTicketListRow: Decodable, Identifiable {
 }
 
 struct AfterSalesTicketsListView: View {
+    @Environment(AppTheme.self) private var theme
     let filter: AfterSalesTicketFilter
     let storeID: UUID?
 
@@ -57,18 +58,18 @@ struct AfterSalesTicketsListView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                RSMSColors.background.ignoresSafeArea()
+                theme.background.ignoresSafeArea()
 
                 if isLoading {
-                    ProgressView("Loading tickets...").tint(RSMSColors.burgundy)
+                    ProgressView("Loading tickets...").tint(theme.burgundy)
                 } else if tickets.isEmpty {
                     VStack(spacing: 12) {
                         Image(systemName: "tray")
                             .font(.system(size: 44))
-                            .foregroundColor(RSMSColors.secondaryText.opacity(0.4))
+                            .foregroundColor(theme.secondaryText.opacity(0.4))
                         Text("No tickets here yet")
                             .font(.system(size: 15))
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                     }
                 } else {
                     ScrollView {
@@ -87,7 +88,7 @@ struct AfterSalesTicketsListView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                 }
             }
             .task { await load() }
@@ -99,29 +100,29 @@ struct AfterSalesTicketsListView: View {
         return HStack(spacing: 14) {
             ZStack {
                 Circle()
-                    .fill((isExchange ? RSMSColors.burgundy : Color(hex: "34495E")).opacity(0.1))
+                    .fill((isExchange ? theme.burgundy : Color(hex: "34495E")).opacity(0.1))
                     .frame(width: 46, height: 46)
                 Image(systemName: isExchange ? "arrow.triangle.2.circlepath" : "wrench.and.screwdriver.fill")
-                    .foregroundColor(isExchange ? RSMSColors.burgundy : Color(hex: "34495E"))
+                    .foregroundColor(isExchange ? theme.burgundy : Color(hex: "34495E"))
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(t.itemName ?? "Item")
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                     .lineLimit(1)
                 HStack(spacing: 8) {
                     Text(t.type.capitalized)
                         .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(RSMSColors.burgundy)
-                    Text("•").foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.burgundy)
+                    Text("•").foregroundColor(theme.secondaryText)
                     Text(stageLabel(t.stage))
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
                 Text(t.createdAt.formatted(date: .abbreviated, time: .shortened))
                     .font(.system(size: 11))
-                    .foregroundColor(RSMSColors.secondaryText.opacity(0.8))
+                    .foregroundColor(theme.secondaryText.opacity(0.8))
             }
 
             Spacer()
@@ -130,24 +131,23 @@ struct AfterSalesTicketsListView: View {
                 if (t.serviceCost ?? 0) <= 0 {
                     Text("FREE")
                         .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(RSMSColors.success)
+                        .foregroundColor(theme.success)
                 } else {
                     Text(String(format: "₹%.0f", t.serviceCost ?? 0))
                         .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                 }
                 if t.warrantyStatus == "active" {
                     Text("In warranty")
                         .font(.system(size: 10))
-                        .foregroundColor(RSMSColors.success)
+                        .foregroundColor(theme.success)
                 }
             }
         }
         .padding(14)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(RSMSColors.cardBorder, lineWidth: 1))
-        .accessibilityElement(children: .combine)
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(theme.cardBorder, lineWidth: 1))
     }
 
     private func stageLabel(_ stage: String) -> String {

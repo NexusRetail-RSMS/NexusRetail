@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct ForgotPasswordView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
 
     private enum Step { case email, code, newPassword, done }
@@ -29,7 +30,7 @@ struct ForgotPasswordView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                RSMSColors.background.ignoresSafeArea()
+                theme.background.ignoresSafeArea()
 
                 ScrollView {
                     VStack(spacing: 24) {
@@ -43,10 +44,10 @@ struct ForgotPasswordView: View {
                         }
 
                         if !errorMessage.isEmpty {
-                            Text(errorMessage).font(.system(size: 13)).foregroundColor(RSMSColors.error)
+                            Text(errorMessage).font(.system(size: 13)).foregroundColor(theme.error)
                                 .multilineTextAlignment(.center)
                         } else if !infoMessage.isEmpty {
-                            Text(infoMessage).font(.system(size: 13)).foregroundColor(RSMSColors.secondaryText)
+                            Text(infoMessage).font(.system(size: 13)).foregroundColor(theme.secondaryText)
                                 .multilineTextAlignment(.center)
                         }
                         if let debugCode {
@@ -61,37 +62,24 @@ struct ForgotPasswordView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Close") { dismiss() }
-                        .foregroundColor(RSMSColors.burgundy)
-                        .accessibilityHint("Double tap to cancel password reset")
+                    Button("Close") { dismiss() }.foregroundColor(theme.burgundy)
                 }
             }
-        }
-        .onChange(of: errorMessage) { _, newValue in
-            guard !newValue.isEmpty else { return }
-            UIAccessibility.post(notification: .announcement, argument: "Error: \(newValue)")
-        }
-        .onChange(of: infoMessage) { _, newValue in
-            guard !newValue.isEmpty else { return }
-            UIAccessibility.post(notification: .announcement, argument: newValue)
         }
     }
 
     private var header: some View {
         VStack(spacing: 12) {
             ZStack {
-                Circle().fill(RSMSColors.burgundy.opacity(0.1)).frame(width: 72, height: 72)
+                Circle().fill(theme.burgundy.opacity(0.1)).frame(width: 72, height: 72)
                 Image(systemName: step == .done ? "checkmark.circle.fill" : "key.horizontal.fill")
                     .font(.system(size: 30))
-                    .foregroundColor(step == .done ? RSMSColors.success : RSMSColors.burgundy)
+                    .foregroundColor(step == .done ? theme.success : theme.burgundy)
             }
-            .accessibilityHidden(true)
-            
             Text(headerText)
                 .font(.system(size: 14))
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
                 .multilineTextAlignment(.center)
-                .accessibilityAddTraits(.isHeader)
         }
     }
 
@@ -125,11 +113,9 @@ struct ForgotPasswordView: View {
                 .tracking(6)
                 .padding(.vertical, 14)
                 .frame(maxWidth: .infinity)
-                .background(RSMSColors.cardBackground)
+                .background(theme.cardBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
-                .overlay(RoundedRectangle(cornerRadius: 12).stroke(RSMSColors.cardBorder, lineWidth: 1))
-                .accessibilityLabel("Verification code")
-                .accessibilityHint("Enter the 6-digit code sent to your email")
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(theme.cardBorder, lineWidth: 1))
                 .onChange(of: code) { _, v in
                     let f = String(v.filter(\.isNumber).prefix(6)); if f != v { code = f }; errorMessage = ""
                 }
@@ -137,7 +123,7 @@ struct ForgotPasswordView: View {
                 Task { await verifyCode() }
             }
             Button("Resend code") { Task { await sendCode() } }
-                .font(.system(size: 14)).foregroundColor(RSMSColors.burgundy)
+                .font(.system(size: 14)).foregroundColor(theme.burgundy)
         }
     }
 
@@ -149,7 +135,7 @@ struct ForgotPasswordView: View {
                 Task { await updatePassword() }
             }
             if !newPassword.isEmpty && newPassword != confirmPassword {
-                Text("Passwords don't match.").font(.system(size: 12)).foregroundColor(RSMSColors.error)
+                Text("Passwords don't match.").font(.system(size: 12)).foregroundColor(theme.error)
             }
         }
     }
@@ -166,19 +152,17 @@ struct ForgotPasswordView: View {
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
             .padding(14)
-            .background(RSMSColors.cardBackground)
+            .background(theme.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(RSMSColors.cardBorder, lineWidth: 1))
-            .accessibilityLabel(placeholder)
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(theme.cardBorder, lineWidth: 1))
     }
 
     private func secureField(_ placeholder: String, text: Binding<String>) -> some View {
         SecureField(placeholder, text: text)
             .padding(14)
-            .background(RSMSColors.cardBackground)
+            .background(theme.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(RSMSColors.cardBorder, lineWidth: 1))
-            .accessibilityLabel(placeholder)
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(theme.cardBorder, lineWidth: 1))
     }
 
     private func primaryButton(_ title: String, enabled: Bool, action: @escaping () -> Void) -> some View {
@@ -190,11 +174,10 @@ struct ForgotPasswordView: View {
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 15)
-            .background(enabled && !isBusy ? RSMSColors.burgundy : RSMSColors.secondaryText.opacity(0.4))
+            .background(enabled && !isBusy ? theme.burgundy : theme.secondaryText.opacity(0.4))
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .disabled(!enabled || isBusy)
-        .accessibilityValue(isBusy ? "Processing" : "")
     }
 
     // MARK: - Actions

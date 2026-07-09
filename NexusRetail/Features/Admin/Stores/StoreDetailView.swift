@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct StoreDetailView: View {
+    @Environment(AppTheme.self) private var theme
     let store: Store
     let manager: DisplayManager?
     @Bindable var viewModel: StoresViewModel
@@ -16,7 +17,7 @@ struct StoreDetailView: View {
     private var isActive: Bool { store.status == .active }
 
     private var statusColor: Color {
-        isActive ? RSMSColors.success : RSMSColors.secondaryText
+        isActive ? theme.success : theme.secondaryText
     }
 
     private var statusLabel: String {
@@ -35,7 +36,7 @@ struct StoreDetailView: View {
             .padding(.top, RSMSSpacing.lg)
             .padding(.bottom, RSMSSpacing.xxxxl)
         }
-        .background(RSMSColors.background.ignoresSafeArea())
+        .background(theme.background.ignoresSafeArea())
         .navigationTitle(store.name)
         .navigationBarTitleDisplayMode(.inline)
         .overlay(alignment: .bottom) {
@@ -72,14 +73,14 @@ struct StoreDetailView: View {
         VStack(spacing: RSMSSpacing.md) {
             ZStack {
                 Circle()
-                    .fill(RSMSColors.burgundy.opacity(0.08))
+                    .fill(theme.burgundy.opacity(0.08))
                     .frame(width: 148, height: 148)
                     .blur(radius: 20)
 
                 Circle()
                     .fill(
                         LinearGradient(
-                            colors: [RSMSColors.burgundy.opacity(0.20), RSMSColors.burgundy.opacity(0.05)],
+                            colors: [theme.burgundy.opacity(0.20), theme.burgundy.opacity(0.05)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -89,7 +90,7 @@ struct StoreDetailView: View {
                         Circle()
                             .stroke(
                                 LinearGradient(
-                                    colors: [RSMSColors.burgundy.opacity(0.35), RSMSColors.burgundy.opacity(0.05)],
+                                    colors: [theme.burgundy.opacity(0.35), theme.burgundy.opacity(0.05)],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 ),
@@ -101,24 +102,24 @@ struct StoreDetailView: View {
                     .font(.system(size: 44, weight: .medium))
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [RSMSColors.burgundy, RSMSColors.burgundy.opacity(0.75)],
+                            colors: [theme.burgundy, theme.burgundy.opacity(0.75)],
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
             }
-            .shadow(color: RSMSColors.burgundy.opacity(0.20), radius: 20, x: 0, y: 10)
+            .shadow(color: theme.burgundy.opacity(0.20), radius: 20, x: 0, y: 10)
             .padding(.top, RSMSSpacing.xl)
 
             VStack(spacing: 6) {
                 Text(store.name)
                     .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                     .multilineTextAlignment(.center)
 
                 Text(store.isWarehouse == true ? "Warehouse" : "Retail Store")
                     .font(.system(size: 12.5, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             }
 
             HStack(spacing: 6) {
@@ -139,13 +140,13 @@ struct StoreDetailView: View {
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 32)
-                .fill(RSMSColors.cardBackground)
+                .fill(theme.cardBackground)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 32)
                 .stroke(
                     LinearGradient(
-                        colors: [RSMSColors.burgundy.opacity(0.15), RSMSColors.cardBorder],
+                        colors: [theme.burgundy.opacity(0.15), theme.cardBorder],
                         startPoint: .top,
                         endPoint: .bottom
                     ),
@@ -153,8 +154,6 @@ struct StoreDetailView: View {
                 )
         )
         .shadow(color: Color.black.opacity(0.06), radius: 20, x: 0, y: 10)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(store.name), \(store.isWarehouse == true ? "Warehouse" : "Retail Store"), Status: \(statusLabel)")
     }
 
     // MARK: - Info card
@@ -163,12 +162,11 @@ struct StoreDetailView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(RSMSColors.burgundy)
+                    .fill(theme.burgundy)
                     .frame(width: 3, height: 16)
                 Text("Store Information")
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(RSMSColors.primaryText)
-                    .accessibilityAddTraits(.isHeader)
+                    .foregroundColor(theme.primaryText)
                 Spacer()
             }
             .padding(.horizontal, RSMSSpacing.lg)
@@ -201,11 +199,11 @@ struct StoreDetailView: View {
                 InfoRow(icon: "indianrupeesign.circle.fill", title: "Currency", value: store.currencyCode ?? "N/A", isLast: true)
             }
         }
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.large))
         .overlay(
             RoundedRectangle(cornerRadius: RSMSRadius.large)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 14, x: 0, y: 6)
     }
@@ -234,7 +232,7 @@ struct StoreDetailView: View {
                     RoundedRectangle(cornerRadius: 11)
                         .fill(
                             LinearGradient(
-                                colors: [RSMSColors.burgundy.opacity(0.12), RSMSColors.burgundy.opacity(0.04)],
+                                colors: [theme.burgundy.opacity(0.12), theme.burgundy.opacity(0.04)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
@@ -242,42 +240,42 @@ struct StoreDetailView: View {
                         .frame(width: 44, height: 44)
                     Image(systemName: "creditcard.fill")
                         .font(.system(size: 18))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                 }
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Payment Configuration")
                         .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     Text("Manage Razorpay & Card Terminals")
                         .font(.system(size: 12.5))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
 
                 Spacer()
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                    .foregroundColor(theme.secondaryText.opacity(0.5))
             }
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.vertical, RSMSSpacing.md)
-            .background(RSMSColors.cardBackground)
+            .background(theme.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.large))
             .overlay(
                 RoundedRectangle(cornerRadius: RSMSRadius.large)
-                    .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                    .stroke(theme.cardBorder, lineWidth: 1)
             )
             .shadow(color: Color.black.opacity(0.04), radius: 14, x: 0, y: 6)
         }
         .buttonStyle(.plain)
-        .accessibilityHint("Double tap to manage payment configurations")
     }
 }
 
 // MARK: - Manager card
 
 private struct ManagerCard: View {
+    @Environment(AppTheme.self) private var theme
     let manager: DisplayManager?
     let openURL: (URL, String) -> Void
 
@@ -300,12 +298,11 @@ private struct ManagerCard: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(RSMSColors.burgundy)
+                    .fill(theme.burgundy)
                     .frame(width: 3, height: 16)
                 Text("Manager")
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(RSMSColors.primaryText)
-                    .accessibilityAddTraits(.isHeader)
+                    .foregroundColor(theme.primaryText)
                 Spacer()
             }
             .padding(.horizontal, RSMSSpacing.lg)
@@ -316,7 +313,7 @@ private struct ManagerCard: View {
                 HStack(spacing: RSMSSpacing.md) {
                     ZStack {
                         Circle()
-                            .fill(RSMSColors.burgundy.opacity(0.12))
+                            .fill(theme.burgundy.opacity(0.12))
                             .frame(width: 44, height: 44)
 
                         if let urlString = manager.imageUrl, let url = URL(string: urlString) {
@@ -329,22 +326,22 @@ private struct ManagerCard: View {
                             } placeholder: {
                                 Text(initials(manager.name))
                                     .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(RSMSColors.burgundy)
+                                    .foregroundColor(theme.burgundy)
                             }
                         } else {
                             Text(initials(manager.name))
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(RSMSColors.burgundy)
+                                .foregroundColor(theme.burgundy)
                         }
                     }
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text(manager.name)
                             .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                         Text(tenureText(manager.createdAt))
                             .font(.system(size: 12.5))
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                     }
 
                     Spacer(minLength: 8)
@@ -370,37 +367,38 @@ private struct ManagerCard: View {
                 HStack(spacing: RSMSSpacing.md) {
                     ZStack {
                         Circle()
-                            .fill(RSMSColors.background)
+                            .fill(theme.background)
                             .frame(width: 44, height: 44)
                             .overlay(
                                 Circle()
                                     .stroke(style: StrokeStyle(lineWidth: 1, dash: [4]))
-                                    .foregroundColor(RSMSColors.cardBorder)
+                                    .foregroundColor(theme.cardBorder)
                             )
                         Image(systemName: "person.badge.plus")
                             .font(.system(size: 16))
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                     }
                     Text("No manager assigned")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                     Spacer()
                 }
                 .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.bottom, RSMSSpacing.lg)
             }
         }
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.large))
         .overlay(
             RoundedRectangle(cornerRadius: RSMSRadius.large)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 14, x: 0, y: 6)
     }
 }
 
 private struct ManagerIconButton: View {
+    @Environment(AppTheme.self) private var theme
     let icon: String
     let action: () -> Void
 
@@ -408,18 +406,18 @@ private struct ManagerIconButton: View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(RSMSColors.burgundy)
+                .foregroundColor(theme.burgundy)
                 .frame(width: 34, height: 34)
-                .background(RSMSColors.burgundy.opacity(0.1), in: Circle())
+                .background(theme.burgundy.opacity(0.1), in: Circle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(icon == "phone.fill" ? "Call Manager" : "Email Manager")
     }
 }
 
 // MARK: - Info row
 
 private struct InfoRow: View {
+    @Environment(AppTheme.self) private var theme
     let icon: String
     let title: String
     let value: String
@@ -433,7 +431,7 @@ private struct InfoRow: View {
                 RoundedRectangle(cornerRadius: 11)
                     .fill(
                         LinearGradient(
-                            colors: [RSMSColors.burgundy.opacity(0.12), RSMSColors.burgundy.opacity(0.04)],
+                            colors: [theme.burgundy.opacity(0.12), theme.burgundy.opacity(0.04)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -441,16 +439,16 @@ private struct InfoRow: View {
                     .frame(width: 36, height: 36)
                 Image(systemName: icon)
                     .font(.system(size: 15))
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
             }
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
                     .font(.system(size: 11.5, weight: .medium))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
                 Text(value)
                     .font(.system(size: 14.5, weight: .medium))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
@@ -460,12 +458,11 @@ private struct InfoRow: View {
                 Button(action: action) {
                     Image(systemName: actionIcon)
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                         .frame(width: 34, height: 34)
-                        .background(RSMSColors.burgundy.opacity(0.1), in: Circle())
+                        .background(theme.burgundy.opacity(0.1), in: Circle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(title == "Address" ? "Get Directions" : "Call Store")
             }
         }
         .padding(.horizontal, RSMSSpacing.lg)
@@ -474,9 +471,10 @@ private struct InfoRow: View {
 }
 
 private struct RowDivider: View {
+    @Environment(AppTheme.self) private var theme
     var body: some View {
         Rectangle()
-            .fill(RSMSColors.divider)
+            .fill(theme.divider)
             .frame(height: 0.5)
             .padding(.leading, RSMSSpacing.lg + 36 + RSMSSpacing.md)
     }

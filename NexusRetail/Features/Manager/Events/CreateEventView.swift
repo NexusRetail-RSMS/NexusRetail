@@ -2,6 +2,7 @@ import SwiftUI
 import PhotosUI
 
 struct CreateEventView: View {
+    @Environment(AppTheme.self) private var theme
     @Bindable var viewModel: EventsViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(SessionStore.self) private var sessionStore
@@ -52,10 +53,10 @@ struct CreateEventView: View {
                                 VStack(spacing: 8) {
                                     Image(systemName: "photo.badge.plus")
                                         .font(.system(size: 32))
-                                        .foregroundColor(.gray)
+                                        .foregroundColor(theme.secondaryText)
                                     Text("Tap to add event banner")
                                         .font(.subheadline)
-                                        .foregroundColor(.gray)
+                                        .foregroundColor(theme.secondaryText)
                                 }
                             }
 
@@ -71,7 +72,6 @@ struct CreateEventView: View {
                     .listRowInsets(EdgeInsets())
                     .buttonStyle(PlainButtonStyle())
                     .disabled(isProcessingImage || isSaving)
-                    .accessibilityLabel(bannerImageData != nil || eventToEdit?.bannerImageURL != nil ? "Change Event Banner" : "Add Event Banner")
                 }
                 
                 // Details Section
@@ -98,7 +98,6 @@ struct CreateEventView: View {
                         TextEditor(text: $description)
                             .frame(minHeight: 100)
                             .padding(.leading, -4)
-                            .accessibilityLabel("Description")
                     }
                 }
                 
@@ -130,11 +129,10 @@ struct CreateEventView: View {
                                 }
                             } label: {
                                 Image(systemName: "minus.circle.fill")
-                                    .foregroundColor(maximumGuests > 1 ? RSMSColors.burgundy : .gray)
+                                    .foregroundColor(maximumGuests > 1 ? theme.burgundy : .gray)
                                     .font(.title3)
                             }
                             .buttonStyle(PlainButtonStyle())
-                            .accessibilityLabel("Decrease Guests")
                             
                             Text("\(maximumGuests)")
                                 .font(.headline)
@@ -146,11 +144,10 @@ struct CreateEventView: View {
                                 }
                             } label: {
                                 Image(systemName: "plus.circle.fill")
-                                    .foregroundColor(maximumGuests < 1000 ? RSMSColors.burgundy : .gray)
+                                    .foregroundColor(maximumGuests < 1000 ? theme.burgundy : .gray)
                                     .font(.title3)
                             }
                             .buttonStyle(PlainButtonStyle())
-                            .accessibilityLabel("Increase Guests")
                         }
                     }
                 }
@@ -162,7 +159,7 @@ struct CreateEventView: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -173,7 +170,7 @@ struct CreateEventView: View {
                             Task { await saveEvent() }
                         }
                         .fontWeight(.bold)
-                        .foregroundColor((title.isEmpty || isProcessingImage) ? .gray : RSMSColors.burgundy)
+                        .foregroundColor((title.isEmpty || isProcessingImage) ? .gray : theme.burgundy)
                         .disabled(title.isEmpty || isProcessingImage)
                     }
                 }

@@ -158,21 +158,24 @@ class ManagersViewModel {
                 .eq("id", value: manager.id)
                 .execute()
 
-            // Update store assignment
+            // Update store assignment. The DB trigger enforces one-store-per-manager
+            // (assigning a manager to a store auto-detaches + archives any store they
+            // previously managed) and archives stores left without a manager.
             struct StoreManagerUpdate: Encodable { let manager_id: UUID? }
-            // 1. Clear old store if any
-            try? await SupabaseManager.shared.client
-                .from("store")
-                .update(StoreManagerUpdate(manager_id: nil))
-                .eq("manager_id", value: manager.id)
-                .execute()
-            
-            // 2. Assign new store
-            if !manager.storeName.isEmpty && manager.storeName != "Not Assigned" && manager.storeName != "Unassigned" {
+            let hasStore = !manager.storeName.isEmpty && manager.storeName != "Not Assigned" && manager.storeName != "Unassigned"
+            if hasStore {
+                // Assign to the chosen store; trigger handles detaching/archiving the old one.
                 try? await SupabaseManager.shared.client
                     .from("store")
                     .update(StoreManagerUpdate(manager_id: manager.id))
                     .eq("name", value: manager.storeName)
+                    .execute()
+            } else {
+                // Unassigned: remove this manager from whatever store they held (trigger archives it).
+                try? await SupabaseManager.shared.client
+                    .from("store")
+                    .update(StoreManagerUpdate(manager_id: nil))
+                    .eq("manager_id", value: manager.id)
                     .execute()
             }
 

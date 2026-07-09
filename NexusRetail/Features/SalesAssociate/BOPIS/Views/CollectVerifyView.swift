@@ -10,6 +10,7 @@
 import SwiftUI
 
 struct CollectVerifyView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     let order: BOPISOrder
     /// Verifies the entered code server-side; returns true if it matched.
@@ -26,22 +27,22 @@ struct CollectVerifyView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                RSMSColors.background.ignoresSafeArea()
+                theme.background.ignoresSafeArea()
 
                 VStack(spacing: RSMSSpacing.xl) {
                     VStack(spacing: 8) {
                         ZStack {
-                            Circle().fill(RSMSColors.burgundy.opacity(0.08)).frame(width: 72, height: 72)
+                            Circle().fill(theme.burgundy.opacity(0.08)).frame(width: 72, height: 72)
                             Image(systemName: "checkmark.shield.fill")
                                 .font(.system(size: 30))
-                                .foregroundColor(RSMSColors.burgundy)
+                                .foregroundColor(theme.burgundy)
                         }
                         Text("Verify Pickup")
                             .font(.system(size: 22, weight: .bold, design: .rounded))
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                         Text("Ask \(order.customerName) for the code sent to their email, then enter it below.")
                             .font(.system(size: 14))
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
                     }
@@ -52,16 +53,16 @@ struct CollectVerifyView: View {
                         .multilineTextAlignment(.center)
                         .font(.system(size: 28, weight: .bold, design: .rounded))
                         .padding(.vertical, 16)
-                        .background(Color.white)
+                        .background(theme.cardBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
-                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(RSMSColors.inputBorder, lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(theme.inputBorder, lineWidth: 1))
                         .padding(.horizontal, RSMSSpacing.lg)
                         .onChange(of: code) { _, _ in errorMessage = nil }
 
                     if let errorMessage {
                         Text(errorMessage)
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(RSMSColors.error)
+                            .foregroundColor(theme.error)
                     }
 
                     Button {
@@ -75,7 +76,7 @@ struct CollectVerifyView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(canVerify ? RSMSColors.burgundy : RSMSColors.disabled)
+                        .background(canVerify ? theme.burgundy : theme.disabled)
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                     }
                     .buttonStyle(.plain)
@@ -89,7 +90,7 @@ struct CollectVerifyView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }.foregroundColor(RSMSColors.burgundy)
+                    Button("Cancel") { dismiss() }.foregroundColor(theme.burgundy)
                 }
             }
         }

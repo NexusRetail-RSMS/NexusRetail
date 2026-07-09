@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct BOPISView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(SessionStore.self) private var sessionStore
     @State private var viewModel = BOPISViewModel()
     @State private var orderToPack: BOPISOrder?
@@ -17,7 +18,7 @@ struct BOPISView: View {
     
     var body: some View {
         ZStack {
-            RSMSColors.background.ignoresSafeArea()
+            theme.background.ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Header Area
@@ -29,7 +30,7 @@ struct BOPISView: View {
                 }
                 .padding(.top, RSMSSpacing.md)
                 .padding(.bottom, RSMSSpacing.sm)
-                .background(Color.white)
+                .background(theme.cardBackground)
                 .shadow(color: Color.black.opacity(0.05), radius: 4, y: 2)
                 
                 // Main Content — always a ScrollView so pull-to-refresh works
@@ -61,7 +62,7 @@ struct BOPISView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink(destination: BOPISHistoryView(viewModel: viewModel)) {
                     Image(systemName: "clock")
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                 }
             }
         }
@@ -104,19 +105,19 @@ struct BOPISView: View {
             
             ZStack(alignment: .bottomTrailing) {
                 Circle()
-                    .fill(RSMSColors.burgundy.opacity(0.05))
+                    .fill(theme.burgundy.opacity(0.05))
                     .frame(width: 120, height: 120)
                 
                 Image(systemName: "bag.fill")
                     .font(.system(size: 60))
-                    .foregroundColor(RSMSColors.burgundy.opacity(0.4))
+                    .foregroundColor(theme.burgundy.opacity(0.4))
                     .offset(x: -8, y: -8)
                 
                 ZStack {
-                    Circle().fill(Color.white).frame(width: 36, height: 36)
+                    Circle().fill(theme.cardBackground).frame(width: 36, height: 36)
                     Image(systemName: "questionmark.circle.fill")
                         .font(.system(size: 34))
-                        .foregroundColor(RSMSColors.burgundy.opacity(0.6))
+                        .foregroundColor(theme.burgundy.opacity(0.6))
                 }
                 .offset(x: 4, y: 4)
             }
@@ -125,11 +126,11 @@ struct BOPISView: View {
             VStack(spacing: 8) {
                 Text("No pickup orders available")
                     .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                 
                 Text("We couldn't find any orders matching\nyour search or filter.")
                     .font(.system(size: 15))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
             }
@@ -144,11 +145,11 @@ struct BOPISView: View {
                     Text("Clear Filters")
                         .font(.system(size: 14, weight: .semibold))
                 }
-                .foregroundColor(RSMSColors.burgundy)
+                .foregroundColor(theme.burgundy)
                 .padding(.horizontal, 24)
                 .padding(.vertical, 12)
                 .background(
-                    Capsule().stroke(RSMSColors.burgundy.opacity(0.5), lineWidth: 1)
+                    Capsule().stroke(theme.burgundy.opacity(0.5), lineWidth: 1)
                 )
             }
             .padding(.top, RSMSSpacing.lg)

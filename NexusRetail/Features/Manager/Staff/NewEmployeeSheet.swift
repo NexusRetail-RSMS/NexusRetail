@@ -9,6 +9,7 @@ import SwiftUI
 import PhotosUI
 
 struct NewEmployeeSheet: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     var initialRole: UserRole? = nil
     var onCreate: ((DisplayEmployee, String) async -> String?)? = nil
@@ -47,9 +48,9 @@ struct NewEmployeeSheet: View {
                         PhotosPicker(selection: $selectedPhoto, matching: .images) {
                             ZStack {
                                 Circle()
-                                    .fill(RSMSColors.burgundy.opacity(0.15))
+                                    .fill(theme.burgundy.opacity(0.15))
                                     .frame(width: 110, height: 110)
-                                    .shadow(color: RSMSColors.burgundy.opacity(0.15), radius: 10, x: 0, y: 4)
+                                    .shadow(color: theme.burgundy.opacity(0.15), radius: 10, x: 0, y: 4)
 
                                 if let image = selectedImage {
                                     Image(uiImage: image)
@@ -62,7 +63,7 @@ struct NewEmployeeSheet: View {
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: 52, height: 52)
-                                        .foregroundColor(RSMSColors.burgundy)
+                                        .foregroundColor(theme.burgundy)
                                 }
                             }
                         }
@@ -71,7 +72,7 @@ struct NewEmployeeSheet: View {
                         PhotosPicker(selection: $selectedPhoto, matching: .images) {
                             Text(selectedImage == nil ? "Add Photo" : "Change Photo")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                                 .padding(.horizontal, 22)
                                 .padding(.vertical, 8)
                                 .background(Color(.systemGray5))
@@ -83,7 +84,7 @@ struct NewEmployeeSheet: View {
                 }
 
                 // ── Basic Info ────────────────────────────
-                Section(header: Text("Employee Details").font(.system(size: 17, weight: .medium)).foregroundColor(.gray)) {
+                Section(header: Text("Employee Details").font(.system(size: 17, weight: .medium)).foregroundColor(theme.secondaryText)) {
                     TextField("First Name", text: $firstName)
                         .autocorrectionDisabled()
                     TextField("Last Name", text: $lastName)
@@ -91,7 +92,7 @@ struct NewEmployeeSheet: View {
                 }
 
                 // ── Contact Info ──────────────────────────
-                Section(header: Text("Contact Details").font(.system(size: 17, weight: .medium)).foregroundColor(.gray)) {
+                Section(header: Text("Contact Details").font(.system(size: 17, weight: .medium)).foregroundColor(theme.secondaryText)) {
                     TextField("Email", text: $email)
                         .keyboardType(.emailAddress)
                         .autocapitalization(.none)
@@ -101,7 +102,7 @@ struct NewEmployeeSheet: View {
                 }
 
                 // ── Role ──────────────────────────────────
-                Section(header: Text("Role").font(.system(size: 17, weight: .medium)).foregroundColor(.gray)) {
+                Section(header: Text("Role").font(.system(size: 17, weight: .medium)).foregroundColor(theme.secondaryText)) {
                     roleSelectionRow(role: .salesAssociate, label: "Sales Associate")
                     roleSelectionRow(role: .afterSales, label: "After Sales Associate")
                 }
@@ -168,10 +169,10 @@ struct NewEmployeeSheet: View {
     private func roleSelectionRow(role: UserRole, label: String) -> some View {
         HStack {
             Text(label)
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
             Spacer()
             Image(systemName: selectedRole == role ? "checkmark.circle.fill" : "circle")
-                .foregroundColor(selectedRole == role ? RSMSColors.burgundy : .gray)
+                .foregroundColor(selectedRole == role ? theme.burgundy : .gray)
                 .font(.system(size: 22))
         }
         .contentShape(Rectangle())

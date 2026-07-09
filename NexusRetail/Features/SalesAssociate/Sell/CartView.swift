@@ -1,13 +1,14 @@
 import SwiftUI
 
 struct CartView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     @Environment(SellViewModel.self) private var viewModel
     @Binding var path: NavigationPath
 
     var body: some View {
         ZStack {
-            RSMSColors.background.ignoresSafeArea()
+            theme.background.ignoresSafeArea()
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
@@ -19,12 +20,12 @@ struct CartView: View {
                         VStack(alignment: .leading, spacing: 14) {
                             Text("Selected Items")
                                 .font(.system(size: 16, weight: .bold, design: .rounded))
-                                .foregroundColor(RSMSColors.darkBrown)
+                                .foregroundColor(theme.darkBrown)
 
                             if viewModel.cartItems.isEmpty {
                                 Text("Your cart is empty")
                                     .font(.system(size: 14))
-                                    .foregroundColor(RSMSColors.secondaryText)
+                                    .foregroundColor(theme.secondaryText)
                                     .frame(maxWidth: .infinity, alignment: .center)
                                     .padding(.vertical, 24)
                             } else {
@@ -39,17 +40,17 @@ struct CartView: View {
                             HStack {
                                 Text("Total Amount")
                                     .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(RSMSColors.darkBrown)
+                                    .foregroundColor(theme.darkBrown)
                                 Spacer()
                                 Text(formatIndianCurrency(viewModel.totalAmount))
                                     .font(.system(size: 20, weight: .bold))
-                                    .foregroundColor(RSMSColors.burgundy)
+                                    .foregroundColor(theme.burgundy)
                             }
                         }
                         .padding(18)
-                        .background(RSMSColors.cardBackground)
+                        .background(theme.cardBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 18))
-                        .overlay(RoundedRectangle(cornerRadius: 18).stroke(RSMSColors.cardBorder, lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 18).stroke(theme.cardBorder, lineWidth: 1))
                         .shadow(color: Color.black.opacity(0.02), radius: 6, x: 0, y: 3)
 
                         // "Scan another" stays inline; the primary Checkout CTA
@@ -60,12 +61,12 @@ struct CartView: View {
                                     Image(systemName: "barcode.viewfinder")
                                     Text("Scan Another Item").font(.system(size: 16, weight: .bold))
                                 }
-                                .foregroundColor(RSMSColors.burgundy)
+                                .foregroundColor(theme.burgundy)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 16)
-                                .background(Color.white)
+                                .background(theme.cardBackground)
                                 .clipShape(RoundedRectangle(cornerRadius: 16))
-                                .overlay(RoundedRectangle(cornerRadius: 16).stroke(RSMSColors.burgundy, lineWidth: 1))
+                                .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.burgundy, lineWidth: 1))
                             }
                             .buttonStyle(.plain)
                         }
@@ -108,11 +109,11 @@ struct CartView: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
             .background(
-                LinearGradient(colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy],
+                LinearGradient(colors: [theme.burgundy, theme.darkBurgundy],
                                startPoint: .topLeading, endPoint: .bottomTrailing)
             )
             .clipShape(RoundedRectangle(cornerRadius: 18))
-            .shadow(color: RSMSColors.burgundy.opacity(0.25), radius: 12, x: 0, y: 6)
+            .shadow(color: theme.burgundy.opacity(0.25), radius: 12, x: 0, y: 6)
         }
         .buttonStyle(.plain)
         .padding(.horizontal, RSMSSpacing.lg)
@@ -141,7 +142,7 @@ struct CartView: View {
         .padding(.top, 60)
         .padding(.bottom, RSMSSpacing.xxxl)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(LinearGradient(colors: [RSMSColors.burgundy, RSMSColors.darkBurgundy], startPoint: .topLeading, endPoint: .bottomTrailing))
+        .background(LinearGradient(colors: [theme.burgundy, theme.darkBurgundy], startPoint: .topLeading, endPoint: .bottomTrailing))
         .clipShape(HeaderCurve())
     }
 
@@ -172,20 +173,20 @@ struct CartView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(product.name)
                     .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                     .lineLimit(2)
                 HStack(spacing: 6) {
                     Text(formatIndianCurrency(product.price))
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                     Text("each")
                         .font(.system(size: 11))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
                 if atMax {
                     Text("Max stock reached (\(available) available)")
                         .font(.system(size: 10, weight: .semibold))
-                        .foregroundColor(RSMSColors.warning)
+                        .foregroundColor(theme.warning)
                 }
             }
 
@@ -195,7 +196,7 @@ struct CartView: View {
                 // Line total
                 Text(formatIndianCurrency(product.price * Double(count)))
                     .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
 
                 HStack(spacing: 10) {
                     Button {
@@ -203,7 +204,7 @@ struct CartView: View {
                     } label: {
                         Image(systemName: count == 1 ? "trash" : "minus")
                             .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(count == 1 ? RSMSColors.error : RSMSColors.darkBrown)
+                            .foregroundColor(count == 1 ? theme.error : theme.darkBrown)
                             .frame(width: 28, height: 28)
                             .background(Color.gray.opacity(0.12))
                             .clipShape(Circle())
@@ -211,7 +212,7 @@ struct CartView: View {
 
                     Text("\(count)")
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                         .frame(minWidth: 18, alignment: .center)
 
                     Button {
@@ -219,7 +220,7 @@ struct CartView: View {
                     } label: {
                         Image(systemName: "plus")
                             .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(atMax ? Color.gray : RSMSColors.darkBrown)
+                            .foregroundColor(atMax ? Color.gray : theme.darkBrown)
                             .frame(width: 28, height: 28)
                             .background(atMax ? Color.gray.opacity(0.08) : Color.gray.opacity(0.12))
                             .clipShape(Circle())
@@ -230,9 +231,9 @@ struct CartView: View {
             }
         }
         .padding(14)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(RSMSColors.cardBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(theme.cardBorder, lineWidth: 1))
     }
 
 

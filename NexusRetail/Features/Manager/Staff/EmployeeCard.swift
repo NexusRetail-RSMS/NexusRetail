@@ -24,6 +24,7 @@ struct DisplayEmployee: Identifiable, Hashable, Codable {
 // MARK: - Employee Card View
 
 struct EmployeeCard: View {
+    @Environment(AppTheme.self) private var theme
     let employee: DisplayEmployee
     var onEdit: (() -> Void)? = nil
     var onDelete: (() -> Void)? = nil
@@ -65,7 +66,7 @@ struct EmployeeCard: View {
             // Profile at centre left
             ZStack {
                 Circle()
-                    .fill(RSMSColors.burgundy.opacity(0.1))
+                    .fill(theme.burgundy.opacity(0.1))
                     .frame(width: 55, height: 55)
                 
                 if let data = employee.imageData, let uiImage = UIImage(data: data) {
@@ -87,25 +88,26 @@ struct EmployeeCard: View {
                     }
                 } else {
                     Image(systemName: "person.fill")
+                        .foregroundColor(theme.burgundy)
+                        .font(.system(size: 24))
                 }
             }
-            .accessibilityHidden(true)
 
             // Name & products sold with amount below
             VStack(alignment: .leading, spacing: 4) {
                 Text(employee.name)
                     .font(.system(size: 17, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                 
                 HStack(spacing: 5) {
                     let isAfterSales = employee.role.localizedCaseInsensitiveContains("after")
                     Image(systemName: isAfterSales ? "wrench.and.screwdriver" : "bag")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(RSMSColors.burgundy)
+                        .foregroundColor(theme.burgundy)
                     
                     Text("\(employee.productsSold) \(isAfterSales ? "Products Aftercare" : "Products Sold")")
                         .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
             }
 
@@ -114,21 +116,18 @@ struct EmployeeCard: View {
             // Chevron at right edge
             Image(systemName: "chevron.right")
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
         }
         .padding(16)
         .frame(minHeight: 85)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .cornerRadius(RSMSRadius.extraLarge)
         .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
         .overlay(
-            RoundedRectangle(cornerRadius: RSMSRadius.extraLarge)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+            RoundedRectangle(cornerRadius: RSMSRadius.large)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
         .contentShape(Rectangle())
-        .accessibilityElement(children: .combine)
-        .accessibilityAction(named: "Edit") { onEdit?() }
-        .accessibilityAction(named: "Delete") { onDelete?() }
         .contextMenu {
             Button {
                 onEdit?()
@@ -138,7 +137,7 @@ struct EmployeeCard: View {
                 } icon: {
                     Image(systemName: "square.and.pencil")
                         .renderingMode(.template)
-                        .foregroundColor(.black)
+                        .foregroundColor(theme.primaryText)
                 }
             }
             .tint(.black)
@@ -161,7 +160,7 @@ struct EmployeeCard: View {
 
 #Preview {
     ZStack {
-        RSMSColors.background.ignoresSafeArea()
+        AppTheme().background.ignoresSafeArea()
         VStack(spacing: 16) {
             EmployeeCard(
                 name: "Sarah Jenkins",

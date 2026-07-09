@@ -9,6 +9,7 @@ import SwiftUI
 import Supabase
 
 struct InventoryCatalogView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(SessionStore.self) private var sessionStore
 
     @State private var products: [POSProduct] = []
@@ -32,7 +33,7 @@ struct InventoryCatalogView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                RSMSColors.background.ignoresSafeArea()
+                theme.background.ignoresSafeArea()
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: RSMSSpacing.lg) {
@@ -40,7 +41,7 @@ struct InventoryCatalogView: View {
                             HStack {
                                 Spacer()
                                 ProgressView("Loading catalog...")
-                                    .tint(RSMSColors.burgundy)
+                                    .tint(theme.burgundy)
                                 Spacer()
                             }
                             .padding(.top, 40)
@@ -74,10 +75,10 @@ struct InventoryCatalogView: View {
         VStack(spacing: 12) {
             Image(systemName: "shippingbox")
                 .font(.system(size: 40))
-                .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                .foregroundColor(theme.secondaryText.opacity(0.5))
             Text(searchText.isEmpty ? "No products available." : "No products found matching '\(searchText)'")
                 .font(.system(size: 14))
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
         }
         .frame(maxWidth: .infinity, alignment: .center)
         .padding(.top, 40)
@@ -91,7 +92,7 @@ struct InventoryCatalogView: View {
                     image.resizable().aspectRatio(contentMode: .fill)
                 } else {
                     Color.gray.opacity(0.1)
-                        .overlay(Image(systemName: "shippingbox").foregroundColor(RSMSColors.secondaryText))
+                        .overlay(Image(systemName: "shippingbox").foregroundColor(theme.secondaryText))
                 }
             }
             .frame(width: 56, height: 56)
@@ -100,11 +101,11 @@ struct InventoryCatalogView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(product.name)
                     .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                     .lineLimit(1)
                 Text("\(product.category) • \(product.sku)")
                     .font(.system(size: 12))
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
             }
 
             Spacer()
@@ -112,24 +113,24 @@ struct InventoryCatalogView: View {
             VStack(alignment: .trailing, spacing: 6) {
                 Text("₹\(String(format: "%.2f", product.price))")
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
 
                 stockBadge(for: product.stock)
             }
         }
         .padding(14)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(RSMSColors.cardBorder, lineWidth: 1)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 3)
     }
 
     private func stockBadge(for stock: Int) -> some View {
         let (text, color): (String, Color) = {
-            if stock <= 0 { return ("Out of Stock", RSMSColors.error) }
+            if stock <= 0 { return ("Out of Stock", theme.error) }
             if stock <= 5 { return ("Low Stock: \(stock)", Color(hex: "D4A017")) }
             return ("In Stock: \(stock)", Color(hex: "2A9D8F"))
         }()

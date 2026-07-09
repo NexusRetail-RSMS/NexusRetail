@@ -9,6 +9,7 @@
 import SwiftUI
 
 struct OTPVerificationView: View {
+    @Environment(AppTheme.self) private var theme
     @Environment(SessionStore.self) private var sessionStore
 
     @State private var code = ""
@@ -34,26 +35,24 @@ struct OTPVerificationView: View {
 
     var body: some View {
         ZStack {
-            RSMSColors.background.ignoresSafeArea()
+            theme.background.ignoresSafeArea()
 
             VStack(spacing: 28) {
                 Spacer()
 
                 VStack(spacing: 14) {
                     ZStack {
-                        Circle().fill(RSMSColors.burgundy.opacity(0.1)).frame(width: 84, height: 84)
+                        Circle().fill(theme.burgundy.opacity(0.1)).frame(width: 84, height: 84)
                         Image(systemName: "lock.shield.fill")
                             .font(.system(size: 38))
-                            .foregroundColor(RSMSColors.burgundy)
+                            .foregroundColor(theme.burgundy)
                     }
-                    .accessibilityHidden(true)
                     Text("Two-Factor Verification")
                         .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(RSMSColors.primaryText)
-                        .accessibilityAddTraits(.isHeader)
+                        .foregroundColor(theme.primaryText)
                     Text("We sent a 6-digit code to\n\(maskedEmail)")
                         .font(.system(size: 14))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                         .multilineTextAlignment(.center)
                 }
 
@@ -68,11 +67,9 @@ struct OTPVerificationView: View {
                         .focused($codeFocused)
                         .padding(.vertical, 16)
                         .frame(maxWidth: .infinity)
-                        .background(RSMSColors.cardBackground)
+                        .background(theme.cardBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
-                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(RSMSColors.cardBorder, lineWidth: 1))
-                        .accessibilityLabel("Verification code")
-                        .accessibilityHint("Enter the 6-digit code sent to your email")
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(theme.cardBorder, lineWidth: 1))
                         .onChange(of: code) { _, newValue in
                             let filtered = String(newValue.filter(\.isNumber).prefix(codeLength))
                             if filtered != newValue { code = filtered }
@@ -82,13 +79,11 @@ struct OTPVerificationView: View {
                     if !errorMessage.isEmpty {
                         Text(errorMessage)
                             .font(.system(size: 13))
-                            .foregroundColor(RSMSColors.error)
-                            .onAppear { UIAccessibility.post(notification: .announcement, argument: "Error: \(errorMessage)") }
+                            .foregroundColor(theme.error)
                     } else if !infoMessage.isEmpty {
                         Text(infoMessage)
                             .font(.system(size: 13))
-                            .foregroundColor(RSMSColors.secondaryText)
-                            .onAppear { UIAccessibility.post(notification: .announcement, argument: infoMessage) }
+                            .foregroundColor(theme.secondaryText)
                     }
 
                     if let debugCode {
@@ -110,12 +105,11 @@ struct OTPVerificationView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(code.count == codeLength ? RSMSColors.burgundy : RSMSColors.secondaryText.opacity(0.4))
+                    .background(code.count == codeLength ? theme.burgundy : theme.secondaryText.opacity(0.4))
                     .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
                 .disabled(code.count != codeLength || isVerifying)
                 .padding(.horizontal, RSMSSpacing.lg)
-                .accessibilityValue(isVerifying ? "Verifying" : "")
 
                 // Resend
                 Button {
@@ -123,16 +117,15 @@ struct OTPVerificationView: View {
                 } label: {
                     if resendCountdown > 0 {
                         Text("Resend code in \(resendCountdown)s")
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                     } else if isSending {
-                        Text("Sending…").foregroundColor(RSMSColors.secondaryText)
+                        Text("Sending…").foregroundColor(theme.secondaryText)
                     } else {
-                        Text("Resend code").foregroundColor(RSMSColors.burgundy).fontWeight(.semibold)
+                        Text("Resend code").foregroundColor(theme.burgundy).fontWeight(.semibold)
                     }
                 }
                 .font(.system(size: 14))
                 .disabled(resendCountdown > 0 || isSending)
-                .accessibilityHint(resendCountdown > 0 ? "Available in \(resendCountdown) seconds" : "Double tap to resend the code")
 
                 Spacer()
 
@@ -141,10 +134,9 @@ struct OTPVerificationView: View {
                 } label: {
                     Text("Cancel and sign out")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
                 .padding(.bottom, 24)
-                .accessibilityHint("Double tap to cancel and sign out")
             }
         }
         .task {

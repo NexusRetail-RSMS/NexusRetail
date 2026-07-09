@@ -2,159 +2,270 @@ import SwiftUI
 
 struct AppointmentsView: View {
     @Environment(SessionStore.self) private var sessionStore
+    @Environment(AppTheme.self) private var theme
     @State private var viewModel = AppointmentsViewModel()
-
     @State private var showingNewAppointment = false
+    @State private var contentAppeared = false
 
     enum FilterMode: String, CaseIterable, Identifiable {
         case inStore = "In Store"
-        case video = "Video"
+        case video   = "Video"
         var id: String { rawValue }
     }
     @State private var selectedFilter: FilterMode = .inStore
 
-    // MARK: - Filtering / Grouping
+    // MARK: - Accent helpers
+    private var accent: Color { theme.isDarkMode ? theme.antiqueGold : theme.burgundy }
+    private var cardBg: Color {
+        theme.isDarkMode ? Color(hex: "1A1009") : Color.white
+    }
 
+    // MARK: - Filtering / Grouping
     private var filtered: [AssociateAppointment] {
         viewModel.appointments
             .filter { appt in
                 appt.date >= Calendar.current.startOfDay(for: .now) &&
                 ((selectedFilter == .inStore && appt.mode == .inStore) ||
-                 (selectedFilter == .video && appt.mode == .video))
+                 (selectedFilter == .video   && appt.mode == .video))
             }
             .sorted { $0.date < $1.date }
     }
 
-    private var todayAppointments: [AssociateAppointment] {
-        filtered.filter { Calendar.current.isDateInToday($0.date) }
-    }
+    private var todayAppointments:    [AssociateAppointment] { filtered.filter {  Calendar.current.isDateInToday($0.date) } }
+    private var tomorrowAppointments: [AssociateAppointment] { filtered.filter {  Calendar.current.isDateInTomorrow($0.date) } }
+    private var upcomingAppointments: [AssociateAppointment] { filtered.filter { !Calendar.current.isDateInToday($0.date) && !Calendar.current.isDateInTomorrow($0.date) } }
 
-    private var tomorrowAppointments: [AssociateAppointment] {
-        filtered.filter { Calendar.current.isDateInTomorrow($0.date) }
-    }
-
-    private var upcomingAppointments: [AssociateAppointment] {
-        filtered.filter {
-            !Calendar.current.isDateInToday($0.date) && !Calendar.current.isDateInTomorrow($0.date)
-        }
-    }
-
+    // MARK: - Body
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 22) {
-                    HStack(alignment: .center) {
-                        Text("Appointments")
-                            .font(.largeTitle.weight(.bold))
-                        
-                        Spacer()
-                        
-                        Button {
-                            showingNewAppointment = true
-                        } label: {
-                            Image(systemName: "plus")
-                                .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(RSMSColors.burgundy)
-                                .frame(width: 44, height: 44)
-                                .background(RSMSColors.burgundy.opacity(0.1))
-                                .clipShape(Circle())
-                        }
-                        .accessibilityLabel("New Appointment")
-                    }
-                    .padding(.top, 4)
+            ZStack {
+                theme.background.ignoresSafeArea()
 
-                    Picker("Filter", selection: $selectedFilter) {
-                        ForEach(FilterMode.allCases) { filter in
-                            Text(filter.rawValue).tag(filter)
-                        }
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 22) {
+                        headerSection
+                        filterToggle
+                        contentSection
                     }
-                    .pickerStyle(.segmented)
-                    .padding(.bottom, 4)
-
-                    if filtered.isEmpty {
-                        ContentUnavailableView(
-                            "No Appointments",
-                            systemImage: "calendar.badge.exclamationmark",
-                            description: Text("No upcoming appointments scheduled.")
-                        )
-                        .padding(.top, 40)
-                    } else {
-                        if !todayAppointments.isEmpty {
-                            sectionBlock(title: "Today", items: todayAppointments)
-                        }
-                        if !tomorrowAppointments.isEmpty {
-                            sectionBlock(title: "Tomorrow", items: tomorrowAppointments)
-                        }
-                        if !upcomingAppointments.isEmpty {
-                            sectionBlock(title: "Upcoming", items: upcomingAppointments)
-                        }
-                    }
+                    .padding(.horizontal, 18)
+                    .padding(.top, 8)
+                    .padding(.bottom, 40)
                 }
-                .padding(.horizontal, 18)
-                .padding(.top, 8)
-                .padding(.bottom, 24)
             }
-            .background(RSMSColors.background.ignoresSafeArea())
             .navigationBarHidden(true)
             .task {
                 if let associateId = sessionStore.currentUser?.id {
                     await viewModel.fetchAppointments(for: associateId)
+                }
+                withAnimation(.spring(response: 0.65, dampingFraction: 0.82).delay(0.05)) {
+                    contentAppeared = true
                 }
             }
             .sheet(isPresented: $showingNewAppointment) {
                 NewAppointmentView(viewModel: viewModel)
             }
         }
-        .tint(RSMSColors.burgundy)
+        .tint(accent)
     }
 
-    // MARK: - Section
+    // MARK: - Header
+    private var headerSection: some View {
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Appointments")
+                    .font(.largeTitle.weight(.bold))
+                    .foregroundStyle(theme.primaryText)
+                if !viewModel.appointments.isEmpty {
+                    Text("\(viewModel.appointments.count) scheduled")
+                        .font(.system(size: 13))
+                        .foregroundStyle(theme.secondaryText)
+                }
+            }
+            Spacer()
+            Button {
+                showingNewAppointment = true
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(accent.opacity(0.14))
+                        .frame(width: 44, height: 44)
+                        .overlay(
+                            Circle()
+                                .strokeBorder(accent.opacity(0.25), lineWidth: 1)
+                        )
+                    Image(systemName: "plus")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(accent)
+                }
+            }
+            .buttonStyle(BounceButtonStyle())
+            .accessibilityLabel("New Appointment")
+        }
+        .padding(.top, 4)
+        .opacity(contentAppeared ? 1 : 0)
+        .offset(y: contentAppeared ? 0 : -12)
+        .animation(.spring(response: 0.55, dampingFraction: 0.82), value: contentAppeared)
+    }
 
-    private func sectionBlock(title: String, items: [AssociateAppointment]) -> some View {
+    // MARK: - Custom pill toggle (replaces segmented Picker)
+    private var filterToggle: some View {
+        HStack(spacing: 0) {
+            ForEach(FilterMode.allCases) { mode in
+                let isSelected = selectedFilter == mode
+                Button {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.72)) {
+                        selectedFilter = mode
+                    }
+                } label: {
+                    Text(mode.rawValue)
+                        .font(.system(size: 13, weight: isSelected ? .bold : .medium))
+                        .foregroundColor(
+                            isSelected
+                                ? (theme.isDarkMode ? Color(hex: "1A0A0A") : .white)
+                                : theme.secondaryText
+                        )
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 9)
+                        .background(isSelected ? accent : Color.clear)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .animation(.spring(response: 0.3, dampingFraction: 0.72), value: selectedFilter)
+            }
+        }
+        .padding(4)
+        .background(
+            theme.isDarkMode
+                ? Color.white.opacity(0.07)
+                : theme.burgundy.opacity(0.07)
+        )
+        .clipShape(Capsule())
+        .opacity(contentAppeared ? 1 : 0)
+        .animation(.spring(response: 0.55, dampingFraction: 0.82).delay(0.08), value: contentAppeared)
+    }
+
+    // MARK: - Content
+    @ViewBuilder
+    private var contentSection: some View {
+        if filtered.isEmpty {
+            VStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(accent.opacity(0.10))
+                        .frame(width: 72, height: 72)
+                    Image(systemName: "calendar.badge.exclamationmark")
+                        .font(.system(size: 30, weight: .medium))
+                        .foregroundStyle(accent)
+                }
+                Text("No Appointments")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(theme.primaryText)
+                Text("No upcoming \(selectedFilter.rawValue.lowercased()) appointments scheduled.")
+                    .font(.system(size: 14))
+                    .foregroundStyle(theme.secondaryText)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.top, 60)
+            .opacity(contentAppeared ? 1 : 0)
+            .animation(.spring(response: 0.55, dampingFraction: 0.82).delay(0.15), value: contentAppeared)
+        } else {
+            if !todayAppointments.isEmpty    { sectionBlock(title: "Today",    items: todayAppointments,    startDelay: 0.10) }
+            if !tomorrowAppointments.isEmpty { sectionBlock(title: "Tomorrow", items: tomorrowAppointments, startDelay: 0.16) }
+            if !upcomingAppointments.isEmpty  { sectionBlock(title: "Upcoming", items: upcomingAppointments, startDelay: 0.22) }
+        }
+    }
+
+    // MARK: - Section block
+    private func sectionBlock(title: String, items: [AssociateAppointment], startDelay: Double) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(title.uppercased())
-                .font(.system(size: 12, weight: .semibold))
-                .kerning(0.6)
-                .foregroundStyle(.black)
-                .padding(.leading, 4)
+            HStack(spacing: 8) {
+                // Accent bar
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(accent)
+                    .frame(width: 3, height: 14)
+                Text(title.uppercased())
+                    .font(.system(size: 11, weight: .bold))
+                    .kerning(1.2)
+                    .foregroundStyle(accent)
+            }
+            .padding(.leading, 2)
 
-            VStack(spacing: 14) {
-                ForEach(items) { appt in
+            VStack(spacing: 12) {
+                ForEach(Array(items.enumerated()), id: \.element.id) { index, appt in
                     appointmentCard(appt)
+                        .opacity(contentAppeared ? 1 : 0)
+                        .offset(y: contentAppeared ? 0 : 16)
+                        .animation(
+                            .spring(response: 0.5, dampingFraction: 0.78).delay(startDelay + Double(index) * 0.06),
+                            value: contentAppeared
+                        )
                 }
             }
         }
     }
 
-    // MARK: - Card
-
+    // MARK: - Appointment Card (flashy, pops out)
     private func appointmentCard(_ appt: AssociateAppointment) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Label(appt.time, systemImage: "clock")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(RSMSColors.darkBrown)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .center) {
+                // Time pill
+                HStack(spacing: 5) {
+                    Image(systemName: "clock.fill")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(accent)
+                    Text(appt.time)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(theme.primaryText)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(accent.opacity(0.10))
+                .clipShape(Capsule())
+                .overlay(Capsule().strokeBorder(accent.opacity(0.20), lineWidth: 1))
+
                 Spacer()
                 statusBadge(appt.status)
             }
 
             Text(appt.clientName)
-                .font(.system(size: 19, weight: .bold))
-                .foregroundStyle(RSMSColors.darkBrown)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(theme.primaryText)
 
-            Text(appt.productOrNote)
-                .font(.system(size: 14))
-                .foregroundStyle(RSMSColors.secondaryText)
-
+            if !appt.productOrNote.isEmpty {
+                Text(appt.productOrNote)
+                    .font(.system(size: 13))
+                    .foregroundStyle(theme.secondaryText)
+                    .lineLimit(2)
+            }
         }
-        .padding(16)
+        .padding(18)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(RSMSColors.cardBackground)
-                .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 3)
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(cardBg)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(
+                    theme.isDarkMode
+                        ? LinearGradient(
+                            colors: [theme.antiqueGold.opacity(0.30), theme.darkWoodBrown.opacity(0.25)],
+                            startPoint: .topLeading, endPoint: .bottomTrailing)
+                        : LinearGradient(
+                            colors: [theme.burgundy.opacity(0.12), Color.clear],
+                            startPoint: .topLeading, endPoint: .bottomTrailing),
+                    lineWidth: 1
+                )
+        )
+        .shadow(
+            color: theme.isDarkMode
+                ? theme.antiqueGold.opacity(0.08)
+                : Color.black.opacity(0.06),
+            radius: theme.isDarkMode ? 14 : 8,
+            x: 0, y: theme.isDarkMode ? 8 : 4
         )
     }
 
+    // MARK: - Status Badge
     private func statusBadge(_ status: AppointmentStatus) -> some View {
         Label(status.title, systemImage: status.icon)
             .font(.system(size: 11, weight: .semibold))
@@ -163,9 +274,12 @@ struct AppointmentsView: View {
             .padding(.vertical, 5)
             .background(status.color.opacity(0.14))
             .clipShape(Capsule())
+            .overlay(Capsule().strokeBorder(status.color.opacity(0.22), lineWidth: 1))
     }
 }
 
 #Preview {
     AppointmentsView()
+        .environment(SessionStore())
+        .environment(AppTheme())
 }

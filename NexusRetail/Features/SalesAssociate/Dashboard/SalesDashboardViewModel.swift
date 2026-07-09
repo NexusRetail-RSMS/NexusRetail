@@ -14,9 +14,18 @@ import Observation
 final class SalesDashboardViewModel {
 
     // MARK: - UI State
-    var selectedPeriod: SalesPeriod      = .allTime
-    var selectedChartPeriod: ChartPeriod = .monthly
+    var selectedPeriod: SalesPeriod      = .month
+    var selectedChartPeriod: ChartPeriod = .monthly {
+        didSet { if oldValue != selectedChartPeriod { chartOffset = 0 } }
+    }
     var isStatsLoading                   = false
+
+    /// How many periods back the revenue chart timeline is shifted.
+    /// 0 = current week / most-recent 6 months. Positive = further into the past.
+    /// Reset to 0 whenever the period type changes so the two axes stay sane.
+    var chartOffset: Int = 0 {
+        didSet { if chartOffset < 0 { chartOffset = 0 } }
+    }
 
     // MARK: - Data
     var dbOrders: [StoreOrder] = []
@@ -107,12 +116,67 @@ final class SalesDashboardViewModel {
         dbOrders.filter { $0.orderType == "bopis" && $0.status != "completed" }.count
     }
 
+    // MARK: - Timeline window (driven by selectedChartPeriod + chartOffset)
+
+    /// Anchor date for the currently-viewed window (now shifted back by chartOffset periods).
+    /// Weekly shifts by whole weeks, monthly by whole months.
+    private var chartAnchor: Date {
+        let calendar = Calendar.current
+        let now = Date()
+        if selectedChartPeriod == .weekly {
+            return calendar.date(byAdding: .weekOfYear, value: -chartOffset, to: now) ?? now
+        } else {
+            return calendar.date(byAdding: .month, value: -chartOffset, to: now) ?? now
+        }
+    }
+
+    /// The date range currently displayed by the chart. Used to filter the breakdown too.
+    var chartWindow: DateInterval {
+        let calendar = Calendar.current
+        let anchor = chartAnchor
+
+        if selectedChartPeriod == .weekly {
+            return calendar.dateInterval(of: .weekOfYear, for: anchor)
+                ?? DateInterval(start: anchor, duration: 0)
+        } else {
+            // 6-month window ending at the anchor month (inclusive)
+            let endOfMonth = calendar.dateInterval(of: .month, for: anchor)?.end ?? anchor
+            let startMonthAnchor = calendar.date(byAdding: .month, value: -5, to: anchor) ?? anchor
+            let startOfWindow = calendar.dateInterval(of: .month, for: startMonthAnchor)?.start ?? startMonthAnchor
+            return DateInterval(start: startOfWindow, end: endOfMonth)
+        }
+    }
+
+    /// Human-readable title for the current window (e.g. "Feb – Jul" or "5–11 Feb").
+    var chartRangeTitle: String {
+        let calendar = Calendar.current
+        let window = chartWindow
+
+        if selectedChartPeriod == .weekly {
+            if chartOffset == 0 { return "This week" }
+            let f = DateFormatter()
+            f.dateFormat = "d MMM"
+            let lastDay = calendar.date(byAdding: .day, value: -1, to: window.end) ?? window.end
+            return "\(f.string(from: window.start)) – \(f.string(from: lastDay))"
+        } else {
+            if chartOffset == 0 { return "Last 6 months" }
+            let f = DateFormatter()
+            f.dateFormat = "MMM yyyy"
+            let lastMonth = calendar.date(byAdding: .day, value: -1, to: window.end) ?? window.end
+            return "\(f.string(from: window.start)) – \(f.string(from: lastMonth))"
+        }
+    }
+
     // MARK: - Revenue Chart Data
     var chartDataPoints: [StoreRevenueChartPoint] {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let fallback = ISO8601DateFormatter()
+        fallback.formatOptions = [.withInternetDateTime]
+        func parse(_ raw: String) -> Date? { formatter.date(from: raw) ?? fallback.date(from: raw) }
+
         let calendar  = Calendar.current
-        let now       = Date()
+        let anchor    = chartAnchor
 
         var points: [StoreRevenueChartPoint] = []
 
@@ -120,12 +184,11 @@ final class SalesDashboardViewModel {
             var weeklyMap: [Int: Double] = [:]
             for i in 1...7 { weeklyMap[i] = 0.0 }
 
-            if let weekRange = calendar.dateInterval(of: .weekOfYear, for: now) {
-                for order in dbOrders {
-                    if let date = formatter.date(from: order.createdAt), weekRange.contains(date) {
-                        let weekday = calendar.component(.weekday, from: date)
-                        weeklyMap[weekday, default: 0.0] += order.total
-                    }
+            let weekRange = chartWindow
+            for order in dbOrders {
+                if let date = parse(order.createdAt), weekRange.contains(date) {
+                    let weekday = calendar.component(.weekday, from: date)
+                    weeklyMap[weekday, default: 0.0] += order.total
                 }
             }
 
@@ -140,18 +203,21 @@ final class SalesDashboardViewModel {
             monthFmt.dateFormat = "MMM"
 
             var labels: [String] = []
-            var map: [String: Double] = [:]
+            var monthStarts: [(label: String, start: Date, end: Date)] = []
             for i in (0..<6).reversed() {
-                if let d = calendar.date(byAdding: .month, value: -i, to: now) {
+                if let d = calendar.date(byAdding: .month, value: -i, to: anchor),
+                   let interval = calendar.dateInterval(of: .month, for: d) {
                     let lbl = monthFmt.string(from: d)
                     labels.append(lbl)
-                    map[lbl] = 0.0
+                    monthStarts.append((lbl, interval.start, interval.end))
                 }
             }
+            var map: [String: Double] = [:]
+            for m in monthStarts { map[m.label] = 0.0 }
             for order in dbOrders {
-                if let date = formatter.date(from: order.createdAt) {
-                    let lbl = monthFmt.string(from: date)
-                    if map[lbl] != nil { map[lbl, default: 0.0] += order.total }
+                if let date = parse(order.createdAt),
+                   let match = monthStarts.first(where: { date >= $0.start && date < $0.end }) {
+                    map[match.label, default: 0.0] += order.total
                 }
             }
             points = labels.map { StoreRevenueChartPoint(label: $0, revenue: map[$0] ?? 0.0) }
@@ -169,8 +235,8 @@ final class SalesDashboardViewModel {
     // MARK: - Helpers
     func statusColor(for status: String) -> Color {
         switch status {
-        case "Completed":       return RSMSColors.success
-        case "Pending Payment": return RSMSColors.warning
+        case "Completed":       return AppTheme().success
+        case "Pending Payment": return AppTheme().warning
         default:                return .blue
         }
     }
@@ -187,9 +253,26 @@ final class SalesDashboardViewModel {
         }
         isStatsLoading = true
 
+        struct DashboardProduct: Codable {
+            let itemName: String?
+            let category: String?
+            enum CodingKeys: String, CodingKey {
+                case itemName = "item_name"
+                case category
+            }
+        }
+
         struct DashboardOrderLineItem: Codable {
             let id: UUID?
             let quantity: Int
+            let appliedPrice: Double?
+            let products: DashboardProduct?
+            enum CodingKeys: String, CodingKey {
+                case id
+                case quantity
+                case appliedPrice = "applied_price"
+                case products
+            }
         }
 
         struct DashboardOrder: Codable, Identifiable {
@@ -221,7 +304,7 @@ final class SalesDashboardViewModel {
         do {
             let fetched: [DashboardOrder] = try await SupabaseManager.shared.client
                 .from("orders")
-                .select("id, client_id, store_id, associate_id, total, created_at, order_type, status, client!client_id(name, phone), order_line_item(id, quantity)")
+                .select("id, client_id, store_id, associate_id, total, created_at, order_type, status, client!client_id(name, phone), order_line_item(id, quantity, applied_price, products(item_name, category))")
                 .eq("store_id", value: storeID)
                 .eq("associate_id", value: associateID)
                 .order("created_at", ascending: false)
@@ -232,7 +315,13 @@ final class SalesDashboardViewModel {
 
             let converted: [StoreOrder] = fetched.map { dOrder in
                 let lineItems = dOrder.orderLineItems?.map { dli in
-                    OrderLineItem(id: dli.id, orderID: nil, quantity: dli.quantity, appliedPrice: 0, products: nil)
+                    OrderLineItem(
+                        id: dli.id,
+                        orderID: nil,
+                        quantity: dli.quantity,
+                        appliedPrice: dli.appliedPrice,
+                        products: dli.products.map { NestedProduct(itemId: nil, itemName: $0.itemName, category: $0.category) }
+                    )
                 }
                 return StoreOrder(
                     id: dOrder.id,

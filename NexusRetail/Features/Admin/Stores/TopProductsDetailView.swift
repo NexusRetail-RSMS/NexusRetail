@@ -24,20 +24,23 @@ struct TopProduct: Identifiable {
 // MARK: - View
 
 struct TopProductsDetailView: View {
+    @Environment(AppTheme.self) private var theme
     let store: Store
     // Default to yearly so there's always data visible on open.
     @State private var selectedRange: StoreChartTimeRange = .yearly(Date())
     @Environment(\.dismiss) private var dismiss
 
     // Colors for the donut slices
-    static let sliceColors: [Color] = [
-        RSMSColors.burgundy,
-        Color(hex: "2A9D8F"),
-        Color(hex: "F4A261"),
-        RSMSColors.success,
-        Color(hex: "E76F51"),
-        Color(hex: "264653"),
-    ]
+    var sliceColors: [Color] {
+        [
+            theme.burgundy,
+            theme.success,
+            theme.warning,
+            theme.gold,
+            theme.error,
+            theme.primaryAction
+        ]
+    }
 
     @State private var products: [TopProduct] = []
     @State private var isLoading = false
@@ -70,7 +73,7 @@ struct TopProductsDetailView: View {
                 HStack {
                     Text("Top Products")
                         .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     
                     Spacer()
                     
@@ -85,7 +88,7 @@ struct TopProductsDetailView: View {
                                 .font(.system(size: 12))
                         }
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(Color.gray.opacity(0.1))
@@ -102,7 +105,7 @@ struct TopProductsDetailView: View {
 
                 Text(periodLabel)
                     .font(RSMSFonts.subheadline)
-                    .foregroundColor(RSMSColors.secondaryText)
+                    .foregroundColor(theme.secondaryText)
                     .padding(.horizontal, RSMSSpacing.lg)
                     .padding(.top, RSMSSpacing.md)
 
@@ -111,7 +114,7 @@ struct TopProductsDetailView: View {
                     VStack {
                         Spacer()
                         ProgressView()
-                            .tint(RSMSColors.burgundy)
+                            .tint(theme.burgundy)
                         Spacer()
                     }
                     .frame(height: 240)
@@ -123,7 +126,7 @@ struct TopProductsDetailView: View {
                                 innerRadius: .ratio(0.6),
                                 angularInset: 2
                             )
-                            .foregroundStyle(RSMSColors.burgundy.opacity(0.1))
+                            .foregroundStyle(theme.burgundy.opacity(0.1))
                             .cornerRadius(6)
                         }
                         .frame(height: 240)
@@ -131,10 +134,10 @@ struct TopProductsDetailView: View {
                         VStack(spacing: 4) {
                             Image(systemName: "bag")
                                 .font(.system(size: 24))
-                                .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                                .foregroundColor(theme.secondaryText.opacity(0.5))
                             Text("No products data")
                                 .font(.system(size: 11))
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                         }
                     }
                     .padding(.horizontal, RSMSSpacing.lg)
@@ -155,10 +158,10 @@ struct TopProductsDetailView: View {
                     VStack(spacing: 2) {
                         Text(formatNumber(totalUnits))
                             .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                         Text("Units sold")
                             .font(.system(size: 11))
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                     }
                 }
                 .padding(.horizontal, RSMSSpacing.lg)
@@ -175,11 +178,11 @@ struct TopProductsDetailView: View {
                                 .frame(width: 8, height: 8)
                             Text(product.name)
                                 .font(.system(size: 12))
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                                 .lineLimit(1)
                             Text(formatNumber(product.unitsSold))
                                 .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(RSMSColors.primaryText)
+                                .foregroundColor(theme.primaryText)
                             Spacer()
                         }
                     }
@@ -191,16 +194,16 @@ struct TopProductsDetailView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     Text("Product Ranking")
                         .font(RSMSFonts.headline)
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                         .padding(.bottom, RSMSSpacing.md)
 
                     if products.isEmpty {
                         VStack(spacing: RSMSSpacing.sm) {
                             Image(systemName: "list.number")
                                 .font(.system(size: 28))
-                                .foregroundColor(RSMSColors.secondaryText.opacity(0.4))
+                                .foregroundColor(theme.secondaryText.opacity(0.4))
                             Text("No ranking data available")
-                                .foregroundColor(RSMSColors.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                                 .font(RSMSFonts.subheadline)
                         }
                         .frame(maxWidth: .infinity)
@@ -219,29 +222,29 @@ struct TopProductsDetailView: View {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(product.name)
                                         .font(RSMSFonts.body)
-                                        .foregroundColor(RSMSColors.primaryText)
+                                        .foregroundColor(theme.primaryText)
                                     Text("\(formatNumber(product.unitsSold)) units")
                                         .font(RSMSFonts.caption)
-                                        .foregroundColor(RSMSColors.secondaryText)
+                                        .foregroundColor(theme.secondaryText)
                                 }
 
                                 Spacer()
 
                                 Text("₹\(formatNumber(Int(product.revenue)))")
                                     .font(.system(size: 15, weight: .semibold))
-                                    .foregroundColor(RSMSColors.primaryText)
+                                    .foregroundColor(theme.primaryText)
                             }
                             .padding(.vertical, RSMSSpacing.md)
 
                             if index < products.count - 1 {
                                 Divider()
-                                    .foregroundColor(RSMSColors.divider)
+                                    .foregroundColor(theme.divider)
                             }
                         }
                     }
                 }
                 .padding(RSMSSpacing.lg)
-                .background(RSMSColors.cardBackground)
+                .background(theme.cardBackground)
                 .cornerRadius(RSMSRadius.large)
                 .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
                 .padding(.horizontal, RSMSSpacing.lg)
@@ -249,7 +252,7 @@ struct TopProductsDetailView: View {
                 .padding(.bottom, RSMSSpacing.xxl)
             }
         }
-        .background(RSMSColors.background.ignoresSafeArea())
+        .background(theme.background.ignoresSafeArea())
         .navigationBarBackButtonHidden(true)
         .toolbar(.visible, for: .navigationBar)
         .toolbar {
@@ -261,7 +264,7 @@ struct TopProductsDetailView: View {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 16, weight: .semibold))
                     }
-                    .foregroundColor(RSMSColors.burgundy)
+                    .foregroundColor(theme.burgundy)
                 }
             }
         }
@@ -308,7 +311,7 @@ struct TopProductsDetailView: View {
                     name: p.name,
                     unitsSold: p.units,
                     revenue: p.revenue,
-                    color: TopProductsDetailView.sliceColors[index % TopProductsDetailView.sliceColors.count]
+                    color: sliceColors[index % sliceColors.count]
                 )
             }
             

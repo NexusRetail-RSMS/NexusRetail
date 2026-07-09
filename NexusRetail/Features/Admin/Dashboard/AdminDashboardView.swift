@@ -16,9 +16,10 @@ import SwiftUI
 import Supabase
 
 struct AdminDashboardView: View {
+    @Environment(AdminNavigationStore.self) private var navStore
     @Environment(SessionStore.self) private var sessionStore
+    @Environment(AppTheme.self) private var theme
     @State private var viewModel = DashboardViewModel()
-    @State private var isProfilePresented = false
     
     // Drill-down states
     @State private var isShowingSalesDetail = false
@@ -40,7 +41,7 @@ struct AdminDashboardView: View {
 
     var body: some View {
         ZStack {
-            RSMSColors.background
+            theme.background
                 .ignoresSafeArea()
 
             ScrollView {
@@ -64,7 +65,6 @@ struct AdminDashboardView: View {
                             }
                             .foregroundColor(.white)
                             .font(RSMSFonts.caption.bold())
-                            .accessibilityHint("Double tap to reload dashboard data")
                         }
                         .padding()
                         .background(Color(hex: "FF3B30"))
@@ -77,7 +77,7 @@ struct AdminDashboardView: View {
                         VStack {
                             Spacer()
                             ProgressView("Loading Dashboard...")
-                                .tint(RSMSColors.burgundy)
+                                .tint(theme.burgundy)
                                 .padding()
                             Spacer()
                         }
@@ -96,11 +96,6 @@ struct AdminDashboardView: View {
                                 timeRange: $viewModel.revenueTimeRange
                             )
                             .contentShape(Rectangle())
-                            .accessibilityElement(children: .ignore)
-                            .accessibilityLabel("Store Revenue Chart")
-                            .accessibilityValue("Total Revenue: \(viewModel.formattedRevenue)")
-                            .accessibilityHint("Double tap to view detailed sales analytics")
-                            .accessibilityAddTraits(.isButton)
                             .onTapGesture { isShowingSalesDetail = true }
 
                             // MARK: - Top Product Sales
@@ -110,11 +105,6 @@ struct AdminDashboardView: View {
                                 timeRange: $viewModel.productTimeRange
                             )
                             .contentShape(Rectangle())
-                            .accessibilityElement(children: .ignore)
-                            .accessibilityLabel("Top Product Sales Chart")
-                            .accessibilityValue("Highest selling product is at \(viewModel.productMaxValue) units")
-                            .accessibilityHint("Double tap to view product sales details")
-                            .accessibilityAddTraits(.isButton)
                             .onTapGesture { isShowingProductsDetail = true }
 
                             // MARK: - Top Locations
@@ -141,9 +131,6 @@ struct AdminDashboardView: View {
             }
             viewModel.startListening()
         }
-        .sheet(isPresented: $isProfilePresented) {
-            AdminProfileSheet()
-        }
         .fullScreenCover(isPresented: $isShowingSalesDetail) {
             NavigationStack {
                 SalesDetailView(store: globalStore)
@@ -164,8 +151,7 @@ struct AdminDashboardView: View {
             Text("Dashboard")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .foregroundColor(RSMSColors.primaryText)
-                .accessibilityAddTraits(.isHeader)
+                .foregroundColor(theme.primaryText)
 
             Spacer()
 
@@ -190,30 +176,27 @@ struct AdminDashboardView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy.opacity(0.1))
+                        .fill(theme.burgundy.opacity(0.1))
                         .frame(width: 44, height: 44)
 
                     if let selected = viewModel.selectedCountry {
                         Text(countryCode(for: selected))
                             .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(RSMSColors.burgundy)
+                            .foregroundColor(theme.burgundy)
                     } else {
                         Text("ALL")
                             .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(RSMSColors.burgundy)
+                            .foregroundColor(theme.burgundy)
                     }
                 }
             }
-            .accessibilityLabel(viewModel.selectedCountry == nil ? "Country filter: All Global" : "Country filter: \(viewModel.selectedCountry!)")
-            .accessibilityHint("Double tap to change country filter")
+            .accessibilityLabel("Country filter")
 
             // Profile avatar
-            Button {
-                isProfilePresented = true
-            } label: {
+            NavigationLink(destination: GlobalProfileView()) {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy)
+                        .fill(theme.burgundy)
                         .frame(width: 44, height: 44)
 
                     if let urlString = sessionStore.currentUser?.imageUrl, let url = URL(string: urlString) {
@@ -291,7 +274,7 @@ struct AdminDashboardView: View {
                 value: viewModel.activeStoresText,
                 icon: "building.2.fill",
                 trend: nil,
-                color: RSMSColors.burgundy
+                color: theme.burgundy
             )
             KPICardView(
                 title: "Pending Transfers",

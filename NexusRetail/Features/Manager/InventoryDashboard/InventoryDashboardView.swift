@@ -9,6 +9,7 @@
 import SwiftUI
 
 struct InventoryDashboardView: View {
+    @Environment(AppTheme.self) private var theme
     @State private var viewModel = InventoryViewModel()
     @Environment(SessionStore.self) private var sessionStore
     
@@ -34,7 +35,7 @@ struct InventoryDashboardView: View {
                     Spacer()
                     ProgressView("Loading inventory…")
                         .font(RSMSFonts.body)
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                     Spacer()
                 } else {
                     ScrollView {
@@ -48,10 +49,10 @@ struct InventoryDashboardView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(RSMSColors.background)
+            .background(theme.background)
         }
         .ignoresSafeArea(edges: .top)
-        .background(RSMSColors.background.ignoresSafeArea())
+        .background(theme.background.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .task {
             await viewModel.load(storeID: sessionStore.currentUser?.storeID)
@@ -76,20 +77,19 @@ struct InventoryDashboardView: View {
             Text("Inventory")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .foregroundColor(RSMSColors.primaryText)
-                .accessibilityAddTraits(.isHeader)
+                .foregroundColor(theme.primaryText)
             
             Spacer()
             
             NavigationLink(destination: ManagerPendingRequestsView(viewModel: viewModel)) {
                 ZStack {
                     Circle()
-                        .fill(RSMSColors.burgundy)
+                        .fill(theme.burgundy)
                         .frame(width: 44, height: 44)
                     
                     Image(systemName: "shippingbox.and.arrow.backward")
                         .font(.title3)
-                        .foregroundColor(RSMSColors.cream)
+                        .foregroundColor(theme.cream)
                 }
             }
             .accessibilityLabel("Stock Requests")
@@ -121,15 +121,14 @@ struct InventoryDashboardView: View {
             } label: {
                 ZStack {
                         Circle()
-                            .fill(RSMSColors.burgundy.opacity(0.08))
+                            .fill(theme.burgundy.opacity(0.08))
                             .frame(width: 48, height: 48)
 
                         Image(systemName: "line.3.horizontal.decrease")
                             .font(.system(size: 20, weight: .medium))
-                            .foregroundColor(RSMSColors.burgundy)
+                            .foregroundColor(theme.burgundy)
                     }
             }
-            .accessibilityLabel("Sort order")
         }
         .padding(.horizontal, RSMSSpacing.lg)
     }
@@ -196,13 +195,13 @@ struct InventoryDashboardView: View {
         VStack(spacing: 16) {
             Image(systemName: icon)
                 .font(.system(size: 48))
-                .foregroundColor(RSMSColors.secondaryText.opacity(0.4))
+                .foregroundColor(theme.secondaryText.opacity(0.4))
             Text(title)
                 .font(RSMSFonts.headline)
-                .foregroundColor(RSMSColors.primaryText)
+                .foregroundColor(theme.primaryText)
             Text(message)
                 .font(RSMSFonts.caption)
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
                 .multilineTextAlignment(.center)
         }
         .padding(.vertical, 40)
@@ -212,6 +211,7 @@ struct InventoryDashboardView: View {
 // MARK: - Category Chip
 
 struct CategoryChip: View {
+    @Environment(AppTheme.self) private var theme
     let label: String
     let isSelected: Bool
     let action: () -> Void
@@ -219,27 +219,26 @@ struct CategoryChip: View {
     var body: some View {
         Text(label)
             .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
-            .foregroundColor(isSelected ? .white : RSMSColors.primaryText)
+            .foregroundColor(isSelected ? .white : theme.primaryText)
             .padding(.horizontal, 14)
             .padding(.vertical, 7)
-            .background(isSelected ? RSMSColors.burgundy : Color.white)
+            .background(isSelected ? theme.burgundy : theme.cardBackground)
             .clipShape(Capsule())
             .overlay(
                 Capsule()
-                    .stroke(isSelected ? Color.clear : RSMSColors.inputBorder, lineWidth: 1)
+                    .stroke(isSelected ? Color.clear : theme.inputBorder, lineWidth: 1)
             )
             .contentShape(Capsule())
             .highPriorityGesture(
                 TapGesture().onEnded { action() }
             )
-            .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
-            .accessibilityLabel(label)
     }
 }
 
 // MARK: - Transfer Request Card
 
 struct ManagerTransferRequestCard: View {
+    @Environment(AppTheme.self) private var theme
     let request: TransferRequestRow
     
     var body: some View {
@@ -249,11 +248,11 @@ struct ManagerTransferRequestCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(request.productName)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     
                     Text(request.skuCode)
                         .font(.system(size: 12))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
                 
                 Spacer()
@@ -263,21 +262,20 @@ struct ManagerTransferRequestCard: View {
                     // Units
                     Label("\(request.quantity) units", systemImage: "cube.box")
                         .font(.system(size: 12))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                     
                     
                     Text(request.formattedDate)
                         .font(.system(size: 12))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
             }
             
         }
         .padding(14)
-        .background(Color.white)
+        .background(theme.cardBackground)
         .cornerRadius(RSMSRadius.medium)
         .shadow(color: Color.black.opacity(0.04), radius: 6, y: 2)
-        .accessibilityElement(children: .combine)
     }
 }
 

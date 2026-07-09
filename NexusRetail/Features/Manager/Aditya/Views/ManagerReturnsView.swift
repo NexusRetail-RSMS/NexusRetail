@@ -56,16 +56,17 @@ class ManagerReturnsViewModel: ObservableObject {
 }
 
 struct ManagerReturnsView: View {
+    @Environment(AppTheme.self) private var theme
     @StateObject private var viewModel = ManagerReturnsViewModel()
     @Environment(SessionStore.self) private var sessionStore
     
     var body: some View {
         ZStack {
-            RSMSColors.background.ignoresSafeArea()
+            theme.background.ignoresSafeArea()
             
             if viewModel.isLoading {
                 ProgressView()
-                    .tint(RSMSColors.burgundy)
+                    .tint(theme.burgundy)
             } else if let error = viewModel.errorMessage {
                 VStack {
                     Image(systemName: "exclamationmark.triangle")
@@ -104,33 +105,33 @@ struct ManagerReturnsView: View {
                                     
                                     Text(ticket.stage.capitalized)
                                         .font(.system(size: 12, weight: .semibold))
-                                        .foregroundColor(RSMSColors.secondaryText)
+                                        .foregroundColor(theme.secondaryText)
                                 }
                                 
                                 Text(ticket.item_name)
                                     .font(.system(size: 18, weight: .semibold))
-                                    .foregroundColor(RSMSColors.primaryText)
+                                    .foregroundColor(theme.primaryText)
                                 
                                 Text(ticket.issue_description)
                                     .font(.system(size: 14))
-                                    .foregroundColor(RSMSColors.secondaryText)
+                                    .foregroundColor(theme.secondaryText)
                                 
                                 Divider()
                                 
                                 HStack {
                                     Label(ticket.app_user?.name ?? "Unassigned", systemImage: "person.crop.circle")
                                         .font(.system(size: 12))
-                                        .foregroundColor(RSMSColors.primaryText)
+                                        .foregroundColor(theme.primaryText)
                                     
                                     Spacer()
                                     
                                     Text(ticket.created_at, style: .date)
                                         .font(.system(size: 12))
-                                        .foregroundColor(RSMSColors.secondaryText)
+                                        .foregroundColor(theme.secondaryText)
                                 }
                             }
                             .padding()
-                            .background(RSMSColors.cardBackground)
+                            .background(theme.cardBackground)
                             .clipShape(RoundedRectangle(cornerRadius: 16))
                         }
                     }

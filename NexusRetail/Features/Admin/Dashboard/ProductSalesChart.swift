@@ -10,6 +10,7 @@
 import SwiftUI
 
 struct ProductSalesChart: View {
+    @Environment(AppTheme.self) private var theme
     let data: [ProductChartPoint]
     let maxValue: Int
     @Binding var timeRange: SalesTimeRange
@@ -27,7 +28,7 @@ struct ProductSalesChart: View {
 
                         Text("Top Products")
                             .font(RSMSFonts.headline)
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                     }
                 }
 
@@ -51,10 +52,10 @@ struct ProductSalesChart: View {
                 VStack(spacing: 8) {
                     Image(systemName: "bag")
                         .font(.system(size: 32))
-                        .foregroundColor(RSMSColors.secondaryText.opacity(0.5))
+                        .foregroundColor(theme.secondaryText.opacity(0.5))
                     Text("No product data")
                         .font(.system(size: 14))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
                 .frame(maxWidth: .infinity, minHeight: 150)
                 .padding(.top, RSMSSpacing.sm)
@@ -72,7 +73,7 @@ struct ProductSalesChart: View {
             }
         }
         .padding(RSMSSpacing.lg)
-        .background(Color.white)
+        .background(theme.cardBackground)
         .cornerRadius(RSMSRadius.large)
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
         .animation(.easeInOut(duration: 0.3), value: data)
@@ -80,6 +81,7 @@ struct ProductSalesChart: View {
 }
 
 struct ProductRankRow: View {
+    @Environment(AppTheme.self) private var theme
     let rank: Int
     let point: ProductChartPoint
     let maxValue: Int
@@ -119,13 +121,13 @@ struct ProductRankRow: View {
                     VStack(alignment: .leading, spacing: 1) {
                         Text(point.name)
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(RSMSColors.primaryText)
+                            .foregroundColor(theme.primaryText)
                             .lineLimit(2)
                             .fixedSize(horizontal: false, vertical: true)
                         
                         Text(point.category)
                             .font(.system(size: 10, weight: .regular))
-                            .foregroundColor(RSMSColors.secondaryText)
+                            .foregroundColor(theme.secondaryText)
                     }
                     
                     // Slim Progress Bar
@@ -151,15 +153,15 @@ struct ProductRankRow: View {
                     let formattedSales = NumberFormatter.localizedString(from: NSNumber(value: point.sales), number: .decimal)
                     Text("\(formattedSales)")
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(RSMSColors.primaryText)
+                        .foregroundColor(theme.primaryText)
                     
                     Text("units")
                         .font(.system(size: 10))
-                        .foregroundColor(RSMSColors.secondaryText)
+                        .foregroundColor(theme.secondaryText)
                 }
             }
             .padding(10)
-            .background(Color.white)
+            .background(theme.cardBackground)
         }
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
@@ -193,15 +195,15 @@ struct ProductRankRow: View {
     
     private func colorFor(category: String) -> Color {
         switch category {
-        case "Couture": return RSMSColors.burgundy
+        case "Couture": return theme.burgundy
         case "Perfume", "Perfumes", "Fragrances", "Fragrance": return Color(hex: "F4A261")
         case "Jewellery", "Jewelry": return Color(hex: "E9C46A")
         case "Leather", "Leather Goods": return Color(hex: "2A9D8F")
         case "Watches": return Color(hex: "264653")
         case "Accessories": return Color(hex: "8A2BE2")
         case "Bags": return Color(hex: "2A9D8F")
-        case "Clothes": return RSMSColors.burgundy
-        default: return RSMSColors.chartBar
+        case "Clothes": return theme.burgundy
+        default: return theme.chartBar
         }
     }
 }

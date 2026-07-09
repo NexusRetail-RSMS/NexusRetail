@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct OrdersHubView: View {
+    @Environment(AppTheme.self) private var theme
     @Binding var path: NavigationPath
     @Environment(\.dismiss) private var dismiss
     @Environment(SellViewModel.self) private var sellVM
@@ -26,7 +27,7 @@ struct OrdersHubView: View {
 
     var body: some View {
         ZStack {
-            RSMSColors.background.ignoresSafeArea()
+            theme.background.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 headerBar
@@ -80,15 +81,15 @@ struct OrdersHubView: View {
         HStack(alignment: .center, spacing: RSMSSpacing.md) {
             Button { dismiss() } label: {
                 ZStack {
-                    Circle().fill(RSMSColors.burgundy.opacity(0.1)).frame(width: 44, height: 44)
+                    Circle().fill(theme.burgundy.opacity(0.1)).frame(width: 44, height: 44)
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 18, weight: .bold)).foregroundColor(RSMSColors.burgundy)
+                        .font(.system(size: 18, weight: .bold)).foregroundColor(theme.burgundy)
                 }
             }
             .accessibilityLabel("Back")
 
             Text("Orders Hub")
-                .font(.system(size: 24, weight: .bold)).foregroundColor(RSMSColors.primaryText)
+                .font(.system(size: 24, weight: .bold)).foregroundColor(theme.primaryText)
                 
             Spacer()
 
@@ -146,10 +147,10 @@ struct OrdersHubView: View {
             Image(systemName: systemImage).font(.system(size: 10, weight: .bold))
             Text(text).font(.system(size: 11, weight: .bold))
         }
-        .foregroundColor(RSMSColors.burgundy)
+        .foregroundColor(theme.burgundy)
         .padding(.horizontal, 10)
         .padding(.vertical, 4)
-        .background(RSMSColors.burgundy.opacity(0.08))
+        .background(theme.burgundy.opacity(0.08))
         .clipShape(Capsule())
     }
 
@@ -170,40 +171,40 @@ struct OrdersHubView: View {
     private func posOrderRow(_ order: DBOrder) -> some View {
         HStack(spacing: 16) {
             ZStack {
-                Circle().fill(RSMSColors.burgundy.opacity(0.08)).frame(width: 44, height: 44)
+                Circle().fill(theme.burgundy.opacity(0.08)).frame(width: 44, height: 44)
                 Image(systemName: "shippingbox.fill")
-                    .foregroundColor(RSMSColors.burgundy).font(.system(size: 16))
+                    .foregroundColor(theme.burgundy).font(.system(size: 16))
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(order.id)
                     .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundColor(RSMSColors.primaryText)
+                    .foregroundColor(theme.primaryText)
                 Text("\(order.formattedDate) · \(order.formattedTime)")
-                    .font(.system(size: 12)).foregroundColor(RSMSColors.secondaryText)
+                    .font(.system(size: 12)).foregroundColor(theme.secondaryText)
             }
 
             Spacer()
 
             VStack(alignment: .trailing, spacing: 6) {
                 Text(formatIndianCurrency(order.amount))
-                    .font(.system(size: 14, weight: .bold)).foregroundColor(RSMSColors.primaryText)
+                    .font(.system(size: 14, weight: .bold)).foregroundColor(theme.primaryText)
                 statusPill(order.status)
             }
         }
         .padding(14)
-        .background(RSMSColors.cardBackground)
+        .background(theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(RSMSColors.cardBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.cardBorder, lineWidth: 1))
     }
 
     private func statusPill(_ status: String) -> some View {
         let isDone = status == "Completed"
         return Text(status)
             .font(.system(size: 10, weight: .bold))
-            .foregroundColor(isDone ? RSMSColors.success : RSMSColors.secondaryText)
+            .foregroundColor(isDone ? theme.success : theme.secondaryText)
             .padding(.horizontal, 8).padding(.vertical, 4)
-            .background(isDone ? RSMSColors.success.opacity(0.08) : Color.gray.opacity(0.08))
+            .background(isDone ? theme.success.opacity(0.08) : Color.gray.opacity(0.08))
             .clipShape(Capsule())
     }
 
@@ -231,7 +232,7 @@ struct OrdersHubView: View {
 
     // MARK: - Shared bits
     private func loadingRow(_ text: String) -> some View {
-        HStack { Spacer(); ProgressView(text).tint(RSMSColors.burgundy); Spacer() }
+        HStack { Spacer(); ProgressView(text).tint(theme.burgundy); Spacer() }
             .padding(.vertical, 40)
     }
 
@@ -239,10 +240,10 @@ struct OrdersHubView: View {
         VStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 40))
-                .foregroundColor(RSMSColors.secondaryText.opacity(0.4))
+                .foregroundColor(theme.secondaryText.opacity(0.4))
             Text(text)
                 .font(.system(size: 14))
-                .foregroundColor(RSMSColors.secondaryText)
+                .foregroundColor(theme.secondaryText)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40)
