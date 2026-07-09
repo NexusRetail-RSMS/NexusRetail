@@ -105,6 +105,15 @@ struct AfterSalesTabView: View {
             ExchangePaymentView(path: $dashboardPath, originalProductId: originalProductId, replacementProductId: replacementProductId, amount: amount)
         case .exchangeSummary(let originalProductId, let replacementProductId, let amount):
             ExchangeSummaryView(path: $dashboardPath, originalProductId: originalProductId, replacementProductId: replacementProductId, amount: amount)
+        case .exchangeWarrantyCheck(let invoiceId, let selectedItem, let purchaseDate, let warrantyEndDate, let customer):
+            ExchangeWarrantyCheckView(path: $dashboardPath, invoiceId: invoiceId, selectedItem: selectedItem, purchaseDate: purchaseDate, warrantyEndDate: warrantyEndDate, customer: customer)
+                .toolbar(.hidden, for: .tabBar)
+        case .exchangeSelection(let invoiceId, let selectedItem, let purchaseDate, let warrantyEndDate, let customer):
+            ExchangeSelectionView(path: $dashboardPath, invoiceId: invoiceId, selectedItem: selectedItem, purchaseDate: purchaseDate, warrantyEndDate: warrantyEndDate, customer: customer)
+                .toolbar(.hidden, for: .tabBar)
+        case .exchangeSuccess(let transaction):
+            ExchangeSuccessView(path: $dashboardPath, transaction: transaction)
+                .toolbar(.hidden, for: .tabBar)
         }
     }
 

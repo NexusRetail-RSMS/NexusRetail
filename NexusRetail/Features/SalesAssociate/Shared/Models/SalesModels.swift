@@ -36,6 +36,11 @@ enum POSFlowDestination: Hashable {
     case afterSalesHistory
     case exchangePayment(originalProductId: UUID, replacementProductId: UUID, amount: Double)
     case exchangeSummary(originalProductId: UUID, replacementProductId: UUID, amount: Double)
+
+    // Exchange flow (replacement selection with warranty check + success)
+    case exchangeWarrantyCheck(invoiceId: String, selectedItem: POSProduct, purchaseDate: Date?, warrantyEndDate: Date?, customer: RequestCustomer?)
+    case exchangeSelection(invoiceId: String, selectedItem: POSProduct, purchaseDate: Date?, warrantyEndDate: Date?, customer: RequestCustomer?)
+    case exchangeSuccess(transaction: ExchangeFlowTransaction)
 }
 
 // MARK: - Chart / Period
