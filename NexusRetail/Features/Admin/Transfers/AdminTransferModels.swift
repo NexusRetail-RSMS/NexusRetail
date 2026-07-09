@@ -66,6 +66,8 @@ struct AdminStockRequest: Identifiable, Codable {
     var updatedAt: Date?
     let products: ProductInfo
     let store: AdminRequestStore?
+    let sourceStore: AdminRequestStore?
+    let declineReason: String?
 
     var scheduledAt: Date?
     var autoApproveAt: Date?
@@ -82,10 +84,13 @@ struct AdminStockRequest: Identifiable, Codable {
         case updatedAt = "updated_at"
         case products
         case store
+        case sourceStore = "source_store"
+        case declineReason = "decline_reason"
     }
 
     var productName: String { products.name }
     var skuCode: String { products.skuCode ?? "\u{2014}" }
     var storeName: String { store?.name ?? "Unknown Store" }
     var managerName: String { store?.manager?.name ?? "No Manager" }
+    var sourceStoreName: String? { sourceStore?.name }
 }

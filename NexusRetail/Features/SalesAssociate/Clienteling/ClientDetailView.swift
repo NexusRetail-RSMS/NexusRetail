@@ -57,7 +57,7 @@ struct ClientDetailView: View {
                         
                         // Avatar
                         Circle()
-                            .fill(theme.gold)
+                            .fill(Color(hex: "FFF9EE")) // A warm, prominent cream color
                             .frame(width: 120, height: 120)
                             .overlay(
                                 Circle().stroke(Color.white, lineWidth: 6)
@@ -66,7 +66,7 @@ struct ClientDetailView: View {
                             .overlay {
                                 Text(client.initials)
                                     .font(.system(size: 46, weight: .bold, design: .rounded))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(theme.burgundy)
                                     .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 2)
                             }
                             .padding(.bottom, 16)
@@ -177,7 +177,7 @@ struct ClientDetailView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    startEditing()
+                    isEditingClient = true
                 } label: {
                     Image(systemName: "square.and.pencil")
                         .font(.system(size: 17, weight: .semibold))

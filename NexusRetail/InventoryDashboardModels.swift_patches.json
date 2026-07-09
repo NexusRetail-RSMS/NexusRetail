@@ -1,0 +1,17 @@
+[
+  {
+    "name": "replace_file_content",
+    "args": {
+      "AllowMultiple": false,
+      "Description": "Adding the new pending_store_approval status for inter-store transfer requests that need the source store manager's approval before stock can be moved.",
+      "EndLine": 100,
+      "Instruction": "Add 'pending_store_approval' case to TransferStatus enum, with display name, color, and step.",
+      "ReplacementContent": "/// Transfer request status — matches the DB enum\nenum TransferStatus: String, Codable, CaseIterable {\n    case pending\n    case pendingStoreApproval = \"pending_store_approval\"\n    case approved\n    case routed\n    case dispatched\n    case delivered\n    case unfulfillable\n    \n    var displayName: String {\n        switch self {\n        case .pendingStoreApproval: return \"Awaiting Store\"\n        default: return rawValue.capitalized\n        }\n    }\n    \n    var color: Color {\n        switch self {\n        case .pending: return AppTheme().warning\n        case .pendingStoreApproval: return AppTheme().burgundy.opacity(0.7)\n        case .approved: return .green.opacity(0.6)\n        case .routed: return AppTheme().burgundy.opacity(0.8)\n        case .dispatched: return AppTheme().burgundy\n        case .delivered: return AppTheme().success\n        case .unfulfillable: return AppTheme().error\n        }\n    }\n    \n    /// Position in the status pipeline (0-based)\n    var step: Int {\n        switch self {\n        case .pending: return 0\n        case .pendingStoreApproval: return 1\n        case .approved: return 2\n        case .routed: return 3\n        case .dispatched: return 4\n        case .delivered: return 5\n        case .unfulfillable: return 6\n        }\n    }\n}",
+      "StartLine": 65,
+      "TargetContent": "/// Transfer request status — matches the DB enum\nenum TransferStatus: String, Codable, CaseIterable {\n    case pending\n    case approved\n    case routed\n    case dispatched\n    case delivered\n    case unfulfillable\n    \n    var displayName: String {\n        rawValue.capitalized\n    }\n    \n    var color: Color {\n        switch self {\n        case .pending: return AppTheme().warning\n        case .approved: return .green.opacity(0.6)\n        case .routed: return AppTheme().burgundy.opacity(0.8)\n        case .dispatched: return AppTheme().burgundy\n        case .delivered: return AppTheme().success\n        case .unfulfillable: return AppTheme().error\n        }\n    }\n    \n    /// Position in the status pipeline (0-based)\n    var step: Int {\n        switch self {\n        case .pending: return 0\n        case .approved: return 1\n        case .routed: return 2\n        case .dispatched: return 3\n        case .delivered: return 4\n        case .unfulfillable: return 5\n        }\n    }\n}",
+      "TargetFile": "/Users/manu/Desktop/NexusRetail/NexusRetail/Features/Manager/InventoryDashboard/InventoryDashboardModels.swift",
+      "toolAction": "Updating TransferStatus enum",
+      "toolSummary": "TransferStatus enum update"
+    }
+  }
+]

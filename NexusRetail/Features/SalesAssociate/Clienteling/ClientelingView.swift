@@ -150,7 +150,7 @@ struct ClientelingView: View {
         HStack(alignment: .center, spacing: 14) {
             ZStack {
                 Circle()
-                    .fill(theme.gold)
+                    .fill(theme.burgundy)
                     .frame(width: 52, height: 52)
                     .overlay(
                         Circle().stroke(Color.white, lineWidth: 2)

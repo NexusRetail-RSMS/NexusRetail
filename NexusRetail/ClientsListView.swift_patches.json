@@ -1,0 +1,32 @@
+[
+  {
+    "name": "replace_file_content",
+    "args": {
+      "AllowMultiple": false,
+      "Description": "Removing the client profile avatar (initials circle) from the client row in ClientsListView.swift as per user request.",
+      "EndLine": 68,
+      "Instruction": "Remove the ZStack containing the avatar from clientRow in ClientsListView.swift",
+      "ReplacementContent": "    private func clientRow(_ client: AssociateClient) -> some View {\n        HStack(spacing: 14) {\n            VStack(alignment: .leading, spacing: 3) {",
+      "StartLine": 54,
+      "TargetContent": "    private func clientRow(_ client: AssociateClient) -> some View {\n        HStack(spacing: 14) {\n            // Avatar\n            ZStack {\n                Circle()\n                    .fill(avatarBg)\n                    .frame(width: 48, height: 48)\n                    .overlay(\n                        Circle().strokeBorder(accent.opacity(theme.isDarkMode ? 0.35 : 0.20), lineWidth: 1.5)\n                    )\n                Text(String(client.name.prefix(1)))\n                    .font(.system(size: 17, weight: .bold, design: .rounded))\n                    .foregroundStyle(accent)\n            }\n\n            VStack(alignment: .leading, spacing: 3) {",
+      "TargetFile": "/Users/manu/Desktop/NexusRetail/NexusRetail/Features/SalesAssociate/ClientsListView.swift",
+      "toolAction": "Removing avatar",
+      "toolSummary": "Remove avatar"
+    }
+  },
+  {
+    "name": "replace_file_content",
+    "args": {
+      "AllowMultiple": false,
+      "Description": "Reverting the removal of the profile initials avatar from the client row.",
+      "EndLine": 57,
+      "Instruction": "Add the avatar ZStack back to the clientRow in ClientsListView.swift",
+      "ReplacementContent": "    private func clientRow(_ client: AssociateClient) -> some View {\n        HStack(spacing: 14) {\n            // Avatar\n            ZStack {\n                Circle()\n                    .fill(avatarBg)\n                    .frame(width: 48, height: 48)\n                    .overlay(\n                        Circle().strokeBorder(accent.opacity(theme.isDarkMode ? 0.35 : 0.20), lineWidth: 1.5)\n                    )\n                Text(String(client.name.prefix(1)))\n                    .font(.system(size: 17, weight: .bold, design: .rounded))\n                    .foregroundStyle(accent)\n            }\n\n            VStack(alignment: .leading, spacing: 3) {",
+      "StartLine": 54,
+      "TargetContent": "    private func clientRow(_ client: AssociateClient) -> some View {\n        HStack(spacing: 14) {\n            VStack(alignment: .leading, spacing: 3) {",
+      "TargetFile": "/Users/manu/Desktop/NexusRetail/NexusRetail/Features/SalesAssociate/ClientsListView.swift",
+      "toolAction": "Restoring avatar",
+      "toolSummary": "Restore avatar"
+    }
+  }
+]
