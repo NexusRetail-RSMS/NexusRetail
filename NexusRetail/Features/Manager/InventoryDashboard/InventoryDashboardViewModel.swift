@@ -135,14 +135,24 @@ class InventoryViewModel {
     // MARK: - Actions
     
     func requestRestock(itemId: Int64, quantity: Int, storeID: UUID) async -> String? {
-        let payload = TransferRequestInsert(
-            itemId: itemId,
-            requestingStoreId: storeID,
-            quantity: quantity,
-            status: .pending
-        )
-        
         do {
+            // Run smart routing to determine source
+            let sourceStoreId = try? await SmartRoutingService.shared.calculateSourceStore(
+                requestingStoreId: storeID,
+                itemId: itemId,
+                quantity: quantity
+            )
+            
+            let status: TransferStatus = sourceStoreId != nil ? .pendingStoreApproval : .pending
+            
+            let payload = TransferRequestInsert(
+                itemId: itemId,
+                requestingStoreId: storeID,
+                quantity: quantity,
+                status: status,
+                sourceStoreId: sourceStoreId
+            )
+            
             try await SupabaseManager.shared.client
                 .from("transfer_request")
                 .insert(payload)

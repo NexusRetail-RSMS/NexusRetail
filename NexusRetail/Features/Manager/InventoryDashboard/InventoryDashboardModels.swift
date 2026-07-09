@@ -258,10 +258,12 @@ struct TransferRequestInsert: Codable {
     let requestingStoreId: UUID
     let quantity: Int
     let status: TransferStatus
+    let sourceStoreId: UUID?
     
     enum CodingKeys: String, CodingKey {
         case itemId = "item_id"
         case requestingStoreId = "requesting_store_id"
+        case sourceStoreId = "source_store_id"
         case quantity, status
     }
 }

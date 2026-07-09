@@ -1,0 +1,47 @@
+[
+  {
+    "name": "replace_file_content",
+    "args": {
+      "AllowMultiple": false,
+      "Description": "Adding a decline reason banner that shows when a request was previously declined by a source store manager and escalated back to admin. Also showing pending_store_approval status badge. This gives the admin context about why the inter-store transfer was rejected.",
+      "EndLine": 53,
+      "Instruction": "Add decline reason banner and pending store approval status badge between sourcing prediction and action buttons",
+      "ReplacementContent": "            // MARK: Request Information\n            requestInfoRow\n                .padding(.top, 18)\n\n            if request.status == .pending {\n                // MARK: Sourcing Prediction\n                sourcingPredictionRow\n                    .padding(.top, 14)\n                \n                // MARK: Decline Reason (if escalated from a store manager)\n                if let reason = request.declineReason, !reason.isEmpty {\n                    declinedBanner(reason: reason, storeName: request.sourceStoreName)\n                        .padding(.top, 10)\n                }\n            }\n            \n            if request.status == .pendingStoreApproval {\n                // MARK: Awaiting Store Approval Badge\n                awaitingStoreApprovalBadge\n                    .padding(.top, 14)\n            }\n\n            // MARK: Action Buttons\n            if request.status == .pending {\n                actionButtons\n                    .padding(.top, 24)\n            }",
+      "StartLine": 39,
+      "TargetContent": "            // MARK: Request Information\n            requestInfoRow\n                .padding(.top, 18)\n\n            if request.status == .pending {\n                // MARK: Sourcing Prediction\n                sourcingPredictionRow\n                    .padding(.top, 14)\n            }\n\n            // MARK: Action Buttons\n            if request.status == .pending {\n                actionButtons\n                    .padding(.top, 24)\n            }",
+      "TargetFile": "/Users/manu/Desktop/NexusRetail/NexusRetail/Features/Admin/Transfers/TransferRequestCard.swift",
+      "toolAction": "Adding decline banner",
+      "toolSummary": "Add decline banner"
+    }
+  },
+  {
+    "name": "replace_file_content",
+    "args": {
+      "AllowMultiple": false,
+      "Description": "Adding the declined banner (shows why a source store manager declined the request) and awaiting store approval badge (shows when a request is waiting for a source store's manager to respond).\"",
+      "EndLine": 210,
+      "Instruction": "Add declinedBanner and awaitingStoreApprovalBadge view builders before the closing brace of TransferRequestCard",
+      "ReplacementContent": "    }\n    \n    // MARK: - Declined Banner\n    \n    private func declinedBanner(reason: String, storeName: String?) -> some View {\n        HStack(spacing: 8) {\n            Image(systemName: \"exclamationmark.triangle.fill\")\n                .foregroundColor(theme.error)\n                .font(.system(size: 14))\n            \n            VStack(alignment: .leading, spacing: 2) {\n                Text(\"Declined by \\(storeName ?? \"Store\")\")\n                    .font(.system(size: 11, weight: .bold))\n                    .foregroundColor(theme.error)\n                    .textCase(.uppercase)\n                \n                Text(reason)\n                    .font(.system(size: 13, weight: .medium))\n                    .foregroundColor(theme.primaryText)\n                    .lineLimit(2)\n            }\n            Spacer()\n        }\n        .padding(12)\n        .background(theme.error.opacity(0.06))\n        .cornerRadius(12)\n    }\n    \n    // MARK: - Awaiting Store Approval Badge\n    \n    private var awaitingStoreApprovalBadge: some View {\n        HStack(spacing: 8) {\n            Image(systemName: \"clock.badge.questionmark\")\n                .foregroundColor(theme.burgundy)\n                .font(.system(size: 16))\n            \n            VStack(alignment: .leading, spacing: 2) {\n                Text(\"Awaiting Store Approval\")\n                    .font(.system(size: 11, weight: .bold))\n                    .foregroundColor(theme.burgundy)\n                    .textCase(.uppercase)\n                \n                if let sourceName = request.sourceStoreName {\n                    Text(\"Sent to \\(sourceName)'s manager for approval\")\n                        .font(.system(size: 13, weight: .medium))\n                        .foregroundColor(theme.primaryText)\n                }\n            }\n            Spacer()\n        }\n        .padding(12)\n        .background(theme.burgundy.opacity(0.06))\n        .cornerRadius(12)\n    }\n}",
+      "StartLine": 209,
+      "TargetContent": "    }\n}",
+      "TargetFile": "/Users/manu/Desktop/NexusRetail/NexusRetail/Features/Admin/Transfers/TransferRequestCard.swift",
+      "toolAction": "Adding banner views",
+      "toolSummary": "Add banner views"
+    }
+  },
+  {
+    "name": "replace_file_content",
+    "args": {
+      "AllowMultiple": false,
+      "Description": "Remove actionButtons and prediction row for pendingStoreApproval",
+      "EndLine": 65,
+      "Instruction": "Remove actionButtons and prediction row for pendingStoreApproval",
+      "ReplacementContent": "            // MARK: Action Buttons\n            if request.status == .pending {\n                actionButtons\n                    .padding(.top, 24)\n            }",
+      "StartLine": 62,
+      "TargetContent": "            // MARK: Action Buttons\n            if request.status == .pending {\n                actionButtons\n                    .padding(.top, 24)\n            }",
+      "TargetFile": "/Users/manu/Desktop/NexusRetail/NexusRetail/Features/Admin/Transfers/TransferRequestCard.swift",
+      "toolAction": "Removing actionButtons for pendingStoreApproval",
+      "toolSummary": "Remove actionButtons"
+    }
+  }
+]

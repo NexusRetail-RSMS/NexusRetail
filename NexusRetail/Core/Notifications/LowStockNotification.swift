@@ -346,57 +346,27 @@ final class LowStockNotificationViewModel {
         await MainActor.run { isProcessingAction = true }
         
         do {
-            // 1. Update transfer status to approved
-            struct ApproveUpdate: Encodable {
-                let status: String
+            struct ApproveParams: Encodable {
+                let p_transfer_id: UUID
+                let p_item_id: Int64
+                let p_quantity: Int
+                let p_source_store_id: UUID
+                let p_requesting_store_id: UUID
             }
-            try await SupabaseManager.shared.client
-                .from("transfer_request")
-                .update(ApproveUpdate(status: "approved"))
-                .eq("id", value: transferId)
-                .execute()
             
-            // 2. Decrement source store inventory
-            struct StockRow: Decodable {
-                let on_hand: Int
-            }
-            let sourceStock: StockRow = try await SupabaseManager.shared.client
-                .from("inventory_item")
-                .select("on_hand")
-                .eq("store_id", value: sourceStoreId.uuidString)
-                .eq("item_id", value: Int(itemId))
-                .single()
-                .execute()
-                .value
-            
-            struct StockUpdate: Encodable {
-                let on_hand: Int
-            }
-            try await SupabaseManager.shared.client
-                .from("inventory_item")
-                .update(StockUpdate(on_hand: max(0, sourceStock.on_hand - quantity)))
-                .eq("store_id", value: sourceStoreId.uuidString)
-                .eq("item_id", value: Int(itemId))
-                .execute()
-            
-            // 3. Increment requesting store inventory
-            let destStock: StockRow = try await SupabaseManager.shared.client
-                .from("inventory_item")
-                .select("on_hand")
-                .eq("store_id", value: requestingStoreId.uuidString)
-                .eq("item_id", value: Int(itemId))
-                .single()
-                .execute()
-                .value
+            let params = ApproveParams(
+                p_transfer_id: transferId,
+                p_item_id: itemId,
+                p_quantity: quantity,
+                p_source_store_id: sourceStoreId,
+                p_requesting_store_id: requestingStoreId
+            )
             
             try await SupabaseManager.shared.client
-                .from("inventory_item")
-                .update(StockUpdate(on_hand: destStock.on_hand + quantity))
-                .eq("store_id", value: requestingStoreId.uuidString)
-                .eq("item_id", value: Int(itemId))
+                .rpc("approve_store_transfer", params: params)
                 .execute()
             
-            // 4. Remove from local notifications
+            // Remove from local notifications
             await MainActor.run {
                 notifications.removeAll { $0.id == transferId }
                 isProcessingAction = false
