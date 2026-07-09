@@ -35,11 +35,13 @@ class BOPISViewModel {
         lastLoadedStoreID = storeID
         
         do {
+            // Shared pool: all OPEN (unclaimed) BOPIS orders from any store,
+            // PLUS this store's own claimed/completed BOPIS orders.
             let fetchedOrders: [StoreOrder] = try await SupabaseManager.shared.client
                 .from("orders")
                 .select("id, client_id, store_id, associate_id, total, created_at, order_type, status, pickup_code, client!client_id(name, phone), order_line_item(id, quantity, applied_price, products(item_id, item_name))")
-                .eq("store_id", value: storeID)
                 .eq("order_type", value: "bopis")
+                .or("status.eq.open,store_id.eq.\(storeID.uuidString)")
                 .execute()
                 .value
 
@@ -115,17 +117,16 @@ class BOPISViewModel {
             orders[index].status = .waitingForCustomer
         }
 
-        // Attribute fulfillment to the associate who packs the order.
-        if let associateID {
-            do {
-                try await SupabaseManager.shared.client
-                    .from("orders")
-                    .update(["associate_id": associateID.uuidString])
-                    .eq("id", value: id)
-                    .execute()
-            } catch {
-                print("Error stamping associate_id on pack: \(error)")
-            }
+        // Claim the order for THIS store + associate (works even if the order
+        // routed to another store — it's a shared pool until someone packs it).
+        do {
+            struct ClaimParams: Encodable { let p_order_id: String }
+            let _: Bool = try await SupabaseManager.shared.client
+                .rpc("claim_bopis_order", params: ClaimParams(p_order_id: id.uuidString))
+                .execute()
+                .value
+        } catch {
+            print("Error claiming BOPIS order on pack: \(error)")
         }
 
         // Generate + email the pickup code server-side.
@@ -149,6 +150,31 @@ class BOPISViewModel {
         }
 
         await loadData(storeID: lastLoadedStoreID)
+        return outcome
+    }
+
+    /// Re-generates and re-emails the pickup code to the customer (e.g. if they
+    /// lost the original email). Reuses the same server function as packing.
+    @discardableResult
+    func resendCode(id: UUID) async -> PackOutcome {
+        var outcome: PackOutcome = .sendFailed
+        do {
+            struct Params: Encodable { let order_id: String }
+            struct Result: Decodable { let ok: Bool; let emailed: Bool?; let reason: String? }
+            let result: Result = try await SupabaseManager.shared.client
+                .functions
+                .invoke("send-pickup-code", options: .init(body: Params(order_id: id.uuidString)))
+            if result.emailed == true {
+                outcome = .emailed
+            } else if result.reason == "no_email" {
+                outcome = .noEmail
+            } else {
+                outcome = .sendFailed
+            }
+        } catch {
+            print("resend send-pickup-code failed: \(error)")
+            outcome = .sendFailed
+        }
         return outcome
     }
 

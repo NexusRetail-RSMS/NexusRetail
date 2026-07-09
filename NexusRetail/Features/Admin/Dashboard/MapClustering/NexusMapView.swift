@@ -6,17 +6,34 @@
 import SwiftUI
 import MapKit
 
+/// MKPolygon carrying a normalised customer-footprint intensity (0...1)
+/// so the renderer can shade it with the burgundy ramp.
+final class FootprintPolygon: MKPolygon {
+    var intensity: CGFloat = 0.5
+}
+
 struct NexusMapView: UIViewRepresentable {
     
     var stores: [StoreMapItem]
     @Binding var selectedStore: StoreMapItem?
     @Binding var cameraPosition: MapCameraPosition
+    /// Per-country customer footprint used to draw the choropleth overlays.
+    var footprint: [CountryFootprint] = []
+    /// Country boundary polygons (from GeoJSONLoader) used to build overlays.
+    var countryPolygons: [CountryPolygon] = []
+    /// Fill colour for the footprint overlays (app burgundy).
+    var fillColor: UIColor = .systemRed
     
     func makeUIView(context: Context) -> MKMapView {
         let mapView = MKMapView()
         mapView.delegate = context.coordinator
         mapView.showsCompass = false
         mapView.showsScale = false
+        // Full native interactivity: pan, pinch-zoom, rotate, drag.
+        mapView.isZoomEnabled = true
+        mapView.isScrollEnabled = true
+        mapView.isRotateEnabled = true
+        mapView.isPitchEnabled = true
         
         // Register custom annotation views
         mapView.register(StoreAnnotationView.self, forAnnotationViewWithReuseIdentifier: StoreAnnotationView.reuseIdentifier)
@@ -26,6 +43,32 @@ struct NexusMapView: UIViewRepresentable {
     }
     
     func updateUIView(_ uiView: MKMapView, context: Context) {
+        // 0. Update footprint choropleth overlays (diffing by signature)
+        let signature = footprint
+            .map { "\(InteractiveChoroplethMap.canonical($0.country)):\($0.customerCount)" }
+            .sorted()
+            .joined(separator: ",")
+        if signature != context.coordinator.footprintSignature {
+            context.coordinator.footprintSignature = signature
+            let existing = uiView.overlays.compactMap { $0 as? FootprintPolygon }
+            uiView.removeOverlays(existing)
+
+            let maxCustomers = max(footprint.map(\.customerCount).max() ?? 0, 1)
+            let byKey = Dictionary(footprint.map { (InteractiveChoroplethMap.canonical($0.country), $0) },
+                                   uniquingKeysWith: { a, _ in a })
+            for country in countryPolygons {
+                guard let fp = byKey[InteractiveChoroplethMap.canonical(country.name)],
+                      fp.customerCount > 0 else { continue }
+                let t = pow(CGFloat(fp.customerCount) / CGFloat(maxCustomers), 0.6)
+                for ring in country.polygons where ring.count > 2 {
+                    let poly = FootprintPolygon(coordinates: ring, count: ring.count)
+                    poly.intensity = t
+                    poly.title = country.name
+                    uiView.addOverlay(poly, level: .aboveRoads)
+                }
+            }
+        }
+
         // 1. Update Annotations safely (diffing)
         let currentAnnotations = uiView.annotations.compactMap { $0 as? StoreAnnotation }
         let currentStoreIds = Set(currentAnnotations.map { $0.storeData.id })
@@ -69,9 +112,21 @@ struct NexusMapView: UIViewRepresentable {
         var parent: NexusMapView
         var isAnimatingCamera = false
         var lastCameraPosition: MapCameraPosition?
+        var footprintSignature: String = ""
         
         init(_ parent: NexusMapView) {
             self.parent = parent
+        }
+
+        func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+            if let fp = overlay as? FootprintPolygon {
+                let renderer = MKPolygonRenderer(polygon: fp)
+                renderer.fillColor = parent.fillColor.withAlphaComponent(0.25 + 0.60 * fp.intensity)
+                renderer.strokeColor = parent.fillColor.withAlphaComponent(0.9)
+                renderer.lineWidth = 1
+                return renderer
+            }
+            return MKOverlayRenderer(overlay: overlay)
         }
         
         func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {

@@ -104,7 +104,7 @@ struct AdminDashboardView: View {
                             .onTapGesture { isShowingProductsDetail = true }
 
                             // MARK: - Top Locations
-                            TopLocationsChartView(revenueByCountry: viewModel.byCountry, selectedCountry: viewModel.selectedCountry)
+                            TopLocationsChartView(revenueByCountry: viewModel.byCountry, selectedCountry: viewModel.selectedCountry, footprint: viewModel.footprint, storePoints: viewModel.storePoints)
                         }
                         .padding(.horizontal, RSMSSpacing.lg)
                         .padding(.top, RSMSSpacing.xxl)

@@ -40,6 +40,62 @@ struct CountryRevenue: Decodable, Identifiable {
     let revenue: Double
 }
 
+/// Customer footprint per country (for the Top Customer Locations choropleth).
+/// Decoded from the `customer_footprint_by_country` RPC.
+struct CountryFootprint: Decodable, Identifiable {
+    var id: String { country }
+    let country: String
+    let customerCount: Int
+    let orderCount: Int
+    let revenue: Double
+
+    enum CodingKeys: String, CodingKey {
+        case country
+        case customerCount = "customer_count"
+        case orderCount = "order_count"
+        case revenue
+    }
+}
+
+/// A single store plotted on the footprint map (bubble).
+/// Decoded from the `store_footprint_points` RPC.
+struct StorePoint: Decodable, Identifiable {
+    var id: UUID { storeId }
+    let storeId: UUID
+    let name: String
+    let city: String?
+    let country: String
+    let latitude: Double
+    let longitude: Double
+    let customerCount: Int
+    let orderCount: Int
+    let revenue: Double
+
+    enum CodingKeys: String, CodingKey {
+        case storeId = "store_id"
+        case name, city, country, latitude, longitude, revenue
+        case customerCount = "customer_count"
+        case orderCount = "order_count"
+    }
+}
+
+/// Customer footprint per Indian state (drill-down choropleth).
+/// Decoded from the `customer_footprint_india_by_state` RPC.
+struct StateFootprint: Decodable, Identifiable {
+    var id: String { state }
+    let state: String
+    let customerCount: Int
+    let orderCount: Int
+    let revenue: Double
+
+    enum CodingKeys: String, CodingKey {
+        case state
+        case customerCount = "customer_count"
+        case orderCount = "order_count"
+        case revenue
+    }
+}
+
 /// Top products data point from RPC
 struct DashboardTopProduct: Decodable, Identifiable {
     let id: Int64
