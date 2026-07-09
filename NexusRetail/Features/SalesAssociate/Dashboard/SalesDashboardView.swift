@@ -18,10 +18,12 @@ struct SalesDashboardView: View {
     @State private var navigationPath  = NavigationPath()
 
     // UI state
+    @State private var isNotificationPresented = false
     @Namespace private var namespace
 
-    // ViewModel
+    // ViewModels
     @State private var vm = SalesDashboardViewModel()
+    @State private var notificationVM = SalesNotificationViewModel()
 
     // MARK: - Body
     var body: some View {
@@ -48,6 +50,9 @@ struct SalesDashboardView: View {
                 }
             }
             .navigationBarHidden(true)
+            .sheet(isPresented: $isNotificationPresented) {
+                SalesNotificationListView(viewModel: notificationVM)
+            }
             .navigationDestination(for: POSFlowDestination.self) { dest in
                 switch dest {
                 case .newSale:       NewSaleView(path: $navigationPath)
@@ -72,7 +77,8 @@ struct SalesDashboardView: View {
                     EmptyView()
                 case .afterSalesHistory:
                     AfterSalesHistoryView(path: $navigationPath)
-                case .exchangeProduct, .exchangePayment, .exchangeSummary:
+                case .exchangeProduct, .exchangePayment, .exchangeSummary,
+                     .exchangeWarrantyCheck, .exchangeSelection, .exchangeSuccess:
                     EmptyView()
                 }
             }
@@ -88,11 +94,21 @@ struct SalesDashboardView: View {
         .environment(posViewModel)
         .refreshable {
             await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
+            await notificationVM.load(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
         }
-        .task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id) }
+        .task {
+            await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
+            await notificationVM.load(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
+            Task {
+                await notificationVM.startListening(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
+            }
+        }
         .onAppear {
             // Refresh data when view appears (e.g., after completing a sale)
-            Task { await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id) }
+            Task {
+                await vm.fetchStoreOrders(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
+                await notificationVM.load(storeID: sessionStore.currentUser?.storeID, associateID: sessionStore.currentUser?.id)
+            }
         }
         .onChange(of: navigationPath.count) { _, newCount in
             // Refresh when returning to dashboard (path becomes empty)
@@ -110,6 +126,9 @@ struct SalesDashboardView: View {
                 .fontWeight(.bold)
                 .foregroundColor(theme.primaryText)
             Spacer()
+            NotificationBellView(unreadCount: notificationVM.unreadCount) {
+                isNotificationPresented = true
+            }
             NavigationLink(destination: GlobalProfileView()) {
                 ZStack {
                     Circle().fill(theme.isDarkMode ? Color(hex: "2C0000") : theme.burgundy).frame(width: 44, height: 44)
@@ -447,6 +466,12 @@ struct SalesRevenueDetailView: View {
         return peak
     }
 
+    private var catColors: [Color] {
+        theme.isDarkMode 
+            ? [theme.antiqueGold, Color(hex: "DDA15E"), Color(hex: "BC6C25"), theme.burgundy, Color(hex: "9A031E"), Color.gray]
+            : [theme.burgundy, Color(hex: "D87A6A"), Color(hex: "E6A87C"), Color(hex: "9D4A4A"), Color(hex: "C28D75"), Color.gray]
+    }
+
     // ISO parser shared by grouping/summary
     private func parseDate(_ raw: String) -> Date? {
         let f = ISO8601DateFormatter()
@@ -756,15 +781,16 @@ struct SalesRevenueDetailView: View {
     }
 
     private func summaryTile(title: String, value: String, caption: String? = nil) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.system(size: 12, weight: .medium)).foregroundColor(theme.secondaryText)
-            Text(value).font(.system(size: 18, weight: .bold)).foregroundColor(theme.burgundy).lineLimit(1).minimumScaleFactor(0.6)
+        VStack(spacing: 6) {
+            Text(title).font(.system(size: 13, weight: .medium)).foregroundColor(theme.secondaryText)
+            Text(value).font(.system(size: 22, weight: .bold)).foregroundColor(theme.burgundy).lineLimit(1).minimumScaleFactor(0.6)
             // Always reserve a caption line so both tiles are the same height
             Text(caption ?? " ")
                 .font(.system(size: 11)).foregroundColor(theme.secondaryText).lineLimit(1)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .center)
+        .padding(.vertical, 18)
+        .padding(.horizontal, 14)
         .background(cardFill)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(theme.cardBorder.opacity(0.6), lineWidth: 1))
@@ -789,13 +815,41 @@ struct SalesRevenueDetailView: View {
             if categorySales.isEmpty {
                 emptyBreakdown
             } else {
-                // Single grouped container holding every category together
-                VStack(spacing: 0) {
-                    ForEach(Array(categorySales.enumerated()), id: \.element.id) { idx, cat in
-                        categoryRow(cat)
-                        if idx < categorySales.count - 1 {
-                            Divider().background(theme.cardBorder.opacity(0.5))
-                                .padding(.leading, 14)
+                // Single grouped container holding
+                VStack(alignment: .leading, spacing: 0) {
+                    // Donut Chart
+                    Chart {
+                        ForEach(Array(categorySales.enumerated()), id: \.element.id) { index, cat in
+                            SectorMark(
+                                angle: .value("Revenue", cat.revenue),
+                                innerRadius: .ratio(0.65),
+                                angularInset: 1.5
+                            )
+                            .cornerRadius(4)
+                            .foregroundStyle(catColors[index % catColors.count])
+                        }
+                    }
+                    .frame(height: 180)
+                    .padding(.vertical, RSMSSpacing.lg)
+                    .overlay {
+                        VStack(spacing: 2) {
+                            Text("Total")
+                                .font(.system(size: 12))
+                                .foregroundColor(theme.secondaryText)
+                            Text(formatIndianCurrency(grandTotalRevenue))
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundColor(theme.primaryText)
+                        }
+                    }
+
+                    // Legend List
+                    VStack(spacing: 0) {
+                        ForEach(Array(categorySales.enumerated()), id: \.element.id) { idx, cat in
+                            categoryRow(cat, color: catColors[idx % catColors.count])
+                            if idx < categorySales.count - 1 {
+                                Divider().background(theme.cardBorder.opacity(0.5))
+                                    .padding(.leading, 14)
+                            }
                         }
                     }
                 }
@@ -809,39 +863,31 @@ struct SalesRevenueDetailView: View {
 
     private var grandTotalRevenue: Double { categorySales.reduce(0) { $0 + $1.revenue } }
 
-    private func categoryRow(_ cat: CategorySales) -> some View {
-        let maxRev = categorySales.first?.revenue ?? 0
-        let frac   = maxRev > 0 ? CGFloat(cat.revenue / maxRev) : 0
+    private func categoryRow(_ cat: CategorySales, color: Color) -> some View {
         let share  = grandTotalRevenue > 0 ? Int((cat.revenue / grandTotalRevenue) * 100) : 0
-        return VStack(spacing: 8) {
-            HStack {
+        return VStack(spacing: 4) {
+            HStack(spacing: 12) {
+                Circle()
+                    .fill(color)
+                    .frame(width: 8, height: 8)
+                
                 Text(cat.category)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(theme.primaryText)
                     .lineLimit(1)
                 Spacer()
+                Text("\(share)%")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(theme.secondaryText)
                 Text(formatIndianCurrency(cat.revenue))
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(theme.burgundy)
+                    .foregroundColor(theme.primaryText)
             }
-
-            // Share bar
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(theme.cardBorder.opacity(0.35)).frame(height: 8)
-                    Capsule().fill(theme.burgundy).frame(width: max(6, geo.size.width * frac), height: 8)
-                }
-            }
-            .frame(height: 8)
-
             HStack {
                 Text("\(cat.units) unit\(cat.units == 1 ? "" : "s") sold")
                     .font(.system(size: 12))
                     .foregroundColor(theme.secondaryText)
                 Spacer()
-                Text("\(share)%")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(theme.secondaryText)
             }
         }
         .padding(14)

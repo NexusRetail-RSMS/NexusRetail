@@ -54,7 +54,7 @@ struct ProductSearchView: View {
                             .padding(.bottom, RSMSSpacing.sm)
                     }
                 }
-                .background(.ultraThinMaterial)
+                .fadingMaterialHeader()
             }
             .ignoresSafeArea(edges: .top)
         }

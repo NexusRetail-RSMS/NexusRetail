@@ -24,6 +24,10 @@ struct ClientDetailView: View {
     @State private var forYouProducts: [POSProduct] = []
     @State private var trendingProducts: [POSProduct] = []
     @State private var isLoading = true
+
+    // Dynamic client insights (computed from real order history)
+    @State private var dynamicPreferences: String?
+    @State private var dynamicPurchasePattern: String?
     
     private struct TopProductsRPCParams: Encodable {
         let p_period: String
@@ -97,11 +101,11 @@ struct ClientDetailView: View {
                         // Style Preferences & Purchase Pattern Card
                         HStack(alignment: .top, spacing: 20) {
                             VStack(spacing: 8) {
-                                Text(client.preferences.isEmpty ? "None specified" : client.preferences)
+                                Text(dynamicPreferences ?? "Analyzing shopping history...")
                                     .font(.system(size: 16, weight: .bold))
                                     .foregroundStyle(theme.burgundy)
                                     .multilineTextAlignment(.center)
-                                    .lineLimit(2)
+                                    .lineLimit(3)
                                 
                                 Text("Style Preferences")
                                     .font(.system(size: 13, weight: .semibold))
@@ -112,10 +116,11 @@ struct ClientDetailView: View {
                             Divider()
                             
                             VStack(spacing: 8) {
-                                Text("N/A")
+                                Text(dynamicPurchasePattern ?? "Loading pattern...")
                                     .font(.system(size: 16, weight: .bold))
                                     .foregroundStyle(theme.burgundy)
                                     .multilineTextAlignment(.center)
+                                    .lineLimit(3)
                                 
                                 Text("Purchase Pattern")
                                     .font(.system(size: 13, weight: .semibold))
@@ -180,7 +185,74 @@ struct ClientDetailView: View {
         }
         .sheet(isPresented: $isNewClientPresented) { newClientSheet }
         .task {
+            await loadClientInsights()
             await loadRecommendations()
+        }
+    }
+
+    // MARK: - Dynamic Insights
+
+    private func loadClientInsights() async {
+        guard let dbId = client.dbId else {
+            dynamicPreferences = client.preferences
+            dynamicPurchasePattern = client.purchasePattern
+            return
+        }
+
+        do {
+            struct ClientOrderLine: Decodable {
+                let quantity: Int
+                let products: InsightProduct?
+            }
+            struct InsightProduct: Decodable {
+                let category: String?
+                let attributes: String?
+            }
+            struct ClientOrder: Decodable {
+                let total: Double
+                let order_line_item: [ClientOrderLine]
+            }
+
+            let orders: [ClientOrder] = try await SupabaseManager.shared.client
+                .from("orders")
+                .select("total, order_line_item(quantity, products(category, attributes))")
+                .eq("client_id", value: dbId.uuidString)
+                .execute()
+                .value
+
+            if orders.isEmpty {
+                dynamicPreferences = "No purchases yet. \(client.preferences)"
+                dynamicPurchasePattern = "New client. Pattern will appear after assisted selling history is available."
+                return
+            }
+
+            let totalSpend = orders.reduce(0) { $0 + $1.total }
+            let avgSpend = totalSpend / Double(orders.count)
+            let formattedAvg = String(format: "₹%.0f", avgSpend)
+
+            dynamicPurchasePattern = "Frequent buyer (\(orders.count) orders) averaging \(formattedAvg) per visit."
+
+            var categoryCounts: [String: Int] = [:]
+            for order in orders {
+                for line in order.order_line_item {
+                    if let cat = line.products?.category {
+                        categoryCounts[cat, default: 0] += line.quantity
+                    }
+                }
+            }
+
+            let topCategories = categoryCounts.sorted { $0.value > $1.value }.prefix(2).map { $0.key }
+            if !topCategories.isEmpty {
+                let catString = topCategories.joined(separator: " and ")
+                dynamicPreferences = "Prefers \(catString)"
+            } else {
+                dynamicPreferences = "Exploring various categories."
+            }
+
+        } catch {
+            print("Failed to fetch client insights: \(error)")
+            dynamicPreferences = client.preferences
+            dynamicPurchasePattern = client.purchasePattern
         }
     }
 
