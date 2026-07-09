@@ -80,11 +80,11 @@ struct CreateEventView: View {
                         .font(.body)
                     
                     Picker("Event Type", selection: $eventType) {
-                        ForEach(EventType.allCases, id: \.self) { type in
+                        ForEach([EventType.productLaunch, EventType.vipEvent, EventType.promotion], id: \.self) { type in
                             Text(type.rawValue).tag(type)
                         }
                     }
-                    .pickerStyle(.navigationLink)
+                    .pickerStyle(.menu)
                     
                     TextField("Venue", text: $venue)
                         .font(.body)

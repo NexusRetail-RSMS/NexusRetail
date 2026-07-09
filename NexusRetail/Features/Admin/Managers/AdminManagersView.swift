@@ -22,8 +22,9 @@ struct DisplayManager: Identifiable, Hashable {
     // Stats
     var productsSold: Int = 0
     var createdAt: Date = Date()
+    var isActive: Bool = true
     
-    init(id: UUID, name: String, storeName: String, country: String, performanceScore: Int, revenue: String, imageUrl: String? = nil, phone: String = "", email: String = "", address: String = "", productsSold: Int = 0, createdAt: Date = Date()) {
+    init(id: UUID, name: String, storeName: String, country: String, performanceScore: Int, revenue: String, imageUrl: String? = nil, phone: String = "", email: String = "", address: String = "", productsSold: Int = 0, createdAt: Date = Date(), isActive: Bool = true) {
         self.id = id
         self.name = name
         self.storeName = storeName
@@ -36,6 +37,7 @@ struct DisplayManager: Identifiable, Hashable {
         self.address = address
         self.productsSold = productsSold
         self.createdAt = createdAt
+        self.isActive = true
     }
 
     init(rpc: ManagerStatsRPC) {
@@ -66,6 +68,7 @@ struct DisplayManager: Identifiable, Hashable {
             }
         }
         self.createdAt = parsedDate
+        self.isActive = true
     }
 }
 
@@ -412,14 +415,14 @@ struct AdminManagersView: View {
         .refreshable {
             await viewModel.loadManagers()
         }
-        .alert("Delete Manager", isPresented: Binding(
+        .alert("Archive Manager", isPresented: Binding(
             get: { managerToDelete != nil },
             set: { if !$0 { managerToDelete = nil } }
         )) {
             Button("Cancel", role: .cancel) {
                 managerToDelete = nil
             }
-            Button("Delete", role: .destructive) {
+            Button("Archive", role: .destructive) {
                 if let manager = managerToDelete {
                     Task {
                         _ = await viewModel.deleteManager(id: manager.id)
@@ -428,7 +431,7 @@ struct AdminManagersView: View {
                 }
             }
         } message: {
-            Text("Are you sure you want to delete this manager? This action cannot be undone and will revoke their access.")
+            Text("Are you sure you want to archive this manager? Their access will be revoked but their records will remain.")
         }
     }
 }
@@ -560,9 +563,9 @@ struct TopPerformanceCard: View {
                 onDelete?()
             } label: {
                 Label {
-                    Text("Delete")
+                    Text("Archive")
                 } icon: {
-                    Image(systemName: "trash")
+                    Image(systemName: "archivebox")
                         .renderingMode(.template)
                         .foregroundColor(.red)
                 }
@@ -621,10 +624,20 @@ struct ManagerListCard: View {
 
                 Spacer()
 
-                // Chevron
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(theme.secondaryText)
+                if !manager.isActive {
+                    Text("Archived")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.gray)
+                        .cornerRadius(6)
+                } else {
+                    // Chevron
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(theme.secondaryText)
+                }
             }
             .padding(16)
             .frame(minHeight: 85)
@@ -635,6 +648,8 @@ struct ManagerListCard: View {
                 RoundedRectangle(cornerRadius: RSMSRadius.large)
                     .stroke(theme.cardBorder, lineWidth: 1)
             )
+            .opacity(manager.isActive ? 1.0 : 0.6)
+            .grayscale(manager.isActive ? 0.0 : 0.8)
         }
         .buttonStyle(.plain)
         .contextMenu {
@@ -655,9 +670,9 @@ struct ManagerListCard: View {
                 onDelete?()
             } label: {
                 Label {
-                    Text("Delete")
+                    Text("Archive")
                 } icon: {
-                    Image(systemName: "trash")
+                    Image(systemName: "archivebox")
                         .renderingMode(.template)
                         .foregroundColor(.red)
                 }

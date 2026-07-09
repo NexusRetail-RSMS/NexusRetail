@@ -41,6 +41,7 @@ final class AfterSalesDashboardViewModel {
 
     // KPIs (derived from real tickets)
     var pendingServiceRequests: Int = 0
+    var completedServices: Int = 0
     var repairsInProgress: Int = 0
     var warrantyVerifications: Int = 0
     var returnsAwaitingApproval: Int = 0
@@ -74,6 +75,7 @@ final class AfterSalesDashboardViewModel {
 
     private func recomputeKPIs() {
         pendingServiceRequests = tickets.filter { $0.stage != "completed" }.count
+        completedServices = tickets.filter { $0.stage == "completed" }.count
         repairsInProgress = tickets.filter { $0.type == "repair" && ($0.stage == "in_repair" || $0.stage == "qa_check") }.count
         warrantyVerifications = tickets.filter { $0.warrantyStatus == "active" }.count
         returnsAwaitingApproval = tickets.filter { $0.type == "exchange" || $0.type == "return" }.count

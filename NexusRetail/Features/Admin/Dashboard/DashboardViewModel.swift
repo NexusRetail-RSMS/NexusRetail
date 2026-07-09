@@ -281,7 +281,7 @@ class DashboardViewModel {
         }
         
         Task {
-            await realtimeChannel?.subscribe()
+            try? await realtimeChannel?.subscribeWithError()
         }
     }
     

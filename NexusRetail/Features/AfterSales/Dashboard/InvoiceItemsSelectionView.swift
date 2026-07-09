@@ -118,11 +118,6 @@ struct InvoiceItemsSelectionView: View {
                 Text("Invoice Item")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(theme.primaryText)
-
-                Text(invoiceId)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(theme.secondaryText)
-                    .lineLimit(1)
             }
 
             Spacer()
@@ -184,21 +179,6 @@ struct InvoiceItemsSelectionView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     Divider()
                         .padding(.vertical, 12)
-
-                    if let purchase = item.purchaseDate {
-                        detailRow(label: "Date of purchase",
-                                  value: Self.displayDateFormatter.string(from: purchase))
-                    }
-
-                    detailRow(label: "Cost", value: formatIndianCurrency(item.price))
-
-                    if let warranty = item.warrantyEndDate {
-                        detailRow(
-                            label: isExpired ? "Warranty expired on" : "Warranty valid until",
-                            value: Self.displayDateFormatter.string(from: warranty),
-                            isWarning: isExpired
-                        )
-                    }
 
                     Button {
                         // Map to POSProduct for the shared downstream views; carry real dates + customer.

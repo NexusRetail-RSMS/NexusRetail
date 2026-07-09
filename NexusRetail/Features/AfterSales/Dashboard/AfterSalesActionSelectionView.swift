@@ -22,7 +22,6 @@ struct ActionSelectionView: View {
     let imageUrls: [String]
 
     @State private var currentImageIndex: Int = 0
-    @State private var showCustomerSheet: Bool = false
     @State private var shareURL: IdentifiableURL?
 
     // Backend / processing state
@@ -84,6 +83,11 @@ struct ActionSelectionView: View {
                             .padding(.top, -cardCornerRadius)
                     }
 
+                    if let customer {
+                        customerCard
+                            .padding(.horizontal, RSMSSpacing.lg)
+                    }
+
                     detailsSection
                         .padding(.horizontal, RSMSSpacing.lg)
                 }
@@ -106,10 +110,6 @@ struct ActionSelectionView: View {
             }
         }
         .navigationBarHidden(true)
-        .sheet(isPresented: $showCustomerSheet) {
-            customerSheetContent
-                .presentationDetents([.height(320)])
-        }
         .sheet(item: $shareURL) { wrapped in
             ShareSheet(items: [wrapped.url])
         }
@@ -172,10 +172,6 @@ struct ActionSelectionView: View {
         HStack {
             floatingIconButton(systemImage: "chevron.left") { dismiss() }
             Spacer()
-            HStack(spacing: 10) {
-                floatingIconButton(systemImage: "square.and.arrow.up") { exportInvoicePDF() }
-                floatingIconButton(systemImage: "person") { showCustomerSheet = true }
-            }
         }
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.top, 10)
@@ -246,16 +242,6 @@ struct ActionSelectionView: View {
 
             detailRow(icon: "doc.text", label: "Invoice", value: invoiceId)
 
-            if let purchaseDate {
-                Divider().padding(.vertical, 12)
-                detailRow(icon: "calendar", label: "Purchased on",
-                          value: Self.displayDateFormatter.string(from: purchaseDate))
-            }
-
-            if let warrantyEndDate {
-                Divider().padding(.vertical, 12)
-                warrantyRow(warrantyEndDate)
-            }
         }
         .padding(20)
         .background(theme.cardBackground)
@@ -313,10 +299,10 @@ struct ActionSelectionView: View {
             Spacer()
             Text(isWarrantyExpired ? "Expired" : "Valid")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(isWarrantyExpired ? theme.burgundy : .green)
+                .foregroundColor(.white)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
-                .background((isWarrantyExpired ? theme.burgundy : Color.green).opacity(0.1))
+                .background(isWarrantyExpired ? theme.burgundy : Color.green)
                 .clipShape(Capsule())
         }
     }
@@ -351,7 +337,7 @@ struct ActionSelectionView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 4)
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.borderedProminent)
                 .tint(theme.burgundy)
                 .controlSize(.large)
             }
@@ -439,52 +425,40 @@ struct ActionSelectionView: View {
             showResult = true
         }
     }
-    // MARK: - Customer sheet
+    // MARK: - Customer Card
 
-    private var customerSheetContent: some View {
-        VStack(spacing: 20) {
-            Capsule()
-                .fill(theme.secondaryText.opacity(0.25))
-                .frame(width: 40, height: 5)
-                .padding(.top, 8)
+    private var customerCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Customer Details")
+                .font(.system(size: 12, weight: .semibold))
+                .textCase(.uppercase)
+                .tracking(0.6)
+                .foregroundColor(theme.secondaryText.opacity(0.7))
+                .padding(.bottom, 14)
 
-            if let customer {
-                ZStack {
-                    Circle()
-                        .fill(theme.burgundy.opacity(0.1))
-                        .frame(width: 64, height: 64)
-                    Text(initials(for: customer.name))
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundColor(theme.burgundy)
+            detailRow(icon: "person", label: "Name", value: customer!.name)
+            
+            if !customer!.phone.isEmpty {
+                Divider().padding(.vertical, 12)
+                detailRow(icon: "phone", label: "Phone", value: customer!.phone) {
+                    callCustomer(customer!.phone)
                 }
-                Text(customer.name)
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(theme.primaryText)
-                Text("Raised this request on invoice \(invoiceId)")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(theme.secondaryText)
-
-                VStack(spacing: 0) {
-                    detailRow(icon: "phone", label: "Phone", value: customer.phone.isEmpty ? "—" : customer.phone) {
-                        if !customer.phone.isEmpty { callCustomer(customer.phone) }
-                    }
-                    Divider().padding(.vertical, 12)
-                    detailRow(icon: "envelope", label: "Email", value: customer.email.isEmpty ? "—" : customer.email) {
-                        if !customer.email.isEmpty { emailCustomer(customer.email) }
-                    }
-                }
-            } else {
-                Spacer()
-                Text("No customer information available for this invoice.")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(theme.secondaryText)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, RSMSSpacing.lg)
             }
-
-            Spacer()
+            
+            if !customer!.email.isEmpty {
+                Divider().padding(.vertical, 12)
+                detailRow(icon: "envelope", label: "Email", value: customer!.email) {
+                    emailCustomer(customer!.email)
+                }
+            }
         }
-        .padding(.bottom, 12)
+        .padding(20)
+        .background(theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(theme.cardBorder, lineWidth: 1)
+        )
     }
 
     private func actionCard(title: String, description: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
