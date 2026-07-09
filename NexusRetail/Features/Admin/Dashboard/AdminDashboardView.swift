@@ -99,13 +99,10 @@ struct AdminDashboardView: View {
                             .onTapGesture { isShowingSalesDetail = true }
 
                             // MARK: - Top Product Sales
-                            ProductSalesChart(
-                                data: viewModel.productChartData,
-                                maxValue: viewModel.productMaxValue,
-                                timeRange: $viewModel.productTimeRange
+                            TopProductsSemiCard(
+                                products: viewModel.productChartData,
+                                onViewAll: { isShowingProductsDetail = true }
                             )
-                            .contentShape(Rectangle())
-                            .onTapGesture { isShowingProductsDetail = true }
 
                             // MARK: - Top Locations
                             TopLocationsChartView(revenueByCountry: viewModel.byCountry, selectedCountry: viewModel.selectedCountry)
