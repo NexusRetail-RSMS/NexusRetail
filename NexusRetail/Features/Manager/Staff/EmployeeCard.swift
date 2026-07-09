@@ -128,6 +128,7 @@ struct EmployeeCard: View {
                 .stroke(theme.cardBorder, lineWidth: 1)
         )
         .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
         .contextMenu {
             Button {
                 onEdit?()

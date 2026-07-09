@@ -91,5 +91,6 @@ struct BOPISCardView: View {
             RoundedRectangle(cornerRadius: RSMSRadius.large)
                 .stroke(theme.cardBorder, lineWidth: 1)
         )
+        .accessibilityElement(children: .combine)
     }
 }
