@@ -35,9 +35,6 @@ struct CheckoutView: View {
 
                         // 1. Order Summary
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("Order Summary")
-                                .font(.system(size: 16, weight: .bold, design: .rounded))
-                                .foregroundColor(theme.darkBrown)
 
                             VStack(spacing: 0) {
                                 ForEach(groupedItems, id: \.product.id) { item in
@@ -68,18 +65,12 @@ struct CheckoutView: View {
 
                         // 2. Customer Link (phone-first)
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("Customer Link")
-                                .font(.system(size: 16, weight: .bold, design: .rounded))
-                                .foregroundColor(theme.darkBrown)
 
                             customerLinkCard
                         }
 
                         // 3. Payment Method
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("Select Payment Method")
-                                .font(.system(size: 16, weight: .bold, design: .rounded))
-                                .foregroundColor(theme.darkBrown)
 
                             VStack(spacing: 12) {
                                 paymentOptionRow(method: .razorpay, title: "Razorpay (UPI / Cards / Wallets)", icon: "creditcard.and.123", selected: selectedPayment == .razorpay)
@@ -119,6 +110,14 @@ struct CheckoutView: View {
         }
         .navigationBarHidden(true)
         .toolbar(.hidden, for: .tabBar)
+        .onAppear {
+            if let exchangeCustomer = viewModel.pendingExchange?.customer, phoneText.isEmpty {
+                phoneText = exchangeCustomer.phone
+                if !phoneText.isEmpty {
+                    lookUpPhone()
+                }
+            }
+        }
     }
 
     // MARK: - Customer Link (phone-first lookup / quick-create)
@@ -145,7 +144,7 @@ struct CheckoutView: View {
                     if lookupState == .searching {
                         ProgressView().tint(theme.burgundy)
                     } else {
-                        Text("Look up").font(.system(size: 14, weight: .bold))
+                        Image(systemName: "magnifyingglass").font(.system(size: 16, weight: .bold))
                     }
                 }
                 .foregroundColor(theme.burgundy)
@@ -214,9 +213,7 @@ struct CheckoutView: View {
                 }
 
             case .idle, .searching:
-                Text("Look up a customer by phone to attach them, or continue anonymously.")
-                    .font(.system(size: 12))
-                    .foregroundColor(theme.secondaryText)
+                EmptyView()
             }
 
             // Skip / Anonymous
@@ -314,8 +311,7 @@ struct CheckoutView: View {
             .accessibilityLabel("Back")
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Checkout").font(.system(size: 24, weight: .bold)).foregroundColor(.white)
-                Text("Finalize & Authorize Payment").font(.system(size: 14, weight: .medium)).foregroundColor(.white.opacity(0.8))
+                Text("Checkout").font(.system(size: 34, weight: .bold)).foregroundColor(.white)
             }
             Spacer()
         }

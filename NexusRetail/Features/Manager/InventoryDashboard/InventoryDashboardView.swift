@@ -81,18 +81,37 @@ struct InventoryDashboardView: View {
             
             Spacer()
             
-            NavigationLink(destination: ManagerPendingRequestsView(viewModel: viewModel)) {
-                ZStack {
-                    Circle()
-                        .fill(theme.burgundy)
+            HStack(spacing: 0) {
+                Menu {
+                    ForEach(InventorySortOrder.allCases, id: \.self) { order in
+                        Button {
+                            viewModel.sortOrder = order
+                        } label: {
+                            HStack {
+                                Text(order.rawValue)
+                                if viewModel.sortOrder == order {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    Image(systemName: "line.3.horizontal.decrease")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(theme.burgundy)
                         .frame(width: 44, height: 44)
-                    
-                    Image(systemName: "shippingbox.and.arrow.backward")
-                        .font(.title3)
-                        .foregroundColor(theme.cream)
                 }
+                
+                NavigationLink(destination: ManagerPendingRequestsView(viewModel: viewModel)) {
+                    Image(systemName: "shippingbox.and.arrow.backward")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(theme.burgundy)
+                        .frame(width: 44, height: 44)
+                }
+                .accessibilityLabel("Stock Requests")
             }
-            .accessibilityLabel("Stock Requests")
+            .background(theme.burgundy.opacity(0.08))
+            .clipShape(Capsule())
         }
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.top, 50) // safe area top
@@ -101,36 +120,8 @@ struct InventoryDashboardView: View {
     // MARK: - Search Bar
     
     private var searchBar: some View {
-        HStack(spacing: 12) {
-            NexusSearchBar(text: $viewModel.searchText, placeholder: "Search by name or SKU…")
-            
-            // Filter Menu
-            Menu {
-                ForEach(InventorySortOrder.allCases, id: \.self) { order in
-                    Button {
-                        viewModel.sortOrder = order
-                    } label: {
-                        HStack {
-                            Text(order.rawValue)
-                            if viewModel.sortOrder == order {
-                                Image(systemName: "checkmark")
-                            }
-                        }
-                    }
-                }
-            } label: {
-                ZStack {
-                        Circle()
-                            .fill(theme.burgundy.opacity(0.08))
-                            .frame(width: 48, height: 48)
-
-                        Image(systemName: "line.3.horizontal.decrease")
-                            .font(.system(size: 20, weight: .medium))
-                            .foregroundColor(theme.burgundy)
-                    }
-            }
-        }
-        .padding(.horizontal, RSMSSpacing.lg)
+        NexusSearchBar(text: $viewModel.searchText, placeholder: "Search by name or SKU…")
+            .padding(.horizontal, RSMSSpacing.lg)
     }
     
     // MARK: - Filter Section

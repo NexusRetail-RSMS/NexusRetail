@@ -166,15 +166,25 @@ struct SwipeableCalendarView: View {
             ForEach(-52...0, id: \.self) { offset in
                 HStack(spacing: 0) {
                     ForEach(weekDays(offset: offset), id: \.self) { date in
-                        VStack(spacing: 3) {
-                            Text(dayLetter(date))
-                                .font(.system(size: 11, weight: .bold))
-                                .foregroundColor(theme.secondaryText)
-                            Text(String(calendar.component(.day, from: date)))
-                                .font(.system(size: 15, weight: isToday(date) ? .bold : .regular))
-                                .foregroundColor(isToday(date) ? theme.burgundy : theme.primaryText)
+                        Button {
+                            selectedRange = .weekly(date)
+                        } label: {
+                            VStack(spacing: 3) {
+                                Text(dayLetter(date))
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(theme.secondaryText)
+                                Text(String(calendar.component(.day, from: date)))
+                                    .font(.system(size: 15, weight: isSelected(date) ? .bold : .regular))
+                                    .foregroundColor(isSelected(date) ? theme.burgundy : theme.primaryText)
+                                    .background(
+                                        Circle()
+                                            .fill(isSelected(date) ? theme.burgundy.opacity(0.1) : Color.clear)
+                                            .frame(width: 30, height: 30)
+                                    )
+                            }
+                            .frame(maxWidth: .infinity)
                         }
-                        .frame(maxWidth: .infinity)
+                        .buttonStyle(.plain)
                     }
                 }
                 .tag(offset)
@@ -224,6 +234,13 @@ struct SwipeableCalendarView: View {
     }
 
     // MARK: - Formatting helpers
+
+    private func isSelected(_ date: Date) -> Bool {
+        switch selectedRange {
+        case .weekly(let selectedDate): return calendar.isDate(date, inSameDayAs: selectedDate)
+        default: return false
+        }
+    }
 
     private func dayLetter(_ date: Date) -> String {
         let f = DateFormatter()

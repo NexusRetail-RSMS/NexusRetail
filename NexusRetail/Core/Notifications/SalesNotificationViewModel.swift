@@ -187,23 +187,24 @@ final class SalesNotificationViewModel {
         
         await stopListening()
         
-        let channel = SupabaseManager.shared.client.realtimeV2.channel("sales-notifications")
+        let channelName = "sales-notifications-\(UUID().uuidString)"
+        let channel = SupabaseManager.shared.client.realtimeV2.channel(channelName)
         
         let eventChanges = channel.postgresChange(
             AnyAction.self,
             schema: "public",
             table: "event",
-            filter: "store_id=eq.\(storeID.uuidString)"
+            filter: .eq("store_id", value: storeID.uuidString)
         )
         
         let apptChanges = channel.postgresChange(
             AnyAction.self,
             schema: "public",
             table: "appointment",
-            filter: "associate_id=eq.\(associateID.uuidString)"
+            filter: .eq("associate_id", value: associateID.uuidString)
         )
         
-        await channel.subscribe()
+        try? await channel.subscribeWithError()
         self.realtimeChannel = channel
         
         // Listen for realtime DB changes

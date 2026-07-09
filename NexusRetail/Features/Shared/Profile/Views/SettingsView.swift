@@ -11,35 +11,26 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section(header: Text("Accessibility")) {
-                NavigationLink(destination: LanguageSettingsView()) {
-                    SettingsRow(icon: "globe", title: "Language", color: .blue)
-                }
+                LanguageSettingsButton()
+                    .padding(.vertical, 2)
                 
                 Toggle(isOn: $voiceOverEnabled) {
-                    SettingsRow(icon: "speaker.wave.2.fill", title: "VoiceOver", color: .green)
+                    SettingsRow(icon: "speaker.wave.2.fill", title: "VoiceOver", color: theme.burgundy)
                 }
-                .tint(theme.primaryAction)
+                .tint(theme.burgundy)
                 
                 Toggle(isOn: Binding(
                     get: { theme.isDarkMode },
                     set: { theme.isDarkMode = $0 }
                 )) {
-                    SettingsRow(icon: theme.isDarkMode ? "moon.fill" : "sun.max.fill", title: "Dark Mode", color: .purple)
+                    SettingsRow(icon: theme.isDarkMode ? "moon.fill" : "sun.max.fill", title: "Dark Mode", color: theme.burgundy)
                 }
-                .tint(theme.primaryAction)
+                .tint(theme.burgundy)
             }
             
             Section(header: Text("Account Security")) {
                 NavigationLink(destination: ChangePasswordView(viewModel: viewModel)) {
-                    SettingsRow(icon: "lock.fill", title: "Change Password", color: .gray)
-                }
-                
-                NavigationLink(destination: ChangeEmailView(viewModel: viewModel)) {
-                    SettingsRow(icon: "envelope.fill", title: "Change Email Address", color: .orange)
-                }
-                
-                NavigationLink(destination: ChangePhoneView(viewModel: viewModel)) {
-                    SettingsRow(icon: "phone.fill", title: "Change Phone Number", color: .mint)
+                    SettingsRow(icon: "lock.fill", title: "Change Password", color: theme.burgundy)
                 }
             }
             
@@ -61,7 +52,7 @@ struct SettingsView: View {
         .scrollContentBackground(.hidden)
         .background(theme.groupedBackground)
         .navigationTitle("Settings")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -76,14 +67,10 @@ struct SettingsRow: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            ZStack {
-                color.opacity(0.15)
-                Image(systemName: icon)
-                    .foregroundColor(color)
-                    .font(.system(size: 14, weight: .semibold))
-            }
-            .frame(width: 30, height: 30)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            Image(systemName: icon)
+                .foregroundColor(color)
+                .font(.system(size: 16, weight: .semibold))
+                .frame(width: 20)
             
             Text(title)
                 .font(RSMSFonts.body)
@@ -93,18 +80,4 @@ struct SettingsRow: View {
     }
 }
 
-struct LanguageSettingsView: View {
-    @Environment(AppTheme.self) private var theme
-    
-    var body: some View {
-        Form {
-            Section {
-                LanguageSettingsButton()
-            }
-        }
-        .scrollContentBackground(.hidden)
-        .background(theme.groupedBackground)
-        .navigationTitle("Language")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
+// Removed unused LanguageSettingsView

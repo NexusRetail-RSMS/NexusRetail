@@ -68,10 +68,6 @@ struct ExchangeSelectionView: View {
 
                         // Search & filter
                         VStack(alignment: .leading, spacing: 14) {
-                            Text("Choose Replacement Product")
-                                .font(.system(size: 16, weight: .bold, design: .rounded))
-                                .foregroundColor(RSMSColors.darkBrown)
-
                             searchBarSection
 
                             categoryFilterSection
@@ -123,13 +119,8 @@ struct ExchangeSelectionView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Exchange Product")
-                    .font(.system(size: 24, weight: .bold))
+                    .font(.system(size: 34, weight: .bold))
                     .foregroundColor(.white)
-
-                Text("Select replacement for \(selectedItem.name)")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.8))
-                    .lineLimit(1)
             }
 
             Spacer()

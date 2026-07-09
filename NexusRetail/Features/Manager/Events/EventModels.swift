@@ -43,6 +43,12 @@ struct SupabaseEvent: Codable, Identifiable, Hashable {
     
     var status: EventStatus {
         let now = Date()
+        let end = endTime ?? scheduledAt.addingTimeInterval(3600) // Fallback to 1 hr if no end time
+        
+        if now > end {
+            return .completed
+        }
+        
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: now)
         let eventDay = calendar.startOfDay(for: scheduledAt)
