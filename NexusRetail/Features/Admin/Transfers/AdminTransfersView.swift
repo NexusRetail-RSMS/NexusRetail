@@ -93,9 +93,40 @@ struct RequestsListView: View {
             LazyVStack(spacing: 16) {
                 if viewModel.isLoading && viewModel.requests.isEmpty {
                     skeletonSection
-                } else if viewModel.pendingRequests.isEmpty {
+                } else if viewModel.pendingRequests.isEmpty && viewModel.pendingStoreApprovalRequests.isEmpty {
                     emptyState
                 } else {
+                    // Requests awaiting store manager approval
+                    if !viewModel.pendingStoreApprovalRequests.isEmpty {
+                        HStack {
+                            Image(systemName: "clock.badge.questionmark")
+                                .font(.system(size: 14))
+                                .foregroundColor(theme.burgundy)
+                            Text("Awaiting Store Approval")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(theme.burgundy)
+                            Spacer()
+                            Text("\(viewModel.pendingStoreApprovalRequests.count)")
+                                .font(.system(size: 12, weight: .bold))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(theme.burgundy.opacity(0.1))
+                                .foregroundColor(theme.burgundy)
+                                .clipShape(Capsule())
+                        }
+                        .padding(.horizontal, 4)
+                        
+                        ForEach(viewModel.pendingStoreApprovalRequests) { request in
+                            TransferRequestCard(request: request)
+                        }
+                        
+                        if !viewModel.pendingRequests.isEmpty {
+                            Divider()
+                                .padding(.vertical, 4)
+                        }
+                    }
+                    
+                    // Standard pending requests
                     ForEach(viewModel.pendingRequests) { request in
                         TransferRequestCard(request: request)
                     }

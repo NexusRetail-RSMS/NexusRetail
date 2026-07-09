@@ -13,11 +13,17 @@ class AdminTransfersViewModel {
     // MARK: - Computed
 
     var activeRequestsCount: Int {
-        requests.filter { $0.status == .pending }.count
+        requests.filter { $0.status == .pending || $0.status == .pendingStoreApproval }.count
     }
 
     var pendingRequests: [AdminStockRequest] {
         requests.filter { $0.status == .pending }
+            .sorted { $0.createdAt > $1.createdAt }
+    }
+
+    /// Requests awaiting a source store manager's approval
+    var pendingStoreApprovalRequests: [AdminStockRequest] {
+        requests.filter { $0.status == .pendingStoreApproval }
             .sorted { $0.createdAt > $1.createdAt }
     }
 
@@ -41,15 +47,16 @@ class AdminTransfersViewModel {
         do {
             let fetchedRequests: [AdminStockRequest] = try await SupabaseManager.shared.client
                 .from("transfer_request")
-                .select("*, products(*), store!requesting_store_id(*, manager:app_user!store_manager_fk(*))")
+                .select("*, products(*), store!requesting_store_id(*, manager:app_user!store_manager_fk(*)), source_store:store!source_store_id(name)")
                 .order("created_at", ascending: false)
                 .execute()
                 .value
 
             self.requests = fetchedRequests
 
-            // Check for auto-approvals on load
+            // Check for auto-approvals and auto-escalations on load
             checkAutoApprovals()
+            checkStoreApprovalTimeouts()
         } catch is CancellationError {
             print("Admin transfers load cancelled")
         } catch {
@@ -76,16 +83,30 @@ class AdminTransfersViewModel {
             do {
                 let chosenSource = try await calculateSourceStore(for: request)
                 
-                try await SupabaseManager.shared.client
-                    .from("transfer_request")
-                    .update(StatusUpdate(status: TransferStatus.approved.rawValue, source_store_id: chosenSource))
-                    .eq("id", value: request.id)
-                    .execute()
+                if let sourceStoreId = chosenSource {
+                    // Inter-store transfer: route to source store's manager for approval
+                    try await SupabaseManager.shared.client
+                        .from("transfer_request")
+                        .update(StatusUpdate(status: TransferStatus.pendingStoreApproval.rawValue, source_store_id: sourceStoreId))
+                        .eq("id", value: request.id)
+                        .execute()
 
-                await MainActor.run {
-                    requests[index].status = .approved
-                    requests[index].approvedAt = Date()
-                    requests[index].approvalMethod = .immediate
+                    await MainActor.run {
+                        requests[index].status = .pendingStoreApproval
+                    }
+                } else {
+                    // Warehouse sourcing: approve immediately (existing flow)
+                    try await SupabaseManager.shared.client
+                        .from("transfer_request")
+                        .update(StatusUpdate(status: TransferStatus.approved.rawValue, source_store_id: nil))
+                        .eq("id", value: request.id)
+                        .execute()
+
+                    await MainActor.run {
+                        requests[index].status = .approved
+                        requests[index].approvedAt = Date()
+                        requests[index].approvalMethod = .immediate
+                    }
                 }
             } catch {
                 print("Failed to approve request: \(error)")
@@ -171,6 +192,48 @@ class AdminTransfersViewModel {
                     }
                 } catch {
                     print("Failed to auto-approve request: \(error)")
+                }
+            }
+        }
+    }
+
+    // MARK: - Store Approval Timeout (24-hour auto-escalation)
+
+    /// If a pending_store_approval request has been waiting for more than 24 hours,
+    /// automatically escalate it back to admin by resetting to pending status.
+    func checkStoreApprovalTimeouts() {
+        let now = Date()
+        let timeoutInterval: TimeInterval = 24 * 60 * 60 // 24 hours
+
+        for (index, request) in requests.enumerated() {
+            guard request.status == .pendingStoreApproval else { continue }
+
+            let elapsed = now.timeIntervalSince(request.createdAt)
+            guard elapsed >= timeoutInterval else { continue }
+
+            Task {
+                do {
+                    struct EscalateUpdate: Encodable {
+                        let status: String
+                        let source_store_id: UUID?
+                        let decline_reason: String
+                    }
+
+                    try await SupabaseManager.shared.client
+                        .from("transfer_request")
+                        .update(EscalateUpdate(
+                            status: TransferStatus.pending.rawValue,
+                            source_store_id: nil,
+                            decline_reason: "Auto-escalated: source store did not respond within 24 hours"
+                        ))
+                        .eq("id", value: request.id)
+                        .execute()
+
+                    await MainActor.run {
+                        requests[index].status = .pending
+                    }
+                } catch {
+                    print("Failed to auto-escalate request: \(error)")
                 }
             }
         }

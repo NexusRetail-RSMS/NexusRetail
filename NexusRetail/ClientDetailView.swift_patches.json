@@ -1,0 +1,58 @@
+[
+  {
+    "name": "replace_file_content",
+    "args": {
+      "AllowMultiple": false,
+      "Description": "Replacing the gold color in the client detail profile avatar with the cream background color and changing the text to burgundy for visibility.",
+      "EndLine": 72,
+      "Instruction": "Change theme.gold to theme.background and the foregroundStyle of the initials text to theme.burgundy.",
+      "ReplacementContent": "                        // Avatar\n                        Circle()\n                            .fill(theme.background)\n                            .frame(width: 120, height: 120)\n                            .overlay(\n                                Circle().stroke(Color.white, lineWidth: 6)\n                            )\n                            .shadow(color: .black.opacity(0.15), radius: 15, x: 0, y: 8)\n                            .overlay {\n                                Text(client.initials)\n                                    .font(.system(size: 46, weight: .bold, design: .rounded))\n                                    .foregroundStyle(theme.burgundy)\n                                    .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 2)\n                            }\n                            .padding(.bottom, 16)",
+      "StartLine": 58,
+      "TargetContent": "                        // Avatar\n                        Circle()\n                            .fill(theme.gold)\n                            .frame(width: 120, height: 120)\n                            .overlay(\n                                Circle().stroke(Color.white, lineWidth: 6)\n                            )\n                            .shadow(color: .black.opacity(0.15), radius: 15, x: 0, y: 8)\n                            .overlay {\n                                Text(client.initials)\n                                    .font(.system(size: 46, weight: .bold, design: .rounded))\n                                    .foregroundStyle(.white)\n                                    .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 2)\n                            }\n                            .padding(.bottom, 16)",
+      "TargetFile": "/Users/manu/Desktop/NexusRetail/NexusRetail/Features/SalesAssociate/Clienteling/ClientDetailView.swift",
+      "toolAction": "Changing avatar color",
+      "toolSummary": "Change avatar color"
+    }
+  },
+  {
+    "name": "multi_replace_file_content",
+    "args": {
+      "Description": "Making the profile avatar background 'more cream' and updating the edit button icon to 'pencil.square' as requested.",
+      "Instruction": "Change the avatar fill color to a stronger cream color and update the edit button icon.",
+      "ReplacementChunks": [
+        {
+          "AllowMultiple": false,
+          "EndLine": 60,
+          "ReplacementContent": "                        // Avatar\n                        Circle()\n                            .fill(Color(hex: \"FFF9EE\")) // A warm, prominent cream color",
+          "StartLine": 58,
+          "TargetContent": "                        // Avatar\n                        Circle()\n                            .fill(theme.background)"
+        },
+        {
+          "AllowMultiple": false,
+          "EndLine": 183,
+          "ReplacementContent": "                Button { isEditingClient = true } label: {\n                    Image(systemName: \"pencil.square\")\n                        .font(.system(size: 16, weight: .bold))",
+          "StartLine": 181,
+          "TargetContent": "                Button { isEditingClient = true } label: {\n                    Image(systemName: \"pencil\")\n                        .font(.system(size: 16, weight: .bold))"
+        }
+      ],
+      "TargetFile": "/Users/manu/Desktop/NexusRetail/NexusRetail/Features/SalesAssociate/Clienteling/ClientDetailView.swift",
+      "toolAction": "Updating cream color and pencil icon",
+      "toolSummary": "Update cream and pencil icon"
+    }
+  },
+  {
+    "name": "replace_file_content",
+    "args": {
+      "AllowMultiple": false,
+      "Description": "Fixing the SF symbol name for the edit button to 'square.and.pencil' as requested by the user.",
+      "EndLine": 182,
+      "Instruction": "Change 'pencil.square' to 'square.and.pencil' in the Image systemName.",
+      "ReplacementContent": "                Button { isEditingClient = true } label: {\n                    Image(systemName: \"square.and.pencil\")",
+      "StartLine": 181,
+      "TargetContent": "                Button { isEditingClient = true } label: {\n                    Image(systemName: \"pencil.square\")",
+      "TargetFile": "/Users/manu/Desktop/NexusRetail/NexusRetail/Features/SalesAssociate/Clienteling/ClientDetailView.swift",
+      "toolAction": "Fixing SF symbol",
+      "toolSummary": "Fix SF symbol"
+    }
+  }
+]
