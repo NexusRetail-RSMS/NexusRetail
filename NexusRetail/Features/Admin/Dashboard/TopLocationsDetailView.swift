@@ -2,172 +2,95 @@
 //  TopLocationsDetailView.swift
 //  NexusRetail
 //
+//  Full-screen, fully-interactive customer-footprint map.
+//  Native MapKit (pan / pinch-zoom / drag) with burgundy country
+//  overlays shaded by distinct-customer count, store pins, a legend,
+//  and a per-country ranking list.
+//
 
 import SwiftUI
+import MapKit
 import CoreLocation
 
 struct TopLocationsDetailView: View {
     @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
-    
-    let countryPolygons: [CountryPolygon]
-    let revenueByCountry: [CountryRevenue]
-    
-    private var maxRevenue: Double {
-        revenueByCountry.map(\.revenue).max() ?? 1
+
+    let footprint: [CountryFootprint]
+    let storePoints: [StorePoint]
+
+    private var ranked: [CountryFootprint] {
+        footprint.sorted { $0.customerCount > $1.customerCount }
     }
-    
-    @State private var scale: CGFloat = 1.0
-    @State private var lastScale: CGFloat = 1.0
-    @State private var offset: CGSize = .zero
-    @State private var lastOffset: CGSize = .zero
-    @State private var selectedCountry: String? = nil
-    
+
+    private var totalCustomers: Int { footprint.reduce(0) { $0 + $1.customerCount } }
+    private var totalOrders: Int { footprint.reduce(0) { $0 + $1.orderCount } }
+
     var body: some View {
         VStack(spacing: 0) {
-            // Header
-            HStack {
-                Button(action: { dismiss() }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 28))
-                        .foregroundColor(theme.secondaryText)
-                }
-                
-                Spacer()
-                
-                Text("Top Customer Locations")
-                    .font(RSMSFonts.headline)
-                    .foregroundColor(theme.primaryText)
-                
-                Spacer()
-                
-                // Placeholder for balance
-                Color.clear.frame(width: 28, height: 28)
-            }
-            .padding()
-            .background(theme.background)
-            
-            ScrollView {
-                VStack(spacing: RSMSSpacing.xl) {
+            header
 
-                    // Map Area
-                    ZStack {
-                        Color.white
-                            .onTapGesture {
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                    selectedCountry = nil
-                                }
-                            }
-                        
-                        ForEach(countryPolygons) { country in
-                            let isSelected = selectedCountry == country.name
-                            
-                            CountryShape(polygons: country.polygons)
-                                .fill(getFillColor(for: country.name).opacity(getOpacity(for: country.name, isSelected: isSelected)))
-                                .stroke(isSelected ? Color.blue : Color.white, lineWidth: isSelected ? 1.5 : 0.5)
-                                .onTapGesture {
-                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                        selectedCountry = (selectedCountry == country.name) ? nil : country.name
-                                    }
-                                }
-                        }
+            ScrollView {
+                VStack(spacing: RSMSSpacing.lg) {
+                    // ECharts store-bubble map (pinch-zoom / drag-pan, tooltips)
+                    ChoroplethWebView(storePoints: storePoints)
+                        .frame(height: 380)
+                        .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.medium))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: RSMSRadius.medium)
+                                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+                        )
+                        .padding(.horizontal)
+
+                    // Totals
+                    HStack(spacing: RSMSSpacing.md) {
+                        totalTile(icon: "person.2.fill", value: "\(totalCustomers)", label: "Customers")
+                        totalTile(icon: "cart.fill", value: "\(totalOrders)", label: "Orders")
+                        totalTile(icon: "globe", value: "\(footprint.count)", label: "Countries")
                     }
-                    .contentShape(Rectangle())
-                    .aspectRatio(1.8, contentMode: .fit)
-                    .scaleEffect(scale)
-                    .offset(offset)
-                    .gesture(
-                        MagnificationGesture()
-                            .onChanged { value in
-                                scale = max(1.0, lastScale * value)
-                            }
-                            .onEnded { value in
-                                lastScale = max(1.0, scale)
-                                scale = lastScale
-                                if scale <= 1.0 {
-                                    scale = 1.0
-                                    lastScale = 1.0
-                                    withAnimation { offset = .zero; lastOffset = .zero }
-                                }
-                            }
-                            .simultaneously(with: DragGesture()
-                                .onChanged { value in
-                                    if scale > 1.0 {
-                                        offset = CGSize(
-                                            width: lastOffset.width + value.translation.width,
-                                            height: lastOffset.height + value.translation.height
-                                        )
-                                    }
-                                }
-                                .onEnded { value in
-                                    lastOffset = offset
-                                }
-                            )
-                    )
-                    .clipped()
-                    .cornerRadius(RSMSRadius.medium)
                     .padding(.horizontal)
-                    
-                    // Details
-                    if let selected = selectedCountry, let data = revenueByCountry.first(where: { $0.country == selected }) {
-                        VStack(spacing: RSMSSpacing.sm) {
-                            Text(selected)
-                                .font(RSMSFonts.headline)
-                                .foregroundColor(theme.primaryText)
-                            
-                            Text("₹\(shortCurrency(data.revenue)) Revenue")
-                                .font(.system(size: 32, weight: .bold))
-                                .foregroundColor(getColor(for: data.revenue))
-                        }
-                    } else {
-                        let total = revenueByCountry.reduce(0) { $0 + $1.revenue }
-                        VStack(spacing: RSMSSpacing.sm) {
-                            Text("Worldwide")
-                                .font(RSMSFonts.headline)
-                                .foregroundColor(theme.primaryText)
-                            
-                            Text("₹\(shortCurrency(total)) Revenue")
-                                .font(.system(size: 32, weight: .bold))
-                                .foregroundColor(theme.primaryText)
-                            
-                            Text("Tap any highlighted region for details")
-                                .font(.system(size: 14))
-                                .foregroundColor(theme.secondaryText)
-                        }
-                    }
-                    
-                    // Ranking List
-                    VStack(alignment: .leading, spacing: RSMSSpacing.md) {
-                        Text("Location Ranking")
+
+                    // Ranking by customers
+                    VStack(alignment: .leading, spacing: RSMSSpacing.sm) {
+                        Text("Customer Footprint by Country")
                             .font(RSMSFonts.headline)
-                            .padding(.bottom, RSMSSpacing.sm)
-                        
-                        let sortedData = revenueByCountry.sorted { $0.revenue > $1.revenue }
-                        ForEach(Array(sortedData.enumerated()), id: \.element.country) { index, item in
-                            HStack {
+                            .foregroundColor(theme.primaryText)
+                            .padding(.bottom, 2)
+
+                        ForEach(Array(ranked.enumerated()), id: \.element.country) { index, item in
+                            HStack(spacing: RSMSSpacing.sm) {
                                 Text("#\(index + 1)")
-                                    .font(.system(size: 14, weight: .bold))
+                                    .font(.system(size: 13, weight: .bold))
                                     .foregroundColor(theme.secondaryText)
-                                    .frame(width: 30, alignment: .leading)
-                                
-                                Circle()
-                                    .fill(getColor(for: item.revenue))
-                                    .frame(width: 12, height: 12)
-                                
-                                Text(item.country)
-                                    .font(.system(size: 16))
+                                    .frame(width: 28, alignment: .leading)
+
+                                Text("\(CountryMapRegion.flags[item.country] ?? "📍") \(item.country)")
+                                    .font(.system(size: 15, weight: .medium))
                                     .foregroundColor(theme.primaryText)
-                                
+
                                 Spacer()
-                                
-                                Text("₹\(shortCurrency(item.revenue))")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(theme.primaryText)
+
+                                VStack(alignment: .trailing, spacing: 1) {
+                                    Text("\(item.customerCount) customers")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(theme.burgundy)
+                                    Text("\(item.orderCount) orders · \(StoreMapViewModel.shortCurrency(item.revenue, symbol: CountryMapRegion.currencySymbols[item.country] ?? "₹"))")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(theme.secondaryText)
+                                }
                             }
                             .padding()
                             .background(theme.cardBackground)
                             .cornerRadius(RSMSRadius.medium)
-                            .shadow(color: Color.black.opacity(0.02), radius: 4, y: 2)
+                            .shadow(color: Color.black.opacity(0.03), radius: 4, y: 2)
+                        }
+
+                        if ranked.isEmpty {
+                            Text("No customer activity yet.")
+                                .font(RSMSFonts.subheadline)
+                                .foregroundColor(theme.secondaryText)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, RSMSSpacing.xl)
                         }
                     }
                     .padding(.horizontal)
@@ -175,32 +98,43 @@ struct TopLocationsDetailView: View {
                 .padding(.vertical)
             }
         }
+        .background(theme.background.ignoresSafeArea())
+    }
+
+    private var header: some View {
+        HStack {
+            Button(action: { dismiss() }) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 26))
+                    .foregroundColor(theme.secondaryText)
+            }
+            Spacer()
+            Text("Top Customer Locations")
+                .font(RSMSFonts.headline)
+                .foregroundColor(theme.primaryText)
+            Spacer()
+            Color.clear.frame(width: 26, height: 26)
+        }
+        .padding()
         .background(theme.background)
     }
-    
-    private func getFillColor(for countryName: String) -> Color {
-        guard let data = revenueByCountry.first(where: { $0.country == countryName }) else {
-            return Color(hex: "E5E5EA")
+
+    private func totalTile(icon: String, value: String, label: String) -> some View {
+        VStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(theme.burgundy)
+            Text(value)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(theme.primaryText)
+            Text(label)
+                .font(.system(size: 11))
+                .foregroundColor(theme.secondaryText)
         }
-        return getColor(for: data.revenue)
-    }
-    
-    private func getOpacity(for countryName: String, isSelected: Bool) -> Double {
-        let hasData = revenueByCountry.contains(where: { $0.country == countryName })
-        return isSelected ? 1.0 : (hasData ? 0.8 : 0.4)
-    }
-    
-    private func getColor(for revenue: Double) -> Color {
-        guard maxRevenue > 0 else { return Color(hex: "E5E5EA") }
-        let ratio = revenue / maxRevenue
-        if ratio > 0.66 { return Color(hex: "007AFF") }
-        if ratio > 0.33 { return Color(hex: "F4A261") }
-        return Color(hex: "E9C46A")
-    }
-    
-    private func shortCurrency(_ value: Double) -> String {
-        if value >= 1_000_000 { return String(format: "%.1fM", value / 1_000_000) }
-        if value >= 1_000 { return String(format: "%.1fK", value / 1_000) }
-        return String(format: "%.0f", value)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, RSMSSpacing.md)
+        .background(theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.medium))
+        .overlay(RoundedRectangle(cornerRadius: RSMSRadius.medium).stroke(theme.cardBorder.opacity(0.5), lineWidth: 1))
     }
 }

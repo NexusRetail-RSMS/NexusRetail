@@ -277,9 +277,12 @@ struct EmployeeDetailView: View {
                 Button {
                     isEditPresented = true
                 } label: {
-                    Image(systemName: "pencil")
-                        .font(.system(.body, design: .default).weight(.semibold))
-                        .foregroundColor(theme.burgundy)
+                    HStack(spacing: 4) {
+                        Image(systemName: "square.and.pencil")
+                        Text("Edit")
+                    }
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(theme.burgundy)
                 }
             }
         }

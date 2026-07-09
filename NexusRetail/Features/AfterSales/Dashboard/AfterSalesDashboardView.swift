@@ -21,7 +21,6 @@ struct AfterSalesDashboardView: View {
         ZStack(alignment: .bottomTrailing) {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 24) {
-                    headerSection
                     kpiSection
                     serviceTrendChartSection
                     serviceStatusDonutSection
@@ -29,6 +28,13 @@ struct AfterSalesDashboardView: View {
                 }
                 .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.top, 16)
+            }
+            .safeAreaInset(edge: .top) {
+                headerSection
+                    .padding(.horizontal, RSMSSpacing.lg)
+                    .padding(.top, 16)
+                    .padding(.bottom, 8)
+                    .fadingMaterialHeader()
             }
             .background(theme.background.ignoresSafeArea())
             .refreshable { await vm.fetch(storeID: sessionStore.currentUser?.storeID) }
@@ -92,7 +98,6 @@ struct AfterSalesDashboardView: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Profile")
         }
-        .padding(.vertical, 4)
     }
     
     private func initials(for name: String?) -> String {

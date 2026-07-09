@@ -18,6 +18,8 @@ struct TopLocationsChartView: View {
     @Environment(AppTheme.self) private var theme
     let revenueByCountry: [CountryRevenue]
     let selectedCountry: String?
+    var footprint: [CountryFootprint] = []
+    var storePoints: [StorePoint] = []
 
     @State private var mapVM = StoreMapViewModel()
     @State private var showingDetail = false
@@ -65,8 +67,8 @@ struct TopLocationsChartView: View {
         }
         .fullScreenCover(isPresented: $showingDetail) {
             TopLocationsDetailView(
-                countryPolygons: countryPolygons,
-                revenueByCountry: revenueByCountry
+                footprint: footprint,
+                storePoints: storePoints
             )
         }
         .onAppear {
@@ -102,37 +104,35 @@ struct TopLocationsChartView: View {
     // MARK: - Map Section
 
     private var mapSection: some View {
-        NexusMapView(
-            stores: mapVM.stores,
-            selectedStore: $selectedStore,
-            cameraPosition: $mapVM.cameraPosition
-        )
-        .frame(height: 260)
-        .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.medium))
-        .overlay(
-            RoundedRectangle(cornerRadius: RSMSRadius.medium)
-                .stroke(Color.black.opacity(0.06), lineWidth: 1)
-        )
-        .overlay(alignment: .bottom) {
-            // Selected store callout
-            if let store = selectedStore {
-                storeCallout(store)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .padding(RSMSSpacing.sm)
+        VStack(spacing: RSMSSpacing.sm) {
+            // ECharts choropleth (WKWebView): plain white, burgundy ramp,
+            // tooltips, native pinch-zoom / drag-pan. Auto-zooms to the
+            // selected country from the dashboard filter.
+            ChoroplethWebView(
+                storePoints: storePoints,
+                focusCountry: selectedCountry
+            )
+            .frame(height: 260)
+            .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.medium))
+            .overlay(
+                RoundedRectangle(cornerRadius: RSMSRadius.medium)
+                    .stroke(Color.black.opacity(0.06), lineWidth: 1)
+            )
+            .overlay(alignment: .topTrailing) {
+                Button {
+                    showingDetail = true
+                } label: {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(theme.burgundy)
+                        .padding(8)
+                        .background(.ultraThinMaterial)
+                        .clipShape(Circle())
+                }
+                .accessibilityLabel("Open full map")
+                .padding(RSMSSpacing.sm)
             }
         }
-        .overlay(alignment: .topTrailing) {
-            // Loading indicator
-            if mapVM.isLoadingStores {
-                ProgressView()
-                    .tint(theme.burgundy)
-                    .padding(8)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Circle())
-                    .padding(RSMSSpacing.sm)
-            }
-        }
-        .animation(.easeInOut(duration: 0.3), value: selectedStore?.id)
     }
 
     // MARK: - Store Callout Overlay

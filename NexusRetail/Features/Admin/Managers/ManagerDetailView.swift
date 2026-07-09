@@ -195,7 +195,7 @@ struct ManagerDetailView: View {
                 Button {
                     isEditPresented = true
                 } label: {
-                    Image(systemName: "pencil")
+                    Image(systemName: "square.and.pencil")
                         .font(.system(.body, design: .default).weight(.semibold))
                         .foregroundColor(theme.burgundy)
                 }

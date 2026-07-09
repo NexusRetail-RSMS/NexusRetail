@@ -67,6 +67,16 @@ struct OrdersHubView: View {
         .sheet(item: $orderToCollect) { order in
             CollectVerifyView(order: order) { code in
                 await bopisVM.verifyAndCollect(id: order.id, code: code)
+            } onResend: {
+                let outcome = await bopisVM.resendCode(id: order.id)
+                switch outcome {
+                case .emailed:
+                    return "A new pickup code was emailed to \(order.customerName)."
+                case .noEmail:
+                    return "No email on file for \(order.customerName). Ask them for their code another way."
+                case .sendFailed:
+                    return "Couldn't send the code right now. Please try again."
+                }
             }
         }
         .alert("Ready for Pickup", isPresented: $showNotifiedAlert) {

@@ -59,6 +59,9 @@ class DashboardViewModel {
     var monthly: [MonthlyRevenue] = []
     var weekly: [WeeklyRevenue] = []
     var byCountry: [CountryRevenue] = []
+    var footprint: [CountryFootprint] = []
+    var storePoints: [StorePoint] = []
+    var indiaStates: [StateFootprint] = []
     var topProductsWeekly: [DashboardTopProduct] = []
     var topProductsMonthly: [DashboardTopProduct] = []
     
@@ -203,6 +206,15 @@ class DashboardViewModel {
                 
             async let countryTask: [CountryRevenue] = SupabaseManager.shared.client
                 .rpc("revenue_by_country").execute().value
+
+            async let footprintTask: [CountryFootprint] = SupabaseManager.shared.client
+                .rpc("customer_footprint_by_country").execute().value
+
+            async let indiaStatesTask: [StateFootprint] = SupabaseManager.shared.client
+                .rpc("customer_footprint_india_by_state").execute().value
+
+            async let storePointsTask: [StorePoint] = SupabaseManager.shared.client
+                .rpc("store_footprint_points").execute().value
                 
             async let topWeeklyTask: [DashboardTopProduct] = SupabaseManager.shared.client
                 .rpc("top_products", params: weekParams).execute().value
@@ -216,6 +228,9 @@ class DashboardViewModel {
             self.monthly = try await monthlyTask
             self.weekly = try await weeklyTask
             self.byCountry = try await countryTask
+            self.footprint = try await footprintTask
+            self.indiaStates = try await indiaStatesTask
+            self.storePoints = try await storePointsTask
             self.topProductsWeekly = try await topWeeklyTask
             self.topProductsMonthly = try await topMonthlyTask
             self.totalProducts = try await productsCountTask

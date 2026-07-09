@@ -50,38 +50,8 @@ struct StaffView: View {
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            // MARK: - Custom Header
-            HStack(alignment: .center) {
-                Text("Employees")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .foregroundColor(theme.primaryText)
-                
-                Spacer()
-                
-                AddCircleButton(accessibilityLabel: "Add new employee") {
-                    isAddEmployeePresented = true
-                }
-            }
-            .padding(.horizontal, RSMSSpacing.lg)
-            .padding(.top, RSMSSpacing.sm)
-            .padding(.bottom, RSMSSpacing.sm)
-            
-            // MARK: - Search Bar
-            NexusSearchBar(text: $searchText, placeholder: "Search employees…")
-                .padding(.horizontal, RSMSSpacing.lg)
-                .padding(.bottom, RSMSSpacing.md)
-            
-            // MARK: - Role Segmented Control
-            Picker("Role Filter", selection: $selectedRoleFilter) {
-                ForEach(EmployeeRoleFilter.allCases, id: \.self) { role in
-                    Text(role.displayName).tag(role)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal, RSMSSpacing.lg)
-            .padding(.bottom, RSMSSpacing.md)
+        ZStack {
+            theme.background.ignoresSafeArea()
             
             // MARK: - Content List
             ScrollView {
@@ -137,6 +107,42 @@ struct StaffView: View {
                 }
                 .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.bottom, RSMSSpacing.xl)
+            }
+            .safeAreaInset(edge: .top) {
+                VStack(spacing: 0) {
+                    // MARK: - Custom Header
+                    HStack(alignment: .center) {
+                        Text("Employees")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(theme.primaryText)
+                        
+                        Spacer()
+                        
+                        AddCircleButton(accessibilityLabel: "Add new employee") {
+                            isAddEmployeePresented = true
+                        }
+                    }
+                    .padding(.horizontal, RSMSSpacing.lg)
+                    .padding(.top, 16)
+                    .padding(.bottom, 8)
+                    
+                    // MARK: - Search Bar
+                    NexusSearchBar(text: $searchText, placeholder: "Search employees…")
+                        .padding(.horizontal, RSMSSpacing.lg)
+                        .padding(.bottom, RSMSSpacing.sm)
+                    
+                    // MARK: - Role Segmented Control
+                    Picker("Role Filter", selection: $selectedRoleFilter) {
+                        ForEach(EmployeeRoleFilter.allCases, id: \.self) { role in
+                            Text(role.displayName).tag(role)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal, RSMSSpacing.lg)
+                    .padding(.bottom, RSMSSpacing.sm)
+                }
+                .fadingMaterialHeader()
             }
         }
         .background(theme.background.ignoresSafeArea())

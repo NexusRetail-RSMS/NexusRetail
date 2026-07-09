@@ -24,25 +24,27 @@ struct ActiveRepairsView: View {
             theme.background
                 .ignoresSafeArea()
             
-            VStack(spacing: 0) {
-                headerSection
-                
+            Group {
                 if isLoading {
-                    Spacer()
-                    ProgressView("Loading Repairs...")
-                        .tint(theme.burgundy)
-                    Spacer()
-                } else if repairOrders.isEmpty {
-                    Spacer()
-                    VStack(spacing: 16) {
-                        Image(systemName: "wrench.and.screwdriver.fill")
-                            .font(.system(size: 48))
-                            .foregroundColor(theme.secondaryText)
-                        Text("No Active Repairs")
-                            .font(RSMSFonts.title)
-                            .foregroundColor(theme.primaryText)
+                    VStack {
+                        Spacer()
+                        ProgressView("Loading Repairs...")
+                            .tint(theme.burgundy)
+                        Spacer()
                     }
-                    Spacer()
+                } else if repairOrders.isEmpty {
+                    VStack {
+                        Spacer()
+                        VStack(spacing: 16) {
+                            Image(systemName: "wrench.and.screwdriver.fill")
+                                .font(.system(size: 48))
+                                .foregroundColor(theme.secondaryText)
+                            Text("No Active Repairs")
+                                .font(RSMSFonts.title)
+                                .foregroundColor(theme.primaryText)
+                        }
+                        Spacer()
+                    }
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 16) {
@@ -66,6 +68,10 @@ struct ActiveRepairsView: View {
                     .refreshable { await fetchRepairOrders() }
                 }
             }
+            .safeAreaInset(edge: .top) {
+                headerSection
+                    .fadingMaterialHeader()
+            }
         }
         .task { await fetchRepairOrders() }
         .navigationBarHidden(true)
@@ -83,7 +89,7 @@ struct ActiveRepairsView: View {
         }
         .padding(.horizontal, RSMSSpacing.lg)
         .padding(.top, 16)
-        .padding(.bottom, 4)
+        .padding(.bottom, 8)
     }
 
     // MARK: - Data (backed by the real after_sales_ticket table)

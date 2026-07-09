@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #ffffff; -webkit-user-select: none; }
+  #chart { width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+  <div id="chart"></div>
+  <script src="echarts.min.js"></script>
+  <script>
+    var chart = echarts.init(document.getElementById('chart'), null, { renderer: 'canvas' });
+    var worldReady = false;
+
+    // points: [{name, city, customers, orders, value:[lng,lat,orders]}]
+    function renderPoints(geojson, points, maxVal, colorLo, colorHi) {
+      if (!worldReady) { echarts.registerMap('world', geojson); worldReady = true; }
+      chart.setOption({
+        backgroundColor: '#ffffff',
+        tooltip: {
+          trigger: 'item',
+          borderColor: colorHi,
+          borderWidth: 1,
+          backgroundColor: 'rgba(255,255,255,0.96)',
+          textStyle: { color: '#3c3c3c', fontSize: 12 },
+          formatter: function (p) {
+            if (p.data && p.data.value) {
+              return '<b>' + p.data.name + '</b>' +
+                     (p.data.city ? '<br/>' + p.data.city : '') +
+                     '<br/>' + p.data.customers + ' customers · ' + p.data.orders + ' orders';
+            }
+            return '';
+          }
+        },
+        // Bubble color: light = fewer, dark = more (by order volume).
+        visualMap: {
+          show: false, min: 0, max: maxVal, dimension: 2,
+          inRange: { color: [colorLo, colorHi] }
+        },
+        geo: {
+          map: 'world',
+          roam: true,               /* pinch-zoom + drag-pan */
+          zoom: 1.2,
+          scaleLimit: { min: 1, max: 14 },
+          itemStyle: { areaColor: '#e6e6ea', borderColor: '#ffffff', borderWidth: 0.4 },
+          emphasis: { itemStyle: { areaColor: '#e6e6ea' }, label: { show: false } },
+          silent: true
+        },
+        series: [{
+          type: 'effectScatter',
+          coordinateSystem: 'geo',
+          data: points,
+          symbolSize: function (val) {
+            return Math.max(6, Math.min(20, Math.sqrt(val[2]) * 1.2));
+          },
+          showEffectOn: 'render',
+          rippleEffect: { brushType: 'stroke', scale: 1.6, period: 4 },
+          itemStyle: { shadowBlur: 6, shadowColor: 'rgba(0,0,0,0.18)', opacity: 0.95 },
+          encode: { value: 2 },
+          zlevel: 1
+        }]
+      }, true);
+    }
+
+    function focus(lng, lat, zoom) {
+      if (!worldReady) return;
+      chart.setOption({ geo: [{ center: [lng, lat], zoom: zoom }] });
+    }
+    function resetView() {
+      if (!worldReady) return;
+      chart.setOption({ geo: [{ center: null, zoom: 1.2 }] });
+    }
+
+    window.addEventListener('resize', function () { chart.resize(); });
+  </script>
+</body>
+</html>

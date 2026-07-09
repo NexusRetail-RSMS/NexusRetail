@@ -37,7 +37,6 @@ struct ClientelingView: View {
             
             VStack(spacing: 0) {
                 VStack(spacing: 20) {
-                    headerBar
                     searchBar
                 }
                 .padding(.horizontal, 20)
@@ -54,6 +53,10 @@ struct ClientelingView: View {
                     .padding(.top, 8)
                     .padding(.bottom, 56)
                 }
+            }
+            .safeAreaInset(edge: .top) {
+                headerBar
+                    .fadingMaterialHeader()
             }
         }
         .navigationBarHidden(true)
@@ -76,6 +79,9 @@ struct ClientelingView: View {
             }
             Spacer()
         }
+        .padding(.horizontal, 20)
+        .padding(.top, 16)
+        .padding(.bottom, 8)
         .opacity(contentAppeared ? 1 : 0)
         .offset(y: contentAppeared ? 0 : -12)
         .animation(.spring(response: 0.55, dampingFraction: 0.82), value: contentAppeared)

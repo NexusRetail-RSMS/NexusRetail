@@ -14,7 +14,7 @@ struct FadingMaterialHeader: ViewModifier {
         content.background(
             Rectangle()
                 .fill(.ultraThinMaterial)
-                .opacity(0.7)
+                .opacity(0.915)
                 .mask(
                     LinearGradient(
                         stops: [

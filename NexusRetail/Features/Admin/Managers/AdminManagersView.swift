@@ -281,9 +281,9 @@ struct AdminManagersView: View {
                             }
                         } label: {
                             Image(systemName: "line.3.horizontal.decrease")
-                                .font(.system(size: 17, weight: .medium))
+                                .font(.system(size: 19, weight: .medium))
                                 .foregroundColor(isFiltered ? theme.burgundy : theme.primaryText)
-                                .frame(width: 40, height: 40)
+                                .frame(width: 48, height: 48)
                                 .background(isFiltered
                                     ? theme.burgundy.opacity(0.12)
                                     : Color.black.opacity(0.05))
