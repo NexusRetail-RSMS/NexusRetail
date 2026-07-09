@@ -581,7 +581,25 @@ struct ExchangeSelectionView: View {
         guard viewModel.isExchangeValid, let replacement = viewModel.selectedReplacement else { return }
         isProcessing = true
 
-        // Store exchange context on SellViewModel for post-processing
+        // Build a checkout line for the REAL replacement product, priced at the
+        // exchange difference. This makes the POS checkout RPC validate the item,
+        // deduct its stock, and charge only the delta (0 for an even exchange) —
+        // instead of a fake "item_id 0" line that inventory rejects.
+        let exchangeLine = POSProduct(
+            id: UUID(),
+            itemId: replacement.product.itemId,
+            name: replacement.product.name,
+            sku: replacement.product.sku,
+            category: replacement.product.category,
+            price: viewModel.amountPayable,
+            stock: replacement.product.stock,
+            size: replacement.product.size,
+            imageUrl: replacement.product.imageUrl
+        )
+
+        sellViewModel.resetFlow()
+        sellViewModel.addToCart(product: exchangeLine)
+        // Store exchange context so it can be recorded after checkout.
         sellViewModel.pendingExchange = PendingExchange(
             invoiceId: invoiceId,
             originalProduct: selectedItem,
@@ -590,36 +608,26 @@ struct ExchangeSelectionView: View {
             customer: customer,
             amountPayable: viewModel.amountPayable
         )
+        if let customer {
+            sellViewModel.selectedClient = customer.name
+            sellViewModel.receiptSharedEmail = customer.email
+            sellViewModel.receiptSharedPhone = customer.phone
+        }
 
         if viewModel.requiresPayment {
-            // Inject difference into SellViewModel for checkout
-            let syntheticProduct = POSProduct(
-                id: UUID(),
-                itemId: 0,
-                name: "Exchange Difference — \(selectedItem.name)",
-                sku: "EXC-DIFF",
-                category: "Exchange",
-                price: viewModel.amountPayable,
-                stock: 999,
-                size: "—",
-                imageUrl: selectedItem.imageUrl
-            )
-            sellViewModel.resetFlow()
-            sellViewModel.addToCart(product: syntheticProduct)
-
-            if let customer {
-                sellViewModel.selectedClient = customer.name
-                sellViewModel.receiptSharedEmail = customer.email
-                sellViewModel.receiptSharedPhone = customer.phone
-            }
-
+            // Collect the difference via the standard checkout → payment flow.
+            // PaymentFlowView finalizes the exchange (restock + ticket) after payment.
             await MainActor.run {
                 isProcessing = false
                 path.append(POSFlowDestination.checkout)
             }
         } else {
-            // No payment needed — finalize exchange and show the success screen
+            // Even exchange (no money due): record the sale + exchange, then show success.
             do {
+                try await sellViewModel.processCheckout(
+                    storeID: sessionStore.currentUser?.storeID,
+                    associateID: sessionStore.currentUser?.id
+                )
                 try await sellViewModel.finalizeExchange(
                     storeID: sessionStore.currentUser?.storeID,
                     associateID: sessionStore.currentUser?.id

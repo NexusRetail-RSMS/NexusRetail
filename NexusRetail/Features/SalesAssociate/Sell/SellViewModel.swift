@@ -489,8 +489,10 @@ class SellViewModel {
 
     // MARK: - Exchange finalization
 
-    /// Records the exchange on the backend and generates a new invoice for the
-    /// replacement product via the standard checkout RPC.
+    /// Records the exchange on the backend: restocks the original item and
+    /// creates the after-sales ticket. The replacement item's stock deduction
+    /// and the (difference-priced) sale order are handled by the normal POS
+    /// checkout that runs alongside this — so we do NOT check out again here.
     func finalizeExchange(storeID: UUID?, associateID: UUID?) async throws {
         guard let exchange = pendingExchange else { return }
 
@@ -506,19 +508,6 @@ class SellViewModel {
             throw NSError(domain: "Exchange", code: 1,
                           userInfo: [NSLocalizedDescriptionKey: result.message ?? "Exchange processing failed on backend"])
         }
-
-        // Set cart to the single replacement product for invoice generation
-        cartItems = [exchange.replacementItem.product]
-
-        // Set customer info from the exchange
-        if let customer = exchange.customer {
-            selectedClient = customer.name
-            receiptSharedEmail = customer.email
-            receiptSharedPhone = customer.phone
-        }
-
-        // Generate a new invoice via the standard checkout RPC
-        try await processCheckout(storeID: storeID, associateID: associateID)
 
         pendingExchange = nil
     }
