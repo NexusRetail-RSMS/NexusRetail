@@ -27282,6 +27282,9 @@
         }
       }
     },
+    "Stores in %@" : {
+
+    },
     "Style Preferences" : {
       "extractionState" : "manual",
       "localizations" : {

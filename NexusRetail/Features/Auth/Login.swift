@@ -35,7 +35,7 @@ struct Login: View {
                     .zIndex(2)
             }
         }
-        .ignoresSafeArea()
+        .ignoresSafeArea(.container, edges: .all)
         .toolbar(.hidden, for: .navigationBar)
         .onAppear {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.82).delay(0.05)) {
