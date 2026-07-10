@@ -194,11 +194,11 @@ struct ExchangeSuccessView: View {
     
     private func summaryRow(label: String, value: String, isHighlight: Bool = false) -> some View {
         HStack {
-            Text(label)
+            Text(localized: label)
                 .font(.system(size: 14))
                 .foregroundColor(RSMSColors.secondaryText)
             Spacer()
-            Text(value)
+            Text(localized: value)
                 .font(.system(size: 14, weight: .bold))
                 .foregroundColor(isHighlight ? RSMSColors.burgundy : RSMSColors.primaryText)
         }

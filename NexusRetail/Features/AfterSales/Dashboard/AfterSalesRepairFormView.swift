@@ -84,7 +84,7 @@ struct AfterSalesRepairFormView: View {
                 if resultWasSuccess { path = NavigationPath() }
             }
         } message: {
-            Text(resultMessage)
+            Text(localized: resultMessage)
         }
     }
 

@@ -188,7 +188,7 @@ struct PaymentFlowView: View {
         HStack(spacing: 8) {
             Image(systemName: "iphone.circle.fill")
                 .foregroundColor(theme.burgundy)
-            Text(label)
+            Text(localized: label)
                 .font(.system(size: 12, weight: .bold))
         }
         .padding(.horizontal, 12)
@@ -202,7 +202,7 @@ struct PaymentFlowView: View {
             Image(systemName: icon)
                 .foregroundColor(theme.secondaryText)
                 .frame(width: 20)
-            Text(title)
+            Text(localized: title)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundColor(theme.primaryText)
             Spacer()
@@ -315,7 +315,7 @@ struct PaymentFlowView: View {
     }
     
     private func keypadAction(_ text: String, color: Color) -> some View {
-        Text(text)
+        Text(localized: text)
             .font(.system(size: 14, weight: .black))
             .foregroundColor(.white)
             .frame(width: 44, height: 32)

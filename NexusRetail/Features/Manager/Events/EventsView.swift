@@ -124,7 +124,7 @@ struct EventsView: View {
                 Menu {
                     Picker("Filter", selection: $selectedFilter) {
                         ForEach(EventFilter.allCases, id: \.self) { filter in
-                            Text(filter.rawValue).tag(filter)
+                            Text(LocalizedStringKey(filter.rawValue)).tag(filter)
                         }
                     }
                 } label: {

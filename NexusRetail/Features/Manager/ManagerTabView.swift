@@ -55,7 +55,7 @@ struct ManagerToolbarModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .navigationTitle(title)
+            .navigationTitle(LocalizedStringKey(title))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -118,12 +118,12 @@ struct ManagerPlaceholderView: View {
                     .font(.system(size: 60))
                     .foregroundColor(theme.burgundy)
                 
-                Text(title)
+                Text(localized: title)
                     .font(RSMSFonts.title)
                     .fontWeight(.bold)
                     .foregroundColor(theme.primaryText)
                 
-                Text(message)
+                Text(localized: message)
                     .font(RSMSFonts.body)
                     .foregroundColor(theme.secondaryText)
                     .multilineTextAlignment(.center)

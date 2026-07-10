@@ -121,7 +121,7 @@ struct ActionSelectionView: View {
         .alert(resultTitle, isPresented: $showResult) {
             Button("OK") { if resultWasSuccess { path = NavigationPath() } }
         } message: {
-            Text(resultMessage)
+            Text(localized: resultMessage)
         }
     }
 
@@ -262,11 +262,11 @@ struct ActionSelectionView: View {
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(theme.secondaryText)
             }
-            Text(label)
+            Text(localized: label)
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(theme.secondaryText)
             Spacer()
-            Text(value)
+            Text(localized: value)
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(theme.primaryText)
         }

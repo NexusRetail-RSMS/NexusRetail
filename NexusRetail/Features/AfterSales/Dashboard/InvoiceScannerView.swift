@@ -277,18 +277,18 @@ struct InvoiceScannerView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(title)
+                Text(localized: title)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(theme.primaryText)
 
-                Text(subtitle)
+                Text(localized: subtitle)
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(theme.secondaryText)
             }
 
             Spacer()
 
-            Text(tag)
+            Text(localized: tag)
                 .font(.system(size: 12, weight: .semibold, design: .monospaced))
                 .tracking(0.5)
                 .foregroundColor(theme.secondaryText.opacity(0.55))

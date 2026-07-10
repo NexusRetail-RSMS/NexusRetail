@@ -25,7 +25,7 @@ struct NewSaleView: View {
                 // Segmented Control
                 Picker("Order Type", selection: $selectedOrderType) {
                     ForEach(OrderType.allCases, id: \.self) { type in
-                        Text(type.rawValue).tag(type)
+                        Text(LocalizedStringKey(type.rawValue)).tag(type)
                     }
                 }
                 .pickerStyle(.segmented)
@@ -144,11 +144,11 @@ struct NewSaleView: View {
             }
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(title)
+                Text(localized: title)
                     .font(.system(size: 16, weight: .bold, design: .rounded))
                     .foregroundColor(theme.primaryText)
                 
-                Text(subtitle)
+                Text(localized: subtitle)
                     .font(.system(size: 12))
                     .foregroundColor(theme.secondaryText)
             }

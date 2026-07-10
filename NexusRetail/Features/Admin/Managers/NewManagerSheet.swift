@@ -238,7 +238,7 @@ struct NewManagerSheet: View {
             .alert("Error Creating Manager", isPresented: $showErrorAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text(errorMessage)
+                Text(localized: errorMessage)
             }
         }
     }

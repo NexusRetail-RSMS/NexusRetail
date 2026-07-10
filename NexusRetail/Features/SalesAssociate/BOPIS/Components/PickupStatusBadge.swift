@@ -21,7 +21,7 @@ struct PickupStatusBadge: View {
     }
     
     var body: some View {
-        Text(status.rawValue)
+        Text(LocalizedStringKey(status.rawValue))
             .font(RSMSFonts.caption)
             .fontWeight(.semibold)
             .padding(.horizontal, RSMSSpacing.sm)
