@@ -59,7 +59,7 @@ struct RootView: View {
             .transition(.move(edge: .bottom).combined(with: .opacity))
             .zIndex(2)
         }
-        .ignoresSafeArea()
+        .ignoresSafeArea(.container, edges: .all)
     }
 
     private var backgroundCircle: some View {

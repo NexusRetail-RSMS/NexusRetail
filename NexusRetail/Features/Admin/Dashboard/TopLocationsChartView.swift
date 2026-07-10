@@ -68,7 +68,8 @@ struct TopLocationsChartView: View {
         .fullScreenCover(isPresented: $showingDetail) {
             TopLocationsDetailView(
                 footprint: footprint,
-                storePoints: storePoints
+                storePoints: storePoints,
+                focusCountry: selectedCountry
             )
         }
         .onAppear {
