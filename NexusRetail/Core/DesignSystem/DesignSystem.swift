@@ -91,7 +91,7 @@ struct KPICardView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
                 
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.system(size: 13))
                     .foregroundColor(theme.secondaryText)
                     .lineLimit(2)
@@ -134,6 +134,31 @@ public struct HeaderCurve: Shape {
 }
 
 /// A reusable search bar styled after the iOS system search bar.
+// MARK: - Keyboard helpers
+
+#if canImport(UIKit)
+import UIKit
+
+extension View {
+    /// Resigns the first responder (dismisses the keyboard) anywhere.
+    func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                        to: nil, from: nil, for: nil)
+    }
+
+    /// Dismiss the keyboard when the user taps outside a text field.
+    /// Uses a simultaneous gesture so it doesn't swallow taps on buttons/rows.
+    func dismissKeyboardOnTap() -> some View {
+        simultaneousGesture(
+            TapGesture().onEnded {
+                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                                to: nil, from: nil, for: nil)
+            }
+        )
+    }
+}
+#endif
+
 /// Rounded pill with a magnifying glass on the left and a mic icon
 /// on the right (collapses to xmark when text is present).
 struct NexusSearchBar: View {
@@ -153,6 +178,13 @@ struct NexusSearchBar: View {
                 .foregroundStyle(theme.primaryText)
                 .focused($isFocused)
                 .submitLabel(.search)
+                .onSubmit { isFocused = false }
+                .toolbar {
+                    ToolbarItemGroup(placement: .keyboard) {
+                        Spacer()
+                        Button("Done") { isFocused = false }
+                    }
+                }
 
             Spacer(minLength: 0)
 
