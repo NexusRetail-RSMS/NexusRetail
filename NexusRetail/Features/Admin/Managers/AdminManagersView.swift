@@ -23,7 +23,7 @@ struct DisplayManager: Identifiable, Hashable {
     var productsSold: Int = 0
     var createdAt: Date = Date()
     var isActive: Bool = true
-    
+
     init(id: UUID, name: String, storeName: String, country: String, performanceScore: Int, revenue: String, imageUrl: String? = nil, phone: String = "", email: String = "", address: String = "", productsSold: Int = 0, createdAt: Date = Date(), isActive: Bool = true) {
         self.id = id
         self.name = name
@@ -51,7 +51,7 @@ struct DisplayManager: Identifiable, Hashable {
         self.email = rpc.email ?? ""
         self.address = rpc.storeName ?? ""
         self.productsSold = rpc.productsSold ?? 0
-        
+
         self.revenue = formatIndianCurrency(rpc.revenue ?? 0)
 
         var parsedDate = Date()
@@ -253,7 +253,7 @@ struct AdminManagersView: View {
                                 Label("Country", systemImage: "globe")
                             }
                             .pickerStyle(.menu)
-                            
+
                             Picker(selection: $selectedPerformanceSort) {
                                 ForEach(PerformanceSortOrder.allCases, id: \.self) { option in
                                     Text(LocalizedStringKey(option.rawValue)).tag(option)
@@ -262,7 +262,7 @@ struct AdminManagersView: View {
                                 Label("Performance", systemImage: "chart.bar.fill")
                             }
                             .pickerStyle(.menu)
-                            
+
                             Button {
                                 isRecentlyAddedSort.toggle()
                             } label: {
@@ -281,9 +281,9 @@ struct AdminManagersView: View {
                             }
                         } label: {
                             Image(systemName: "line.3.horizontal.decrease")
-                                .font(.system(size: 17, weight: .medium))
+                                .font(.system(size: 19, weight: .medium))
                                 .foregroundColor(isFiltered ? theme.burgundy : theme.primaryText)
-                                .frame(width: 40, height: 40)
+                                .frame(width: 48, height: 48)
                                 .background(isFiltered
                                     ? theme.burgundy.opacity(0.12)
                                     : Color.black.opacity(0.05))
@@ -513,7 +513,7 @@ struct TopPerformanceCard: View {
                                 .font(.system(size: 16, weight: .medium))
                                 .foregroundColor(theme.secondaryText)
                                 .lineLimit(1)
-                                
+
                             Text(manager.country)
                                 .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(theme.secondaryText.opacity(0.8))

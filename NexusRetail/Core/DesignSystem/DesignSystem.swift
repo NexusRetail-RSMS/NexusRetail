@@ -9,16 +9,16 @@ import SwiftUI
 extension Color {
     /// Deep Maroon / Red Primary
     static let nexusRed = Color(hex: "#720B0D")
-    
+
     /// Warm Cream Background
     static let nexusBackground = Color(hex: "#FAF6F0")
-    
+
     /// Gold/Bronze Accent
     static let nexusGold = Color(hex: "#A68153")
-    
+
     /// Dark Brown/Black for text and solid dark buttons
     static let nexusDark = Color(hex: "#1A1513")
-    
+
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
         var int: UInt64 = 0
@@ -47,7 +47,7 @@ extension Color {
 /// A primary button style matching the luxury aesthetic.
 struct PrimaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
-    
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.headline)
@@ -69,7 +69,7 @@ struct KPICardView: View {
     let icon: String
     let trend: String?
     var color: Color = Color(hex: "8B0000")
-    
+
     var body: some View {
         HStack(spacing: RSMSSpacing.sm) {
             // Single-color icon on the left
@@ -77,12 +77,12 @@ struct KPICardView: View {
                 Circle()
                     .fill(color.opacity(0.18))
                     .frame(width: 48, height: 48)
-                
+
                 Image(systemName: icon)
                     .foregroundColor(color)
                     .font(.system(size: 20, weight: .semibold))
             }
-            
+
             // Value + label on the right
             VStack(alignment: .leading, spacing: 3) {
                 Text(localized: value)
@@ -90,7 +90,7 @@ struct KPICardView: View {
                     .foregroundColor(theme.primaryText)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
-                
+
                 Text(localized: title)
                     .font(.system(size: 13))
                     .foregroundColor(theme.secondaryText)
@@ -98,7 +98,7 @@ struct KPICardView: View {
                     .multilineTextAlignment(.leading)
                     .minimumScaleFactor(0.8)
             }
-            
+
             Spacer(minLength: 0)
         }
         .padding(.horizontal, RSMSSpacing.md)
@@ -118,7 +118,7 @@ struct KPICardView: View {
 /// instead of a harsh straight line. Used in premium top headers.
 public struct HeaderCurve: Shape {
     public init() {}
-    
+
     public func path(in rect: CGRect) -> Path {
         var path = Path()
         path.move(to: .zero)
@@ -183,14 +183,15 @@ struct NexusSearchBar: View {
     }
 }
 
-/// A drop-in replacement for AsyncImage that caches images in memory/disk
-/// to prevent reloading the same image repeatedly.
+/// A drop-in replacement for AsyncImage that caches images in memory and on disk
+/// (via ImageCache) to prevent reloading or re-flashing the same image repeatedly.
 public struct CachedAsyncImage<Content: View, Placeholder: View>: View {
     let url: URL?
     let content: (Image) -> Content
     let placeholder: () -> Placeholder
 
     @State private var image: Image?
+    @State private var loadedURL: URL?
 
     public init(url: URL?, @ViewBuilder content: @escaping (Image) -> Content, @ViewBuilder placeholder: @escaping () -> Placeholder) {
         self.url = url
@@ -199,42 +200,38 @@ public struct CachedAsyncImage<Content: View, Placeholder: View>: View {
     }
 
     public var body: some View {
-        if let image = image {
-            content(image)
-        } else {
-            placeholder()
-                .task(id: url) {
-                    await loadImage()
-                }
+        Group {
+            if let image = image {
+                content(image)
+            } else {
+                placeholder()
+            }
+        }
+        .task(id: url) {
+            await loadImage()
         }
     }
 
     private func loadImage() async {
-        guard let url = url else { return }
-        
-        let request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad)
-        
-        if let cachedResponse = URLCache.shared.cachedResponse(for: request),
-           let uiImage = UIImage(data: cachedResponse.data) {
-            self.image = Image(uiImage: uiImage)
+        guard let url = url else {
+            image = nil
+            loadedURL = nil
             return
         }
-        
-        do {
-            let (data, response) = try await URLSession.shared.data(for: request)
-            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200,
-               let uiImage = UIImage(data: data) {
-                let cachedData = CachedURLResponse(response: response, data: data)
-                URLCache.shared.storeCachedResponse(cachedData, for: request)
-                self.image = Image(uiImage: uiImage)
-            }
-        } catch {
-            let nsError = error as NSError
-            if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled {
-                // Ignore cancellation errors
-            } else {
-                print("Failed to load image: \(error)")
-            }
+
+        guard url != loadedURL else { return }
+
+        let uiImage = await ImageCache.shared.image(for: url.absoluteString)
+
+        // Guard against the url changing again while this await was in flight
+        guard url == self.url else { return }
+
+        if let uiImage = uiImage {
+            self.image = Image(uiImage: uiImage)
+            self.loadedURL = url
+        } else {
+            self.image = nil
+            self.loadedURL = nil
         }
     }
 }

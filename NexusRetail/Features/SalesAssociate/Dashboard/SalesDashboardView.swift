@@ -33,13 +33,19 @@ struct SalesDashboardView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
-                        headerSection
                         kpiSection
                         revenueChartSection
                         Spacer(minLength: 80)
                     }
                     .padding(.horizontal, RSMSSpacing.lg)
                     .padding(.top, 16)
+                }
+                .safeAreaInset(edge: .top) {
+                    headerSection
+                        .padding(.horizontal, RSMSSpacing.lg)
+                        .padding(.top, 16)
+                        .padding(.bottom, 8)
+                        .fadingMaterialHeader()
                 }
 
                 if #available(iOS 18.0, *) {
@@ -57,7 +63,7 @@ struct SalesDashboardView: View {
                 switch dest {
                 case .newSale:       NewSaleView(path: $navigationPath)
                 case .searchProduct: ProductSearchView(path: $navigationPath)
-                case .barcodeScanner: 
+                case .barcodeScanner:
                     if #available(iOS 18.0, *) {
                         BarcodeScannerView(path: $navigationPath)
                             .navigationTransition(.zoom(sourceID: "scannerButton", in: namespace))
@@ -155,7 +161,6 @@ struct SalesDashboardView: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Profile")
         }
-        .padding(.vertical, 4)
     }
 
     // MARK: - Top Actions & KPIs
@@ -203,13 +208,13 @@ struct SalesDashboardView: View {
                 ? color.opacity(0.08)
                 : color.opacity(0.04)
         )
-        .cornerRadius(RSMSRadius.medium)
+        .cornerRadius(RSMSRadius.kpiCard)
         .overlay(
-            RoundedRectangle(cornerRadius: RSMSRadius.medium)
+            RoundedRectangle(cornerRadius: RSMSRadius.kpiCard)
                 .stroke(color.opacity(theme.isDarkMode ? 0.25 : 0.12), lineWidth: 1)
         )
     }
-    
+
     private var startOrderCard: some View {
         NavigationLink(value: POSFlowDestination.ordersHub) {
             HStack(spacing: 12) {
@@ -232,7 +237,7 @@ struct SalesDashboardView: View {
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             ))
-            .clipShape(RoundedRectangle(cornerRadius: 18))
+            .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.kpiCard))
             .shadow(color: theme.darkBurgundy.opacity(0.18), radius: 10, x: 0, y: 5)
         }
         .buttonStyle(.plain)
@@ -353,7 +358,7 @@ struct SalesDashboardView: View {
                     .fill(Color(red: 122/255, green: 22/255, blue: 34/255))
                     .frame(width: 60, height: 60)
                     .shadow(color: Color(red: 122/255, green: 22/255, blue: 34/255).opacity(0.5), radius: 8, x: 0, y: 4)
-                
+
                 Image(systemName: "qrcode.viewfinder")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(.white)
@@ -469,7 +474,7 @@ struct SalesRevenueDetailView: View {
     }
 
     private var catColors: [Color] {
-        theme.isDarkMode 
+        theme.isDarkMode
             ? [theme.antiqueGold, Color(hex: "DDA15E"), Color(hex: "BC6C25"), theme.burgundy, Color(hex: "9A031E"), Color.gray]
             : [theme.burgundy, Color(hex: "D87A6A"), Color(hex: "E6A87C"), Color(hex: "9D4A4A"), Color(hex: "C28D75"), Color.gray]
     }
@@ -876,7 +881,7 @@ struct SalesRevenueDetailView: View {
                 Circle()
                     .fill(color)
                     .frame(width: 8, height: 8)
-                
+
                 Text(localized: cat.category)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(theme.primaryText)

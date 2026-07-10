@@ -21,11 +21,11 @@ struct AdminDashboardView: View {
     @Environment(AppTheme.self) private var theme
     @Environment(\.locale) private var locale
     @State private var viewModel = DashboardViewModel()
-    
+
     // Drill-down states
     @State private var isShowingSalesDetail = false
     @State private var isShowingProductsDetail = false
-    
+
     // Dummy store for global drill-downs
     private var globalStore: Store {
         Store(
@@ -47,10 +47,6 @@ struct AdminDashboardView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-
-                    // MARK: - Header (scrolls with content)
-                    headerSection
-                        .padding(.top, 16)
 
                     // MARK: - Error Banner
                     if let errorMessage = viewModel.errorMessage {
@@ -109,13 +105,20 @@ struct AdminDashboardView: View {
                             .onTapGesture { isShowingProductsDetail = true }
 
                             // MARK: - Top Locations
-                            TopLocationsChartView(revenueByCountry: viewModel.byCountry, selectedCountry: viewModel.selectedCountry)
+                            TopLocationsChartView(revenueByCountry: viewModel.byCountry, selectedCountry: viewModel.selectedCountry, footprint: viewModel.footprint, storePoints: viewModel.storePoints)
                         }
                         .padding(.horizontal, RSMSSpacing.lg)
                         .padding(.top, RSMSSpacing.xxl)
                         .padding(.bottom, RSMSSpacing.xxl)
                     }
                 }
+            }
+            .safeAreaInset(edge: .top) {
+                headerSection
+                    .padding(.horizontal, RSMSSpacing.lg)
+                    .padding(.top, 16)
+                    .padding(.bottom, 8)
+                    .fadingMaterialHeader()
             }
             .refreshable {
                 await viewModel.load()
@@ -222,7 +225,6 @@ struct AdminDashboardView: View {
             .accessibilityLabel("Profile")
             .accessibilityHint("Opens your profile and settings")
         }
-        .padding(.horizontal, RSMSSpacing.lg)
     }
 
     private func initials(for name: String?) -> String {
@@ -253,8 +255,19 @@ struct AdminDashboardView: View {
             "Singapore":            "SG",
             "United Arab Emirates": "AE",
             "UAE":                  "AE",
+            "Slovakia":             "SK",
+            "Finland":              "FI",
+            "Russia":               "RU",
+            "Italy":                "IT",
+            "Spain":                "ES",
+            "Netherlands":          "NL",
+            "Switzerland":          "CH",
         ]
-        return map[country] ?? "ALL"
+        // Fallback: derive a 2-letter code from the name so any country shows
+        // a sensible badge instead of "ALL".
+        if let code = map[country] { return code }
+        let letters = country.trimmingCharacters(in: .whitespaces).uppercased()
+        return String(letters.prefix(2))
     }
 
     // MARK: - KPI Cards

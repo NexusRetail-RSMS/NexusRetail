@@ -71,6 +71,18 @@ enum CountryMapRegion {
             center: CLLocationCoordinate2D(latitude: 22.5, longitude: 78.9),
             span: MKCoordinateSpan(latitudeDelta: 28, longitudeDelta: 28)
         ),
+        "Slovakia": MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 48.7, longitude: 19.7),
+            span: MKCoordinateSpan(latitudeDelta: 4, longitudeDelta: 7)
+        ),
+        "Finland": MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 64.9, longitude: 26.0),
+            span: MKCoordinateSpan(latitudeDelta: 12, longitudeDelta: 16)
+        ),
+        "Russia": MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 61.5, longitude: 105.3),
+            span: MKCoordinateSpan(latitudeDelta: 45, longitudeDelta: 90)
+        ),
         "Japan": MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 36.2, longitude: 138.2),
             span: MKCoordinateSpan(latitudeDelta: 15, longitudeDelta: 18)
@@ -140,6 +152,9 @@ enum CountryMapRegion {
     /// Country name → flag emoji.
     static let flags: [String: String] = [
         "India": "🇮🇳",
+        "Slovakia": "🇸🇰",
+        "Russia": "🇷🇺",
+        "Finland": "🇫🇮",
         "France": "🇫🇷",
         "Germany": "🇩🇪",
         "Japan": "🇯🇵",
@@ -157,6 +172,9 @@ enum CountryMapRegion {
     /// Country name → currency symbol.
     static let currencySymbols: [String: String] = [
         "India": "₹",
+        "Slovakia": "€",
+        "Russia": "₽",
+        "Finland": "€",
         "France": "€",
         "Germany": "€",
         "Japan": "¥",

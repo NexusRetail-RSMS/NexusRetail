@@ -18,6 +18,8 @@ struct TopLocationsChartView: View {
     @Environment(AppTheme.self) private var theme
     let revenueByCountry: [CountryRevenue]
     let selectedCountry: String?
+    var footprint: [CountryFootprint] = []
+    var storePoints: [StorePoint] = []
 
     @State private var mapVM = StoreMapViewModel()
     @State private var showingDetail = false
@@ -65,8 +67,8 @@ struct TopLocationsChartView: View {
         }
         .fullScreenCover(isPresented: $showingDetail) {
             TopLocationsDetailView(
-                countryPolygons: countryPolygons,
-                revenueByCountry: revenueByCountry
+                footprint: footprint,
+                storePoints: storePoints
             )
         }
         .onAppear {
@@ -102,55 +104,35 @@ struct TopLocationsChartView: View {
     // MARK: - Map Section
 
     private var mapSection: some View {
-        Map(position: $mapVM.cameraPosition) {
-            // Store markers / annotations
-            ForEach(mapVM.stores) { store in
-                Annotation(store.name, coordinate: store.coordinate) {
-                    StoreMarkerView(store: store, isSelected: selectedStore?.id == store.id)
-                        .onTapGesture {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                if selectedStore?.id == store.id {
-                                    selectedStore = nil
-                                } else {
-                                    selectedStore = store
-                                }
-                            }
-                        }
+        VStack(spacing: RSMSSpacing.sm) {
+            // ECharts choropleth (WKWebView): plain white, burgundy ramp,
+            // tooltips, native pinch-zoom / drag-pan. Auto-zooms to the
+            // selected country from the dashboard filter.
+            ChoroplethWebView(
+                storePoints: storePoints,
+                focusCountry: selectedCountry
+            )
+            .frame(height: 260)
+            .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.medium))
+            .overlay(
+                RoundedRectangle(cornerRadius: RSMSRadius.medium)
+                    .stroke(Color.black.opacity(0.06), lineWidth: 1)
+            )
+            .overlay(alignment: .topTrailing) {
+                Button {
+                    showingDetail = true
+                } label: {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(theme.burgundy)
+                        .padding(8)
+                        .background(.ultraThinMaterial)
+                        .clipShape(Circle())
                 }
-                .annotationTitles(.hidden)
+                .accessibilityLabel("Open full map")
+                .padding(RSMSSpacing.sm)
             }
         }
-        .mapStyle(.standard(elevation: .realistic, pointsOfInterest: .excludingAll))
-        .mapControls {
-            MapCompass()
-            MapScaleView()
-        }
-        .frame(height: 260)
-        .clipShape(RoundedRectangle(cornerRadius: RSMSRadius.medium))
-        .overlay(
-            RoundedRectangle(cornerRadius: RSMSRadius.medium)
-                .stroke(Color.black.opacity(0.06), lineWidth: 1)
-        )
-        .overlay(alignment: .bottom) {
-            // Selected store callout
-            if let store = selectedStore {
-                storeCallout(store)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .padding(RSMSSpacing.sm)
-            }
-        }
-        .overlay(alignment: .topTrailing) {
-            // Loading indicator
-            if mapVM.isLoadingStores {
-                ProgressView()
-                    .tint(theme.burgundy)
-                    .padding(8)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Circle())
-                    .padding(RSMSSpacing.sm)
-            }
-        }
-        .animation(.easeInOut(duration: 0.3), value: selectedStore?.id)
     }
 
     // MARK: - Store Callout Overlay
@@ -258,7 +240,7 @@ struct TopLocationsChartView: View {
                     color: Color(hex: "E76F51")
                 )
             }
-            
+
             if let topCountry = stats.topCountryName, let topDetail = stats.topCountryDetail {
                 HStack(spacing: 10) {
                     ZStack {
@@ -269,7 +251,7 @@ struct TopLocationsChartView: View {
                             .foregroundColor(Color(hex: "D4A017"))
                             .font(.system(size: 12, weight: .bold))
                     }
-                    
+
                     VStack(alignment: .leading, spacing: 2) {
                         HStack(spacing: 4) {
                             Text("Top Region:")
@@ -281,7 +263,7 @@ struct TopLocationsChartView: View {
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                         }
-                        
+
                         Text(topDetail)
                             .font(.system(size: 11, weight: .medium))
                             .foregroundColor(theme.burgundy)
@@ -317,7 +299,7 @@ struct TopLocationsChartView: View {
                 statChip(icon: "cart.fill", value: "\(stats.orderCount)", label: "Orders")
                 statChip(icon: "person.2.fill", value: "\(stats.managerCount)", label: "Managers")
             }
-            
+
             if let topStore = stats.topStoreName, let topDetail = stats.topStoreDetail {
                 HStack(spacing: 10) {
                     ZStack {
@@ -328,7 +310,7 @@ struct TopLocationsChartView: View {
                             .foregroundColor(Color(hex: "D4A017"))
                             .font(.system(size: 12, weight: .bold))
                     }
-                    
+
                     VStack(alignment: .leading, spacing: 2) {
                         HStack(spacing: 4) {
                             Text("Top Store:")
@@ -340,7 +322,7 @@ struct TopLocationsChartView: View {
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                         }
-                        
+
                         Text(topDetail)
                             .font(.system(size: 11, weight: .medium))
                             .foregroundColor(theme.burgundy)
@@ -362,9 +344,9 @@ struct TopLocationsChartView: View {
             Text("Store Locations")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(theme.secondaryText)
-            
+
             Spacer()
-            
+
             Menu {
                 Button {
                     withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
@@ -377,9 +359,9 @@ struct TopLocationsChartView: View {
                         Image(systemName: "checkmark")
                     }
                 }
-                
+
                 Divider()
-                
+
                 ForEach(mapVM.stores) { store in
                     Button {
                         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
@@ -431,11 +413,11 @@ struct TopLocationsChartView: View {
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(color)
 
-            Text(localized: value)
+            Text(value)
                 .font(.system(size: 17, weight: .bold))
                 .foregroundColor(theme.primaryText)
 
-            Text(localized: label)
+            Text(label)
                 .font(.system(size: 11))
                 .foregroundColor(theme.secondaryText)
         }
@@ -448,11 +430,11 @@ struct TopLocationsChartView: View {
                 .font(.system(size: 11))
                 .foregroundColor(theme.burgundy)
 
-            Text(localized: value)
+            Text(value)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(theme.primaryText)
 
-            Text(localized: label)
+            Text(label)
                 .font(.system(size: 12))
                 .foregroundColor(theme.secondaryText)
         }
@@ -462,6 +444,8 @@ struct TopLocationsChartView: View {
         .clipShape(Capsule())
     }
 }
+
+
 
 // MARK: - Country Shape (used by TopLocationsDetailView)
 

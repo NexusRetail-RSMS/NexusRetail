@@ -7,13 +7,13 @@ struct ClientelingView: View {
 
     @State private var searchText = ""
     @State private var contentAppeared = false
-    
+
     // Appointment State
     @State private var isNewAppointmentPresented = false
     @State private var appointmentClientName = ""
     @State private var appointmentClientPhone = ""
     @State private var appointmentClientEmail = ""
-    
+
     @State private var selectedFilter = "All Clients"
     @State private var clients: [AssociateClient] = []
 
@@ -34,10 +34,9 @@ struct ClientelingView: View {
     var body: some View {
         ZStack {
             theme.background.ignoresSafeArea()
-            
+
             VStack(spacing: 0) {
                 VStack(spacing: 20) {
-                    headerBar
                     searchBar
                 }
                 .padding(.horizontal, 20)
@@ -45,7 +44,7 @@ struct ClientelingView: View {
                 .padding(.bottom, 12)
                 .background(theme.background.ignoresSafeArea(edges: .top))
                 .zIndex(1)
-                
+
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 20) {
                         clientsSection
@@ -54,6 +53,10 @@ struct ClientelingView: View {
                     .padding(.top, 8)
                     .padding(.bottom, 56)
                 }
+            }
+            .safeAreaInset(edge: .top) {
+                headerBar
+                    .fadingMaterialHeader()
             }
         }
         .navigationBarHidden(true)
@@ -76,6 +79,9 @@ struct ClientelingView: View {
             }
             Spacer()
         }
+        .padding(.horizontal, 20)
+        .padding(.top, 16)
+        .padding(.bottom, 8)
         .opacity(contentAppeared ? 1 : 0)
         .offset(y: contentAppeared ? 0 : -12)
         .animation(.spring(response: 0.55, dampingFraction: 0.82), value: contentAppeared)
@@ -144,7 +150,7 @@ struct ClientelingView: View {
         HStack(alignment: .center, spacing: 14) {
             ZStack {
                 Circle()
-                    .fill(theme.gold)
+                    .fill(theme.burgundy)
                     .frame(width: 52, height: 52)
                     .overlay(
                         Circle().stroke(Color.white, lineWidth: 2)
@@ -155,7 +161,7 @@ struct ClientelingView: View {
                     .foregroundStyle(.white)
                     .shadow(color: .black.opacity(0.2), radius: 1, x: 0, y: 1)
             }
-            
+
             // Name + phone
             VStack(alignment: .leading, spacing: 4) {
                 Text(client.name)
@@ -165,9 +171,9 @@ struct ClientelingView: View {
                     .font(.system(size: 14))
                     .foregroundStyle(theme.secondaryText)
             }
-            
+
             Spacer()
-            
+
             Image(systemName: "chevron.right")
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(accent.opacity(0.5))

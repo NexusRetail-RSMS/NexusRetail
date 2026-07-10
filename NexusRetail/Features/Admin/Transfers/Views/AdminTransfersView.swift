@@ -3,13 +3,6 @@ import SwiftUI
 enum TransferTab: String, CaseIterable {
     case requests = "Requests"
     case waiting = "Waiting"
-    
-    var localizedName: String {
-        switch self {
-        case .requests: return String(localized: "Requests")
-        case .waiting: return String(localized: "Waiting")
-        }
-    }
 }
 
 struct AdminTransfersView: View {
@@ -22,30 +15,31 @@ struct AdminTransfersView: View {
             theme.background
                 .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                // Header
-                headerSection
-                    .padding(.top, 16)
-                    .padding(.bottom, 16)
-
-                // Tabs
-                Picker("Tabs", selection: $selectedTab) {
-                    ForEach(TransferTab.allCases, id: \.self) { tab in
-                        Text(LocalizedStringKey(tab.localizedName)).tag(tab)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, RSMSSpacing.lg)
-                .padding(.bottom, RSMSSpacing.md)
-
-                // Content
-                TabView(selection: $selectedTab) {
+            Group {
+                switch selectedTab {
+                case .requests:
                     RequestsListView()
-                        .tag(TransferTab.requests)
+                case .waiting:
                     WaitingRequestsView()
-                        .tag(TransferTab.waiting)
                 }
-                .tabViewStyle(.page(indexDisplayMode: .never))
+            }
+            .safeAreaInset(edge: .top) {
+                VStack(spacing: 0) {
+                    headerSection
+                        .padding(.horizontal, RSMSSpacing.lg)
+                        .padding(.top, 16)
+                        .padding(.bottom, 12)
+
+                    Picker("Tabs", selection: $selectedTab) {
+                        ForEach(TransferTab.allCases, id: \.self) { tab in
+                            Text(LocalizedStringKey(tab.rawValue)).tag(tab)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal, RSMSSpacing.lg)
+                    .padding(.bottom, 12)
+                }
+                .fadingMaterialHeader()
             }
         }
         .toolbar(.hidden, for: .navigationBar)
@@ -85,7 +79,6 @@ struct AdminTransfersView: View {
             }
             .accessibilityLabel("History")
         }
-        .padding(.horizontal, RSMSSpacing.lg)
     }
 }
 
@@ -100,9 +93,40 @@ struct RequestsListView: View {
             LazyVStack(spacing: 16) {
                 if viewModel.isLoading && viewModel.requests.isEmpty {
                     skeletonSection
-                } else if viewModel.pendingRequests.isEmpty {
+                } else if viewModel.pendingRequests.isEmpty && viewModel.pendingStoreApprovalRequests.isEmpty {
                     emptyState
                 } else {
+                    // Requests awaiting store manager approval
+                    if !viewModel.pendingStoreApprovalRequests.isEmpty {
+                        HStack {
+                            Image(systemName: "clock.badge.questionmark")
+                                .font(.system(size: 14))
+                                .foregroundColor(theme.burgundy)
+                            Text("Awaiting Store Approval")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(theme.burgundy)
+                            Spacer()
+                            Text("\(viewModel.pendingStoreApprovalRequests.count)")
+                                .font(.system(size: 12, weight: .bold))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(theme.burgundy.opacity(0.1))
+                                .foregroundColor(theme.burgundy)
+                                .clipShape(Capsule())
+                        }
+                        .padding(.horizontal, 4)
+
+                        ForEach(viewModel.pendingStoreApprovalRequests) { request in
+                            TransferRequestCard(request: request)
+                        }
+
+                        if !viewModel.pendingRequests.isEmpty {
+                            Divider()
+                                .padding(.vertical, 4)
+                        }
+                    }
+
+                    // Standard pending requests
                     ForEach(viewModel.pendingRequests) { request in
                         TransferRequestCard(request: request)
                     }
@@ -113,7 +137,6 @@ struct RequestsListView: View {
         .refreshable {
             await viewModel.load()
         }
-        .background(theme.background)
     }
 
     private var skeletonSection: some View {
@@ -257,7 +280,6 @@ struct WaitingRequestsView: View {
         .refreshable {
             await viewModel.load()
         }
-        .background(theme.background)
     }
 
     private var emptyState: some View {

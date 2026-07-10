@@ -16,20 +16,20 @@ class InventoryViewModel {
     // MARK: - Data
     var items: [InventoryItemRow] = []
     var requests: [TransferRequestRow] = []
-    
+
     // MARK: - UI State
     var searchText: String = ""
     var selectedCategory: InventoryCategory? = nil
     var sortOrder: InventorySortOrder = .all
     var isLoading: Bool = false
     var errorMessage: String? = nil
-    
+
     // Restock sheet
     var restockItem: InventoryItemRow? = nil
     var showRestockSheet: Bool = false
-    
+
     // MARK: - Computed: Summary
-    
+
     var summary: InventorySummary {
         let totalSKUs = items.count
         let unitsInStock = items.reduce(0) { $0 + $1.onHand }
@@ -38,12 +38,12 @@ class InventoryViewModel {
         let lowStockCount = items.filter { $0.isLowStock }.count
         return InventorySummary(totalSKUs: totalSKUs, unitsInStock: unitsInStock, outOfStock: outOfStock, inventoryValue: inventoryValue, lowStockCount: lowStockCount)
     }
-    
+
     // MARK: - Computed: Filtered & Sorted Items
-    
+
     var filteredItems: [InventoryItemRow] {
         var result = items
-        
+
         // Search
         if !searchText.isEmpty {
             let query = searchText.lowercased()
@@ -52,12 +52,12 @@ class InventoryViewModel {
                 $0.skuCode.lowercased().contains(query)
             }
         }
-        
+
         // Category
         if let cat = selectedCategory {
             result = result.filter { $0.category.lowercased() == cat.rawValue.lowercased() }
         }
-        
+
         // Sort
         switch sortOrder {
         case .all:
@@ -67,12 +67,12 @@ class InventoryViewModel {
         case .stockHighToLow:
             result.sort { $0.onHand > $1.onHand }
         }
-        
+
         return result
     }
-    
+
     // MARK: - Load Data
-    
+
     func load(storeID: UUID?) async {
         var targetStoreID = storeID
         if targetStoreID == nil {
@@ -80,7 +80,7 @@ class InventoryViewModel {
                 targetStoreID = stores.first?.id
             }
         }
-        
+
         guard let finalStoreID = targetStoreID else {
             await MainActor.run {
                 self.items = []
@@ -93,7 +93,7 @@ class InventoryViewModel {
 
         isLoading = true
         errorMessage = nil
-        
+
         do {
             // Fetch inventory items with joined SKU + price data
             let inventoryResponse: [InventoryItemRow] = try await SupabaseManager.shared.client
@@ -102,11 +102,11 @@ class InventoryViewModel {
                 .eq("store_id", value: finalStoreID.uuidString)
                 .execute()
                 .value
-            
+
             // Fetch transfer requests for this store
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
-            
+
             let requestsResponse: [TransferRequestRow] = try await SupabaseManager.shared.client
                 .from("transfer_request")
                 .select("*, products!inner(item_name, category, sku_code, image_url, description)")
@@ -114,7 +114,7 @@ class InventoryViewModel {
                 .order("created_at", ascending: false)
                 .execute()
                 .value
-            
+
             await MainActor.run {
                 self.items = inventoryResponse
                 self.requests = requestsResponse
@@ -131,23 +131,33 @@ class InventoryViewModel {
             }
         }
     }
-    
+
     // MARK: - Actions
-    
+
     func requestRestock(itemId: Int64, quantity: Int, storeID: UUID) async -> String? {
-        let payload = TransferRequestInsert(
-            itemId: itemId,
-            requestingStoreId: storeID,
-            quantity: quantity,
-            status: .pending
-        )
-        
         do {
+            // Run smart routing to determine source
+            let sourceStoreId = try? await SmartRoutingService.shared.calculateSourceStore(
+                requestingStoreId: storeID,
+                itemId: itemId,
+                quantity: quantity
+            )
+
+            let status: TransferStatus = sourceStoreId != nil ? .pendingStoreApproval : .pending
+
+            let payload = TransferRequestInsert(
+                itemId: itemId,
+                requestingStoreId: storeID,
+                quantity: quantity,
+                status: status,
+                sourceStoreId: sourceStoreId
+            )
+
             try await SupabaseManager.shared.client
                 .from("transfer_request")
                 .insert(payload)
                 .execute()
-            
+
             // Reload to get the fresh request in the list
             await load(storeID: storeID)
             return nil // success
@@ -156,16 +166,16 @@ class InventoryViewModel {
             return error.localizedDescription
         }
     }
-    
+
     func saveLocalPrice(itemId: Int64, storeID: UUID, price: Double) async -> Bool {
         let payload = StorePriceUpsert(itemId: itemId, storeId: storeID, localPrice: price)
-        
+
         do {
             try await SupabaseManager.shared.client
                 .from("store_price")
                 .upsert(payload)
                 .execute()
-            
+
             await load(storeID: storeID)
             return true
         } catch {
@@ -173,7 +183,7 @@ class InventoryViewModel {
             return false
         }
     }
-    
+
     func triggerRestock(for item: InventoryItemRow) {
         restockItem = item
         showRestockSheet = true

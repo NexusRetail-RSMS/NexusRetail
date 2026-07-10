@@ -2,7 +2,7 @@ import SwiftUI
 
 enum PerformanceTier {
     case gold, silver, bronze, none
-    
+
     var label: LocalizedStringKey {
         switch self {
         case .gold:   return "Top Performer"
@@ -11,7 +11,7 @@ enum PerformanceTier {
         case .none:   return ""
         }
     }
-    
+
     var icon: String {
         switch self {
         case .gold:   return "crown.fill"
@@ -20,7 +20,7 @@ enum PerformanceTier {
         case .none:   return ""
         }
     }
-    
+
     var ringColors: [Color] {
         switch self {
         case .gold:
@@ -51,7 +51,7 @@ enum PerformanceTier {
             return [Color.gray.opacity(0.3)]
         }
     }
-    
+
     var textColor: Color {
         switch self {
         case .gold:   return Color(red: 0.6,  green: 0.45, blue: 0.0)
@@ -66,18 +66,24 @@ struct GlobalProfileView: View {
     @Environment(AppTheme.self) private var theme
     @Environment(SessionStore.self) private var sessionStore
     @State private var viewModel = ProfileViewModel()
-    
+
     @State private var ringRotation: Double = 0
     @State private var performanceTier: PerformanceTier = .gold
     @State private var showEditProfile = false
-    
+
     private var effectivePerformanceTier: PerformanceTier {
         if sessionStore.currentRole == .manager || sessionStore.currentUser?.role == .manager {
             return performanceTier
         }
         return .none
     }
-    
+
+    private var profileCardColors: [Color] {
+        theme.isDarkMode
+            ? [Color(hex: "3D0000"), Color(hex: "2C0000"), Color(hex: "1E1E1E")]
+            : [theme.burgundy.opacity(0.20), theme.burgundy.opacity(0.05)]
+    }
+
     var body: some View {
         List {
             if viewModel.isLoading && viewModel.profile == nil {
@@ -111,18 +117,18 @@ struct GlobalProfileView: View {
                                             }
                                         }
                                     }
-                                
+
                                 // Glittery sparkle dots
                                 ForEach(0..<8, id: \.self) { i in
                                     sparkleDot(index: i)
                                 }
                             }
-                            
+
                             // Gap ring — adapts to dark mode
                             Circle()
                                 .stroke(theme.isDarkMode ? Color(hex: "1C1C1C") : Color.white, lineWidth: 4)
                                 .frame(width: 118, height: 118)
-                            
+
                             // Profile photo
                             ZStack {
                                 Circle()
@@ -145,12 +151,12 @@ struct GlobalProfileView: View {
                                 }
                             }
                         }
-                        
+
                         // Name
                         Text(profile.fullName)
                             .font(.system(size: 22, weight: .bold))
                             .foregroundColor(theme.isDarkMode ? theme.antiqueGold : theme.primaryText)
-                        
+
                         // Performance tier badge
                         if effectivePerformanceTier != .none {
                             tierBadgeView
@@ -162,14 +168,12 @@ struct GlobalProfileView: View {
                 .listRowBackground(
                     // Gradient fills behind the avatar
                     LinearGradient(
-                        colors: theme.isDarkMode
-                            ? [Color(hex: "3D0000"), Color(hex: "1C1007"), Color(hex: "1C1C1C")]
-                            : [theme.burgundy.opacity(0.12), theme.cream.opacity(0.6)],
+                        colors: profileCardColors,
                         startPoint: .top, endPoint: .bottom
                     )
                 )
                 .listRowInsets(EdgeInsets())
-                
+
                 // MARK: - Pill 1: Role · Phone · Email
                 Section {
                     infoRow(icon: "person.badge.shield.checkmark.fill",
@@ -185,7 +189,7 @@ struct GlobalProfileView: View {
                             label: "Email",
                             value: profile.email)
                 }
-                
+
                 // MARK: - Pill 2: Address · Country
                 Section {
                     infoRow(icon: "location.fill",
@@ -198,7 +202,7 @@ struct GlobalProfileView: View {
                             value: profile.country,
                             valueColor: theme.isDarkMode ? theme.antiqueGold : theme.burgundy)
                 }
-                
+
                 // MARK: - Pill 3: Settings
                 Section {
                     NavigationLink(destination: SettingsView(viewModel: viewModel)) {
@@ -207,7 +211,7 @@ struct GlobalProfileView: View {
                                 .foregroundColor(theme.burgundy)
                                 .font(.system(size: 16, weight: .semibold))
                                 .frame(width: 20)
-                            
+
                             Text("Settings")
                                 .font(RSMSFonts.body)
                                 .foregroundColor(theme.primaryText)
@@ -241,9 +245,9 @@ struct GlobalProfileView: View {
             }
         }
     }
-    
+
     // MARK: - View Builders
-    
+
     // Tier Badge
     private var tierBadgeView: some View {
         let bgColors: [Color] = Array(effectivePerformanceTier.ringColors.prefix(3)).map { $0.opacity(0.25) }
@@ -282,7 +286,7 @@ struct GlobalProfileView: View {
             .opacity(0.85)
             .blur(radius: 0.3)
     }
-    
+
     @ViewBuilder
     private func infoRow(
         icon: String,

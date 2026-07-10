@@ -91,7 +91,7 @@ struct StoreAnalyticsView: View {
                         Label("Store Info", systemImage: "info.circle")
                     }
                     Button { isShowingEditForm = true } label: {
-                        Label("Edit Store", systemImage: "pencil")
+                        Label("Edit Store", systemImage: "square.and.pencil")
                     }
                 } label: {
                     Image(systemName: "ellipsis")
@@ -181,9 +181,9 @@ struct StoreAnalyticsView: View {
                             .font(.system(size: 13))
                             .lineLimit(1)
                     }
-                    
+
                     Spacer()
-                    
+
                     if let name = manager?.name {
                         HStack(spacing: 6) {
                             Circle()

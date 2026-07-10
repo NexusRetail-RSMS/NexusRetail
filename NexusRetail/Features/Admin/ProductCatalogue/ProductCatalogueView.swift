@@ -7,7 +7,7 @@ struct ProductCatalogueView: View {
     @State private var showAddProduct = false
     @State private var editingProduct: CatalogueProduct?
     @State private var productToDelete: CatalogueProduct?
-    
+
     var body: some View {
         ZStack(alignment: .top) {
             theme.background.ignoresSafeArea()
@@ -246,11 +246,11 @@ struct ProductCatalogueView: View {
                 ZStack {
                     Circle()
                         .fill(theme.burgundy.opacity(0.1))
-                        .frame(width: 36, height: 36)
+                        .frame(width: 48, height: 48)
 
                     Image(systemName: "line.3.horizontal.decrease")
                         .foregroundColor(theme.burgundy)
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 19, weight: .medium))
                 }
             }
         }
@@ -263,7 +263,7 @@ private struct ProductRowCard: View {
     let viewModel: ProductCatalogueViewModel
     let onEdit: () -> Void
     let onDelete: () -> Void
-    
+
     var stockColor: Color {
         if product.stock == 0 { return theme.warning }
         if product.stock < 10 { return .orange }
@@ -271,7 +271,7 @@ private struct ProductRowCard: View {
     }
 
         @State private var showQR = false
-        
+
         var body: some View {
             HStack(spacing: 14) {
                 ZStack {
@@ -339,7 +339,7 @@ private struct ProductRowCard: View {
                             Text(viewModel.formattedPrice(for: product))
                                 .font(.system(size: 17, weight: .bold, design: .rounded))
                                 .foregroundStyle(theme.darkBrown)
-                            
+
                             if product.qrCode != nil {
                                 Button {
                                     showQR = true
@@ -371,7 +371,7 @@ private struct ProductRowCard: View {
                         Label("Show QR Code", systemImage: "qrcode")
                     }
                 }
-                
+
                 Button {
                     onEdit()
                 } label: {
@@ -405,14 +405,14 @@ private struct ProductRowCard: View {
                         VStack(spacing: 24) {
                             Text(product.name)
                                 .font(.headline)
-                            
+
                             QRCodeView(qrCodeString: qr)
                                 .frame(width: 250, height: 250)
                                 .padding()
                                 .background(theme.cardBackground)
                                 .cornerRadius(16)
                                 .shadow(radius: 4)
-                            
+
                             Text("SKU: \(product.sku)")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
@@ -444,29 +444,29 @@ private struct ProductRowCard: View {
 
 struct QRCodeView: View {
     let qrCodeString: String
-    
+
     var body: some View {
         Image(uiImage: generateQRCode(from: qrCodeString))
             .interpolation(.none)
             .resizable()
             .scaledToFit()
     }
-    
+
     private func generateQRCode(from string: String) -> UIImage {
         let context = CIContext()
         let filter = CIFilter.qrCodeGenerator()
-        
+
         filter.message = Data(string.utf8)
-        
+
         if let outputImage = filter.outputImage {
             let transform = CGAffineTransform(scaleX: 10, y: 10)
             let scaledImage = outputImage.transformed(by: transform)
-            
+
             if let cgimg = context.createCGImage(scaledImage, from: scaledImage.extent) {
                 return UIImage(cgImage: cgimg)
             }
         }
-        
+
         return UIImage(systemName: "xmark.circle") ?? UIImage()
     }
 }

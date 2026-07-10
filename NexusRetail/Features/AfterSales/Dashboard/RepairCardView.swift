@@ -8,7 +8,7 @@ struct RepairCardView: View {
     let itemName: String
     let itemSKU: String
     let pickupDate: Date
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Top Section: Customer Info
@@ -18,13 +18,13 @@ struct RepairCardView: View {
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(theme.primaryText)
                 }
-                
+
                 Spacer()
             }
-            
+
             Divider()
                 .background(theme.divider)
-            
+
             // Middle Section: Item Info
             HStack(spacing: 16) {
                 if let itemImageURL = itemImageURL, let url = URL(string: itemImageURL) {
@@ -45,53 +45,52 @@ struct RepairCardView: View {
                         .frame(width: 60, height: 60)
                         .overlay(Image(systemName: "photo").foregroundColor(theme.secondaryText))
                 }
-                
+
                 VStack(alignment: .leading, spacing: 4) {
                     Text(itemName)
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(theme.primaryText)
-                    
+
                     Text("SKU: \(itemSKU)")
                         .font(.system(size: 14))
                         .foregroundColor(theme.secondaryText)
                 }
             }
-            
+
             // Bottom Section: Pickup Date
-            HStack {
+            HStack(alignment: .center) {
                 HStack(spacing: 8) {
                     Image(systemName: "calendar.badge.clock")
                         .foregroundColor(theme.burgundy)
                         .font(.system(size: 20))
-                    
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("ESTIMATED PICKUP")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(theme.burgundy)
-                        
-                        Text(formatDate(pickupDate))
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(theme.primaryText)
-                    }
+
+                    Text("ESTIMATED PICKUP")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(theme.burgundy)
                 }
+
                 Spacer()
+
+                Text(formatDate(pickupDate))
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(theme.primaryText)
             }
-            .padding(12)
+            .padding(14)
             .background(theme.burgundy.opacity(0.05))
-            .cornerRadius(8)
+            .cornerRadius(16)
         }
         .padding(16)
         .background(theme.cardBackground)
-        .cornerRadius(16)
+        .cornerRadius(24)
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: 24)
                 .strokeBorder(Color.gray.opacity(0.15), lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(customerName), \(itemName), SKU \(itemSKU). Estimated pickup: \(formatDate(pickupDate))")
     }
-    
+
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "d MMM yyyy"

@@ -11,37 +11,37 @@ struct EmployeeDetailView: View {
     @State var employee: DisplayEmployee
     var onUpdate: ((DisplayEmployee) -> Void)? = nil
     var onDelete: (() -> Void)? = nil
-    
+
     @State private var isEditPresented = false
     @State private var showDeleteAlert = false
     @State private var revenueTimeRange: SalesTimeRange = .yearly
     @State private var revenueChartData: [ManagerRevenueChartPoint] = []
     @State private var revenueMaxValue: Double = 1.0
-    
+
     private func fetchRevenueData() async {
         let prefix: String
         let allLabels: [String]
         switch revenueTimeRange {
-        case .weekly: 
+        case .weekly:
             prefix = "W"
             allLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-        case .monthly: 
+        case .monthly:
             prefix = "M"
             allLabels = ["W1", "W2", "W3", "W4", "W5"]
-        case .yearly: 
+        case .yearly:
             prefix = "Y"
             allLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
         }
-        
+
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         let dateString = formatter.string(from: Date()) // Current date for now
-        
+
         let params = [
             "p_associate_id": employee.id.uuidString,
             "p_period": "\(prefix):\(dateString)"
         ]
-        
+
         do {
             struct SalesPeriodResult: Decodable {
                 let label: String
@@ -52,7 +52,7 @@ struct EmployeeDetailView: View {
                 .rpc("associate_sales_by_period", params: params)
                 .execute()
                 .value
-            
+
             await MainActor.run {
                 var paddedData: [ManagerRevenueChartPoint] = []
                 for label in allLabels {
@@ -62,7 +62,7 @@ struct EmployeeDetailView: View {
                         paddedData.append(ManagerRevenueChartPoint(label: label, revenue: 0.0))
                     }
                 }
-                
+
                 self.revenueChartData = paddedData
                 self.revenueMaxValue = self.revenueChartData.map(\.revenue).max() ?? 1.0
             }
@@ -80,7 +80,7 @@ struct EmployeeDetailView: View {
             .map { String($0) }
             .joined()
             .uppercased()
-            
+
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 20) {
                 // Card 1: Hero card with avatar, name, phone, email
@@ -89,7 +89,7 @@ struct EmployeeDetailView: View {
                         Circle()
                             .fill(theme.burgundy)
                             .frame(width: 68, height: 68)
-                        
+
                         if let data = employee.imageData, let uiImage = UIImage(data: data) {
                             Image(uiImage: uiImage)
                                 .resizable()
@@ -124,11 +124,11 @@ struct EmployeeDetailView: View {
                         Text(employee.name)
                             .font(.system(size: 24, weight: .bold, design: .rounded))
                             .foregroundStyle(theme.primaryText)
-                        
+
                         Text(employee.phone.isEmpty ? "Not Available" : employee.phone)
                             .font(RSMSFonts.body)
                             .foregroundStyle(theme.secondaryText)
-                            
+
                         Text(employee.email.isEmpty ? "Not Available" : employee.email)
                             .font(RSMSFonts.body)
                             .foregroundStyle(theme.secondaryText)
@@ -148,20 +148,20 @@ struct EmployeeDetailView: View {
                             .frame(width: 34, height: 34)
                             .background(theme.burgundy.opacity(0.08))
                             .clipShape(Circle())
-                        
+
                         Text("Role")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(theme.primaryText)
-                        
+
                         Spacer()
-                        
+
                         Text(employee.role)
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(theme.secondaryText)
                     }
-                    
+
                     Divider()
-                    
+
                     // Row 2: Products Sold / Repaired
                     HStack(alignment: .center, spacing: 12) {
                         Image(systemName: isAfterSales ? "wrench.and.screwdriver" : "bag")
@@ -170,20 +170,20 @@ struct EmployeeDetailView: View {
                             .frame(width: 34, height: 34)
                             .background(theme.burgundy.opacity(0.08))
                             .clipShape(Circle())
-                        
+
                         Text(isAfterSales ? LocalizedStringKey("Product Aftercare") : LocalizedStringKey("Products Sold"))
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(theme.primaryText)
-                        
+
                         Spacer()
-                        
+
                         Text("\(employee.productsSold)")
                             .font(.system(size: 14, weight: .bold))
                             .foregroundStyle(theme.primaryText)
                     }
-                    
+
                     Divider()
-                    
+
                     // Row 3: Customer Attraction
                     HStack(alignment: .center, spacing: 12) {
                         Image(systemName: "person.2.fill")
@@ -192,13 +192,13 @@ struct EmployeeDetailView: View {
                             .frame(width: 34, height: 34)
                             .background(theme.burgundy.opacity(0.08))
                             .clipShape(Circle())
-                        
+
                         Text("Customer Attraction")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(theme.primaryText)
-                        
+
                         Spacer()
-                        
+
                         Text("\(employee.customerAttraction)")
                             .font(.system(size: 14, weight: .bold))
                             .foregroundStyle(theme.burgundy)
@@ -206,7 +206,7 @@ struct EmployeeDetailView: View {
                 }
                 .padding(14)
                 .luxuryCard()
-                
+
                 // MARK: - Revenue Chart
                 VStack {
                     HStack {
@@ -224,7 +224,7 @@ struct EmployeeDetailView: View {
                             Task { await fetchRevenueData() }
                         }
                     }
-                    
+
                     ManagerRevenueChartView(
                         data: revenueChartData,
                         maxValue: revenueMaxValue,
@@ -235,7 +235,7 @@ struct EmployeeDetailView: View {
                 }
                 .padding()
                 .luxuryCard()
-                
+
                 // MARK: - Delete Action
                 if onDelete != nil {
                     Button(role: .destructive) {
@@ -272,14 +272,17 @@ struct EmployeeDetailView: View {
                         .foregroundColor(theme.burgundy)
                 }
             }
-            
+
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     isEditPresented = true
                 } label: {
-                    Image(systemName: "pencil")
-                        .font(.system(.body, design: .default).weight(.semibold))
-                        .foregroundColor(theme.burgundy)
+                    HStack(spacing: 4) {
+                        Image(systemName: "square.and.pencil")
+                        Text("Edit")
+                    }
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(theme.burgundy)
                 }
             }
         }

@@ -21,7 +21,6 @@ struct AfterSalesDashboardView: View {
         ZStack(alignment: .bottomTrailing) {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 24) {
-                    headerSection
                     kpiSection
                     serviceTrendChartSection
                     serviceStatusDonutSection
@@ -30,10 +29,17 @@ struct AfterSalesDashboardView: View {
                 .padding(.horizontal, RSMSSpacing.lg)
                 .padding(.top, 16)
             }
+            .safeAreaInset(edge: .top) {
+                headerSection
+                    .padding(.horizontal, RSMSSpacing.lg)
+                    .padding(.top, 16)
+                    .padding(.bottom, 8)
+                    .fadingMaterialHeader()
+            }
             .background(theme.background.ignoresSafeArea())
             .refreshable { await vm.fetch(storeID: sessionStore.currentUser?.storeID) }
             .task { await vm.fetch(storeID: sessionStore.currentUser?.storeID) }
-            
+
             if #available(iOS 18.0, *) {
                 floatingQRButton
                     .matchedTransitionSource(id: "scannerButton", in: namespace)
@@ -45,7 +51,7 @@ struct AfterSalesDashboardView: View {
             AfterSalesTicketsListView(filter: filter, storeID: sessionStore.currentUser?.storeID)
         }
     }
-    
+
     // MARK: - Header
     private var headerSection: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -54,7 +60,7 @@ struct AfterSalesDashboardView: View {
                 .fontWeight(.bold)
                 .foregroundColor(theme.primaryText)
             Spacer()
-            
+
             Button {
                 path.append(POSFlowDestination.afterSalesHistory)
             } label: {
@@ -92,9 +98,8 @@ struct AfterSalesDashboardView: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Profile")
         }
-        .padding(.vertical, 4)
     }
-    
+
     private func initials(for name: String?) -> String {
         guard let name = name, !name.isEmpty else { return "AS" }
         let components = name.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
@@ -107,16 +112,16 @@ struct AfterSalesDashboardView: View {
         }
         return "AS"
     }
-    
+
     // MARK: - KPI Section
     private var kpiSection: some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: RSMSSpacing.md) {
             KPICardView(title: "Pending Service Requests", value: "\(vm.pendingServiceRequests)", icon: "wrench.and.screwdriver.fill", trend: nil, color: theme.warning)
-            
+
             KPICardView(title: "Completed Services", value: "\(vm.completedServices)", icon: "checkmark.seal.fill", trend: nil, color: Color(hex: "2A9D8F"))
         }
     }
-    
+
     // MARK: - Service Request Trend Chart
     private var serviceTrendChartSection: some View {
         VStack(alignment: .leading, spacing: RSMSSpacing.md) {
@@ -133,7 +138,7 @@ struct AfterSalesDashboardView: View {
                 .pickerStyle(.segmented)
                 .fixedSize()
             }
-            
+
             if vm.serviceRequestChartData.allSatisfy({ $0.value == 0 }) {
                 emptyChartPlaceholder(text: "No service requests in this period")
             } else {
@@ -182,7 +187,7 @@ struct AfterSalesDashboardView: View {
         }
         .frame(maxWidth: .infinity, minHeight: 180)
     }
-    
+
     // Maps the service-status breakdown into colored donut slices.
     private var serviceStatusSlices: [DonutSlice] {
         func color(for label: String) -> Color {
@@ -205,7 +210,7 @@ struct AfterSalesDashboardView: View {
             Text("Service Status")
                 .font(RSMSFonts.headline)
                 .foregroundColor(theme.primaryText)
-            
+
             if vm.totalServiceRequests == 0 {
                 emptyChartPlaceholder(text: "No service tickets yet")
             } else {
@@ -219,7 +224,7 @@ struct AfterSalesDashboardView: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Service Status Chart, Total service tickets: \(vm.totalServiceRequests)")
     }
-    
+
     // MARK: - Floating QR Button
     private var floatingQRButton: some View {
         Button {
@@ -230,7 +235,7 @@ struct AfterSalesDashboardView: View {
                     .fill(Color(red: 122/255, green: 22/255, blue: 34/255))
                     .frame(width: 60, height: 60)
                     .shadow(color: Color(red: 122/255, green: 22/255, blue: 34/255).opacity(0.5), radius: 8, x: 0, y: 4)
-                
+
                 Image(systemName: "qrcode.viewfinder")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(.white)

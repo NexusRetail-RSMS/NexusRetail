@@ -11,17 +11,17 @@ import PhotosUI
 struct ManagerDetailView: View {
     @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
-    
+
     // We keep a local copy so edits reflect immediately
     @State private var manager: DisplayManager
     @State private var isEditPresented = false
-    
+
     @State private var isResettingPassword = false
     @State private var showResetAlert = false
     @State private var showResetSuccessAlert = false
     @State private var newPassword = ""
     @State private var showDeleteAlert = false
-    
+
     var onResetPassword: ((String) async -> Bool)?
     var onDelete: (() -> Void)?
     var onUpdate: ((DisplayManager, UIImage?) async -> String?)?
@@ -32,7 +32,7 @@ struct ManagerDetailView: View {
         self.onDelete = onDelete
         self.onUpdate = onUpdate
     }
-    
+
     var body: some View {
         List {
             // MARK: - Avatar Header Section
@@ -43,7 +43,7 @@ struct ManagerDetailView: View {
                         Circle()
                             .fill(theme.burgundy.opacity(0.15))
                             .frame(width: 110, height: 110)
-                        
+
                         if let urlString = manager.imageUrl, let url = URL(string: urlString) {
                             AsyncImage(url: url) { image in
                                 image
@@ -64,7 +64,7 @@ struct ManagerDetailView: View {
                         }
                     }
                     .shadow(color: theme.burgundy.opacity(0.15), radius: 10, x: 0, y: 4)
-                    
+
                     // Full name on one line
                     Text(manager.name)
                         .font(.system(size: 22, weight: .bold))
@@ -75,7 +75,7 @@ struct ManagerDetailView: View {
             }
             .listRowBackground(Color.clear)
             .listRowInsets(EdgeInsets())
-            
+
             // MARK: - Contact Info
             Section(header: Text("Manager Information")
                 .font(.system(size: 17, weight: .semibold))
@@ -86,20 +86,20 @@ struct ManagerDetailView: View {
                         label: "Role",
                         value: "Manager",
                         valueColor: theme.burgundy)
-                
+
                 if !manager.phone.isEmpty {
                     infoRow(icon: "phone.fill",
                             label: "Phone",
                             value: manager.phone)
                 }
-                
+
                 if !manager.email.isEmpty {
                     infoRow(icon: "envelope.fill",
                             label: "Email",
                             value: manager.email)
                 }
             }
-            
+
             // MARK: - Store
             Section(header: Text("Store Information")
                 .font(.system(size: 17, weight: .semibold))
@@ -110,14 +110,14 @@ struct ManagerDetailView: View {
                         label: "Store",
                         value: manager.storeName.isEmpty ? "Not Assigned" : manager.storeName,
                         valueColor: manager.storeName.isEmpty ? theme.secondaryText : theme.primaryText)
-                
+
                 if !manager.address.isEmpty {
                     infoRow(icon: "location.fill",
                             label: "Address",
                             value: manager.address,
                             multiline: true)
                 }
-                
+
                 if !manager.country.isEmpty {
                     infoRow(icon: "globe",
                             label: "Country",
@@ -125,7 +125,7 @@ struct ManagerDetailView: View {
                             valueColor: theme.burgundy)
                 }
             }
-            
+
             // MARK: - Account
             if onResetPassword != nil {
                 Section(header: Text("Account")
@@ -156,7 +156,7 @@ struct ManagerDetailView: View {
                     }
                 }
             }
-            
+
             // MARK: - Delete Manager
             if onDelete != nil {
                 Section {
@@ -189,13 +189,13 @@ struct ManagerDetailView: View {
                         .foregroundColor(theme.burgundy)
                 }
             }
-            
+
             // Edit button on RIGHT
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     isEditPresented = true
                 } label: {
-                    Image(systemName: "pencil")
+                    Image(systemName: "square.and.pencil")
                         .font(.system(.body, design: .default).weight(.semibold))
                         .foregroundColor(theme.burgundy)
                 }
@@ -226,7 +226,7 @@ struct ManagerDetailView: View {
             Text("Are you sure you want to delete this manager? This action cannot be undone and will revoke their access.")
         }
     }
-    
+
     // MARK: - Native Info Row
     @ViewBuilder
     private func infoRow(
@@ -240,13 +240,13 @@ struct ManagerDetailView: View {
             Image(systemName: icon)
                 .foregroundColor(theme.burgundy)
                 .frame(width: 20)
-            
+
             Text(localized: label)
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(theme.primaryText)
-            
+
             Spacer()
-            
+
             Text(localized: value)
                 .font(.system(size: 16))
                 .foregroundColor(valueColor)
@@ -262,7 +262,7 @@ struct EditManagerSheet: View {
     @Environment(AppTheme.self) private var theme
     @Environment(\.dismiss) private var dismiss
     @Binding var manager: DisplayManager
-    
+
     @State private var firstName: String
     @State private var lastName: String
     @State private var phone: String
@@ -276,7 +276,7 @@ struct EditManagerSheet: View {
     @State private var stores: [Store] = []
     @State private var showErrorAlert = false
     @State private var errorMessage = ""
-    
+
     private var pickerStoreNames: [String] {
         var names = stores.filter { $0.managerID == nil || $0.name == storeName }.map { $0.name }
         if !storeName.isEmpty && storeName != "None" && storeName != "Unassigned" && storeName != "Not Assigned" && !names.contains(storeName) {
@@ -284,7 +284,7 @@ struct EditManagerSheet: View {
         }
         return names
     }
-    
+
     private var pickerCountries: [String] {
         var list = countries
         if !selectedCountry.isEmpty && !list.contains(selectedCountry) {
@@ -292,7 +292,7 @@ struct EditManagerSheet: View {
         }
         return list
     }
-    
+
     private let countries = ["United States", "United Kingdom", "Canada", "Australia", "India", "Germany", "France", "Japan", "United Arab Emirates", "Singapore"]
     var onSave: ((DisplayManager, UIImage?) async -> String?)? = nil
 
@@ -310,11 +310,11 @@ struct EditManagerSheet: View {
         _selectedCountry = State(initialValue: (initialStore == "None") ? "" : m.country)
         self.onSave = onSave
     }
-    
+
     private var isFormValid: Bool {
         !firstName.trimmingCharacters(in: .whitespaces).isEmpty
     }
-    
+
     var body: some View {
         NavigationStack {
             Form {
@@ -327,7 +327,7 @@ struct EditManagerSheet: View {
                                     .fill(theme.burgundy.opacity(0.15))
                                     .frame(width: 110, height: 110)
                                     .shadow(color: theme.burgundy.opacity(0.15), radius: 10, x: 0, y: 4)
-                                
+
                                 if let data = selectedImageData, let uiImage = UIImage(data: data) {
                                     Image(uiImage: uiImage)
                                         .resizable()
@@ -355,7 +355,7 @@ struct EditManagerSheet: View {
                             }
                         }
                         .buttonStyle(.plain)
-                        
+
                         // Pill-shaped Add Photo button
                         PhotosPicker(selection: $photoPickerItem, matching: .images) {
                             Text(selectedImageData == nil ? "Add Photo" : "Change Photo")
@@ -379,7 +379,7 @@ struct EditManagerSheet: View {
                         }
                     }
                 }
-                
+
                 // ── Manager Details (single grouped pill) ─────────────
                 Section("Manager Details") {
                     TextField("First Name", text: $firstName)
@@ -402,7 +402,7 @@ struct EditManagerSheet: View {
                             .autocapitalization(.none)
                     }
                 }
-                
+
                 // ── Store Details ──────────────────────────────────────
                 Section("Store Details") {
                     Picker(selection: $storeName) {

@@ -15,10 +15,14 @@ struct CollectVerifyView: View {
     let order: BOPISOrder
     /// Verifies the entered code server-side; returns true if it matched.
     let onVerify: (String) async -> Bool
+    /// Re-sends the pickup code to the customer; returns a user-facing message.
+    var onResend: (() async -> String)? = nil
 
     @State private var code = ""
     @State private var isVerifying = false
     @State private var errorMessage: String?
+    @State private var isResending = false
+    @State private var resendMessage: String?
 
     private var canVerify: Bool {
         code.trimmingCharacters(in: .whitespaces).count >= 4 && !isVerifying
@@ -83,6 +87,38 @@ struct CollectVerifyView: View {
                     .disabled(!canVerify)
                     .padding(.horizontal, RSMSSpacing.lg)
 
+                    // Resend the pickup code to the customer (lost email, etc.)
+                    if onResend != nil {
+                        Button {
+                            resend()
+                        } label: {
+                            HStack(spacing: 6) {
+                                if isResending {
+                                    ProgressView().tint(theme.burgundy)
+                                } else {
+                                    Image(systemName: "paperplane")
+                                }
+                                Text(isResending ? "Sending…" : "Resend code to customer")
+                                    .font(.system(size: 14, weight: .semibold))
+                            }
+                            .foregroundColor(theme.burgundy)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .overlay(RoundedRectangle(cornerRadius: 14).stroke(theme.burgundy.opacity(0.4), lineWidth: 1))
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(isResending)
+                        .padding(.horizontal, RSMSSpacing.lg)
+                    }
+
+                    if let resendMessage {
+                        Text(resendMessage)
+                            .font(.system(size: 12))
+                            .foregroundColor(theme.secondaryText)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, RSMSSpacing.lg)
+                    }
+
                     Spacer()
                 }
             }
@@ -95,6 +131,19 @@ struct CollectVerifyView: View {
             }
         }
         .presentationDetents([.medium, .large])
+    }
+
+    private func resend() {
+        guard let onResend else { return }
+        isResending = true
+        resendMessage = nil
+        Task {
+            let message = await onResend()
+            await MainActor.run {
+                isResending = false
+                resendMessage = message
+            }
+        }
     }
 
     private func verify() {

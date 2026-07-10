@@ -18,7 +18,7 @@ struct InventoryCatalogView: View {
 
     var filteredProducts: [POSProduct] {
         var base = products
-        
+
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         if !query.isEmpty {
             base = base.filter {
@@ -31,41 +31,55 @@ struct InventoryCatalogView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                theme.background.ignoresSafeArea()
+        ZStack {
+            theme.background.ignoresSafeArea()
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: RSMSSpacing.lg) {
-                        if isLoading {
-                            HStack {
-                                Spacer()
-                                ProgressView("Loading catalog...")
-                                    .tint(theme.burgundy)
-                                Spacer()
-                            }
-                            .padding(.top, 40)
-                        } else if filteredProducts.isEmpty {
-                            emptyState
-                        } else {
-                            VStack(spacing: 12) {
-                                ForEach(filteredProducts) { product in
-                                    catalogRow(product)
-                                }
+            ScrollView {
+                VStack(alignment: .leading, spacing: RSMSSpacing.lg) {
+                    if isLoading {
+                        HStack {
+                            Spacer()
+                            ProgressView("Loading catalog...")
+                                .tint(theme.burgundy)
+                            Spacer()
+                        }
+                        .padding(.top, 40)
+                    } else if filteredProducts.isEmpty {
+                        emptyState
+                    } else {
+                        VStack(spacing: 12) {
+                            ForEach(filteredProducts) { product in
+                                catalogRow(product)
                             }
                         }
                     }
+                }
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, 16)
+                .padding(.bottom, RSMSSpacing.xxl)
+            }
+            .safeAreaInset(edge: .top) {
+                VStack(spacing: 0) {
+                    HStack {
+                        Text("Search")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(theme.primaryText)
+                        Spacer()
+                    }
                     .padding(.horizontal, RSMSSpacing.lg)
                     .padding(.top, 16)
-                    .padding(.bottom, RSMSSpacing.xxl)
+                    .padding(.bottom, 8)
+                    NexusSearchBar(text: $searchText, placeholder: "Search products by name, SKU, or category...")
+                        .padding(.horizontal, RSMSSpacing.lg)
+                        .padding(.bottom, 12)
                 }
+                .fadingMaterialHeader()
             }
-            .navigationTitle("Search")
-            .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $searchText, prompt: "Search products by name, SKU, or category...")
-            .task { await loadProducts() }
-            .refreshable { await loadProducts() }
         }
+        .toolbar(.hidden, for: .navigationBar)
+        .task { await loadProducts() }
+        .refreshable { await loadProducts() }
     }
 
 
@@ -156,18 +170,18 @@ struct InventoryCatalogView: View {
                 let pexels_page: String?
                 let image_url: String?
             }
-            
+
             let response: [ProductResponse] = try await SupabaseManager.shared.client
                 .from("products")
                 .select("item_id, item_name, category, price, pexels_page, image_url")
                 .execute()
                 .value
-            
+
             var mapped: [POSProduct] = []
             for product in response {
                 let uuid = UUID(uuidString: String(format: "00000000-0000-0000-0000-%012d", product.item_id)) ?? UUID()
                 let pexelsImageUrl = POSProductRepository.shared.extractPexelsImageUrl(from: product.pexels_page ?? "") ?? product.image_url
-                
+
                 mapped.append(POSProduct(
                     id: uuid,
                     itemId: product.item_id,

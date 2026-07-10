@@ -9,10 +9,10 @@ struct ManagerDashboardView: View {
     @State private var viewModel = ManagerDashboardViewModel()
     @Environment(SessionStore.self) private var sessionStore
     @Environment(AppTheme.self) private var theme
-    
+
     // Notification ViewModel
     @State private var notificationVM = LowStockNotificationViewModel()
-    
+
     // Presentation States
     @State private var isNotificationPresented = false
     @State private var isShowingRevenueDetail = false
@@ -31,17 +31,13 @@ struct ManagerDashboardView: View {
                      isWarehouse: false, status: .active, latitude: nil, longitude: nil,
                      city: nil, country: nil, imageURL: nil)
     }
-    
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: RSMSSpacing.xl) {
-                // MARK: - Header
-                headerSection
-                    .padding(.top, RSMSSpacing.sm)
-                
                 // MARK: - KPI Cards
                 kpiSection
-                
+
                 // MARK: - Top Product Sales
                 ProductSalesChart(
                     data: viewModel.topProductsData,
@@ -51,7 +47,7 @@ struct ManagerDashboardView: View {
                 )
                 .contentShape(Rectangle())
                 .onTapGesture { isShowingProductsDetail = true }
-                
+
                 // MARK: - Staff Performance
                 StaffPerformanceChart(
                     data: viewModel.staffPerformanceData
@@ -59,6 +55,13 @@ struct ManagerDashboardView: View {
             }
             .padding(.horizontal, RSMSSpacing.lg)
             .padding(.bottom, RSMSSpacing.xxxl)
+        }
+        .safeAreaInset(edge: .top) {
+            headerSection
+                .padding(.horizontal, RSMSSpacing.lg)
+                .padding(.top, 16)
+                .padding(.bottom, 8)
+                .fadingMaterialHeader()
         }
         .background(theme.background.ignoresSafeArea())
         .navigationBarHidden(true)
@@ -113,17 +116,17 @@ struct ManagerDashboardView: View {
                             }
                             Spacer()
                             Menu {
-                                Button("Weekly") { 
+                                Button("Weekly") {
                                     viewModel.revenueTimeRange = .weekly
                                     viewModel.revenueDate = Date()
                                     Task { await viewModel.fetchRevenueData(storeID: sessionStore.currentUser?.storeID) }
                                 }
-                                Button("Monthly") { 
+                                Button("Monthly") {
                                     viewModel.revenueTimeRange = .monthly
                                     viewModel.revenueDate = Date()
                                     Task { await viewModel.fetchRevenueData(storeID: sessionStore.currentUser?.storeID) }
                                 }
-                                Button("Yearly") { 
+                                Button("Yearly") {
                                     viewModel.revenueTimeRange = .yearly
                                     viewModel.revenueDate = Date()
                                     Task { await viewModel.fetchRevenueData(storeID: sessionStore.currentUser?.storeID) }
@@ -138,13 +141,13 @@ struct ManagerDashboardView: View {
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
                                 .background(Color.black.opacity(0.05))
-                                .cornerRadius(16)
+                                .clipShape(Capsule())
                                 .foregroundColor(theme.primaryText)
                             }
                         }
                         .padding(.horizontal, RSMSSpacing.lg)
                         .padding(.top, RSMSSpacing.lg)
-                        
+
                         let calendarBinding = Binding<StoreChartTimeRange>(
                             get: {
                                 switch viewModel.revenueTimeRange {
@@ -168,10 +171,10 @@ struct ManagerDashboardView: View {
                                 Task { await viewModel.fetchRevenueData(storeID: sessionStore.currentUser?.storeID) }
                             }
                         )
-                        
+
                         SwipeableCalendarView(selectedRange: calendarBinding)
                             .padding(.top, 4)
-                        
+
                         ManagerRevenueChartView(
                             data: viewModel.revenueChartData,
                             maxValue: viewModel.revenueMaxValue,
@@ -256,7 +259,7 @@ struct ManagerDashboardView: View {
             }
         }
     }
-    
+
     // MARK: - Header
     private var headerSection: some View {
         HStack(alignment: .center) {
@@ -271,7 +274,7 @@ struct ManagerDashboardView: View {
             NotificationBellView(unreadCount: notificationVM.unreadCount) {
                 isNotificationPresented = true
             }
-            
+
             // Profile avatar
             NavigationLink(destination: GlobalProfileView()) {
                 ZStack {
@@ -301,28 +304,28 @@ struct ManagerDashboardView: View {
             .accessibilityHint("Opens your profile and settings")
         }
     }
-    
+
     // MARK: - KPI Section
     private var kpiSection: some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: RSMSSpacing.md) {
             KPICardView(title: "Today's Revenue", value: viewModel.todayRevenue, icon: "indianrupeesign", trend: nil, color: Color(hex: "2A9D8F"))
                 .contentShape(Rectangle())
                 .onTapGesture { isShowingRevenueDetail = true }
-            
+
             KPICardView(title: "Pending Requests", value: viewModel.pendingRequests, icon: "doc.text.fill", trend: nil, color: theme.burgundy)
                 .contentShape(Rectangle())
                 .onTapGesture { isShowingRequestsDetail = true }
-            
+
             KPICardView(title: "Low Stock Items", value: viewModel.lowStockItems, icon: "exclamationmark.triangle.fill", trend: nil, color: Color(hex: "E76F51"))
                 .contentShape(Rectangle())
                 .onTapGesture { isShowingLowStockDetail = true }
-            
+
             KPICardView(title: "After Service", value: viewModel.afterServiceCount, icon: "wrench.and.screwdriver.fill", trend: nil, color: Color(hex: "D4A017"))
                 .contentShape(Rectangle())
                 .onTapGesture { isShowingReturnsDetail = true }
         }
     }
-    
+
     private func initials(for name: String?) -> String {
         guard let name = name, !name.isEmpty else { return "M" }
         let components = name.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }

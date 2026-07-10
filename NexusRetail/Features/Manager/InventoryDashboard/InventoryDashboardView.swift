@@ -14,45 +14,35 @@ struct InventoryDashboardView: View {
     @Environment(SessionStore.self) private var sessionStore
 
     var body: some View {
-        VStack(spacing: 0) {
-            // ── Pinned top area: header + search + chips ──
-            // Completely outside the ScrollView so chips NEVER
-            // overlap grid items and can never leak taps.
-            VStack(spacing: 0) {
-                headerSection
-                    .padding(.top, RSMSSpacing.sm)
-                    .padding(.bottom, RSMSSpacing.md)
-                searchBar
-                    .padding(.bottom, RSMSSpacing.md)
-                filterSection
-                    .padding(.bottom, RSMSSpacing.sm)
-            }
-            .fadingMaterialHeader()
+        ZStack {
+            theme.background
+                .ignoresSafeArea()
 
-            // ── Scrollable content: grid only ──
-            Group {
-                if viewModel.isLoading && viewModel.items.isEmpty {
+            if viewModel.isLoading && viewModel.items.isEmpty {
+                VStack {
                     Spacer()
                     ProgressView("Loading inventory…")
                         .font(RSMSFonts.body)
                         .foregroundColor(theme.secondaryText)
                     Spacer()
-                } else {
-                    ScrollView {
-                        inventoryList
-                            .padding(.top, RSMSSpacing.md)
-                            .padding(.bottom, RSMSSpacing.xxxl)
-                    }
-                    .refreshable {
-                        await viewModel.load(storeID: sessionStore.currentUser?.storeID)
-                    }
+                }
+                .safeAreaInset(edge: .top) {
+                    topBarHeader
+                }
+            } else {
+                ScrollView {
+                    inventoryList
+                        .padding(.top, RSMSSpacing.md)
+                        .padding(.bottom, RSMSSpacing.xxxl)
+                }
+                .safeAreaInset(edge: .top) {
+                    topBarHeader
+                }
+                .refreshable {
+                    await viewModel.load(storeID: sessionStore.currentUser?.storeID)
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(theme.background)
         }
-        .ignoresSafeArea(edges: .top)
-        .background(theme.background.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .task {
             await viewModel.load(storeID: sessionStore.currentUser?.storeID)
@@ -68,6 +58,19 @@ struct InventoryDashboardView: View {
                 .presentationDetents([.height(590)])
             }
         }
+    }
+
+    private var topBarHeader: some View {
+        VStack(spacing: 0) {
+            headerSection
+                .padding(.top, 16)
+                .padding(.bottom, 8)
+            searchBar
+                .padding(.bottom, 12)
+            filterSection
+                .padding(.bottom, 8)
+        }
+        .fadingMaterialHeader()
     }
 
     // MARK: - Header
@@ -88,7 +91,7 @@ struct InventoryDashboardView: View {
                             viewModel.sortOrder = order
                         } label: {
                             HStack {
-                                Text(order.rawValue)
+                                Text(LocalizedStringKey(order.rawValue))
                                 if viewModel.sortOrder == order {
                                     Image(systemName: "checkmark")
                                 }
@@ -114,42 +117,13 @@ struct InventoryDashboardView: View {
             .clipShape(Capsule())
         }
         .padding(.horizontal, RSMSSpacing.lg)
-        .padding(.top, 50) // safe area top
     }
 
     // MARK: - Search Bar
 
     private var searchBar: some View {
-        HStack(spacing: 12) {
-            NexusSearchBar(text: $viewModel.searchText, placeholder: "Search by name or SKU…")
-
-            // Filter Menu
-            Menu {
-                ForEach(InventorySortOrder.allCases, id: \.self) { order in
-                    Button {
-                        viewModel.sortOrder = order
-                    } label: {
-                        HStack {
-                            Text(localized: order.rawValue)
-                            if viewModel.sortOrder == order {
-                                Image(systemName: "checkmark")
-                            }
-                        }
-                    }
-                }
-            } label: {
-                ZStack {
-                        Circle()
-                            .fill(theme.burgundy.opacity(0.08))
-                            .frame(width: 48, height: 48)
-
-                        Image(systemName: "line.3.horizontal.decrease")
-                            .font(.system(size: 20, weight: .medium))
-                            .foregroundColor(theme.burgundy)
-                    }
-            }
-        }
-        .padding(.horizontal, RSMSSpacing.lg)
+        NexusSearchBar(text: $viewModel.searchText, placeholder: "Search by name or SKU…")
+            .padding(.horizontal, RSMSSpacing.lg)
     }
 
     // MARK: - Filter Section
@@ -215,10 +189,10 @@ struct InventoryDashboardView: View {
             Image(systemName: icon)
                 .font(.system(size: 48))
                 .foregroundColor(theme.secondaryText.opacity(0.4))
-            Text(localized: title)
+            Text(title)
                 .font(RSMSFonts.headline)
                 .foregroundColor(theme.primaryText)
-            Text(localized: message)
+            Text(message)
                 .font(RSMSFonts.caption)
                 .foregroundColor(theme.secondaryText)
                 .multilineTextAlignment(.center)
@@ -236,7 +210,7 @@ struct CategoryChip: View {
     let action: () -> Void
 
     var body: some View {
-        Text(localized: label)
+        Text(label)
             .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
             .foregroundColor(isSelected ? .white : theme.primaryText)
             .padding(.horizontal, 14)

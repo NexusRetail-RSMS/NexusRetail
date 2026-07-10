@@ -35,7 +35,7 @@ struct OrdersHubView: View {
                 // Single segment control — replaces the old stacked
                 // In-Store/BOPIS + search + Pending/Waiting mess.
                 Picker("Orders", selection: $segment) {
-                    ForEach(Segment.allCases) { Text(localized: $0.rawValue).tag($0) }
+                    ForEach(Segment.allCases) { Text(LocalizedStringKey($0.rawValue)).tag($0) }
                 }
                 .pickerStyle(.segmented)
                 .padding(.horizontal, RSMSSpacing.lg)
@@ -50,17 +50,33 @@ struct OrdersHubView: View {
         .task { await reloadAll() }
         .sheet(item: $orderToPack) { order in
             BOPISPackOrderView(order: order) {
-                bopisVM.packAndNotify(id: order.id, associateID: sessionStore.currentUser?.id)
-                notifiedMessage = "Order packed and moved to waiting for customer pickup."
-                showNotifiedAlert = true
+                Task {
+                    let outcome = await bopisVM.packAndNotify(id: order.id, associateID: sessionStore.currentUser?.id)
+                    switch outcome {
+                    case .emailed:
+                        notifiedMessage = "A pickup code has been emailed to \(order.customerName)."
+                    case .noEmail:
+                        notifiedMessage = "Order packed, but no email is on file for \(order.customerName). Ask them for their code another way."
+                    case .sendFailed:
+                        notifiedMessage = "Order packed, but the pickup email couldn't be sent right now. Please try resending or check the email setup."
+                    }
+                    showNotifiedAlert = true
+                }
             }
         }
         .sheet(item: $orderToCollect) { order in
             CollectVerifyView(order: order) { code in
-                let expectedCode = bopisVM.orders.first(where: { $0.id == order.id })?.verificationCode
-                guard expectedCode == code else { return false }
-                bopisVM.markCollected(id: order.id)
-                return true
+                await bopisVM.verifyAndCollect(id: order.id, code: code)
+            } onResend: {
+                let outcome = await bopisVM.resendCode(id: order.id)
+                switch outcome {
+                case .emailed:
+                    return "A new pickup code was emailed to \(order.customerName)."
+                case .noEmail:
+                    return "No email on file for \(order.customerName). Ask them for their code another way."
+                case .sendFailed:
+                    return "Couldn't send the code right now. Please try again."
+                }
             }
         }
         .alert("Ready for Pickup", isPresented: $showNotifiedAlert) {
@@ -84,7 +100,7 @@ struct OrdersHubView: View {
 
             Text("Orders Hub")
                 .font(.system(size: 24, weight: .bold)).foregroundColor(theme.primaryText)
-                
+
             Spacer()
 
         }
@@ -139,7 +155,7 @@ struct OrdersHubView: View {
     private func typeBadge(_ text: String, systemImage: String) -> some View {
         HStack(spacing: 5) {
             Image(systemName: systemImage).font(.system(size: 10, weight: .bold))
-            Text(localized: text).font(.system(size: 11, weight: .bold))
+            Text(text).font(.system(size: 11, weight: .bold))
         }
         .foregroundColor(theme.burgundy)
         .padding(.horizontal, 10)
@@ -194,7 +210,7 @@ struct OrdersHubView: View {
 
     private func statusPill(_ status: String) -> some View {
         let isDone = status == "Completed"
-        return Text(localized: status)
+        return Text(status)
             .font(.system(size: 10, weight: .bold))
             .foregroundColor(isDone ? theme.success : theme.secondaryText)
             .padding(.horizontal, 8).padding(.vertical, 4)
@@ -235,7 +251,7 @@ struct OrdersHubView: View {
             Image(systemName: icon)
                 .font(.system(size: 40))
                 .foregroundColor(theme.secondaryText.opacity(0.4))
-            Text(localized: text)
+            Text(text)
                 .font(.system(size: 14))
                 .foregroundColor(theme.secondaryText)
         }

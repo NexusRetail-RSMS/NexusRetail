@@ -16,7 +16,7 @@ enum StockStatus: String {
     case inStock = "In Stock"
     case low = "Low"
     case outOfStock = "Out"
-    
+
     var color: Color {
         switch self {
         case .inStock: return AppTheme().success
@@ -24,7 +24,7 @@ enum StockStatus: String {
         case .outOfStock: return AppTheme().error
         }
     }
-    
+
     var icon: String {
         switch self {
         case .inStock: return "checkmark.circle.fill"
@@ -65,15 +65,17 @@ enum InventoryCategory: String, CaseIterable {
 /// Transfer request status — matches the DB enum
 enum TransferStatus: String, Codable, CaseIterable {
     case pending
+    case pendingStoreApproval = "pending_store_approval"
     case approved
     case routed
     case dispatched
     case delivered
     case unfulfillable
-    
+
     var displayName: String {
         switch self {
         case .pending: return String(localized: "Pending")
+        case .pendingStoreApproval: return String(localized: "Awaiting Store")
         case .approved: return String(localized: "Approved")
         case .routed: return String(localized: "Routed")
         case .dispatched: return String(localized: "Dispatched")
@@ -81,10 +83,11 @@ enum TransferStatus: String, Codable, CaseIterable {
         case .unfulfillable: return String(localized: "Unfulfillable")
         }
     }
-    
+
     var color: Color {
         switch self {
         case .pending: return AppTheme().warning
+        case .pendingStoreApproval: return AppTheme().burgundy.opacity(0.7)
         case .approved: return .green.opacity(0.6)
         case .routed: return AppTheme().burgundy.opacity(0.8)
         case .dispatched: return AppTheme().burgundy
@@ -92,16 +95,17 @@ enum TransferStatus: String, Codable, CaseIterable {
         case .unfulfillable: return AppTheme().error
         }
     }
-    
+
     /// Position in the status pipeline (0-based)
     var step: Int {
         switch self {
         case .pending: return 0
-        case .approved: return 1
-        case .routed: return 2
-        case .dispatched: return 3
-        case .delivered: return 4
-        case .unfulfillable: return 5
+        case .pendingStoreApproval: return 1
+        case .approved: return 2
+        case .routed: return 3
+        case .dispatched: return 4
+        case .delivered: return 5
+        case .unfulfillable: return 6
         }
     }
 }
@@ -134,7 +138,7 @@ struct ProductInfo: Codable {
 struct PriceBandInfo: Codable {
     let basePrice: Double
     let floorPrice: Double
-    
+
     enum CodingKeys: String, CodingKey {
         case basePrice = "base_price"
         case floorPrice = "floor_price"
@@ -144,7 +148,7 @@ struct PriceBandInfo: Codable {
 /// Nested store price info
 struct StorePriceInfo: Codable {
     let localPrice: Double
-    
+
     enum CodingKeys: String, CodingKey {
         case localPrice = "local_price"
     }
@@ -158,7 +162,7 @@ struct InventoryItemRow: Codable, Identifiable {
     let onHand: Int
     let reorderThreshold: Int
     let products: ProductInfo
-    
+
     enum CodingKeys: String, CodingKey {
         case id
         case itemId = "item_id"
@@ -167,9 +171,9 @@ struct InventoryItemRow: Codable, Identifiable {
         case reorderThreshold = "reorder_threshold"
         case products
     }
-    
+
     // MARK: Computed Helpers
-    
+
     var name: String { products.name }
     var category: String { products.category ?? "Uncategorized" }
     var skuCode: String { products.skuCode ?? "—" }
@@ -187,35 +191,35 @@ struct InventoryItemRow: Codable, Identifiable {
     }
     // Store-specific override > canonical base
     var localPrice: Double { products.storePrice?.first?.localPrice ?? basePrice }
-    
+
     /// Stock health status
     var stockStatus: StockStatus {
         if onHand == 0 { return .outOfStock }
         if onHand <= reorderThreshold { return .low }
         return .inStock
     }
-    
+
     /// Progress of on_hand relative to a "healthy" level (2× threshold or at least 20)
     var stockProgress: Double {
         let target = max(Double(reorderThreshold) * 2.0, 20.0)
         return min(Double(onHand) / target, 1.0)
     }
-    
+
     /// Color for the progress bar
     var progressColor: Color {
         stockStatus.color
     }
-    
+
     /// Inventory value = on_hand × local_price (or base_price)
     var inventoryValue: Double {
         Double(onHand) * localPrice
     }
-    
+
     /// Formatted price string with Lac/Cr
     var formattedValue: String {
         formatIndianCurrency(inventoryValue)
     }
-    
+
     var isLowStock: Bool {
         onHand <= reorderThreshold
     }
@@ -231,7 +235,7 @@ struct TransferRequestRow: Codable, Identifiable {
     let status: TransferStatus
     let createdAt: Date
     let products: ProductInfo
-    
+
     enum CodingKeys: String, CodingKey {
         case id
         case itemId = "item_id"
@@ -241,10 +245,10 @@ struct TransferRequestRow: Codable, Identifiable {
         case createdAt = "created_at"
         case products
     }
-    
+
     var productName: String { products.name }
     var skuCode: String { products.skuCode ?? "—" }
-    
+
     var formattedDate: String {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
@@ -259,10 +263,12 @@ struct TransferRequestInsert: Codable {
     let requestingStoreId: UUID
     let quantity: Int
     let status: TransferStatus
-    
+    let sourceStoreId: UUID?
+
     enum CodingKeys: String, CodingKey {
         case itemId = "item_id"
         case requestingStoreId = "requesting_store_id"
+        case sourceStoreId = "source_store_id"
         case quantity, status
     }
 }
@@ -272,7 +278,7 @@ struct StorePriceUpsert: Codable {
     let itemId: Int64
     let storeId: UUID
     let localPrice: Double
-    
+
     enum CodingKeys: String, CodingKey {
         case itemId = "item_id"
         case storeId = "store_id"
@@ -289,11 +295,11 @@ struct InventorySummary {
     let outOfStock: Int
     let inventoryValue: Double
     let lowStockCount: Int
-    
+
     var formattedValue: String {
         formatIndianCurrency(inventoryValue)
     }
-    
+
     static let empty = InventorySummary(totalSKUs: 0, unitsInStock: 0, outOfStock: 0, inventoryValue: 0, lowStockCount: 0)
 }
 
