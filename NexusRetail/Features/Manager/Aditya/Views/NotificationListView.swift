@@ -98,7 +98,7 @@ struct NotificationListView: View {
                 .font(.system(size: 14))
                 .foregroundColor(color)
             
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(theme.primaryText)
             
@@ -440,7 +440,7 @@ struct NotificationListView: View {
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(theme.primaryText)
             
-            Text(message)
+            Text(LocalizedStringKey(message))
                 .font(.system(size: 13))
                 .foregroundColor(theme.secondaryText)
                 .multilineTextAlignment(.center)

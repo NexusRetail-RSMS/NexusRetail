@@ -251,7 +251,7 @@ struct OrdersHubView: View {
             Image(systemName: icon)
                 .font(.system(size: 40))
                 .foregroundColor(theme.secondaryText.opacity(0.4))
-            Text(text)
+            Text(LocalizedStringKey(text))
                 .font(.system(size: 14))
                 .foregroundColor(theme.secondaryText)
         }

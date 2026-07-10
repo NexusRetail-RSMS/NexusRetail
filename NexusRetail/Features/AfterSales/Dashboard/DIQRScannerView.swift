@@ -306,8 +306,8 @@ fileprivate struct DIQRScannerView: View {
                 }
             }
             VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.system(size: 17, weight: .bold)).foregroundColor(theme.primaryText)
-                Text(subtitle).font(.system(size: 14)).foregroundColor(theme.secondaryText)
+                Text(LocalizedStringKey(title)).font(.system(size: 17, weight: .bold)).foregroundColor(theme.primaryText)
+                Text(LocalizedStringKey(subtitle)).font(.system(size: 14)).foregroundColor(theme.secondaryText)
             }
             Spacer()
             Text(tag)

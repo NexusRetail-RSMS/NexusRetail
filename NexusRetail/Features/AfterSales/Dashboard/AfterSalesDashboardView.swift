@@ -181,7 +181,7 @@ struct AfterSalesDashboardView: View {
             Image(systemName: "chart.bar.xaxis")
                 .font(.system(size: 32))
                 .foregroundColor(theme.secondaryText.opacity(0.4))
-            Text(text)
+            Text(LocalizedStringKey(text))
                 .font(.system(size: 13))
                 .foregroundColor(theme.secondaryText)
         }

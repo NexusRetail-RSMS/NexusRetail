@@ -84,7 +84,7 @@ struct RevenueCardView: View {
                 .font(RSMSFonts.headline)
                 .foregroundColor(theme.primaryText)
             
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .font(.system(size: 10))
                 .foregroundColor(theme.secondaryText)
                 .multilineTextAlignment(.center)
