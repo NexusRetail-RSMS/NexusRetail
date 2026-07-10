@@ -254,8 +254,19 @@ struct AdminDashboardView: View {
             "Singapore":            "SG",
             "United Arab Emirates": "AE",
             "UAE":                  "AE",
+            "Slovakia":             "SK",
+            "Finland":              "FI",
+            "Russia":               "RU",
+            "Italy":                "IT",
+            "Spain":                "ES",
+            "Netherlands":          "NL",
+            "Switzerland":          "CH",
         ]
-        return map[country] ?? "ALL"
+        // Fallback: derive a 2-letter code from the name so any country shows
+        // a sensible badge instead of "ALL".
+        if let code = map[country] { return code }
+        let letters = country.trimmingCharacters(in: .whitespaces).uppercased()
+        return String(letters.prefix(2))
     }
 
     // MARK: - KPI Cards

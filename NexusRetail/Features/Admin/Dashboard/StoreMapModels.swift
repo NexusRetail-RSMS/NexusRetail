@@ -75,6 +75,10 @@ enum CountryMapRegion {
             center: CLLocationCoordinate2D(latitude: 48.7, longitude: 19.7),
             span: MKCoordinateSpan(latitudeDelta: 4, longitudeDelta: 7)
         ),
+        "Finland": MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 64.9, longitude: 26.0),
+            span: MKCoordinateSpan(latitudeDelta: 12, longitudeDelta: 16)
+        ),
         "Russia": MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 61.5, longitude: 105.3),
             span: MKCoordinateSpan(latitudeDelta: 45, longitudeDelta: 90)
@@ -150,6 +154,7 @@ enum CountryMapRegion {
         "India": "🇮🇳",
         "Slovakia": "🇸🇰",
         "Russia": "🇷🇺",
+        "Finland": "🇫🇮",
         "France": "🇫🇷",
         "Germany": "🇩🇪",
         "Japan": "🇯🇵",
@@ -169,6 +174,7 @@ enum CountryMapRegion {
         "India": "₹",
         "Slovakia": "€",
         "Russia": "₽",
+        "Finland": "€",
         "France": "€",
         "Germany": "€",
         "Japan": "¥",

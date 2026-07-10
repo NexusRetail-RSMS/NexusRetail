@@ -59,6 +59,7 @@ class DashboardViewModel {
     var monthly: [MonthlyRevenue] = []
     var weekly: [WeeklyRevenue] = []
     var byCountry: [CountryRevenue] = []
+    var storeCountries: [String] = []
     var footprint: [CountryFootprint] = []
     var storePoints: [StorePoint] = []
     var indiaStates: [StateFootprint] = []
@@ -83,8 +84,11 @@ class DashboardViewModel {
         }
     }
     
+    /// Every country that has a store (so newly-added regions appear even with
+    /// no sales yet), unioned with any country that has revenue, for safety.
     var countries: [String] {
-        byCountry.map(\.country).sorted()
+        Array(Set(storeCountries).union(byCountry.map(\.country)))
+            .sorted()
     }
     
     var displayCountry: String {
@@ -223,6 +227,8 @@ class DashboardViewModel {
                 .rpc("top_products", params: monthParams).execute().value
                 
             async let productsCountTask = fetchTotalProducts()
+
+            async let storeCountriesTask = fetchStoreCountries()
                 
             self.kpis = try await kpisTask
             self.monthly = try await monthlyTask
@@ -234,6 +240,7 @@ class DashboardViewModel {
             self.topProductsWeekly = try await topWeeklyTask
             self.topProductsMonthly = try await topMonthlyTask
             self.totalProducts = try await productsCountTask
+            self.storeCountries = try await storeCountriesTask
             
         } catch is CancellationError {
             // A newer load() superseded this one (e.g. view re-rendered or
@@ -251,6 +258,19 @@ class DashboardViewModel {
     
     // MARK: - Realtime and Product Count
     
+    /// Distinct countries that currently have a store, so the region filter
+    /// reflects every region we operate in — even brand-new ones with no sales.
+    private func fetchStoreCountries() async throws -> [String] {
+        struct Row: Decodable { let country: String? }
+        let rows: [Row] = try await SupabaseManager.shared.client
+            .from("store")
+            .select("country")
+            .execute()
+            .value
+        return Array(Set(rows.compactMap { $0.country?.trimmingCharacters(in: .whitespaces) }
+                            .filter { !$0.isEmpty })).sorted()
+    }
+
     private func fetchTotalProducts() async throws -> Int {
         let response = try await SupabaseManager.shared.client
             .from("products")
