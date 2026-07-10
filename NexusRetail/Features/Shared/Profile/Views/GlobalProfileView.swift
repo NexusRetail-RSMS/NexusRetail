@@ -300,7 +300,7 @@ struct GlobalProfileView: View {
                 .foregroundColor(theme.isDarkMode ? theme.antiqueGold : theme.burgundy)
                 .frame(width: 20)
 
-            Text(label)
+            Text(LocalizedStringKey(label))
                 .foregroundColor(theme.primaryText)
 
             Spacer()

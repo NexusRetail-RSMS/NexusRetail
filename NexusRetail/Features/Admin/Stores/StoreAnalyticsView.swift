@@ -457,7 +457,7 @@ struct StoreAnalyticsView: View {
             RoundedRectangle(cornerRadius: 2)
                 .fill(theme.burgundy)
                 .frame(width: 3, height: 18)
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(theme.primaryText)
             Spacer()

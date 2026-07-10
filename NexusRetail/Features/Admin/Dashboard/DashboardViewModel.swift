@@ -282,7 +282,10 @@ class DashboardViewModel {
     func startListening() {
         if realtimeChannel != nil { return }
         
-        realtimeChannel = SupabaseManager.shared.client.channel("admin_dashboard_products")
+        // Unique channel name per instance so we never reuse a stale, already
+        // subscribed channel (which makes adding postgresChange callbacks throw
+        // "Cannot add postgres_changes callbacks after subscribe()").
+        realtimeChannel = SupabaseManager.shared.client.channel("admin_dashboard_products_\(UUID().uuidString)")
         
         let insertions = realtimeChannel?.postgresChange(
             InsertAction.self,
@@ -321,8 +324,12 @@ class DashboardViewModel {
     }
     
     deinit {
+        // Fully remove the channel (not just unsubscribe) so it doesn't linger
+        // in the client's registry and get reused in a subscribed state.
         Task { [channel = realtimeChannel] in
-            await channel?.unsubscribe()
+            if let channel {
+                await SupabaseManager.shared.client.removeChannel(channel)
+            }
         }
     }
 }

@@ -241,7 +241,7 @@ struct ManagerDetailView: View {
                 .foregroundColor(theme.burgundy)
                 .frame(width: 20)
             
-            Text(label)
+            Text(LocalizedStringKey(label))
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(theme.primaryText)
             

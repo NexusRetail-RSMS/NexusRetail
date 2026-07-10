@@ -189,10 +189,10 @@ struct InventoryDashboardView: View {
             Image(systemName: icon)
                 .font(.system(size: 48))
                 .foregroundColor(theme.secondaryText.opacity(0.4))
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .font(RSMSFonts.headline)
                 .foregroundColor(theme.primaryText)
-            Text(message)
+            Text(LocalizedStringKey(message))
                 .font(RSMSFonts.caption)
                 .foregroundColor(theme.secondaryText)
                 .multilineTextAlignment(.center)
@@ -210,7 +210,7 @@ struct CategoryChip: View {
     let action: () -> Void
     
     var body: some View {
-        Text(label)
+        Text(LocalizedStringKey(label))
             .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
             .foregroundColor(isSelected ? .white : theme.primaryText)
             .padding(.horizontal, 14)

@@ -148,7 +148,7 @@ struct RepairOrderDetailsView: View {
     
     private func detailRow(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(theme.secondaryText)
             
