@@ -133,6 +133,10 @@ struct TopLocationsChartView: View {
                 .padding(RSMSSpacing.sm)
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Top Customer Locations Map")
+        .accessibilityValue(selectedCountry != nil ? "Map centered on \(selectedCountry!)" : "World map showing stores across all regions.")
+        .accessibilityHint("Double tap to open full map view.")
     }
 
     // MARK: - Store Callout Overlay

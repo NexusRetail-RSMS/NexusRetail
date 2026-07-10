@@ -127,6 +127,10 @@ struct TopProductsDonut: View {
                 .foregroundColor(theme.secondaryText.opacity(0.7))
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Top Products Chart")
+        .accessibilityValue(selectedSlice != nil ? "\(selectedSlice!.label): \(formatCount(selectedSlice!.value)) \(unitLabel)" : "Donut chart showing \(formatCount(total)) \(unitLabel) total.")
+        .accessibilityHint(selectedSlice == nil ? "Double tap and hold to explore chart segments." : "Release to stop exploring.")
     }
 
     private var centerContent: some View {
