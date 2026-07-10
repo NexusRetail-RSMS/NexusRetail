@@ -36,7 +36,7 @@ struct ClientDetailView: View {
     }
     
     private struct MinimalTopProduct: Decodable {
-        let id: UUID
+        let id: Int64
         let units: Int
     }
 
@@ -185,7 +185,14 @@ struct ClientDetailView: View {
                 }
             }
         }
-        .sheet(isPresented: $isNewClientPresented) { newClientSheet }
+        .sheet(isPresented: $isEditingClient) { newClientSheet }
+        .onChange(of: isEditingClient) { _, isEditing in
+            if isEditing {
+                clientName = client.name
+                clientPhone = client.phone
+                stylePreferences = client.preferences
+            }
+        }
         .task {
             await loadClientInsights()
             await loadRecommendations()
@@ -345,7 +352,7 @@ struct ClientDetailView: View {
                 .value
             
             trendingProducts = topProductsResp.compactMap { top in
-                allProducts.first(where: { $0.id == top.id })
+                allProducts.first(where: { $0.itemId == top.id })
             }
             if trendingProducts.isEmpty {
                 trendingProducts = Array(allProducts.prefix(6))
@@ -385,7 +392,7 @@ struct ClientDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { isNewClientPresented = false }
+                    Button("Cancel") { isEditingClient = false }
                         .foregroundColor(theme.burgundy)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -423,6 +430,10 @@ struct ClientDetailView: View {
                         .update(UpdateClient(name: name, phone: phone))
                         .eq("id", value: editingId)
                         .execute()
+                    
+                    await MainActor.run {
+                        isEditingClient = false
+                    }
                 }
             } catch {
                 print("Error saving client: \(error)")

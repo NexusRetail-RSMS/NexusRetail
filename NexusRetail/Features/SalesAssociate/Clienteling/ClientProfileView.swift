@@ -19,7 +19,7 @@ struct ClientProfileView: View {
     }
     
     private struct MinimalTopProduct: Decodable {
-        let id: UUID
+        let id: Int64
         let units: Int
     }
     
@@ -156,7 +156,7 @@ struct ClientProfileView: View {
                 .value
             
             trendingProducts = topProductsResp.compactMap { top in
-                allProducts.first(where: { $0.id == top.id })
+                allProducts.first(where: { $0.itemId == top.id })
             }
             
             if trendingProducts.isEmpty {
