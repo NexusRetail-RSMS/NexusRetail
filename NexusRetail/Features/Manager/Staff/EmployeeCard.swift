@@ -107,7 +107,7 @@ struct EmployeeCard: View {
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(theme.burgundy)
                     
-                    Text("\(employee.productsSold) \(isAfterSales ? "Products Aftercare" : "Products Sold")")
+                    Text("\(employee.productsSold) ") + Text(isAfterSales ? LocalizedStringKey("Products Aftercare") : LocalizedStringKey("Products Sold"))
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(theme.secondaryText)
                 }

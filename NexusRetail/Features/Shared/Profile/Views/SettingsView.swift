@@ -72,7 +72,7 @@ struct SettingsRow: View {
                 .font(.system(size: 16, weight: .semibold))
                 .frame(width: 20)
             
-            Text(title)
+            Text(localized: title)
                 .font(RSMSFonts.body)
                 .foregroundColor(theme.primaryText)
         }

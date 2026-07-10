@@ -63,7 +63,7 @@ struct PaymentConfigurationView: View {
         .alert("Error", isPresented: $viewModel.showError) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text(viewModel.errorMessage)
+            Text(localized: viewModel.errorMessage)
         }
         .alert("Success", isPresented: $viewModel.showSuccess) {
             Button("OK", role: .cancel) {}

@@ -15,7 +15,7 @@ struct BarcodeScannerView: View {
     @State private var selectedPhoto: PhotosPickerItem? = nil
     @State private var stockLimitReached = false   // shown when scan hits stock limit
     @State private var toastMessage: String? = nil // brief add-to-cart confirmation
-    @State private var invoiceNumber: String = ""
+    @State private var manualSku: String = ""
     
     var body: some View {
         ZStack(alignment: .top) {
@@ -188,26 +188,32 @@ struct BarcodeScannerView: View {
                     .padding(.vertical, 4)
                 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Invoice Number")
+                    Text("SKU / Product Code")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(theme.primaryText)
                     
-                    TextField("Enter invoice number", text: $invoiceNumber)
-                        .font(.system(size: 15, weight: .medium))
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 14)
-                        .background(Color.gray.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(theme.cardBorder, lineWidth: 1)
-                        )
-                        .onSubmit {
-                            if !invoiceNumber.isEmpty {
-                                simulateScan(forSku: invoiceNumber)
-                                invoiceNumber = ""
-                            }
+                    HStack(spacing: 8) {
+                        TextField("Enter SKU or product code", text: $manualSku)
+                            .font(.system(size: 15, weight: .medium))
+                            .autocorrectionDisabled()
+                            .textInputAutocapitalization(.characters)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 14)
+                            .background(Color.gray.opacity(0.1))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(theme.cardBorder, lineWidth: 1)
+                            )
+                            .onSubmit { submitManualSku() }
+
+                        Button { submitManualSku() } label: {
+                            Image(systemName: "arrow.right.circle.fill")
+                                .font(.system(size: 30))
+                                .foregroundColor(manualSku.trimmingCharacters(in: .whitespaces).isEmpty ? theme.disabled : theme.burgundy)
                         }
+                        .disabled(manualSku.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -217,8 +223,29 @@ struct BarcodeScannerView: View {
         .padding(.bottom, 48)
     }
     
-    private func simulateScan(forSku sku: String) {
-        guard let match = POSProductRepository.shared.products.first(where: { $0.sku == sku }) else { return }
+    private func submitManualSku() {
+        let entered = manualSku.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !entered.isEmpty else { return }
+        simulateScan(forSku: entered)
+        manualSku = ""
+    }
+
+    private func simulateScan(forSku rawSku: String) {
+        // Normalize: strip any nexus://product/ prefix, trim, case-insensitive.
+        let sku = rawSku
+            .replacingOccurrences(of: "nexus://product/", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard let match = POSProductRepository.shared.products.first(where: {
+            $0.sku.compare(sku, options: .caseInsensitive) == .orderedSame
+        }) else {
+            withAnimation { toastMessage = "No product found for \"\(sku)\"" }
+            UINotificationFeedbackGenerator().notificationOccurred(.error)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                withAnimation { self.toastMessage = nil }
+            }
+            return
+        }
 
         // Out of stock — show detail so the associate can pick an alternative.
         if match.stock == 0 {
@@ -381,7 +408,7 @@ struct BarcodeScannerView: View {
         HStack(spacing: 4) {
             Image(systemName: "checkmark")
                 .font(.system(size: 10, weight: .bold))
-            Text(text)
+            Text(localized: text)
                 .font(.system(size: 11, weight: .semibold))
         }
         .foregroundColor(theme.burgundy)

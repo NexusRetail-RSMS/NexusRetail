@@ -128,7 +128,7 @@ struct RecentOrdersView: View {
     private func statusPill(_ status: String) -> some View {
         let color: Color = status == "Completed" ? theme.success : theme.secondaryText
         let bg: Color    = status == "Completed" ? theme.success.opacity(0.08) : Color.gray.opacity(0.08)
-        return Text(status)
+        return Text(localized: status)
             .font(.system(size: 10, weight: .bold))
             .foregroundColor(color)
             .padding(.horizontal, 8).padding(.vertical, 4)

@@ -190,7 +190,7 @@ struct StoreFormView: View {
                         HStack(spacing: 10) {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .foregroundColor(theme.error)
-                            Text(errorMessage)
+                            Text(localized: errorMessage)
                                 .font(.system(size: 13, weight: .medium))
                                 .foregroundColor(theme.error)
                         }
@@ -488,7 +488,7 @@ private struct FormSectionCard<Content: View>: View {
                 RoundedRectangle(cornerRadius: 2)
                     .fill(theme.burgundy)
                     .frame(width: 3, height: 16)
-                Text(title)
+                Text(localized: title)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(theme.primaryText)
                 Spacer()
@@ -566,9 +566,9 @@ private struct PremiumMenuRow: View {
 
     var body: some View {
         Menu {
-            Picker(title, selection: $selection) {
+            Picker(LocalizedStringKey(title), selection: $selection) {
                 ForEach(options, id: \.self) { option in
-                    Text(option).tag(option)
+                    Text(localized: option).tag(option)
                 }
             }
         } label: {
@@ -589,10 +589,10 @@ private struct PremiumMenuRow: View {
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
+                    Text(localized: title)
                         .font(.system(size: 11.5, weight: .medium))
                         .foregroundColor(theme.secondaryText)
-                    Text(value)
+                    Text(localized: value)
                         .font(.system(size: 14.5, weight: .medium))
                         .foregroundColor(theme.primaryText)
                 }
@@ -632,7 +632,7 @@ private struct PremiumToggleRow: View {
                     .foregroundColor(theme.burgundy)
             }
 
-            Text(title)
+            Text(localized: title)
                 .font(.system(size: 14.5, weight: .medium))
                 .foregroundColor(theme.primaryText)
 

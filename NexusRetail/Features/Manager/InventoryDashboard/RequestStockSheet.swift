@@ -138,7 +138,7 @@ struct RequestStockSheet: View {
                     .disabled(isSubmitting || isSuccess)
 
                     if let errorMessage {
-                        Text(errorMessage)
+                        Text(localized: errorMessage)
                             .font(.system(size: 13))
                             .foregroundColor(.red)
                             .multilineTextAlignment(.center)

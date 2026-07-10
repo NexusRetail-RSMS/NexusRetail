@@ -92,7 +92,7 @@ struct ManagerRevenueChartView: View {
                     AxisMarks { value in
                         AxisValueLabel {
                             if let label = value.as(String.self) {
-                                Text(label)
+                                Text(localized: label)
                                     .font(.system(size: 10, weight: .medium))
                                     .foregroundColor(theme.secondaryText)
                             }

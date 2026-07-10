@@ -16,7 +16,7 @@ struct GradientButton: View {
                     ProgressView()
                         .tint(.white)
                 } else {
-                    Text(title)
+                    Text(localized: title)
                     Image(systemName: icon)
                 }
             }

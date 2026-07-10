@@ -38,7 +38,7 @@ struct ManagerPendingRequestsView: View {
                         // Segmented Control Filter
                         Picker("Filter", selection: $selectedTab) {
                             ForEach(RequestFilterTab.allCases, id: \.self) { tab in
-                                Text(tab.rawValue).tag(tab)
+                                Text(LocalizedStringKey(tab.rawValue)).tag(tab)
                             }
                         }
                         .pickerStyle(.segmented)

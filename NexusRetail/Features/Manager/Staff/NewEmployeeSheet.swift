@@ -139,12 +139,12 @@ struct NewEmployeeSheet: View {
                     dismiss()
                 }
             } message: {
-                Text(successAlertMessage)
+                Text(localized: successAlertMessage)
             }
             .alert("Error", isPresented: $showErrorAlert) {
                 Button("OK") {}
             } message: {
-                Text(errorMessage)
+                Text(localized: errorMessage)
             }
             .onAppear {
                 if selectedRole == nil {
@@ -168,7 +168,7 @@ struct NewEmployeeSheet: View {
 
     private func roleSelectionRow(role: UserRole, label: String) -> some View {
         HStack {
-            Text(label)
+            Text(localized: label)
                 .foregroundColor(theme.primaryText)
             Spacer()
             Image(systemName: selectedRole == role ? "checkmark.circle.fill" : "circle")

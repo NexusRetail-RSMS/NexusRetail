@@ -98,7 +98,7 @@ struct AdminToolbarModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .navigationTitle(title)
+            .navigationTitle(LocalizedStringKey(title))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -169,7 +169,7 @@ struct AdminPlaceholderView: View {
                     .fontWeight(.semibold)
                     .foregroundColor(theme.primaryText)
 
-                Text(message)
+                Text(localized: message)
                     .font(RSMSFonts.body)
                     .foregroundColor(theme.secondaryText)
                     .multilineTextAlignment(.center)

@@ -51,7 +51,7 @@ struct InventoryGridItemCard: View {
                     
                     Spacer()
                     
-                    Text(item.stockStatus.rawValue)
+                    Text(LocalizedStringKey(item.stockStatus.rawValue))
                         .font(.system(size: 11, weight: .bold))
                         .foregroundColor(item.stockStatus.color)
                         .padding(.horizontal, 6)

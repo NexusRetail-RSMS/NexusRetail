@@ -94,7 +94,7 @@ struct ExchangeSelectionView: View {
         .alert("Exchange Error", isPresented: $showError) {
             Button("OK") { }
         } message: {
-            Text(errorMessage)
+            Text(localized: errorMessage)
         }
     }
 
@@ -323,7 +323,7 @@ struct ExchangeSelectionView: View {
 
     private func categoryPill(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(title)
+            Text(localized: title)
                 .font(.system(size: 13, weight: isSelected ? .bold : .medium))
                 .foregroundColor(isSelected ? .white : RSMSColors.burgundy)
                 .padding(.horizontal, 16)
@@ -524,7 +524,7 @@ struct ExchangeSelectionView: View {
                                     .tint(.white)
                                     .controlSize(.small)
                             }
-                            Text(ctaButtonText)
+                            Text(localized: ctaButtonText)
                                 .font(.system(size: 16, weight: .bold))
                             if !isProcessing {
                                 Image(systemName: "arrow.right")

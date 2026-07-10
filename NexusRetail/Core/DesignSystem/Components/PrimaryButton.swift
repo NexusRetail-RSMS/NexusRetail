@@ -18,7 +18,7 @@ struct RSMSPrimaryButton: View {
     var body: some View {
         Button(action: action) {
             ZStack {
-                Text(title)
+                Text(localized: title)
                     .font(.headline)
                     .opacity(isLoading ? 0 : 1)
                 
@@ -47,7 +47,7 @@ struct RSMSSecondaryButton: View {
     
     var body: some View {
         Button(action: action) {
-            Text(title)
+            Text(localized: title)
                 .font(.subheadline)
                 .foregroundColor(isDestructive ? theme.error : theme.primaryAction)
         }

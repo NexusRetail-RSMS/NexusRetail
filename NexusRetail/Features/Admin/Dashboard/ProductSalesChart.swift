@@ -114,7 +114,7 @@ struct ProductRankRow: View {
                             .lineLimit(2)
                             .fixedSize(horizontal: false, vertical: true)
                         
-                        Text(point.category)
+                        Text(localized: point.category)
                             .font(.system(size: 10, weight: .regular))
                             .foregroundColor(theme.secondaryText)
                     }

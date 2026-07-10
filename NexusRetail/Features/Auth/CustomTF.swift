@@ -48,7 +48,7 @@ struct CustomTF: View {
                     .overlay(errorMessage != nil ? RSMSColors.error : RSMSColors.inputBorder)
 
                 if let errorMessage {
-                    Text(errorMessage)
+                    Text(localized: errorMessage)
                         .font(.caption2)
                         .foregroundStyle(RSMSColors.error)
                 }
